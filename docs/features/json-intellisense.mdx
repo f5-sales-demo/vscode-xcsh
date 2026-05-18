@@ -1,0 +1,24 @@
+---
+title: JSON IntelliSense
+description: Schema validation and auto-completion for F5 XC resource configurations.
+sidebar:
+  order: 4
+---
+
+## Schema Validation
+
+The extension provides JSON schemas for common resource types. When editing resource JSON files, VS Code validates your configuration in real-time and highlights errors.
+
+## Supported Schemas
+
+- HTTP Load Balancer (`.http_loadbalancer.json`)
+- Origin Pool (`.origin_pool.json`)
+- App Firewall / WAF (`.app_firewall.json`)
+- Health Check (`.healthcheck.json`)
+- TCP Load Balancer (`.tcp_loadbalancer.json`)
+- DNS Load Balancer (`.dns_load_balancer.json`)
+- Virtual Site (`.virtual_site.json`)
+
+## Auto-Completion
+
+IntelliSense provides auto-completion for field names, enum values, and nested object structures based on the F5 XC OpenAPI spec.

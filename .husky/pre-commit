@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+# Husky pre-commit hook
+# - Runs lint-staged for TypeScript/JavaScript linting and formatting
+
+# Run lint-staged for code quality
+npx lint-staged

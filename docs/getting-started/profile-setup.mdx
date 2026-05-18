@@ -1,0 +1,24 @@
+---
+title: Profile Setup
+description: Configure API credentials for connecting to F5 Distributed Cloud.
+sidebar:
+  order: 2
+---
+
+## Adding a Profile
+
+1. Open the **Profiles** view in the F5 XC sidebar.
+2. Click the **+** icon to add a new profile.
+3. Enter your tenant URL (e.g., `https://your-tenant.console.ves.volterra.io`).
+4. Choose an authentication method:
+   - **API Token**: Paste your API token from the F5 XC console.
+   - **P12 Certificate**: Select your `.p12` certificate file and enter the password.
+5. Set a default namespace.
+
+## Managing Profiles
+
+- **Switch profiles**: Click a profile in the Profiles view to make it active.
+- **Edit**: Right-click a profile and select **Edit Profile**.
+- **Delete**: Right-click a profile and select **Delete Profile**.
+
+Profiles are stored securely using VS Code's built-in secret storage (XDG-compliant on Linux).

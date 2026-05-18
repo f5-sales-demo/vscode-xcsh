@@ -1,0 +1,16 @@
+{
+  "customSets": [
+    {
+      "label": "Getting Started",
+      "description": "Installation and initial profile configuration",
+      "paths": ["getting-started*"]
+    },
+    {
+      "label": "Features",
+      "description": "Resource management, observability, cloud status, and IntelliSense",
+      "paths": ["features*"]
+    }
+  ],
+  "promote": ["index*", "getting-started*", "features*"],
+  "demote": ["reference/supported-resources*"]
+}

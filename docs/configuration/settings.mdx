@@ -1,0 +1,18 @@
+---
+title: Settings
+description: Extension configuration options for F5 Distributed Cloud Tools.
+sidebar:
+  order: 1
+---
+
+## Available Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | Log verbosity: `debug`, `info`, `warn`, `error` |
+| `f5xc.defaultNamespace` | string | `default` | Default namespace for resource operations |
+| `f5xc.confirmDelete` | boolean | `true` | Show confirmation dialog before deleting resources |
+| `f5xc.deleteConfirmationLevel` | string | `always` | When to confirm: `always`, `high-only`, `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | Auto-refresh interval in seconds (0 = disabled) |
+| `f5xc.viewMode` | string | `console` | View mode: `console` or `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | Show beta/preview API resource types |

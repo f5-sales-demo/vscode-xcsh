@@ -1,0 +1,313 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - CHANGELOG.md
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  repository_dispatch:
+    types: [theme-updated, enriched-specs-updated]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Validate that code generation is deterministic
+  validate-generation:
+    name: Validate Generation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Log dispatch event
+        if: github.event_name == 'repository_dispatch'
+        run: |
+          echo "::notice::Triggered by repository_dispatch (${{ github.event.action }})"
+          echo "Source: ${{ github.event.client_payload.trigger_source || github.event.client_payload.source_repo }}"
+          echo "Version: ${{ github.event.client_payload.version || 'N/A' }}"
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure specs are up-to-date
+        run: npm run specs:ensure
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate files
+        run: npm run generate
+
+      - name: Verify idempotent generation
+        run: |
+          # Save hashes of first generation
+          shasum -a 256 src/generated/*.ts src/generated/*.json > /tmp/first_hashes.txt
+
+          # Run generation again
+          npm run generate
+
+          # Save hashes of second generation
+          shasum -a 256 src/generated/*.ts src/generated/*.json > /tmp/second_hashes.txt
+
+          # Compare hashes - generation must be deterministic
+          if ! diff /tmp/first_hashes.txt /tmp/second_hashes.txt; then
+            echo "ERROR: Generated files changed on second run!"
+            echo "This indicates non-deterministic generation."
+            exit 1
+          fi
+
+          echo "✅ Generation is idempotent and deterministic"
+
+      - name: Upload generated files artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: generated-files
+          path: src/generated/
+          retention-days: 1
+
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: validate-generation
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node-version: [22]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync API specs from upstream
+        run: npm run specs:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download generated files
+        uses: actions/download-artifact@v8
+        with:
+          name: generated-files
+          path: src/generated/
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Validate form defaults
+        run: npm run validate:forms
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v6
+        if: matrix.os == 'ubuntu-latest'
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+        continue-on-error: true
+
+      - name: Build extension
+        run: npm run package
+
+      # Linux requires xvfb for headless VSCode testing
+      - name: Run integration tests (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: xvfb-run -a npm run test:integration
+
+      - name: Run integration tests (macOS/Windows)
+        if: matrix.os != 'ubuntu-latest'
+        run: npm run test:integration
+
+  build:
+    name: Build VSIX
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync API specs from upstream
+        run: npm run specs:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download generated files
+        uses: actions/download-artifact@v8
+        with:
+          name: generated-files
+          path: src/generated/
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Build production bundle
+        run: npm run package
+
+      - name: Package extension
+        run: vsce package --no-dependencies
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: vscode-f5xc-tools-vsix
+          path: "*.vsix"
+          retention-days: 30
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run security audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+  # Create release after successful build (main branch only)
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync API specs from upstream
+        run: npm run specs:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate version
+        id: version
+        run: |
+          VERSION_JSON=$(npm run version:json --silent)
+          VERSION=$(echo "$VERSION_JSON" | jq -r '.version')
+          SEMVER=$(echo "$VERSION_JSON" | jq -r '.semver')
+          UPSTREAM=$(echo "$VERSION_JSON" | jq -r '.upstream')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "semver=$SEMVER" >> $GITHUB_OUTPUT
+          echo "upstream=$UPSTREAM" >> $GITHUB_OUTPUT
+          echo "📦 Version: v$VERSION (semver: $SEMVER, upstream: $UPSTREAM)"
+
+      - name: Update package.json version
+        env:
+          HUSKY: 0
+        run: |
+          npm run version:update
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): v${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Create and push tag
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "🏷️ Created tag: $TAG"
+
+      - name: Download VSIX artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: vscode-f5xc-tools-vsix
+          path: ./
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          VSIX_FILE=$(ls *.vsix)
+
+          # Generate release notes from recent commits
+          NOTES=$(git log --oneline -10 --no-merges --format="- %s")
+
+          gh release create "$TAG" \
+            --title "Release $TAG" \
+            --notes "## Changes
+
+          Based on F5 XC API version: ${{ steps.version.outputs.upstream }}
+
+          ### Recent commits:
+          $NOTES
+
+          ---
+          📦 Download the \`.vsix\` file and install manually, or wait for VS Code Marketplace sync." \
+            "$VSIX_FILE"
+
+          echo "✅ Release created: $TAG"
+
+      - name: Trigger Marketplace publish
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+        run: |
+          TAG="v${{ steps.version.outputs.version }}"
+          echo "🚀 Triggering Release workflow for $TAG"
+          gh workflow run release.yml --ref "$TAG"
+          echo "✅ Release workflow triggered successfully"

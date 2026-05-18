@@ -1,0 +1,28 @@
+---
+title: Resource Management
+description: Browse, create, edit, and delete F5 XC resources from VS Code.
+sidebar:
+  order: 1
+---
+
+## Browsing Resources
+
+The **Resources** tree view displays resources organized by domain and category. Expand a category to see resource types, then expand a type to list individual resources in your namespace.
+
+## Creating Resources
+
+1. Right-click a resource type in the tree and select **Create**.
+2. A JSON editor opens with a schema-validated template.
+3. Fill in the required fields (IntelliSense provides auto-completion).
+4. Save the file to submit the resource to the F5 XC API.
+
+## Editing Resources
+
+1. Click a resource in the tree to open it in the editor.
+2. Modify fields with full IntelliSense support.
+3. Save to push changes to the API.
+
+## Deleting Resources
+
+1. Right-click a resource and select **Delete**.
+2. Confirm the deletion (configurable via `f5xc.confirmDelete` and `f5xc.deleteConfirmationLevel`).
