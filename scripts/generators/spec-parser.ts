@@ -942,7 +942,8 @@ function extractFieldMetadataFromProperty(
   if (prop.properties) {
     for (const [propName, propValue] of Object.entries(prop.properties)) {
       const childPath = basePath ? `${basePath}.${propName}` : propName;
-      extractFieldMetadataFromProperty(propValue, childPath, metadata, schemas);
+
+      extractFieldMetadataFromProperty(propValue as SchemaObject, childPath, metadata, schemas);
     }
   }
 
