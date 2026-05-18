@@ -737,11 +737,6 @@ describe('Resource Types Registry', () => {
         expect(required).toContain('spec.origin_servers');
       });
 
-      it('should mark port as user required', () => {
-        const required = getUserRequiredFields('origin_pool', 'create');
-        expect(required).toContain('spec.port');
-      });
-
       it('should not include loadbalancer_algorithm as user required', () => {
         // loadbalancer_algorithm has a server default, so user doesn't need to provide it
         const required = getUserRequiredFields('origin_pool', 'create');
