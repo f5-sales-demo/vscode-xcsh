@@ -7,11 +7,6 @@ import { F5XCExplorerProvider } from '../tree/f5xcExplorer';
 import { withErrorHandling, showInfo, showWarning } from '../utils/errors';
 
 /**
- * Auth type selection options
- */
-type AuthType = 'apiToken' | 'p12Bundle' | 'certKey';
-
-/**
  * Register profile management commands
  */
 export function registerProfileCommands(
