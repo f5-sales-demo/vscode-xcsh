@@ -1025,8 +1025,8 @@ function mergeResourceType(
     supportsLogs: override.supportsLogs,
     supportsMetrics: override.supportsMetrics,
     namespaceScope:
-      override.namespaceScope ?? (generated?.namespaceScope as NamespaceScope) ?? 'any',
-    apiBase: override.apiBase || (generated?.apiBase as ApiBase) || 'config',
+      override.namespaceScope ?? generated?.namespaceScope ?? 'any',
+    apiBase: override.apiBase || generated?.apiBase || 'config',
     // Include service segment for extended API paths (e.g., /api/config/dns/...)
     serviceSegment: (generated as { serviceSegment?: string } | undefined)?.serviceSegment,
     customListPath: override.customListPath,

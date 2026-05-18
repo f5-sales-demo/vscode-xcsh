@@ -73,6 +73,7 @@ export default tseslint.config(
       'jest.config.js',
       '.vscode-test.mjs',
       'coverage/**',
+      'src/generated/**',
     ],
   },
 );

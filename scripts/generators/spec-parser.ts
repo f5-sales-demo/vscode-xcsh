@@ -686,7 +686,7 @@ export function deriveResourceKeyFromApiPath(apiPath: string): string {
 function deriveSchemaIdFromPath(apiPath: string, pathItem: PathItem): string {
   // Try to get operationId from any method
   for (const method of ['post', 'get', 'put', 'delete'] as const) {
-    const operation = pathItem[method] as { operationId?: string } | undefined;
+    const operation = pathItem[method];
     if (operation?.operationId) {
       // Extract schema ID from operationId
       // "ves.io.schema.app_firewall.API.Create" -> "ves.io.schema.app_firewall"
@@ -932,7 +932,7 @@ function extractFieldMetadataFromProperty(
     if (refSchema && refSchema.properties) {
       for (const [propName, propValue] of Object.entries(refSchema.properties)) {
         const childPath = basePath ? `${basePath}.${propName}` : propName;
-        extractFieldMetadataFromProperty(propValue as SchemaObject, childPath, metadata, schemas);
+        extractFieldMetadataFromProperty(propValue, childPath, metadata, schemas);
       }
     }
     // Don't return early - continue to check for nested properties
@@ -942,13 +942,13 @@ function extractFieldMetadataFromProperty(
   if (prop.properties) {
     for (const [propName, propValue] of Object.entries(prop.properties)) {
       const childPath = basePath ? `${basePath}.${propName}` : propName;
-      extractFieldMetadataFromProperty(propValue as SchemaObject, childPath, metadata, schemas);
+      extractFieldMetadataFromProperty(propValue, childPath, metadata, schemas);
     }
   }
 
   // Handle array items
   if (prop.items) {
-    extractFieldMetadataFromProperty(prop.items as SchemaObject, basePath, metadata, schemas);
+    extractFieldMetadataFromProperty(prop.items, basePath, metadata, schemas);
   }
 }
 
@@ -1180,7 +1180,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     // Get description from first operation
     let description = '';
     for (const method of ['get', 'post'] as const) {
-      const operation = pathItem[method] as { description?: string } | undefined;
+      const operation = pathItem[method];
       if (operation?.description) {
         description = normalizeDescription(operation.description);
         break;
