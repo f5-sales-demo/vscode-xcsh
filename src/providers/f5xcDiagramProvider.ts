@@ -444,7 +444,7 @@ export class F5XCDiagramProvider {
 
       spec.advertise_custom.advertise_where.forEach((adv, i) => {
         const nodeId = `adv_target_${i}`;
-        let label = '';
+        let label: string;
 
         if (adv.site) {
           label = `Site: ${adv.site.site?.name || 'Unknown'}<br>Network: ${adv.site.network || 'N/A'}`;

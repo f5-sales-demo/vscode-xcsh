@@ -145,7 +145,7 @@ export class HealthcheckFormProvider {
       const namespaces = await client.listNamespaces();
       return namespaces.map((ns) => ns.name);
     } catch (error) {
-      logger.warn('Failed to load namespaces', error as Error);
+      logger.warn('Failed to load namespaces', error);
       return ['default'];
     }
   }
@@ -168,7 +168,7 @@ export class HealthcheckFormProvider {
       }
       return quota;
     } catch (error) {
-      logger.warn('Failed to load quota info', error as Error);
+      logger.warn('Failed to load quota info', error);
       return undefined;
     }
   }

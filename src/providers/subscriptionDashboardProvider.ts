@@ -235,7 +235,7 @@ export class SubscriptionDashboardProvider {
         accessStatuses.set(name, accessStatus);
       });
     } catch (error) {
-      logger.warn('Failed to fetch addon access statuses:', error as Error);
+      logger.warn('Failed to fetch addon access statuses:', error);
     }
 
     return accessStatuses;

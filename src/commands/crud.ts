@@ -335,7 +335,7 @@ export function registerCrudCommands(
         const validationResult = validateResourcePayload(
           resourceTypeKey,
           operation,
-          resource as Record<string, unknown>,
+          resource,
         );
 
         // If validation fails, show warning with option to continue

@@ -308,7 +308,7 @@ describe('ProfileManager', () => {
         apiToken: 'token',
       });
 
-      await profileManager.updateProfile('original', { name: 'changed' } as Partial<Profile>);
+      await profileManager.updateProfile('original', { name: 'changed' });
 
       expect(mockProfiles.has('original')).toBe(true);
       expect(mockProfiles.get('original')?.name).toBe('original');

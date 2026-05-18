@@ -76,18 +76,18 @@ export function registerProfileCommands(
             {
               label: 'API Token',
               description: 'Use an API token for authentication',
-              value: 'apiToken' as AuthType,
+              value: 'apiToken',
             },
             {
               label: 'P12 Certificate Bundle',
               description:
                 'Use a P12/PFX certificate file (password from F5XC_P12_PASSWORD env var)',
-              value: 'p12Bundle' as AuthType,
+              value: 'p12Bundle',
             },
             {
               label: 'Certificate + Key Files',
               description: 'Use separate PEM certificate and key files',
-              value: 'certKey' as AuthType,
+              value: 'certKey',
             },
           ],
           {

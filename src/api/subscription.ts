@@ -156,7 +156,7 @@ function parseAddonService(service: ApiAddonService | string): AddonService {
 
   // Determine category from name
   let category: AddonCategory = 'other';
-  let derivedDisplayName = name;
+  let derivedDisplayName: string;
 
   if (lowerName.includes('bot_defense') || lowerName.includes('bot-defense')) {
     category = 'bot_defense';
@@ -586,7 +586,7 @@ export async function getAddonActivationStatus(
       state: (response.state as ActivationState) || 'AS_NONE',
     };
   } catch (error) {
-    logger.warn(`Failed to get activation status for ${addonServiceName}:`, error as Error);
+    logger.warn(`Failed to get activation status for ${addonServiceName}:`, error);
     return {
       state: 'AS_NONE',
     };

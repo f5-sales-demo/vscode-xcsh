@@ -502,7 +502,7 @@ export class F5XCClient {
       });
       return result;
     } catch (error) {
-      this.logger.warn('API access check failed, assuming no permission', error as Error);
+      this.logger.warn('API access check failed, assuming no permission', error);
       return false;
     }
   }

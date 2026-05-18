@@ -1259,7 +1259,7 @@ export class F5XCDescribeProvider {
       metadataFields.push({ key: 'UID', value: String(systemMetadata.uid) });
     }
     // Labels (key-value pairs for organization)
-    if (metadata?.labels && Object.keys(metadata.labels as object).length > 0) {
+    if (metadata?.labels && Object.keys(metadata.labels).length > 0) {
       const labels = metadata.labels as Record<string, string>;
       const labelStr = Object.entries(labels)
         .map(([k, v]) => `${k}=${v}`)

@@ -1868,7 +1868,7 @@ export class CloudStatusDashboardProvider {
 
     // Build XC Regional Edge section
     // Note: F5-managed Regional Edge sites only expose labels data, not full spec with coordinates
-    let xcDetailsHtml = '';
+    let xcDetailsHtml: string;
     if (xcSite) {
       const siteObj = xcSite as unknown as Record<string, unknown>;
       const labels = (siteObj['labels'] as Record<string, string>) || {};

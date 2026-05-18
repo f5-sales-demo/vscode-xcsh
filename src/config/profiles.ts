@@ -82,7 +82,7 @@ export class ProfileManager {
 
       this.logger.debug('Profile file watcher initialized');
     } catch (error) {
-      this.logger.warn('Failed to initialize file watcher', error as Error);
+      this.logger.warn('Failed to initialize file watcher', error);
     }
   }
 
