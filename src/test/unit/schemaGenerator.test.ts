@@ -322,4 +322,83 @@ describe('Schema Generator', () => {
       }
     });
   });
+
+  // -------------------------------------------------------------------------
+  // Additional coverage: known-type safety and SchemaRegistry integration
+  // -------------------------------------------------------------------------
+  describe('generateSchemaForResourceType — known-type safety', () => {
+    const knownTypes = ['http_loadbalancer', 'origin_pool', 'healthcheck', 'app_firewall'];
+
+    for (const typeKey of knownTypes) {
+      it(`does not throw for known type "${typeKey}"`, () => {
+        expect(() => generateSchemaForResourceType(typeKey)).not.toThrow();
+      });
+    }
+
+    for (const typeKey of knownTypes) {
+      it(`returns a non-null schema for "${typeKey}"`, () => {
+        const schema = generateSchemaForResourceType(typeKey);
+        expect(schema).not.toBeNull();
+        expect(schema!.type).toBe('object');
+      });
+    }
+  });
+
+  describe('SchemaRegistry integration', () => {
+    // SchemaRegistry uses vscode.Uri internally, so we need the mock.
+    // The global vscode mock (via moduleNameMapper) is already configured.
+    let SchemaRegistryClass: typeof import('../../schema/schemaRegistry').SchemaRegistry;
+    let resetFn: typeof import('../../schema/schemaRegistry').resetSchemaRegistry;
+
+    beforeAll(async () => {
+      const mod = await import('../../schema/schemaRegistry');
+      SchemaRegistryClass = mod.SchemaRegistry;
+      resetFn = mod.resetSchemaRegistry;
+    });
+
+    afterEach(() => {
+      resetFn();
+    });
+
+    it('getOrGenerateSchema returns an object for http_loadbalancer', () => {
+      const registry = new SchemaRegistryClass();
+      const schema = registry.getOrGenerateSchema('http_loadbalancer');
+      expect(schema).not.toBeNull();
+      expect(typeof schema).toBe('object');
+    });
+
+    it('getOrGenerateSchema returns an object for origin_pool', () => {
+      const registry = new SchemaRegistryClass();
+      const schema = registry.getOrGenerateSchema('origin_pool');
+      expect(schema).not.toBeNull();
+      expect(typeof schema).toBe('object');
+    });
+
+    it('getOrGenerateSchema returns an object for healthcheck', () => {
+      const registry = new SchemaRegistryClass();
+      const schema = registry.getOrGenerateSchema('healthcheck');
+      expect(schema).not.toBeNull();
+      expect(typeof schema).toBe('object');
+    });
+
+    it('getOrGenerateSchema returns an object for app_firewall', () => {
+      const registry = new SchemaRegistryClass();
+      const schema = registry.getOrGenerateSchema('app_firewall');
+      expect(schema).not.toBeNull();
+      expect(typeof schema).toBe('object');
+    });
+
+    it('getOrGenerateSchema returns null for unknown types', () => {
+      const registry = new SchemaRegistryClass();
+      const schema = registry.getOrGenerateSchema('__does_not_exist__');
+      expect(schema).toBeNull();
+    });
+
+    it('caches schemas on subsequent calls', () => {
+      const registry = new SchemaRegistryClass();
+      const schema1 = registry.getOrGenerateSchema('http_loadbalancer');
+      const schema2 = registry.getOrGenerateSchema('http_loadbalancer');
+      expect(schema1).toBe(schema2);
+    });
+  });
 });
