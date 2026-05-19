@@ -226,7 +226,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          token: ${{ secrets.RELEASE_PAT }}
+          token: ${{ secrets.RELEASE_TOKEN || secrets.RELEASE_PAT || github.token }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -280,7 +280,7 @@ jobs:
 
       - name: Create GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.RELEASE_PAT || github.token }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           VSIX_FILE=$(ls *.vsix)
@@ -305,7 +305,7 @@ jobs:
 
       - name: Trigger Marketplace publish
         env:
-          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.RELEASE_PAT || github.token }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           echo "🚀 Triggering Release workflow for $TAG"
