@@ -39,6 +39,11 @@ export default tseslint.config(
   },
   {
     files: ['src/test/**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.test.json',
+      },
+    },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/no-unsafe-assignment': 'off',
