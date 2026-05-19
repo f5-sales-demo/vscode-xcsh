@@ -2,7 +2,7 @@
   "name": "vscode-f5xc-tools",
   "displayName": "F5 Distributed Cloud Tools",
   "description": "Manage F5 Distributed Cloud resources directly from VS Code",
-  "version": "2.2602.40310",
+  "version": "2.2605.190623",
   "publisher": "f5xc-salesdemos",
   "license": "Apache-2.0",
   "repository": {
