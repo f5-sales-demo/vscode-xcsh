@@ -80,6 +80,12 @@ export interface OperationMetadata {
   commonErrors?: CommonError[];
   /** Performance impact information */
   performanceImpact?: PerformanceImpact;
+  /** Discovered response time (from x-f5xc-discovered-response-time) */
+  discoveredResponseTime?: string;
+  /** Operation-level required fields (from x-f5xc-required-fields) */
+  operationRequiredFields?: string[];
+  /** Prerequisite resource types (from x-f5xc-requires) */
+  requires?: string[];
 }
 
 /**
@@ -127,6 +133,10 @@ export interface ParsedSpecInfo {
   operationMetadata?: ResourceOperationMetadata;
   /** Field metadata for server defaults and required fields */
   fieldMetadata?: ResourceFieldMetadata;
+  /** Domain-level best practices (from x-f5xc-best-practices in spec info) */
+  bestPractices?: BestPracticesInfo;
+  /** Guided workflows (from x-f5xc-guided-workflows in spec info) */
+  guidedWorkflows?: unknown[];
 }
 
 /**
@@ -161,6 +171,20 @@ export interface FieldMetadata {
   description?: string;
   /** Field type */
   type?: string;
+  /** Short description (from x-f5xc-description-short) */
+  descriptionShort?: string;
+  /** Medium description (from x-f5xc-description-medium) */
+  descriptionMedium?: string;
+  /** Example value (from x-f5xc-example) */
+  example?: unknown;
+  /** Validation constraints (from x-f5xc-constraints) */
+  constraints?: ConstraintInfo;
+  /** Fields this field conflicts with (from x-f5xc-conflicts-with) */
+  conflictsWith?: string[];
+  /** Whether this field is required for minimum configuration (from x-f5xc-minimum-configuration) */
+  isMinimumConfig?: boolean;
+  /** Recommended oneof variant (from x-f5xc-recommended-oneof-variant) */
+  recommendedOneofVariant?: string;
 }
 
 /**
@@ -176,6 +200,43 @@ export interface ResourceFieldMetadata {
   userRequiredFields: string[];
   /** List of field paths that have recommended values */
   recommendedValueFields?: string[];
+  /** List of field paths marked as minimum configuration */
+  minimumConfigFields: string[];
+  /** List of field paths that have validation constraints */
+  constrainedFields: string[];
+}
+
+/**
+ * Field validation constraints from x-f5xc-constraints extension.
+ */
+export interface ConstraintInfo {
+  constraintType?: string;
+  category?: string;
+  maxLength?: number;
+  minLength?: number;
+  pattern?: string;
+  format?: string;
+  formatDescription?: string;
+  characterSet?: {
+    allowed?: string;
+    restricted?: string;
+    description?: string;
+  };
+  deterministic?: boolean;
+}
+
+/**
+ * Domain-level best practices from x-f5xc-best-practices extension.
+ */
+export interface BestPracticesInfo {
+  commonErrors?: Array<{
+    code: number;
+    message: string;
+    resolution: string;
+    prevention?: string;
+  }>;
+  securityNotes?: string[];
+  performanceTips?: string[];
 }
 
 /**
@@ -197,6 +258,7 @@ interface SchemaProperty {
   type?: string;
   description?: string;
   default?: unknown;
+  enum?: unknown[];
   'x-f5xc-server-default'?: boolean;
   'x-f5xc-required-for'?: {
     minimum_config?: boolean;
@@ -206,6 +268,13 @@ interface SchemaProperty {
   };
   'x-f5xc-recommended-value'?: unknown;
   'x-ves-required'?: string;
+  'x-f5xc-description-short'?: string;
+  'x-f5xc-description-medium'?: string;
+  'x-f5xc-example'?: unknown;
+  'x-f5xc-constraints'?: Record<string, unknown>;
+  'x-f5xc-minimum-configuration'?: boolean;
+  'x-f5xc-conflicts-with'?: string[];
+  'x-f5xc-recommended-oneof-variant'?: string;
   properties?: Record<string, SchemaProperty>;
   items?: SchemaProperty;
   $ref?: string;
@@ -219,6 +288,17 @@ interface OpenAPISpec {
     title?: string;
     description?: string;
     'x-f5xc-cli-domain'?: string;
+    'x-f5xc-best-practices'?: {
+      common_errors?: Array<{
+        code: number;
+        message: string;
+        resolution: string;
+        prevention?: string;
+      }>;
+      security_notes?: string[];
+      performance_tips?: string[];
+    };
+    'x-f5xc-guided-workflows'?: unknown[];
   };
   paths?: Record<string, PathItem>;
   externalDocs?: {
@@ -275,6 +355,9 @@ interface Operation {
   };
   'x-f5xc-operation-metadata'?: RawOperationMetadata;
   'x-f5xc-danger-level'?: string;
+  'x-f5xc-discovered-response-time'?: string | Record<string, unknown>;
+  'x-f5xc-required-fields'?: string[];
+  'x-f5xc-requires'?: string[];
 }
 
 /**
@@ -798,7 +881,29 @@ function extractOperationMetadata(operation: Operation | undefined): OperationMe
     }
   }
 
-  return metadata;
+  const result = metadata ?? {};
+
+  const rt = operation['x-f5xc-discovered-response-time'];
+  if (typeof rt === 'string' && rt.length > 0) {
+    result.discoveredResponseTime = rt;
+  } else if (rt !== null && rt !== undefined && typeof rt === 'object') {
+    // Strip time-varying fields (e.g., last_measured) for deterministic output
+    const rtCopy = { ...rt };
+    delete rtCopy['last_measured'];
+    result.discoveredResponseTime = JSON.stringify(rtCopy);
+  }
+
+  const reqFields = operation['x-f5xc-required-fields'];
+  if (Array.isArray(reqFields) && reqFields.length > 0) {
+    result.operationRequiredFields = reqFields.filter((v): v is string => typeof v === 'string');
+  }
+
+  const requires = operation['x-f5xc-requires'];
+  if (Array.isArray(requires) && requires.length > 0) {
+    result.requires = requires.filter((v): v is string => typeof v === 'string');
+  }
+
+  return Object.keys(result).length === 0 ? undefined : result;
 }
 
 // ============================================================================
@@ -856,6 +961,13 @@ function extractFieldMetadataFromProperty(
     };
     'x-f5xc-recommended-value'?: unknown;
     'x-ves-required'?: string;
+    'x-f5xc-description-short'?: string;
+    'x-f5xc-description-medium'?: string;
+    'x-f5xc-example'?: unknown;
+    'x-f5xc-constraints'?: Record<string, unknown>;
+    'x-f5xc-minimum-configuration'?: boolean;
+    'x-f5xc-conflicts-with'?: string[];
+    'x-f5xc-recommended-oneof-variant'?: string;
     properties?: Record<string, unknown>;
     items?: Record<string, unknown>;
     $ref?: string;
@@ -871,6 +983,16 @@ function extractFieldMetadataFromProperty(
   const hasRecommendedValue = prop['x-f5xc-recommended-value'] !== undefined;
   const hasSingleEnum = prop.enum && Array.isArray(prop.enum) && prop.enum.length === 1;
 
+  // New extension flags
+  const hasDescShort = prop['x-f5xc-description-short'] !== undefined;
+  const hasDescMedium = prop['x-f5xc-description-medium'] !== undefined;
+  const hasExample = prop['x-f5xc-example'] !== undefined;
+  const hasConstraints = prop['x-f5xc-constraints'] !== undefined;
+  const hasMinConfig = prop['x-f5xc-minimum-configuration'] === true;
+  const hasConflicts =
+    Array.isArray(prop['x-f5xc-conflicts-with']) && prop['x-f5xc-conflicts-with'].length > 0;
+  const hasRecOneof = prop['x-f5xc-recommended-oneof-variant'] !== undefined;
+
   // Determine effective recommended value with priority
   let effectiveRecommendedValue: unknown = undefined;
 
@@ -885,7 +1007,19 @@ function extractFieldMetadataFromProperty(
     effectiveRecommendedValue = prop.enum[0];
   }
 
-  if (hasDefault || hasServerDefault || hasRequiredFor || effectiveRecommendedValue !== undefined) {
+  if (
+    hasDefault ||
+    hasServerDefault ||
+    hasRequiredFor ||
+    effectiveRecommendedValue !== undefined ||
+    hasDescShort ||
+    hasDescMedium ||
+    hasExample ||
+    hasConstraints ||
+    hasMinConfig ||
+    hasConflicts ||
+    hasRecOneof
+  ) {
     const fieldMeta: FieldMetadata = {
       path: basePath,
     };
@@ -919,6 +1053,77 @@ function extractFieldMetadataFromProperty(
 
     if (prop.type) {
       fieldMeta.type = prop.type;
+    }
+
+    // Task 4: Short and medium descriptions
+    if (hasDescShort) {
+      fieldMeta.descriptionShort = prop['x-f5xc-description-short'];
+    }
+    if (hasDescMedium) {
+      fieldMeta.descriptionMedium = prop['x-f5xc-description-medium'];
+    }
+
+    // Task 5: Example value
+    if (hasExample) {
+      fieldMeta.example = prop['x-f5xc-example'];
+    }
+
+    // Task 6: Constraints
+    const rawC = prop['x-f5xc-constraints'];
+    if (rawC && typeof rawC === 'object') {
+      const c = rawC;
+      const ci: ConstraintInfo = {};
+      if (typeof c['constraintType'] === 'string') {
+        ci.constraintType = c['constraintType'];
+      }
+      if (typeof c['category'] === 'string') {
+        ci.category = c['category'];
+      }
+      if (typeof c['maxLength'] === 'number') {
+        ci.maxLength = c['maxLength'];
+      }
+      if (typeof c['minLength'] === 'number') {
+        ci.minLength = c['minLength'];
+      }
+      if (typeof c['pattern'] === 'string') {
+        ci.pattern = c['pattern'];
+      }
+      if (typeof c['format'] === 'string') {
+        ci.format = c['format'];
+      }
+      if (typeof c['formatDescription'] === 'string') {
+        ci.formatDescription = c['formatDescription'];
+      }
+      if (typeof c['deterministic'] === 'boolean') {
+        ci.deterministic = c['deterministic'];
+      }
+      if (c['characterSet'] && typeof c['characterSet'] === 'object') {
+        const cs = c['characterSet'] as Record<string, unknown>;
+        ci.characterSet = {
+          allowed: typeof cs['allowed'] === 'string' ? cs['allowed'] : undefined,
+          restricted: typeof cs['restricted'] === 'string' ? cs['restricted'] : undefined,
+          description: typeof cs['description'] === 'string' ? cs['description'] : undefined,
+        };
+      }
+      if (Object.keys(ci).length > 0) {
+        fieldMeta.constraints = ci;
+      }
+    }
+
+    // Task 7: Minimum config, conflicts with, recommended oneof variant
+    if (hasMinConfig) {
+      fieldMeta.isMinimumConfig = true;
+    }
+
+    if (hasConflicts) {
+      const cw = prop['x-f5xc-conflicts-with'];
+      if (Array.isArray(cw) && cw.length > 0) {
+        fieldMeta.conflictsWith = cw.filter((v): v is string => typeof v === 'string');
+      }
+    }
+
+    if (typeof prop['x-f5xc-recommended-oneof-variant'] === 'string') {
+      fieldMeta.recommendedOneofVariant = prop['x-f5xc-recommended-oneof-variant'];
     }
 
     metadata[basePath] = fieldMeta;
@@ -1064,6 +1269,8 @@ export function extractResourceFieldMetadata(
   const serverDefaultFields: string[] = [];
   const userRequiredFields: string[] = [];
   const recommendedValueFields: string[] = [];
+  const minimumConfigFields: string[] = [];
+  const constrainedFields: string[] = [];
 
   for (const [path, meta] of Object.entries(fields)) {
     // Fields with server defaults
@@ -1082,6 +1289,16 @@ export function extractResourceFieldMetadata(
     if (meta.recommendedValue !== undefined) {
       recommendedValueFields.push(path);
     }
+
+    // Fields marked as minimum configuration
+    if (meta.isMinimumConfig === true) {
+      minimumConfigFields.push(path);
+    }
+
+    // Fields with validation constraints
+    if (meta.constraints !== undefined) {
+      constrainedFields.push(path);
+    }
   }
 
   // Only return if we found meaningful metadata
@@ -1093,6 +1310,8 @@ export function extractResourceFieldMetadata(
     fields,
     serverDefaultFields: serverDefaultFields.sort(),
     userRequiredFields: userRequiredFields.sort(),
+    minimumConfigFields: minimumConfigFields.sort(),
+    constrainedFields: constrainedFields.sort(),
   };
 
   // Only include recommendedValueFields if we have any
@@ -1258,6 +1477,41 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     // Only include fieldMetadata if we have meaningful data
     if (fieldMetadata) {
       result.fieldMetadata = fieldMetadata;
+    }
+
+    // Extract domain-level best practices from spec info
+    const rawBP = spec.info?.['x-f5xc-best-practices'];
+    if (rawBP && typeof rawBP === 'object') {
+      const bp = rawBP as Record<string, unknown>;
+      const bestPractices: BestPracticesInfo = {};
+      const rawErrors = bp['common_errors'];
+      if (Array.isArray(rawErrors) && rawErrors.length > 0) {
+        bestPractices.commonErrors = (rawErrors as Array<Record<string, unknown>>)
+          .filter((e) => typeof e['code'] === 'number' && typeof e['message'] === 'string')
+          .map((e) => ({
+            code: e['code'] as number,
+            message: e['message'] as string,
+            resolution: typeof e['resolution'] === 'string' ? e['resolution'] : '',
+            prevention: typeof e['prevention'] === 'string' ? e['prevention'] : undefined,
+          }));
+      }
+      const secNotes = bp['security_notes'];
+      if (Array.isArray(secNotes) && secNotes.length > 0) {
+        bestPractices.securityNotes = secNotes.filter((v): v is string => typeof v === 'string');
+      }
+      const perfTips = bp['performance_tips'];
+      if (Array.isArray(perfTips) && perfTips.length > 0) {
+        bestPractices.performanceTips = perfTips.filter((v): v is string => typeof v === 'string');
+      }
+      if (Object.keys(bestPractices).length > 0) {
+        result.bestPractices = bestPractices;
+      }
+    }
+
+    // Extract guided workflows from spec info
+    const rawGW = spec.info?.['x-f5xc-guided-workflows'];
+    if (Array.isArray(rawGW) && rawGW.length > 0) {
+      result.guidedWorkflows = rawGW;
     }
 
     results.push(result);

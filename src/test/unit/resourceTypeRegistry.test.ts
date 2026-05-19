@@ -27,6 +27,7 @@ import {
   getRecommendedValueFields,
   isResourceTypePreview,
 } from '../../api/resourceTypes';
+import { GENERATED_RESOURCE_TYPES } from '../../generated/resourceTypesBase';
 
 // ---------------------------------------------------------------------------
 // RESOURCE_TYPES constant
@@ -279,6 +280,23 @@ describe('Resource Type Registry (comprehensive)', () => {
 
     it('returns false for unknown type', () => {
       expect(isResourceTypePreview('__unknown__')).toBe(false);
+    });
+  });
+
+  describe('generated resource types include new metadata fields', () => {
+    it('at least one resource has fieldMetadata with constrainedFields', () => {
+      let found = false;
+      for (const rt of Object.values(GENERATED_RESOURCE_TYPES)) {
+        if (
+          rt.fieldMetadata &&
+          rt.fieldMetadata.constrainedFields &&
+          rt.fieldMetadata.constrainedFields.length > 0
+        ) {
+          found = true;
+          break;
+        }
+      }
+      expect(found).toBe(true);
     });
   });
 });

@@ -279,4 +279,296 @@ describe('Spec Parser - parseAllDomainFiles', () => {
       }
     });
   });
+
+  describe('ConstraintInfo and BestPracticesInfo interfaces', () => {
+    it('spec-parser exports ConstraintInfo type (compile-time check)', () => {
+      const c: import('../../../scripts/generators/spec-parser').ConstraintInfo = {
+        constraintType: 'string',
+        maxLength: 128,
+        pattern: '^[a-z]+$',
+      };
+      expect(c.constraintType).toBe('string');
+    });
+
+    it('spec-parser exports BestPracticesInfo type (compile-time check)', () => {
+      const b: import('../../../scripts/generators/spec-parser').BestPracticesInfo = {
+        commonErrors: [{ code: 400, message: 'bad', resolution: 'fix', prevention: 'check' }],
+        securityNotes: ['use HTTPS'],
+        performanceTips: ['paginate'],
+      };
+      expect(b.securityNotes?.[0]).toBe('use HTTPS');
+    });
+  });
+
+  describe('FieldMetadata extended fields (compile-time)', () => {
+    it('FieldMetadata accepts new fields without type error', () => {
+      const f: import('../../../scripts/generators/spec-parser').FieldMetadata = {
+        path: 'spec.name',
+        descriptionShort: 'A short description',
+        descriptionMedium: 'A medium description',
+        example: 'my-resource',
+        constraints: { maxLength: 64, pattern: '^[a-z]+$' },
+        conflictsWith: ['spec.other_field'],
+        isMinimumConfig: true,
+        recommendedOneofVariant: 'TCP',
+      };
+      expect(f.isMinimumConfig).toBe(true);
+    });
+
+    it('ResourceFieldMetadata has minimumConfigFields and constrainedFields', () => {
+      const r: import('../../../scripts/generators/spec-parser').ResourceFieldMetadata = {
+        fields: {},
+        serverDefaultFields: [],
+        userRequiredFields: [],
+        minimumConfigFields: ['spec.name'],
+        constrainedFields: ['spec.name'],
+      };
+      expect(r.minimumConfigFields).toHaveLength(1);
+      expect(r.constrainedFields).toHaveLength(1);
+    });
+  });
+
+  describe('field description extraction', () => {
+    it('at least 500 fields have descriptionShort across all resources', () => {
+      // Note: We extract fields from CreateSpecType/SpecType schemas only.
+      // The raw JSON has ~23K occurrences but most are in nested schemas not directly
+      // traversed from create spec schemas. Actual extracted count is ~641.
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (meta.descriptionShort) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThanOrEqual(500);
+    });
+
+    it('at least 100 fields have descriptionMedium across all resources', () => {
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (meta.descriptionMedium) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThanOrEqual(100);
+    });
+
+    it('descriptionShort is a non-empty string when present', () => {
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (meta.descriptionShort !== undefined) {
+            expect(typeof meta.descriptionShort).toBe('string');
+            expect(meta.descriptionShort.length).toBeGreaterThan(0);
+          }
+        }
+      }
+    });
+  });
+
+  describe('field example extraction', () => {
+    it('at least 300 fields have example across all resources', () => {
+      // Raw JSON has ~20K x-f5xc-example but we only extract from create spec schemas.
+      // Actual extracted count is ~416.
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (meta.example !== undefined) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThanOrEqual(300);
+    });
+  });
+
+  describe('field constraint extraction', () => {
+    it('at least 200 fields have constraints across all resources', () => {
+      // Raw JSON has ~12K x-f5xc-constraints but we only extract from create spec schemas.
+      // Actual extracted count is ~294.
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (meta.constraints !== undefined) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThanOrEqual(200);
+    });
+
+    it('constrainedFields array is populated for resources with constraints', () => {
+      const withConstraints = parsedResources.filter(
+        (r) => r.fieldMetadata && r.fieldMetadata.constrainedFields.length > 0,
+      );
+      expect(withConstraints.length).toBeGreaterThan(0);
+    });
+
+    it('constraint object has expected structure', () => {
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (!meta.constraints) {
+            continue;
+          }
+          const c = meta.constraints;
+          const hasContent =
+            c.maxLength !== undefined ||
+            c.pattern !== undefined ||
+            c.format !== undefined ||
+            c.constraintType !== undefined;
+          expect(hasContent).toBe(true);
+          return; // One validated constraint is enough
+        }
+      }
+    });
+  });
+
+  describe('conflicts-with extraction', () => {
+    // Note: x-f5xc-minimum-configuration is a schema-level extension (object with required_fields),
+    // not a per-property boolean. The isMinimumConfig field on FieldMetadata will remain unpopulated
+    // until we implement schema-level extraction. minimumConfigFields will be empty for now.
+
+    it('at least 400 fields have conflictsWith', () => {
+      // Raw JSON has ~6.6K x-f5xc-conflicts-with but we only extract from create spec schemas.
+      // Actual extracted count is ~614.
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (meta.conflictsWith && meta.conflictsWith.length > 0) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThanOrEqual(400);
+    });
+
+    it('conflictsWith is an array of strings when present', () => {
+      for (const r of parsedResources) {
+        if (!r.fieldMetadata) {
+          continue;
+        }
+        for (const meta of Object.values(r.fieldMetadata.fields)) {
+          if (!meta.conflictsWith) {
+            continue;
+          }
+          expect(Array.isArray(meta.conflictsWith)).toBe(true);
+          for (const s of meta.conflictsWith) {
+            expect(typeof s).toBe('string');
+          }
+        }
+      }
+    });
+  });
+
+  describe('operation-level extension extraction', () => {
+    it('at least 200 operations have discoveredResponseTime', () => {
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.operationMetadata) {
+          continue;
+        }
+        for (const op of Object.values(r.operationMetadata)) {
+          if (op?.discoveredResponseTime) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThanOrEqual(200);
+    });
+
+    it('discoveredResponseTime is a non-empty string when present', () => {
+      for (const r of parsedResources) {
+        if (!r.operationMetadata) {
+          continue;
+        }
+        for (const op of Object.values(r.operationMetadata)) {
+          if (op?.discoveredResponseTime !== undefined) {
+            expect(typeof op.discoveredResponseTime).toBe('string');
+            expect(op.discoveredResponseTime.length).toBeGreaterThan(0);
+          }
+        }
+      }
+    });
+
+    it('some operations have operationRequiredFields', () => {
+      let count = 0;
+      for (const r of parsedResources) {
+        if (!r.operationMetadata) {
+          continue;
+        }
+        for (const op of Object.values(r.operationMetadata)) {
+          if (op?.operationRequiredFields && op.operationRequiredFields.length > 0) {
+            count++;
+          }
+        }
+      }
+      expect(count).toBeGreaterThan(0);
+    });
+  });
+
+  describe('best-practices and guided-workflows extraction', () => {
+    it('at least 30 resources have bestPractices', () => {
+      const withBP = parsedResources.filter((r) => r.bestPractices !== undefined);
+      expect(withBP.length).toBeGreaterThanOrEqual(30);
+    });
+
+    it('bestPractices has at least one of commonErrors, securityNotes, performanceTips', () => {
+      const withBP = parsedResources.filter((r) => r.bestPractices !== undefined);
+      for (const r of withBP) {
+        const bp = r.bestPractices!;
+        const hasContent =
+          (bp.commonErrors && bp.commonErrors.length > 0) ||
+          (bp.securityNotes && bp.securityNotes.length > 0) ||
+          (bp.performanceTips && bp.performanceTips.length > 0);
+        expect(hasContent).toBe(true);
+      }
+    });
+  });
+
+  describe('OperationMetadata and ParsedSpecInfo extended fields (compile-time)', () => {
+    it('OperationMetadata accepts new operation fields', () => {
+      const o: import('../../../scripts/generators/spec-parser').OperationMetadata = {
+        discoveredResponseTime: '50ms',
+        operationRequiredFields: ['metadata.name', 'spec.origin_servers'],
+        requires: ['origin_pool'],
+      };
+      expect(o.discoveredResponseTime).toBe('50ms');
+    });
+
+    it('ParsedSpecInfo accepts bestPractices and guidedWorkflows', () => {
+      const p: Partial<import('../../../scripts/generators/spec-parser').ParsedSpecInfo> = {
+        bestPractices: {
+          commonErrors: [{ code: 400, message: 'err', resolution: 'fix' }],
+          securityNotes: ['use HTTPS'],
+          performanceTips: ['paginate'],
+        },
+        guidedWorkflows: [{ name: 'basic-setup' }],
+      };
+      expect(p.bestPractices?.securityNotes).toHaveLength(1);
+      expect(p.guidedWorkflows).toHaveLength(1);
+    });
+  });
 });

@@ -153,6 +153,20 @@ export interface GeneratedFieldMetadata {
   };
   /** Recommended value for this field (from x-f5xc-recommended-value) */
   recommendedValue?: unknown;
+  /** Short description (from x-f5xc-description-short) */
+  descriptionShort?: string;
+  /** Medium description (from x-f5xc-description-medium) */
+  descriptionMedium?: string;
+  /** Example value (from x-f5xc-example) */
+  example?: unknown;
+  /** Validation constraints (from x-f5xc-constraints) */
+  constraints?: import('./spec-parser').ConstraintInfo;
+  /** Fields this field conflicts with */
+  conflictsWith?: string[];
+  /** Whether required for minimum configuration */
+  isMinimumConfig?: boolean;
+  /** Recommended oneof variant */
+  recommendedOneofVariant?: string;
 }
 
 /**
@@ -195,7 +209,15 @@ export interface GeneratedResourceTypeInfo {
     userRequiredFields?: string[];
     /** List of field paths that have recommended values */
     recommendedValueFields?: string[];
+    /** List of field paths marked as minimum configuration */
+    minimumConfigFields?: string[];
+    /** List of field paths that have validation constraints */
+    constrainedFields?: string[];
   };
+  /** Domain-level best practices */
+  bestPractices?: import('./spec-parser').BestPracticesInfo;
+  /** Guided workflows */
+  guidedWorkflows?: unknown[];
 }
 
 /**
@@ -259,6 +281,27 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
       if (meta.recommendedValue !== undefined) {
         genMeta.recommendedValue = meta.recommendedValue;
       }
+      if (meta.descriptionShort !== undefined) {
+        genMeta.descriptionShort = meta.descriptionShort;
+      }
+      if (meta.descriptionMedium !== undefined) {
+        genMeta.descriptionMedium = meta.descriptionMedium;
+      }
+      if (meta.example !== undefined) {
+        genMeta.example = meta.example;
+      }
+      if (meta.constraints !== undefined) {
+        genMeta.constraints = meta.constraints;
+      }
+      if (meta.conflictsWith && meta.conflictsWith.length > 0) {
+        genMeta.conflictsWith = meta.conflictsWith;
+      }
+      if (meta.isMinimumConfig === true) {
+        genMeta.isMinimumConfig = true;
+      }
+      if (meta.recommendedOneofVariant !== undefined) {
+        genMeta.recommendedOneofVariant = meta.recommendedOneofVariant;
+      }
 
       // Only include if there's meaningful metadata
       if (Object.keys(genMeta).length > 0) {
@@ -285,7 +328,21 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
       ) {
         result.fieldMetadata.recommendedValueFields = info.fieldMetadata.recommendedValueFields;
       }
+      if (info.fieldMetadata.minimumConfigFields.length > 0) {
+        result.fieldMetadata.minimumConfigFields = info.fieldMetadata.minimumConfigFields;
+      }
+      if (info.fieldMetadata.constrainedFields.length > 0) {
+        result.fieldMetadata.constrainedFields = info.fieldMetadata.constrainedFields;
+      }
     }
+  }
+
+  if (info.bestPractices && Object.keys(info.bestPractices).length > 0) {
+    result.bestPractices = info.bestPractices;
+  }
+
+  if (info.guidedWorkflows && info.guidedWorkflows.length > 0) {
+    result.guidedWorkflows = info.guidedWorkflows;
   }
 
   return result;
@@ -392,6 +449,12 @@ export interface OperationMetadata {
   commonErrors?: CommonError[];
   /** Performance impact information */
   performanceImpact?: PerformanceImpact;
+  /** Discovered response time (from x-f5xc-discovered-response-time) */
+  discoveredResponseTime?: string;
+  /** Operation-level required fields (from x-f5xc-required-fields) */
+  operationRequiredFields?: string[];
+  /** Prerequisite resource types (from x-f5xc-requires) */
+  requires?: string[];
 }
 
 /**
@@ -421,6 +484,34 @@ export interface GeneratedFieldMetadata {
   };
   /** Recommended value for this field (from x-f5xc-recommended-value) */
   recommendedValue?: unknown;
+  /** Short description (from x-f5xc-description-short) */
+  descriptionShort?: string;
+  /** Medium description (from x-f5xc-description-medium) */
+  descriptionMedium?: string;
+  /** Example value (from x-f5xc-example) */
+  example?: unknown;
+  /** Validation constraints (from x-f5xc-constraints) */
+  constraints?: {
+    constraintType?: string;
+    category?: string;
+    maxLength?: number;
+    minLength?: number;
+    pattern?: string;
+    format?: string;
+    formatDescription?: string;
+    characterSet?: {
+      allowed?: string;
+      restricted?: string;
+      description?: string;
+    };
+    deterministic?: boolean;
+  };
+  /** Fields this field conflicts with */
+  conflictsWith?: string[];
+  /** Whether required for minimum configuration */
+  isMinimumConfig?: boolean;
+  /** Recommended oneof variant */
+  recommendedOneofVariant?: string;
 }
 
 /**
@@ -436,6 +527,10 @@ export interface ResourceFieldMetadata {
   userRequiredFields?: string[];
   /** List of field paths that have recommended values */
   recommendedValueFields?: string[];
+  /** List of field paths marked as minimum configuration */
+  minimumConfigFields?: string[];
+  /** List of field paths that have validation constraints */
+  constrainedFields?: string[];
 }
 
 /**
@@ -471,6 +566,19 @@ export interface GeneratedResourceTypeInfo {
   operationMetadata?: ResourceOperationMetadata;
   /** Field metadata for server defaults and required fields */
   fieldMetadata?: ResourceFieldMetadata;
+  /** Domain-level best practices */
+  bestPractices?: {
+    commonErrors?: Array<{
+      code: number;
+      message: string;
+      resolution: string;
+      prevention?: string;
+    }>;
+    securityNotes?: string[];
+    performanceTips?: string[];
+  };
+  /** Guided workflows */
+  guidedWorkflows?: unknown[];
 }
 
 /**
