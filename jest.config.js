@@ -5,7 +5,11 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
-  testMatch: ['**/unit/**/*.test.ts'],
+  testMatch: [
+    '**/unit/**/*.test.ts',
+    // Include integration smoke tests only when F5XC_API_URL is set
+    ...(process.env['F5XC_API_URL'] ? ['**/integration/liveApiSmoke*.test.ts'] : []),
+  ],
   moduleFileExtensions: ['ts', 'js', 'json'],
   collectCoverageFrom: [
     'src/**/*.ts',
@@ -37,13 +41,19 @@ module.exports = {
     '^.+\\.ts$': [
       'ts-jest',
       {
-        tsconfig: 'tsconfig.json',
+        tsconfig: 'tsconfig.test.json',
         diagnostics: {
           ignoreCodes: [151002],
         },
       },
     ],
   },
-  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/dist/',
+    '/out/',
+    // Skip integration tests by default unless env var is set
+    ...(process.env['F5XC_API_URL'] ? [] : ['/integration/']),
+  ],
   verbose: true,
 };
