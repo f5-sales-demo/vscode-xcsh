@@ -167,6 +167,8 @@ export interface GeneratedFieldMetadata {
   isMinimumConfig?: boolean;
   /** Recommended oneof variant */
   recommendedOneofVariant?: string;
+  /** Field type inferred from spec (e.g., 'string', 'object', 'array') */
+  type?: string;
 }
 
 /**
@@ -515,6 +517,8 @@ export interface GeneratedFieldMetadata {
   isMinimumConfig?: boolean;
   /** Recommended oneof variant */
   recommendedOneofVariant?: string;
+  /** Field type inferred from spec (e.g., 'string', 'object', 'array') */
+  type?: string;
 }
 
 /**
