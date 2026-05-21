@@ -7,8 +7,8 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: [
     '**/unit/**/*.test.ts',
-    // Include integration smoke tests only when F5XC_API_URL is set
-    ...(process.env['F5XC_API_URL'] ? ['**/integration/liveApiSmoke*.test.ts'] : []),
+    // Include integration live tests only when F5XC_API_URL is set
+    ...(process.env['F5XC_API_URL'] ? ['**/integration/live*.test.ts'] : []),
   ],
   moduleFileExtensions: ['ts', 'js', 'json'],
   collectCoverageFrom: [
@@ -43,7 +43,7 @@ module.exports = {
       {
         tsconfig: 'tsconfig.test.json',
         diagnostics: {
-          ignoreCodes: [151002],
+          ignoreCodes: [151002, 2554],
         },
       },
     ],

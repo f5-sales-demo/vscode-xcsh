@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import { getLogger } from './logger';
-import { getSmartErrorMessage } from '../api/resourceTypes';
+import { getEnrichedErrorMessage } from '../api/resourceTypes';
 
 /**
  * Custom error class for F5 XC API errors
@@ -137,7 +137,7 @@ export async function withErrorHandling<T>(
       // Try to get a smart error message if we have resource context
       let smartMessage: string | undefined;
       if (options?.resourceTypeKey && options?.operation) {
-        smartMessage = getSmartErrorMessage(
+        smartMessage = getEnrichedErrorMessage(
           options.resourceTypeKey,
           options.operation,
           error.statusCode,

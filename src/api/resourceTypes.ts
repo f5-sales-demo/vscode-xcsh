@@ -1024,8 +1024,7 @@ function mergeResourceType(
     icon: override.icon,
     supportsLogs: override.supportsLogs,
     supportsMetrics: override.supportsMetrics,
-    namespaceScope:
-      override.namespaceScope ?? generated?.namespaceScope ?? 'any',
+    namespaceScope: override.namespaceScope ?? generated?.namespaceScope ?? 'any',
     apiBase: override.apiBase || generated?.apiBase || 'config',
     // Include service segment for extended API paths (e.g., /api/config/dns/...)
     serviceSegment: (generated as { serviceSegment?: string } | undefined)?.serviceSegment,
@@ -1655,4 +1654,104 @@ export function hasRecommendedValue(resourceKey: string, fieldPath: string): boo
   const generated = GENERATED_RESOURCE_TYPES[resourceKey];
   const fieldMeta = generated?.fieldMetadata?.fields[fieldPath];
   return fieldMeta?.recommendedValue !== undefined;
+}
+
+/**
+ * Get field constraints for a resource type.
+ * Returns a map of field paths to their ConstraintInfo.
+ */
+export function getFieldConstraints(resourceKey: string): Record<
+  string,
+  {
+    maxLength?: number;
+    minLength?: number;
+    pattern?: string;
+    format?: string;
+    formatDescription?: string;
+  }
+> {
+  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
+  const fields = generated?.fieldMetadata?.fields;
+  if (!fields) {
+    return {};
+  }
+
+  const result: Record<
+    string,
+    {
+      maxLength?: number;
+      minLength?: number;
+      pattern?: string;
+      format?: string;
+      formatDescription?: string;
+    }
+  > = {};
+  for (const [path, meta] of Object.entries(fields)) {
+    const c = (meta as Record<string, unknown>)['constraints'];
+    if (c && typeof c === 'object') {
+      result[path] = c;
+    }
+  }
+  return result;
+}
+
+/**
+ * Get field conflicts for a resource type.
+ * Returns a map of field paths to the paths they conflict with.
+ */
+export function getFieldConflicts(resourceKey: string): Record<string, string[]> {
+  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
+  const fields = generated?.fieldMetadata?.fields;
+  if (!fields) {
+    return {};
+  }
+
+  const result: Record<string, string[]> = {};
+  for (const [path, meta] of Object.entries(fields)) {
+    const cw = (meta as Record<string, unknown>)['conflictsWith'];
+    if (Array.isArray(cw) && cw.length > 0) {
+      result[path] = cw as string[];
+    }
+  }
+  return result;
+}
+
+/**
+ * Get short description for a specific field.
+ */
+export function getFieldDescription(resourceKey: string, fieldPath: string): string | undefined {
+  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
+  const meta = generated?.fieldMetadata?.fields[fieldPath];
+  if (!meta) {
+    return undefined;
+  }
+  return (meta as Record<string, unknown>)['descriptionShort'] as string | undefined;
+}
+
+/**
+ * Get enriched error message with bestPractices fallback.
+ * First checks operation-level commonErrors, then domain-level bestPractices.
+ */
+export function getEnrichedErrorMessage(
+  resourceKey: string,
+  operation: CrudOperation,
+  statusCode: number,
+): string | undefined {
+  const opMsg = getSmartErrorMessage(resourceKey, operation, statusCode);
+  if (opMsg) {
+    return opMsg;
+  }
+
+  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
+  const bp = (generated as Record<string, unknown> | undefined)?.['bestPractices'] as
+    | { commonErrors?: Array<{ code: number; resolution: string }> }
+    | undefined;
+  if (bp?.commonErrors) {
+    const match = bp.commonErrors.find((e) => e.code === statusCode);
+    if (match) {
+      return match.resolution;
+    }
+  }
+
+  return undefined;
 }

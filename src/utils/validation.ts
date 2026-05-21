@@ -16,6 +16,20 @@ import {
   getRecommendedValueFields,
   getRecommendedValue,
 } from '../api/resourceTypes';
+import { getFieldConstraints, getFieldConflicts } from '../api/resourceTypes';
+
+export interface ConstraintViolation {
+  fieldPath: string;
+  value: unknown;
+  constraint: string;
+  message: string;
+}
+
+export interface FieldConflict {
+  field: string;
+  conflictsWith: string;
+  message: string;
+}
 
 /**
  * Result of validating a resource payload
@@ -27,6 +41,10 @@ export interface ValidationResult {
   missingFields: string[];
   /** List of missing fields that server will provide defaults for */
   serverDefaultedFields: string[];
+  /** Constraint violations found during validation */
+  constraintViolations: ConstraintViolation[];
+  /** Field conflicts found during validation */
+  conflicts: FieldConflict[];
   /** List of fields with recommended values that user hasn't provided */
   recommendedValueFields?: string[];
   /** Warning messages for the user */
@@ -224,10 +242,87 @@ export function validateResourcePayload(
     }
   }
 
+  // Constraint validation
+  const constraintViolations: ConstraintViolation[] = [];
+  const fieldConstraintsMap = getFieldConstraints(resourceKey);
+
+  for (const [fieldPath, constraint] of Object.entries(fieldConstraintsMap)) {
+    const value = getNestedValue(payload, fieldPath);
+    if (!isValuePresent(value) || typeof value !== 'string') {
+      continue;
+    }
+    const strValue = value;
+
+    if (constraint.maxLength !== undefined && strValue.length > constraint.maxLength) {
+      constraintViolations.push({
+        fieldPath,
+        value: strValue,
+        constraint: `maxLength: ${constraint.maxLength}`,
+        message: `${formatFieldName(fieldPath)}: exceeds max length of ${constraint.maxLength} (got ${strValue.length})`,
+      });
+    }
+    if (constraint.minLength !== undefined && strValue.length < constraint.minLength) {
+      constraintViolations.push({
+        fieldPath,
+        value: strValue,
+        constraint: `minLength: ${constraint.minLength}`,
+        message: `${formatFieldName(fieldPath)}: below min length of ${constraint.minLength} (got ${strValue.length})`,
+      });
+    }
+    if (constraint.pattern) {
+      try {
+        if (!new RegExp(constraint.pattern).test(strValue)) {
+          const desc = constraint.formatDescription ?? `must match pattern ${constraint.pattern}`;
+          constraintViolations.push({
+            fieldPath,
+            value: strValue,
+            constraint: `pattern: ${constraint.pattern}`,
+            message: `${formatFieldName(fieldPath)}: ${desc}`,
+          });
+        }
+      } catch {
+        /* invalid regex — skip */
+      }
+    }
+  }
+
+  // Conflict detection
+  const conflicts: FieldConflict[] = [];
+  const fieldConflictsMap = getFieldConflicts(resourceKey);
+
+  for (const [fieldPath, conflictPaths] of Object.entries(fieldConflictsMap)) {
+    const fieldValue = getNestedValue(payload, fieldPath);
+    if (!isValuePresent(fieldValue)) {
+      continue;
+    }
+    for (const conflictPath of conflictPaths) {
+      const conflictValue = getNestedValue(payload, conflictPath);
+      if (isValuePresent(conflictValue)) {
+        conflicts.push({
+          field: fieldPath,
+          conflictsWith: conflictPath,
+          message: `${formatFieldName(fieldPath)} conflicts with ${formatFieldName(conflictPath)} — only one should be set`,
+        });
+      }
+    }
+  }
+
+  if (constraintViolations.length > 0) {
+    warnings.push(
+      `Constraint violations:\n${constraintViolations.map((v) => `• ${v.message}`).join('\n')}`,
+    );
+  }
+  if (conflicts.length > 0) {
+    warnings.push(`Field conflicts:\n${conflicts.map((c) => `• ${c.message}`).join('\n')}`);
+  }
+
   const result: ValidationResult = {
-    valid: missingFields.length === 0,
+    valid:
+      missingFields.length === 0 && constraintViolations.length === 0 && conflicts.length === 0,
     missingFields,
     serverDefaultedFields,
+    constraintViolations,
+    conflicts,
     warnings,
     hints,
   };
