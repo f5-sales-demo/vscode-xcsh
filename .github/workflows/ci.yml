@@ -306,6 +306,25 @@ jobs:
 
           echo "✅ Release created: $TAG"
 
-      - name: Marketplace publish triggered automatically
-        run: |
-          echo "✅ Release created. release.yml will trigger automatically via the 'release: published' event."
+      - name: Find VSIX file
+        id: vsix
+        run: echo "filename=$(ls *.vsix)" >> $GITHUB_OUTPUT
+
+      - name: Publish to Open VSX Registry
+        if: ${{ !contains(github.ref, 'BETA') }}
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.OPEN_VSX_TOKEN }}
+          extensionFile: ${{ steps.vsix.outputs.filename }}
+          skipDuplicate: true
+        continue-on-error: true
+
+      - name: Publish to VS Code Marketplace
+        if: ${{ !contains(github.ref, 'BETA') }}
+        uses: HaaLeo/publish-vscode-extension@v2
+        with:
+          pat: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          registryUrl: https://marketplace.visualstudio.com
+          extensionFile: ${{ steps.vsix.outputs.filename }}
+          skipDuplicate: true
+        continue-on-error: true
