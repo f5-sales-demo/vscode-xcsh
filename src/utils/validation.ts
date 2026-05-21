@@ -295,7 +295,17 @@ export function validateResourcePayload(
     if (!isValuePresent(fieldValue)) {
       continue;
     }
-    for (const conflictPath of conflictPaths) {
+    for (const rawConflictPath of conflictPaths) {
+      // conflictsWith values may be bare sibling names (e.g., "port_ranges")
+      // or full paths (e.g., "spec.port_ranges"). Resolve relative to field's parent.
+      const parentPath = fieldPath.includes('.')
+        ? fieldPath.substring(0, fieldPath.lastIndexOf('.'))
+        : '';
+      const conflictPath = rawConflictPath.includes('.')
+        ? rawConflictPath
+        : parentPath
+          ? `${parentPath}.${rawConflictPath}`
+          : rawConflictPath;
       const conflictValue = getNestedValue(payload, conflictPath);
       if (isValuePresent(conflictValue)) {
         conflicts.push({

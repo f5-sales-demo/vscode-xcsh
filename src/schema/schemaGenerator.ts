@@ -68,9 +68,10 @@ function setNestedProperty(
     const isLast = i === parts.length - 1;
 
     if (isLast) {
-      // Set properties on the leaf
+      // Set properties on the leaf — omit default type so JSON Schema is permissive
+      // (avoids incorrect 'string' type on object/array fields)
       if (!current[part]) {
-        current[part] = { type: 'string' };
+        current[part] = {};
       }
       Object.assign(current[part], props);
     } else {
