@@ -1,6 +1,8 @@
 name: Release
 
 on:
+  release:
+    types: [published]
   push:
     tags:
       # Match new version format: v1.0.77-YYMMDDHHMM or v1.0.77-YYMMDDHHMM-BETA
