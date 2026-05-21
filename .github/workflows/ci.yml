@@ -306,11 +306,6 @@ jobs:
 
           echo "✅ Release created: $TAG"
 
-      - name: Trigger Marketplace publish
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Marketplace publish triggered automatically
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          echo "🚀 Triggering Release workflow for $TAG"
-          gh workflow run release.yml --ref "$TAG"
-          echo "✅ Release workflow triggered successfully"
+          echo "✅ Release created. release.yml will trigger automatically via the 'release: published' event."
