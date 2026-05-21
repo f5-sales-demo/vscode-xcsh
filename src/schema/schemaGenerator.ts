@@ -24,10 +24,17 @@ export interface SchemaProperty {
   additionalProperties?: SchemaProperty | boolean;
   $ref?: string;
   required?: string[];
+  // JSON Schema validation keywords
+  pattern?: string;
+  maxLength?: number;
+  minLength?: number;
+  examples?: unknown[];
   // F5 XC custom extensions for IntelliSense hints
   'x-f5xc-required'?: boolean;
   'x-f5xc-server-default'?: boolean;
   'x-f5xc-recommended-value'?: unknown;
+  'x-f5xc-conflicts-with'?: string[];
+  'x-f5xc-format-description'?: string;
 }
 
 /**
@@ -184,6 +191,11 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
 function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaProperty> {
   const props: Partial<SchemaProperty> = {};
 
+  // Use descriptionShort as the primary description (before serverDefault append)
+  if (typeof metadata.descriptionShort === 'string') {
+    props.description = metadata.descriptionShort;
+  }
+
   // Infer type from default value if available
   if (metadata.default !== undefined) {
     props.default = metadata.default;
@@ -209,6 +221,33 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
     if (!props.type) {
       props.type = inferJsonType(metadata.recommendedValue);
     }
+  }
+
+  // Wire constraints into JSON Schema keywords
+  const constraints = metadata.constraints;
+  if (constraints && typeof constraints === 'object') {
+    if (typeof constraints.pattern === 'string') {
+      props.pattern = constraints.pattern;
+    }
+    if (typeof constraints.maxLength === 'number') {
+      props.maxLength = constraints.maxLength;
+    }
+    if (typeof constraints.minLength === 'number') {
+      props.minLength = constraints.minLength;
+    }
+    if (typeof constraints.formatDescription === 'string') {
+      props['x-f5xc-format-description'] = constraints.formatDescription;
+    }
+  }
+
+  // Add example
+  if (metadata.example !== undefined) {
+    props.examples = [metadata.example];
+  }
+
+  // Add conflicts as custom extension
+  if (Array.isArray(metadata.conflictsWith) && metadata.conflictsWith.length > 0) {
+    props['x-f5xc-conflicts-with'] = metadata.conflictsWith;
   }
 
   return props;

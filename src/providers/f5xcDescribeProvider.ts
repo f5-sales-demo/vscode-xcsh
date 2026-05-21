@@ -7,6 +7,8 @@ import { API_ENDPOINTS } from '../generated/constants';
 import { getLogger } from '../utils/logger';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
 import { getQuotaForResourceType, QuotaItem } from '../api/subscription';
+import { renderBestPractices } from './metadataRenderer';
+import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
 
 const logger = getLogger();
 
@@ -397,6 +399,7 @@ export class F5XCDescribeProvider {
       <div class="tab-content active" id="form-view">
         ${quotaInfo ? this.renderQuotaWidget(quotaInfo, resourceType) : this.renderQuotaUnavailable(resourceType)}
         ${sections.map((s) => this.renderSection(s)).join('\n')}
+        ${this.renderBestPracticesPanel(apiPath)}
       </div>
 
       <!-- JSON View -->
@@ -2098,6 +2101,33 @@ export class F5XCDescribeProvider {
       }
     })();
     `;
+  }
+
+  /**
+   * Render best practices panel for a resource type
+   */
+  private renderBestPracticesPanel(apiPath: string): string {
+    const resourceKey = apiPath.endsWith('s') ? apiPath.slice(0, -1) : apiPath;
+    const generated = GENERATED_RESOURCE_TYPES[resourceKey];
+    const bp = (generated as Record<string, unknown> | undefined)?.['bestPractices'] as
+      | {
+          commonErrors?: Array<{
+            code: number;
+            message: string;
+            resolution: string;
+            prevention?: string;
+          }>;
+          securityNotes?: string[];
+          performanceTips?: string[];
+        }
+      | undefined;
+
+    const html = renderBestPractices(bp);
+    if (!html) {
+      return '';
+    }
+
+    return `<details class="best-practices-panel" style="margin-top:16px;padding:12px;border:1px solid var(--vscode-panel-border);border-radius:4px;"><summary style="cursor:pointer;font-weight:bold;">Best Practices</summary>${html}</details>`;
   }
 
   /**

@@ -171,6 +171,33 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
         docs.push('*Server provides default*');
       }
 
+      // Enriched metadata from constraints
+      if (propSchema['x-f5xc-format-description']) {
+        docs.push(`**Format:** ${String(propSchema['x-f5xc-format-description'])}`);
+      } else if (propSchema.pattern) {
+        docs.push(`**Pattern:** \`${String(propSchema.pattern)}\``);
+      }
+
+      if (typeof propSchema.maxLength === 'number') {
+        docs.push(`**Max length:** ${propSchema.maxLength}`);
+      }
+
+      if (
+        propSchema.examples &&
+        Array.isArray(propSchema.examples) &&
+        propSchema.examples.length > 0
+      ) {
+        docs.push(`**Example:** \`${JSON.stringify(propSchema.examples[0])}\``);
+      }
+
+      if (
+        propSchema['x-f5xc-conflicts-with'] &&
+        Array.isArray(propSchema['x-f5xc-conflicts-with'])
+      ) {
+        const conflicts = propSchema['x-f5xc-conflicts-with'].map((f) => `\`${f}\``).join(', ');
+        docs.push(`**Conflicts with:** ${conflicts}`);
+      }
+
       item.documentation = new vscode.MarkdownString(docs.join('\n\n'));
 
       // Sort order: required first, then recommended, then alphabetical

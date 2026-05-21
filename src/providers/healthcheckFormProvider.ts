@@ -8,6 +8,7 @@ import { Resource } from '../api/client';
 import { getLogger } from '../utils/logger';
 import { showInfo, showError } from '../utils/errors';
 import { getQuotaForResourceType, QuotaItem } from '../api/subscription';
+import { getFieldConstraints } from '../api/resourceTypes';
 
 const logger = getLogger();
 
@@ -346,6 +347,18 @@ export class HealthcheckFormProvider {
         return;
       }
 
+      // Validate form data against field constraints
+      const constraintErrors = this.validateConstraints(data);
+      if (constraintErrors.length > 0) {
+        if (this.panel) {
+          void this.panel.webview.postMessage({
+            command: 'createError',
+            error: `Validation failed:\n${constraintErrors.join('\n')}`,
+          });
+        }
+        return;
+      }
+
       // Build and validate payload
       const payload = this.buildApiPayload(data);
       logger.info(`Creating healthcheck: ${data.name} in namespace ${data.namespace}`);
@@ -387,6 +400,38 @@ export class HealthcheckFormProvider {
         });
       }
     }
+  }
+
+  /**
+   * Validate form data against generated field constraints
+   */
+  private validateConstraints(data: HealthcheckFormData): string[] {
+    const constraints = getFieldConstraints('healthcheck');
+    const errors: string[] = [];
+
+    for (const [fieldPath, constraint] of Object.entries(constraints)) {
+      // Map spec.field paths to form field names
+      const formFieldName = fieldPath.replace('spec.', '');
+      const value = (data as unknown as Record<string, unknown>)[formFieldName];
+      if (typeof value !== 'string' || !value) {
+        continue;
+      }
+
+      if (constraint.maxLength && value.length > constraint.maxLength) {
+        errors.push(`${formFieldName}: exceeds max length of ${constraint.maxLength}`);
+      }
+      if (constraint.pattern) {
+        try {
+          if (!new RegExp(constraint.pattern).test(value)) {
+            errors.push(`${formFieldName}: invalid format`);
+          }
+        } catch {
+          /* skip invalid regex */
+        }
+      }
+    }
+
+    return errors;
   }
 
   /**

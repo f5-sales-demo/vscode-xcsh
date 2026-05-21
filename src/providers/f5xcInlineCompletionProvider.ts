@@ -98,6 +98,30 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
       return undefined;
     }
 
+    // Filter ghost text that violates schema constraints
+    if (typeof formattedValue === 'string' && propertySchema) {
+      // Extract the raw string value (strip JSON quotes) for constraint checks
+      const rawValue =
+        formattedValue.startsWith('"') && formattedValue.endsWith('"')
+          ? formattedValue.slice(1, -1)
+          : formattedValue;
+      if (typeof propertySchema.pattern === 'string') {
+        try {
+          if (!new RegExp(propertySchema.pattern).test(rawValue)) {
+            return []; // Don't suggest invalid values
+          }
+        } catch {
+          /* skip invalid regex */
+        }
+      }
+      if (
+        typeof propertySchema.maxLength === 'number' &&
+        rawValue.length > propertySchema.maxLength
+      ) {
+        return [];
+      }
+    }
+
     // Create inline completion item
     const item = new vscode.InlineCompletionItem(formattedValue);
     item.range = new vscode.Range(position, position);
