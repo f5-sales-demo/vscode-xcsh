@@ -283,6 +283,32 @@ describe('Resource Type Registry (comprehensive)', () => {
     });
   });
 
+  describe('enriched metadata accessors', () => {
+    it('getFieldConstraints returns an object for any resource', () => {
+      const { getFieldConstraints } = require('../../api/resourceTypes');
+      const constraints = getFieldConstraints('http_loadbalancer');
+      expect(typeof constraints).toBe('object');
+    });
+
+    it('getFieldConflicts returns an object for any resource', () => {
+      const { getFieldConflicts } = require('../../api/resourceTypes');
+      const conflicts = getFieldConflicts('http_loadbalancer');
+      expect(typeof conflicts).toBe('object');
+    });
+
+    it('getFieldDescription returns string or undefined', () => {
+      const { getFieldDescription } = require('../../api/resourceTypes');
+      const desc = getFieldDescription('http_loadbalancer', 'spec.domains');
+      expect(desc === undefined || typeof desc === 'string').toBe(true);
+    });
+
+    it('getEnrichedErrorMessage returns string or undefined', () => {
+      const { getEnrichedErrorMessage } = require('../../api/resourceTypes');
+      const msg = getEnrichedErrorMessage('http_loadbalancer', 'create', 400);
+      expect(msg === undefined || typeof msg === 'string').toBe(true);
+    });
+  });
+
   describe('generated resource types include new metadata fields', () => {
     it('at least one resource has fieldMetadata with constrainedFields', () => {
       let found = false;
