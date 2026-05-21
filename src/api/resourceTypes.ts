@@ -1729,29 +1729,16 @@ export function getFieldDescription(resourceKey: string, fieldPath: string): str
 }
 
 /**
- * Get enriched error message with bestPractices fallback.
- * First checks operation-level commonErrors, then domain-level bestPractices.
+ * Get enriched error message for a resource operation.
+ * Checks operation-level commonErrors from operationMetadata.
+ * NOTE: bestPractices fallback removed — bestPractices is domain-level,
+ * not resource-specific, and produced wrong guidance (e.g., load balancer
+ * errors showing on healthcheck operations).
  */
 export function getEnrichedErrorMessage(
   resourceKey: string,
   operation: CrudOperation,
   statusCode: number,
 ): string | undefined {
-  const opMsg = getSmartErrorMessage(resourceKey, operation, statusCode);
-  if (opMsg) {
-    return opMsg;
-  }
-
-  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
-  const bp = (generated as Record<string, unknown> | undefined)?.['bestPractices'] as
-    | { commonErrors?: Array<{ code: number; resolution: string }> }
-    | undefined;
-  if (bp?.commonErrors) {
-    const match = bp.commonErrors.find((e) => e.code === statusCode);
-    if (match) {
-      return match.resolution;
-    }
-  }
-
-  return undefined;
+  return getSmartErrorMessage(resourceKey, operation, statusCode);
 }

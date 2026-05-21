@@ -1479,35 +1479,6 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       result.fieldMetadata = fieldMetadata;
     }
 
-    // Extract domain-level best practices from spec info
-    const rawBP = spec.info?.['x-f5xc-best-practices'];
-    if (rawBP && typeof rawBP === 'object') {
-      const bp = rawBP as Record<string, unknown>;
-      const bestPractices: BestPracticesInfo = {};
-      const rawErrors = bp['common_errors'];
-      if (Array.isArray(rawErrors) && rawErrors.length > 0) {
-        bestPractices.commonErrors = (rawErrors as Array<Record<string, unknown>>)
-          .filter((e) => typeof e['code'] === 'number' && typeof e['message'] === 'string')
-          .map((e) => ({
-            code: e['code'] as number,
-            message: e['message'] as string,
-            resolution: typeof e['resolution'] === 'string' ? e['resolution'] : '',
-            prevention: typeof e['prevention'] === 'string' ? e['prevention'] : undefined,
-          }));
-      }
-      const secNotes = bp['security_notes'];
-      if (Array.isArray(secNotes) && secNotes.length > 0) {
-        bestPractices.securityNotes = secNotes.filter((v): v is string => typeof v === 'string');
-      }
-      const perfTips = bp['performance_tips'];
-      if (Array.isArray(perfTips) && perfTips.length > 0) {
-        bestPractices.performanceTips = perfTips.filter((v): v is string => typeof v === 'string');
-      }
-      if (Object.keys(bestPractices).length > 0) {
-        result.bestPractices = bestPractices;
-      }
-    }
-
     // Extract guided workflows from spec info
     const rawGW = spec.info?.['x-f5xc-guided-workflows'];
     if (Array.isArray(rawGW) && rawGW.length > 0) {
