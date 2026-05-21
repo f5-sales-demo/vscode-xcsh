@@ -85,6 +85,10 @@ function setNestedProperty(
       if (!current[part].properties) {
         current[part].properties = {};
       }
+      // Upgrade to object type if it was initially created as a typeless leaf
+      if (!current[part].type) {
+        current[part].type = 'object';
+      }
       current = current[part].properties!;
     }
   }

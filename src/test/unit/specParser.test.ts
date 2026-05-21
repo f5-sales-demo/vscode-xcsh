@@ -529,22 +529,13 @@ describe('Spec Parser - parseAllDomainFiles', () => {
     });
   });
 
-  describe('best-practices and guided-workflows extraction', () => {
-    it('at least 30 resources have bestPractices', () => {
+  describe('best-practices scoping', () => {
+    it('resources do not have bestPractices (domain-level, not per-resource)', () => {
+      // bestPractices is domain-level guidance from spec.info, not resource-specific.
+      // Attaching to each resource causes wrong guidance (e.g., healthcheck getting
+      // load-balancer error messages). Correct approach is domain-category-generator.
       const withBP = parsedResources.filter((r) => r.bestPractices !== undefined);
-      expect(withBP.length).toBeGreaterThanOrEqual(30);
-    });
-
-    it('bestPractices has at least one of commonErrors, securityNotes, performanceTips', () => {
-      const withBP = parsedResources.filter((r) => r.bestPractices !== undefined);
-      for (const r of withBP) {
-        const bp = r.bestPractices!;
-        const hasContent =
-          (bp.commonErrors && bp.commonErrors.length > 0) ||
-          (bp.securityNotes && bp.securityNotes.length > 0) ||
-          (bp.performanceTips && bp.performanceTips.length > 0);
-        expect(hasContent).toBe(true);
-      }
+      expect(withBP.length).toBe(0);
     });
   });
 
