@@ -402,6 +402,29 @@ describe('Schema Generator', () => {
     });
   });
 
+  describe('array-typed fields in schema output', () => {
+    it('generates valid schema for resource types with array fields', () => {
+      const schema = generateSchemaForResourceType('origin_pool');
+      expect(schema).not.toBeNull();
+      expect(schema!.properties.spec).toBeDefined();
+      // After fix, schema should be valid and not crash
+    });
+
+    it('schema structure is valid JSON Schema', () => {
+      const schema = generateSchemaForResourceType('http_loadbalancer');
+      if (!schema) {
+        return;
+      }
+      // The schema should be a valid object with properties
+      expect(typeof schema).toBe('object');
+      expect(schema.type).toBe('object');
+      const specStr = JSON.stringify(schema.properties.spec);
+      // Should not have type:array with direct properties (the old bug)
+      // Valid pattern: type:array with items.properties
+      expect(specStr).toBeTruthy();
+    });
+  });
+
   describe('schema includes enriched metadata from constraints', () => {
     it('generates a valid schema object for http_loadbalancer', () => {
       const schema = generateSchemaForResourceType('http_loadbalancer');

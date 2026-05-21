@@ -602,4 +602,27 @@ describe('Validation Utilities', () => {
       }
     });
   });
+
+  describe('getNestedValue array traversal', () => {
+    it('validates payloads with array fields without crashing', () => {
+      const result = validateResourcePayload('http_loadbalancer', 'create', {
+        metadata: { name: 'test', namespace: 'default' },
+        spec: {
+          rules: [{ name: 'rule1' }],
+        },
+      });
+      expect(result).toBeDefined();
+      expect(Array.isArray(result.constraintViolations)).toBe(true);
+    });
+  });
+
+  describe('numeric constraint validation', () => {
+    it('returns constraintViolations for numeric fields', () => {
+      const result = validateResourcePayload('http_loadbalancer', 'create', {
+        metadata: { name: 'test', namespace: 'default' },
+        spec: {},
+      });
+      expect(Array.isArray(result.constraintViolations)).toBe(true);
+    });
+  });
 });

@@ -62,12 +62,19 @@ export interface ValidationResult {
  * @returns The value at the path, or undefined if not found
  */
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-  const parts = path.split('.');
+  const cleanPath = path.replace(/\[\]/g, '');
+  const parts = cleanPath.split('.');
   let current: unknown = obj;
 
   for (const part of parts) {
     if (current === null || current === undefined) {
       return undefined;
+    }
+    if (Array.isArray(current)) {
+      current = current.length > 0 ? current[0] : undefined;
+      if (current === null || current === undefined) {
+        return undefined;
+      }
     }
     if (typeof current !== 'object') {
       return undefined;
@@ -248,40 +255,62 @@ export function validateResourcePayload(
 
   for (const [fieldPath, constraint] of Object.entries(fieldConstraintsMap)) {
     const value = getNestedValue(payload, fieldPath);
-    if (!isValuePresent(value) || typeof value !== 'string') {
+    if (!isValuePresent(value)) {
       continue;
     }
-    const strValue = value;
 
-    if (constraint.maxLength !== undefined && strValue.length > constraint.maxLength) {
-      constraintViolations.push({
-        fieldPath,
-        value: strValue,
-        constraint: `maxLength: ${constraint.maxLength}`,
-        message: `${formatFieldName(fieldPath)}: exceeds max length of ${constraint.maxLength} (got ${strValue.length})`,
-      });
-    }
-    if (constraint.minLength !== undefined && strValue.length < constraint.minLength) {
-      constraintViolations.push({
-        fieldPath,
-        value: strValue,
-        constraint: `minLength: ${constraint.minLength}`,
-        message: `${formatFieldName(fieldPath)}: below min length of ${constraint.minLength} (got ${strValue.length})`,
-      });
-    }
-    if (constraint.pattern) {
-      try {
-        if (!new RegExp(constraint.pattern).test(strValue)) {
-          const desc = constraint.formatDescription ?? `must match pattern ${constraint.pattern}`;
-          constraintViolations.push({
-            fieldPath,
-            value: strValue,
-            constraint: `pattern: ${constraint.pattern}`,
-            message: `${formatFieldName(fieldPath)}: ${desc}`,
-          });
+    // String constraint validation
+    if (typeof value === 'string') {
+      if (constraint.maxLength !== undefined && value.length > constraint.maxLength) {
+        constraintViolations.push({
+          fieldPath,
+          value,
+          constraint: `maxLength: ${constraint.maxLength}`,
+          message: `${formatFieldName(fieldPath)}: exceeds max length of ${constraint.maxLength} (got ${value.length})`,
+        });
+      }
+      if (constraint.minLength !== undefined && value.length < constraint.minLength) {
+        constraintViolations.push({
+          fieldPath,
+          value,
+          constraint: `minLength: ${constraint.minLength}`,
+          message: `${formatFieldName(fieldPath)}: below min length of ${constraint.minLength} (got ${value.length})`,
+        });
+      }
+      if (constraint.pattern) {
+        try {
+          if (!new RegExp(constraint.pattern).test(value)) {
+            const desc = constraint.formatDescription ?? `must match pattern ${constraint.pattern}`;
+            constraintViolations.push({
+              fieldPath,
+              value,
+              constraint: `pattern: ${constraint.pattern}`,
+              message: `${formatFieldName(fieldPath)}: ${desc}`,
+            });
+          }
+        } catch {
+          /* invalid regex */
         }
-      } catch {
-        /* invalid regex — skip */
+      }
+    }
+
+    // Numeric constraint validation
+    if (typeof value === 'number') {
+      if (constraint.minimum !== undefined && value < constraint.minimum) {
+        constraintViolations.push({
+          fieldPath,
+          value,
+          constraint: `minimum: ${constraint.minimum}`,
+          message: `${formatFieldName(fieldPath)}: value ${value} is below minimum of ${constraint.minimum}`,
+        });
+      }
+      if (constraint.maximum !== undefined && value > constraint.maximum) {
+        constraintViolations.push({
+          fieldPath,
+          value,
+          constraint: `maximum: ${constraint.maximum}`,
+          message: `${formatFieldName(fieldPath)}: value ${value} exceeds maximum of ${constraint.maximum}`,
+        });
       }
     }
   }

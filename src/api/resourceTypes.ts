@@ -1668,6 +1668,9 @@ export function getFieldConstraints(resourceKey: string): Record<
     pattern?: string;
     format?: string;
     formatDescription?: string;
+    minimum?: number;
+    maximum?: number;
+    multipleOf?: number;
   }
 > {
   const generated = GENERATED_RESOURCE_TYPES[resourceKey];
@@ -1684,6 +1687,9 @@ export function getFieldConstraints(resourceKey: string): Record<
       pattern?: string;
       format?: string;
       formatDescription?: string;
+      minimum?: number;
+      maximum?: number;
+      multipleOf?: number;
     }
   > = {};
   for (const [path, meta] of Object.entries(fields)) {

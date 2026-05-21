@@ -223,6 +223,9 @@ export interface ConstraintInfo {
     description?: string;
   };
   deterministic?: boolean;
+  minimum?: number;
+  maximum?: number;
+  multipleOf?: number;
 }
 
 /**
@@ -1097,6 +1100,15 @@ function extractFieldMetadataFromProperty(
       if (typeof c['deterministic'] === 'boolean') {
         ci.deterministic = c['deterministic'];
       }
+      if (typeof c['minimum'] === 'number') {
+        ci.minimum = c['minimum'];
+      }
+      if (typeof c['maximum'] === 'number') {
+        ci.maximum = c['maximum'];
+      }
+      if (typeof c['multipleOf'] === 'number') {
+        ci.multipleOf = c['multipleOf'];
+      }
       if (c['characterSet'] && typeof c['characterSet'] === 'object') {
         const cs = c['characterSet'] as Record<string, unknown>;
         ci.characterSet = {
@@ -1154,7 +1166,22 @@ function extractFieldMetadataFromProperty(
 
   // Handle array items
   if (prop.items) {
-    extractFieldMetadataFromProperty(prop.items, basePath, metadata, schemas);
+    extractFieldMetadataFromProperty(prop.items, `${basePath}[]`, metadata, schemas);
+  }
+
+  // Handle allOf composition — recurse into each allOf item with same basePath
+  const rawAllOf = (property as Record<string, unknown>)['allOf'];
+  if (Array.isArray(rawAllOf)) {
+    for (const allOfItem of rawAllOf) {
+      if (allOfItem && typeof allOfItem === 'object') {
+        extractFieldMetadataFromProperty(
+          allOfItem as Record<string, unknown>,
+          basePath,
+          metadata,
+          schemas,
+        );
+      }
+    }
   }
 }
 

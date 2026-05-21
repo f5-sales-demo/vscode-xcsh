@@ -67,20 +67,20 @@ describe('Generation Determinism', () => {
       expect(firstContent).toBe(secondContent);
     });
 
-    it('should not contain timestamps in generated content', () => {
-      // Check for common timestamp patterns
-      // ISO 8601 dates like 2026-05-18T...
-      expect(firstContent).not.toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/);
-
-      // Epoch timestamps (13+ digits for milliseconds)
+    it('should not contain non-deterministic timestamps in generated content', () => {
+      // Epoch timestamps (13+ digits for milliseconds — from Date.now())
       expect(firstContent).not.toMatch(/\b1\d{12}\b/);
 
-      // Date.now() or new Date() patterns
+      // Date.now() or new Date() patterns in code
       expect(firstContent).not.toMatch(/Date\.now\(\)/);
       expect(firstContent).not.toMatch(/new Date\(\)/);
 
       // "Generated at" or "Generated on" type comments
       expect(firstContent).not.toMatch(/generated (?:at|on)\s+\d/i);
+
+      // NOTE: ISO 8601 dates (e.g., 2025-01-15T10:30:00Z) are NOT checked here
+      // because they appear as legitimate spec-derived values in example and
+      // formatDescription fields. Determinism is verified by the SHA256 comparison.
     });
 
     it('generated content should be non-empty and contain expected markers', () => {

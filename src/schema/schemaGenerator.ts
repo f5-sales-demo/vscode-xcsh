@@ -64,28 +64,39 @@ function setNestedProperty(
   let current = obj;
 
   for (let i = 0; i < parts.length; i++) {
-    const part = parts[i] as string;
+    const rawPart = parts[i] as string;
+    const isArrayItem = rawPart.endsWith('[]');
+    const part = isArrayItem ? rawPart.slice(0, -2) : rawPart;
     const isLast = i === parts.length - 1;
 
-    if (isLast) {
-      // Set properties on the leaf — omit default type so JSON Schema is permissive
-      // (avoids incorrect 'string' type on object/array fields)
+    if (isArrayItem) {
+      if (!current[part]) {
+        current[part] = { type: 'array', items: { type: 'object', properties: {} } };
+      }
+      if (!current[part].items) {
+        current[part].items = { type: 'object', properties: {} };
+      }
+      const items = current[part].items;
+      if (!items.properties) {
+        items.properties = {};
+      }
+      if (isLast) {
+        Object.assign(items, props);
+      } else {
+        current = items.properties!;
+      }
+    } else if (isLast) {
       if (!current[part]) {
         current[part] = {};
       }
       Object.assign(current[part], props);
     } else {
-      // Create intermediate nested object
       if (!current[part]) {
-        current[part] = {
-          type: 'object',
-          properties: {},
-        };
+        current[part] = { type: 'object', properties: {} };
       }
       if (!current[part].properties) {
         current[part].properties = {};
       }
-      // Upgrade to object type if it was initially created as a typeless leaf
       if (!current[part].type) {
         current[part].type = 'object';
       }

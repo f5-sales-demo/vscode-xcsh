@@ -510,6 +510,9 @@ export interface GeneratedFieldMetadata {
       description?: string;
     };
     deterministic?: boolean;
+    minimum?: number;
+    maximum?: number;
+    multipleOf?: number;
   };
   /** Fields this field conflicts with */
   conflictsWith?: string[];
