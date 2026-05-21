@@ -197,10 +197,18 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
     props.description = metadata.descriptionShort;
   }
 
-  // Infer type from default value if available
+  // Use explicit type from field metadata when available
+  const metaType = (metadata as Record<string, unknown>)['type'];
+  if (typeof metaType === 'string' && metaType.length > 0) {
+    props.type = metaType;
+  }
+
+  // Infer type from default value if not already known
   if (metadata.default !== undefined) {
     props.default = metadata.default;
-    props.type = inferJsonType(metadata.default);
+    if (!props.type) {
+      props.type = inferJsonType(metadata.default);
+    }
   }
 
   // Mark server default fields
