@@ -261,7 +261,7 @@ export class HealthcheckFormProvider {
         spec.tcp_health_check = this.buildTcpConfig(data);
         break;
       case 'udp_icmp':
-        spec.icmp_health_check = {};
+        spec.udp_icmp_health_check = {};
         break;
     }
 
@@ -1473,7 +1473,7 @@ export class HealthcheckFormProvider {
           }
           payload.spec.tcp_health_check = tcpConfig;
         } else if (data.type === 'udp_icmp') {
-          payload.spec.icmp_health_check = {};
+          payload.spec.udp_icmp_health_check = {};
         }
 
         return payload;
