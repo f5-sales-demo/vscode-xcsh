@@ -281,6 +281,9 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
       if (meta.recommendedValue !== undefined) {
         genMeta.recommendedValue = meta.recommendedValue;
       }
+      if (meta.type) {
+        (genMeta as Record<string, unknown>)['type'] = meta.type;
+      }
       if (meta.descriptionShort !== undefined) {
         genMeta.descriptionShort = meta.descriptionShort;
       }
