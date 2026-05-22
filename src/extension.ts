@@ -2,11 +2,12 @@
 
 import * as vscode from 'vscode';
 import { registerCloudStatusCommands } from './commands/cloudStatus';
+import { registerContextCommands } from './commands/context';
 import { registerCrudCommands } from './commands/crud';
 import { registerDiagramCommands } from './commands/diagram';
 import { registerObservabilityCommands } from './commands/observability';
-import { registerProfileCommands } from './commands/profile';
-import { ProfileManager } from './config/profiles';
+import { ContextManager } from './config/contextManager';
+import { migrateProfilesToContexts } from './config/contextMigration';
 import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
 import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
 import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
@@ -18,8 +19,8 @@ import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
 import { SubscriptionDashboardProvider } from './providers/subscriptionDashboardProvider';
 import { getSchemaRegistry } from './schema/schemaRegistry';
 import { CloudStatusProvider } from './tree/cloudStatusProvider';
+import { ContextProvider } from './tree/contextProvider';
 import { F5XCExplorerProvider } from './tree/f5xcExplorer';
-import { ProfilesProvider } from './tree/profilesProvider';
 import { SubscriptionProvider } from './tree/subscriptionProvider';
 import { getLogger, type Logger } from './utils/logger';
 
@@ -29,30 +30,38 @@ export function activate(context: vscode.ExtensionContext): void {
   logger = getLogger();
   logger.info('F5 Distributed Cloud extension is activating...');
 
-  // Initialize profile manager with XDG-compliant file storage
-  const profileManager = new ProfileManager();
+  // Run one-time profile-to-context migration
+  const migrationResult = migrateProfilesToContexts();
+  if (migrationResult.migrated > 0) {
+    logger.info(`Migrated ${migrationResult.migrated} profiles to contexts`);
+  }
+
+  // Initialize context manager with file-based storage
+  const contextManager = new ContextManager();
+  contextManager.initFileWatcher();
+  context.subscriptions.push(contextManager);
 
   // Client factory for creating API clients
-  const clientFactory = (profile: { apiUrl: string; name: string }) => {
-    return profileManager.getClient(profile.name);
+  const clientFactory = (ctx: { apiUrl: string; name: string }) => {
+    return contextManager.getClient(ctx.name);
   };
 
   // Initialize tree view providers
-  const explorerProvider = new F5XCExplorerProvider(profileManager, clientFactory);
-  const profilesProvider = new ProfilesProvider(profileManager);
+  const explorerProvider = new F5XCExplorerProvider(contextManager, clientFactory);
+  const contextProvider = new ContextProvider(contextManager);
   const cloudStatusProvider = new CloudStatusProvider();
-  const subscriptionProvider = new SubscriptionProvider(profileManager);
-  const cloudStatusDashboardProvider = new CloudStatusDashboardProvider(profileManager);
+  const subscriptionProvider = new SubscriptionProvider(contextManager);
+  const cloudStatusDashboardProvider = new CloudStatusDashboardProvider(contextManager);
 
-  // Set context for active profile to control view visibility
-  const updateHasActiveProfile = async () => {
-    const hasActive = (await profileManager.getActiveProfile()) !== null;
-    void vscode.commands.executeCommand('setContext', 'f5xc.hasActiveProfile', hasActive);
+  // Set context for active context to control view visibility
+  const updateHasActiveContext = async () => {
+    const hasActive = (await contextManager.getActiveContext()) !== null;
+    void vscode.commands.executeCommand('setContext', 'f5xc.hasActiveContext', hasActive);
   };
-  void updateHasActiveProfile();
+  void updateHasActiveContext();
 
   // Initialize F5 XC file system provider for editing resources
-  const fsProvider = new F5XCFileSystemProvider(profileManager, () => {
+  const fsProvider = new F5XCFileSystemProvider(contextManager, () => {
     explorerProvider.refresh();
   });
 
@@ -65,11 +74,11 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // Initialize and register the view provider for read-only resource viewing
-  const viewProvider = new F5XCViewProvider(profileManager);
+  const viewProvider = new F5XCViewProvider(contextManager);
   context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('f5xc-view', viewProvider));
 
   // Initialize the describe provider for formatted resource descriptions
-  const describeProvider = new F5XCDescribeProvider(profileManager);
+  const describeProvider = new F5XCDescribeProvider(contextManager);
 
   // Initialize and register the schema provider for JSON IntelliSense
   console.log('[Extension] Registering F5XC Schema Provider');
@@ -119,40 +128,40 @@ export function activate(context: vscode.ExtensionContext): void {
   }
 
   // Initialize the subscription dashboard provider for Plan and Quotas views
-  const subscriptionDashboardProvider = new SubscriptionDashboardProvider(profileManager);
+  const subscriptionDashboardProvider = new SubscriptionDashboardProvider(contextManager);
 
   // Register subscription commands (f5xc.showPlan, f5xc.showQuotas)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.showPlan', async (profileName?: string) => {
-      const activeProfile = await profileManager.getActiveProfile();
-      const profile = profileName || activeProfile?.name;
-      if (profile) {
-        void subscriptionDashboardProvider.showPlan(profile);
+    vscode.commands.registerCommand('f5xc.showPlan', async (contextName?: string) => {
+      const activeContext = await contextManager.getActiveContext();
+      const name = contextName || activeContext?.name;
+      if (name) {
+        void subscriptionDashboardProvider.showPlan(name);
       } else {
-        void vscode.window.showWarningMessage('No active profile selected');
+        void vscode.window.showWarningMessage('No active context selected');
       }
     }),
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.showQuotas', async (profileName?: string) => {
-      const activeProfile = await profileManager.getActiveProfile();
-      const profile = profileName || activeProfile?.name;
-      if (profile) {
-        void subscriptionDashboardProvider.showQuotas(profile);
+    vscode.commands.registerCommand('f5xc.showQuotas', async (contextName?: string) => {
+      const activeContext = await contextManager.getActiveContext();
+      const name = contextName || activeContext?.name;
+      if (name) {
+        void subscriptionDashboardProvider.showQuotas(name);
       } else {
-        void vscode.window.showWarningMessage('No active profile selected');
+        void vscode.window.showWarningMessage('No active context selected');
       }
     }),
   );
 
   // Register addon activation command (for programmatic access)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.activateAddon', async (addonName: string, profileName?: string) => {
-      const activeProfile = await profileManager.getActiveProfile();
-      const profile = profileName || activeProfile?.name;
-      if (!profile) {
-        void vscode.window.showWarningMessage('No active profile selected');
+    vscode.commands.registerCommand('f5xc.activateAddon', async (addonName: string, contextName?: string) => {
+      const activeContext = await contextManager.getActiveContext();
+      const name = contextName || activeContext?.name;
+      if (!name) {
+        void vscode.window.showWarningMessage('No active context selected');
         return;
       }
       if (!addonName) {
@@ -160,7 +169,7 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
       // Show the plan dashboard which handles activation
-      await subscriptionDashboardProvider.showPlan(profile);
+      await subscriptionDashboardProvider.showPlan(name);
       void vscode.window.showInformationMessage(
         `To activate "${addonName}", click the Activate button in the Plan dashboard.`,
       );
@@ -174,8 +183,8 @@ export function activate(context: vscode.ExtensionContext): void {
     canSelectMany: false,
   });
 
-  const profilesView = vscode.window.createTreeView('f5xc.profiles', {
-    treeDataProvider: profilesProvider,
+  const contextsView = vscode.window.createTreeView('f5xc.profiles', {
+    treeDataProvider: contextProvider,
     showCollapseAll: false,
     canSelectMany: false,
   });
@@ -200,23 +209,23 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // Register profile commands
-  registerProfileCommands(context, profileManager, profilesProvider, explorerProvider);
+  // Register context commands
+  registerContextCommands(context, contextManager, contextProvider, explorerProvider);
 
   // Register CRUD commands
-  registerCrudCommands(context, explorerProvider, profileManager, fsProvider, viewProvider, describeProvider);
+  registerCrudCommands(context, explorerProvider, contextManager, fsProvider, viewProvider, describeProvider);
 
   // Register observability commands
-  registerObservabilityCommands(context, profileManager);
+  registerObservabilityCommands(context, contextManager);
 
   // Register diagram commands
-  registerDiagramCommands(context, profileManager);
+  registerDiagramCommands(context, contextManager);
 
   // Register cloud status commands
   registerCloudStatusCommands(context, cloudStatusProvider, cloudStatusDashboardProvider);
 
   // Register healthcheck form provider
-  const healthcheckFormProvider = new HealthcheckFormProvider(profileManager, explorerProvider, describeProvider);
+  const healthcheckFormProvider = new HealthcheckFormProvider(contextManager, explorerProvider, describeProvider);
   context.subscriptions.push(
     vscode.commands.registerCommand('f5xc.createHealthcheckForm', async (arg?: unknown) => {
       // Extract namespace from context if available
@@ -242,7 +251,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register views
   context.subscriptions.push(explorerView);
-  context.subscriptions.push(profilesView);
+  context.subscriptions.push(contextsView);
   context.subscriptions.push(cloudStatusView);
   context.subscriptions.push(subscriptionView);
 
@@ -256,12 +265,12 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
-  // Listen for profile changes
-  profileManager.onDidChangeProfiles(() => {
-    profilesProvider.refresh();
+  // Listen for context changes
+  contextManager.onDidChangeContext(() => {
+    contextProvider.refresh();
     explorerProvider.refresh();
     subscriptionProvider.refresh();
-    void updateHasActiveProfile();
+    void updateHasActiveContext();
   });
 
   logger.info('F5 Distributed Cloud extension activated successfully');

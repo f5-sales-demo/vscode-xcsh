@@ -6,7 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { PlanNode, QuotasNode } from './subscriptionNodes';
 import type { F5XCTreeItem } from './treeTypes';
 
@@ -18,7 +18,7 @@ export class SubscriptionProvider implements vscode.TreeDataProvider<F5XCTreeIte
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<F5XCTreeItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  constructor(private readonly profileManager: ProfileManager) {}
+  constructor(private readonly contextManager: ContextManager) {}
 
   getTreeItem(element: F5XCTreeItem): vscode.TreeItem {
     return element.getTreeItem();
@@ -30,12 +30,12 @@ export class SubscriptionProvider implements vscode.TreeDataProvider<F5XCTreeIte
     }
 
     // Root level - return Plan and Quotas nodes if there's an active profile
-    const activeProfile = await this.profileManager.getActiveProfile();
-    if (!activeProfile) {
+    const activeContext = await this.contextManager.getActiveContext();
+    if (!activeContext) {
       return [];
     }
 
-    return [new PlanNode(activeProfile.name), new QuotasNode(activeProfile.name)];
+    return [new PlanNode(activeContext.name), new QuotasNode(activeContext.name)];
   }
 
   refresh(): void {

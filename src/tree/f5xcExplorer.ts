@@ -18,7 +18,8 @@ import {
   RESOURCE_TYPES,
   type ResourceTypeInfo,
 } from '../api/resourceTypes';
-import type { Profile, ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
+import type { F5XCContext } from '../config/contextTypes';
 import {
   getDomainComplexity,
   getDomainMetadata,
@@ -43,12 +44,12 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
   private readonly _onDidChangeTreeData = new vscode.EventEmitter<F5XCTreeItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
-  private readonly profileManager: ProfileManager;
-  private readonly clientFactory: (profile: Profile) => Promise<F5XCClient>;
+  private readonly contextManager: ContextManager;
+  private readonly clientFactory: (ctx: F5XCContext) => Promise<F5XCClient>;
   private readonly logger = getLogger();
 
-  constructor(profileManager: ProfileManager, clientFactory: (profile: Profile) => Promise<F5XCClient>) {
-    this.profileManager = profileManager;
+  constructor(contextManager: ContextManager, clientFactory: (ctx: F5XCContext) => Promise<F5XCClient>) {
+    this.contextManager = contextManager;
     this.clientFactory = clientFactory;
   }
 
@@ -93,14 +94,14 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
   }
 
   private async getRootItems(): Promise<F5XCTreeItem[]> {
-    const activeProfile = await this.profileManager.getActiveProfile();
+    const activeContext = await this.contextManager.getActiveContext();
 
-    if (!activeProfile) {
+    if (!activeContext) {
       return [];
     }
 
     try {
-      const client = await this.clientFactory(activeProfile);
+      const client = await this.clientFactory(activeContext);
       const namespaces = await client.listNamespaces();
 
       // Separate built-in and custom namespaces using generated constants
@@ -122,9 +123,9 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
           new NamespaceGroupNode(
             'Built-in Namespaces',
             builtInNs.map((ns) => ns.name),
-            activeProfile.name,
+            activeContext.name,
             this.clientFactory,
-            this.profileManager,
+            this.contextManager,
             'symbol-namespace',
             true, // isBuiltIn
           ),
@@ -137,9 +138,9 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
           new NamespaceGroupNode(
             'Custom Namespaces',
             customNamespaces.map((ns) => ns.name),
-            activeProfile.name,
+            activeContext.name,
             this.clientFactory,
-            this.profileManager,
+            this.contextManager,
             'folder-library',
             false, // isBuiltIn
           ),
@@ -163,8 +164,8 @@ class NamespaceGroupNode implements F5XCTreeItem {
     private readonly groupName: string,
     private readonly namespaceNames: string[],
     private readonly profileName: string,
-    private readonly clientFactory: (profile: Profile) => Promise<F5XCClient>,
-    private readonly profileManager: ProfileManager,
+    private readonly clientFactory: (ctx: F5XCContext) => Promise<F5XCClient>,
+    private readonly contextManager: ContextManager,
     private readonly icon: string,
     private readonly isBuiltIn: boolean,
   ) {}
@@ -184,7 +185,7 @@ class NamespaceGroupNode implements F5XCTreeItem {
           new NamespaceNode(
             { name, profileName: this.profileName, isBuiltIn: this.isBuiltIn },
             this.clientFactory,
-            this.profileManager,
+            this.contextManager,
           ),
       ),
     );
@@ -197,8 +198,8 @@ class NamespaceGroupNode implements F5XCTreeItem {
 export class NamespaceNode implements F5XCTreeItem {
   constructor(
     private readonly data: NamespaceNodeData,
-    private readonly clientFactory: (profile: Profile) => Promise<F5XCClient>,
-    private readonly profileManager: ProfileManager,
+    private readonly clientFactory: (ctx: F5XCContext) => Promise<F5XCClient>,
+    private readonly contextManager: ContextManager,
   ) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -224,7 +225,7 @@ export class NamespaceNode implements F5XCTreeItem {
             profileName: this.data.profileName,
           },
           this.clientFactory,
-          this.profileManager,
+          this.contextManager,
         ),
       );
     }
@@ -246,8 +247,8 @@ export class NamespaceNode implements F5XCTreeItem {
 class CategoryNode implements F5XCTreeItem {
   constructor(
     private readonly data: CategoryNodeData,
-    private readonly clientFactory: (profile: Profile) => Promise<F5XCClient>,
-    private readonly profileManager: ProfileManager,
+    private readonly clientFactory: (ctx: F5XCContext) => Promise<F5XCClient>,
+    private readonly contextManager: ContextManager,
   ) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -299,7 +300,7 @@ class CategoryNode implements F5XCTreeItem {
               profileName: this.data.profileName,
             },
             this.clientFactory,
-            this.profileManager,
+            this.contextManager,
           ),
       ),
     );
@@ -314,8 +315,8 @@ class ResourceTypeNode implements F5XCTreeItem {
 
   constructor(
     private readonly data: ResourceTypeNodeData,
-    private readonly clientFactory: (profile: Profile) => Promise<F5XCClient>,
-    private readonly profileManager: ProfileManager,
+    private readonly clientFactory: (ctx: F5XCContext) => Promise<F5XCClient>,
+    private readonly contextManager: ContextManager,
   ) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -410,12 +411,12 @@ class ResourceTypeNode implements F5XCTreeItem {
 
   async getChildren(): Promise<F5XCTreeItem[]> {
     try {
-      const profile = await this.profileManager.getProfile(this.data.profileName);
-      if (!profile) {
+      const ctx = await this.contextManager.getContext(this.data.profileName);
+      if (!ctx) {
         return [];
       }
 
-      const client = await this.clientFactory(profile);
+      const client = await this.clientFactory(ctx);
       const listOptions = F5XCClient.buildListOptions(this.data.resourceType);
       const resources = await client.listWithOptions(this.data.namespace, this.data.resourceType.apiPath, listOptions);
 

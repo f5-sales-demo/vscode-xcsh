@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import type { Resource } from '../api/client';
 import { getFieldConstraints } from '../api/resourceTypes';
 import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
 import { showError, showInfo } from '../utils/errors';
 import { getLogger } from '../utils/logger';
@@ -69,7 +69,7 @@ export class HealthcheckFormProvider {
   private quotaInfo: QuotaItem | undefined;
 
   constructor(
-    private readonly profileManager: ProfileManager,
+    private readonly contextManager: ContextManager,
     private readonly explorer: F5XCExplorerProvider,
     private readonly describeProvider: F5XCDescribeProvider,
   ) {}
@@ -132,12 +132,12 @@ export class HealthcheckFormProvider {
    */
   private async loadNamespaces(): Promise<string[]> {
     try {
-      const activeProfile = await this.profileManager.getActiveProfile();
-      if (!activeProfile) {
+      const activeContext = await this.contextManager.getActiveContext();
+      if (!activeContext) {
         return ['default'];
       }
 
-      const client = await this.profileManager.getClient(activeProfile.name);
+      const client = await this.contextManager.getClient(activeContext.name);
       const namespaces = await client.listNamespaces();
       return namespaces.map((ns) => ns.name);
     } catch (error) {
@@ -151,12 +151,12 @@ export class HealthcheckFormProvider {
    */
   private async loadQuotaInfo(): Promise<QuotaItem | undefined> {
     try {
-      const activeProfile = await this.profileManager.getActiveProfile();
-      if (!activeProfile) {
+      const activeContext = await this.contextManager.getActiveContext();
+      if (!activeContext) {
         return undefined;
       }
 
-      const client = await this.profileManager.getClient(activeProfile.name);
+      const client = await this.contextManager.getClient(activeContext.name);
       // Try namespace first, fallback to system
       let quota = await getQuotaForResourceType(client, 'healthchecks', this.initialNamespace);
       if (!quota) {
@@ -332,9 +332,9 @@ export class HealthcheckFormProvider {
    */
   private async createHealthcheck(data: HealthcheckFormData): Promise<void> {
     try {
-      const activeProfile = await this.profileManager.getActiveProfile();
-      if (!activeProfile) {
-        showError('No active profile. Configure a profile first.');
+      const activeContext = await this.contextManager.getActiveContext();
+      if (!activeContext) {
+        showError('No active context. Configure a context first.');
         return;
       }
 
@@ -363,7 +363,7 @@ export class HealthcheckFormProvider {
           cancellable: false,
         },
         async () => {
-          const client = await this.profileManager.getClient(activeProfile.name);
+          const client = await this.contextManager.getClient(activeContext.name);
           await client.create(data.namespace, 'healthchecks', payload);
         },
       );
@@ -373,7 +373,7 @@ export class HealthcheckFormProvider {
       this.panel?.dispose();
 
       // Show the describe view for the newly created resource
-      await this.describeProvider.showDescribe(activeProfile.name, data.namespace, 'healthchecks', data.name);
+      await this.describeProvider.showDescribe(activeContext.name, data.namespace, 'healthchecks', data.name);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       logger.error(`Failed to create healthcheck: ${message}`);

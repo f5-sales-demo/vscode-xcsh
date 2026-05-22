@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import type { ResourceNode } from '../tree/f5xcExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
@@ -56,16 +56,16 @@ interface MetricsResponse {
 /**
  * Register observability commands for F5 XC resources
  */
-export function registerObservabilityCommands(context: vscode.ExtensionContext, profileManager: ProfileManager): void {
+export function registerObservabilityCommands(context: vscode.ExtensionContext, contextManager: ContextManager): void {
   // VIEW LOGS - View access logs for load balancer
   context.subscriptions.push(
     vscode.commands.registerCommand('f5xc.viewLogs', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
-        const profile = await profileManager.getProfile(data.profileName);
+        const ctx = await contextManager.getContext(data.profileName);
 
-        if (!profile) {
-          showWarning(`Profile "${data.profileName}" not found`);
+        if (!ctx) {
+          showWarning(`Context "${data.profileName}" not found`);
           return;
         }
 
@@ -73,7 +73,7 @@ export function registerObservabilityCommands(context: vscode.ExtensionContext, 
         const endTime = new Date();
         const startTime = new Date(endTime.getTime() - 60 * 60 * 1000);
 
-        const client = await profileManager.getClient(data.profileName);
+        const client = await contextManager.getClient(data.profileName);
 
         // Fetch access logs
         await vscode.window.withProgress(
@@ -139,10 +139,10 @@ export function registerObservabilityCommands(context: vscode.ExtensionContext, 
     vscode.commands.registerCommand('f5xc.viewMetrics', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
-        const profile = await profileManager.getProfile(data.profileName);
+        const ctx = await contextManager.getContext(data.profileName);
 
-        if (!profile) {
-          showWarning(`Profile "${data.profileName}" not found`);
+        if (!ctx) {
+          showWarning(`Context "${data.profileName}" not found`);
           return;
         }
 
@@ -150,7 +150,7 @@ export function registerObservabilityCommands(context: vscode.ExtensionContext, 
         const endTime = new Date();
         const startTime = new Date(endTime.getTime() - 60 * 60 * 1000);
 
-        const client = await profileManager.getClient(data.profileName);
+        const client = await contextManager.getClient(data.profileName);
 
         await vscode.window.withProgress(
           {

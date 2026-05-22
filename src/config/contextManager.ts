@@ -250,6 +250,11 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     this.clientCache.clear();
   }
 
+  /** Public cache clear for commands (e.g., "Clear Auth Cache"). */
+  clearAllCachesPublic(): void {
+    this.clearAllCaches();
+  }
+
   // ───────── client factory ─────────
 
   async getClient(contextName: string): Promise<F5XCClient> {

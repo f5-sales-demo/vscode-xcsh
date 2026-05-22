@@ -16,7 +16,7 @@ import {
   type QuotaItem,
   type QuotaUsage,
 } from '../api/subscription';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -28,7 +28,7 @@ export class SubscriptionDashboardProvider {
   private planPanel: vscode.WebviewPanel | undefined;
   private quotasPanel: vscode.WebviewPanel | undefined;
 
-  constructor(private readonly profileManager: ProfileManager) {}
+  constructor(private readonly contextManager: ContextManager) {}
 
   /**
    * Generate a nonce for CSP
@@ -63,7 +63,7 @@ export class SubscriptionDashboardProvider {
     try {
       logger.debug(`Showing plan dashboard for profile: ${profileName}`);
 
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
       const planInfo = await getCurrentPlan(client);
 
       // Get available addons (not included in plan)
@@ -123,7 +123,7 @@ export class SubscriptionDashboardProvider {
     try {
       logger.debug(`Showing quotas dashboard for profile: ${profileName}`);
 
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
       const quotaUsage = await getQuotaUsage(client, 'system');
 
       if (this.quotasPanel) {
@@ -177,7 +177,7 @@ export class SubscriptionDashboardProvider {
     }
 
     try {
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
 
       await vscode.window.withProgress(
         {
@@ -214,7 +214,7 @@ export class SubscriptionDashboardProvider {
     const accessStatuses = new Map<string, AccessStatus>();
 
     try {
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
 
       // Fetch access status for each addon in parallel
       const statusPromises = addons.map(async (addon) => {

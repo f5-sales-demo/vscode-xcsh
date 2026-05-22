@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import type { Resource } from '../api/client';
 import { RESOURCE_TYPES } from '../api/resourceTypes';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { showError, showInfo } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 
@@ -36,7 +36,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
   private readonly fileMeta = new Map<string, { mtime: number; ctime: number }>();
 
   constructor(
-    private readonly profileManager: ProfileManager,
+    private readonly contextManager: ContextManager,
     private readonly onResourceUpdated?: () => void,
   ) {}
 
@@ -128,7 +128,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
     }
 
     try {
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
       const apiBase = resourceTypeInfo.apiBase || 'config';
 
       // Get the full resource (without GET_RSP_FORMAT_FOR_REPLACE which returns spec-only)
@@ -295,7 +295,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
 
     // Apply to F5 XC
     try {
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
       const apiBase = resourceTypeInfo.apiBase || 'config';
 
       await vscode.window.withProgress(

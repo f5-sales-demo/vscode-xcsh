@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
 import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { API_ENDPOINTS } from '../generated/constants';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
@@ -48,7 +48,7 @@ interface SectionDefinition {
 export class F5XCDescribeProvider {
   private panel: vscode.WebviewPanel | undefined;
 
-  constructor(private readonly profileManager: ProfileManager) {}
+  constructor(private readonly contextManager: ContextManager) {}
 
   /**
    * Generate a nonce for CSP
@@ -186,7 +186,7 @@ export class F5XCDescribeProvider {
         logger.debug(`Using cached list data for ${resourceName} (no GET endpoint available)`);
         resource = cachedData;
       } else {
-        const client = await this.profileManager.getClient(profileName);
+        const client = await this.contextManager.getClient(profileName);
         const apiBase = resourceTypeInfo?.apiBase || 'config';
         resource = (await client.getWithOptions(namespace, resourceType, resourceName, {
           apiBase,
@@ -233,7 +233,7 @@ export class F5XCDescribeProvider {
       // Quotas are typically tenant-wide, so try resource's namespace first, then fall back to 'system'
       let quotaInfo: QuotaItem | undefined;
       try {
-        const client = await this.profileManager.getClient(profileName);
+        const client = await this.contextManager.getClient(profileName);
         logger.info(`Fetching quota for resourceType: ${resourceType}, namespace: ${namespace}`);
 
         // First try the resource's namespace
@@ -281,7 +281,7 @@ export class F5XCDescribeProvider {
     try {
       logger.debug(`Describing namespace: ${namespaceName}`);
 
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
       const resource = await client.customRequest<Record<string, unknown>>(
         `${API_ENDPOINTS.NAMESPACES}/${encodeURIComponent(namespaceName)}`,
       );

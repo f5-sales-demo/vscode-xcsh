@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { F5XCDiagramProvider } from '../providers/f5xcDiagramProvider';
 import type { ResourceNode } from '../tree/f5xcExplorer';
 import { showWarning, withErrorHandling } from '../utils/errors';
@@ -12,9 +12,9 @@ const logger = getLogger();
 /**
  * Register diagram commands for F5 XC HTTP Load Balancers
  */
-export function registerDiagramCommands(context: vscode.ExtensionContext, profileManager: ProfileManager): void {
+export function registerDiagramCommands(context: vscode.ExtensionContext, contextManager: ContextManager): void {
   // Create diagram provider instance
-  const diagramProvider = new F5XCDiagramProvider(profileManager);
+  const diagramProvider = new F5XCDiagramProvider(contextManager);
 
   // Register dispose handler
   context.subscriptions.push({
@@ -26,10 +26,10 @@ export function registerDiagramCommands(context: vscode.ExtensionContext, profil
     vscode.commands.registerCommand('f5xc.diagram', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
-        const profile = await profileManager.getProfile(data.profileName);
+        const ctx = await contextManager.getContext(data.profileName);
 
-        if (!profile) {
-          showWarning(`Profile "${data.profileName}" not found`);
+        if (!ctx) {
+          showWarning(`Context "${data.profileName}" not found`);
           return;
         }
 

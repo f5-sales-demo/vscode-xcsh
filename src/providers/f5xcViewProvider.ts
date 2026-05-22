@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { getLogger } from '../utils/logger';
 import { filterResource, getFilterOptionsForViewMode, type ViewMode } from '../utils/resourceFilter';
 
@@ -38,7 +38,7 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
   // Cache for resource content
   private readonly contentCache = new Map<string, string>();
 
-  constructor(private readonly profileManager: ProfileManager) {}
+  constructor(private readonly contextManager: ContextManager) {}
 
   /**
    * Parse an F5 XC View URI into its components
@@ -97,7 +97,7 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
 
       logger.debug(`Loading view content for: ${resourceName} (${resourceType})`);
 
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
       const resourceTypeInfo = this.findResourceTypeInfo(resourceType);
       const apiBase = resourceTypeInfo?.apiBase || 'config';
 

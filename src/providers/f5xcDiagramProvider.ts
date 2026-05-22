@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -180,7 +180,7 @@ interface OriginServerInfo {
 export class F5XCDiagramProvider {
   private panel: vscode.WebviewPanel | undefined;
 
-  constructor(private readonly profileManager: ProfileManager) {}
+  constructor(private readonly contextManager: ContextManager) {}
 
   /**
    * Generate a nonce for CSP
@@ -201,7 +201,7 @@ export class F5XCDiagramProvider {
     try {
       logger.debug(`Generating diagram for: ${resourceName}`);
 
-      const client = await this.profileManager.getClient(profileName);
+      const client = await this.contextManager.getClient(profileName);
 
       // Fetch HTTP Load Balancer configuration
       const lbConfig = (await client.get(namespace, 'http_loadbalancers', resourceName)) as HttpLoadBalancerConfig;

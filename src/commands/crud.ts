@@ -13,7 +13,7 @@ import {
   isBuiltInNamespace,
   RESOURCE_TYPES,
 } from '../api/resourceTypes';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import type { F5XCDescribeProvider } from '../providers/f5xcDescribeProvider';
 import { F5XCFileSystemProvider } from '../providers/f5xcFileSystemProvider';
 import { F5XCViewProvider } from '../providers/f5xcViewProvider';
@@ -58,7 +58,7 @@ function getViewMode(): ViewMode {
 export function registerCrudCommands(
   context: vscode.ExtensionContext,
   explorer: F5XCExplorerProvider,
-  profileManager: ProfileManager,
+  contextManager: ContextManager,
   fsProvider: F5XCFileSystemProvider,
   viewProvider: F5XCViewProvider,
   describeProvider: F5XCDescribeProvider,
@@ -68,10 +68,10 @@ export function registerCrudCommands(
     vscode.commands.registerCommand('f5xc.get', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
-        const profile = await profileManager.getProfile(data.profileName);
+        const profile = await contextManager.getContext(data.profileName);
 
         if (!profile) {
-          showWarning(`Profile "${data.profileName}" not found`);
+          showWarning(`Context "${data.profileName}" not found`);
           return;
         }
 
@@ -147,10 +147,10 @@ export function registerCrudCommands(
           };
         }
 
-        const profile = await profileManager.getProfile(data.profileName);
+        const profile = await contextManager.getContext(data.profileName);
 
         if (!profile) {
-          showWarning(`Profile "${data.profileName}" not found`);
+          showWarning(`Context "${data.profileName}" not found`);
           return;
         }
 
@@ -283,13 +283,13 @@ export function registerCrudCommands(
         }
 
         // Get active profile
-        const activeProfile = await profileManager.getActiveProfile();
-        if (!activeProfile) {
-          showWarning('No active profile. Configure a profile first.');
+        const activeContext = await contextManager.getActiveContext();
+        if (!activeContext) {
+          showWarning('No active context. Configure a context first.');
           return;
         }
 
-        const client = await profileManager.getClient(activeProfile.name);
+        const client = await contextManager.getClient(activeContext.name);
         const apiBase = resourceType.apiBase || 'config';
         const serviceSegment = resourceType.serviceSegment;
 
@@ -362,7 +362,7 @@ export function registerCrudCommands(
     vscode.commands.registerCommand('f5xc.delete', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
-        const client = await profileManager.getClient(data.profileName);
+        const client = await contextManager.getClient(data.profileName);
         const apiBase = data.resourceType.apiBase || 'config';
         const serviceSegment = data.resourceType.serviceSegment;
 
@@ -489,7 +489,7 @@ export function registerCrudCommands(
           return;
         }
 
-        const client = await profileManager.getClient(data.profileName);
+        const client = await contextManager.getClient(data.profileName);
 
         // Build the DELETE API path for RBAC check
         const deletePath = `/api/web/namespaces/${data.name}/cascade_delete`;
@@ -566,7 +566,7 @@ export function registerCrudCommands(
         if (node) {
           // Called from tree view
           const data = node.getData();
-          const client = await profileManager.getClient(data.profileName);
+          const client = await contextManager.getClient(data.profileName);
           const apiBase = data.resourceType.apiBase || 'config';
           const serviceSegment = data.resourceType.serviceSegment;
           const resource = await client.get(
@@ -627,13 +627,13 @@ export function registerCrudCommands(
             return;
           }
 
-          const activeProfile = await profileManager.getActiveProfile();
-          if (!activeProfile) {
-            showWarning('No active profile');
+          const activeContext = await contextManager.getActiveContext();
+          if (!activeContext) {
+            showWarning('No active context');
             return;
           }
 
-          const client = await profileManager.getClient(activeProfile.name);
+          const client = await contextManager.getClient(activeContext.name);
           const apiBase = resourceType.apiBase || 'config';
           const serviceSegmentFromType = resourceType.serviceSegment;
           const remoteResource = await client.get(
@@ -679,7 +679,7 @@ export function registerCrudCommands(
     vscode.commands.registerCommand('f5xc.copyAsJson', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
-        const client = await profileManager.getClient(data.profileName);
+        const client = await contextManager.getClient(data.profileName);
         const apiBase = data.resourceType.apiBase || 'config';
         const resource = await client.get(data.namespace, data.resourceType.apiPath, data.name, undefined, apiBase);
 
@@ -699,10 +699,10 @@ export function registerCrudCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand('f5xc.openInBrowser', async (node: ResourceNode) => {
       const data = node.getData();
-      const profile = await profileManager.getProfile(data.profileName);
+      const profile = await contextManager.getContext(data.profileName);
 
       if (!profile) {
-        showWarning(`Profile "${data.profileName}" not found`);
+        showWarning(`Context "${data.profileName}" not found`);
         return;
       }
 

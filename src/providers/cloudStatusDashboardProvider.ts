@@ -20,7 +20,7 @@ import {
 } from '../api/cloudStatus';
 import { geocodeLocation } from '../api/geocoder';
 import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/popCoordinates';
-import type { ProfileManager } from '../config/profiles';
+import type { ContextManager } from '../config/contextManager';
 import { getLogger } from '../utils/logger';
 
 /**
@@ -29,11 +29,11 @@ import { getLogger } from '../utils/logger';
 export class CloudStatusDashboardProvider {
   private panel: vscode.WebviewPanel | undefined;
   private readonly client: CloudStatusClient;
-  private readonly profileManager: ProfileManager;
+  private readonly contextManager: ContextManager;
 
-  constructor(profileManager: ProfileManager) {
+  constructor(contextManager: ContextManager) {
     this.client = new CloudStatusClient();
-    this.profileManager = profileManager;
+    this.contextManager = contextManager;
   }
 
   /**
@@ -1716,11 +1716,11 @@ export class CloudStatusDashboardProvider {
     // Try to fetch Regional Edge data from XC API if authenticated
     // Note: F5-managed Regional Edge sites are visible in LIST but coordinates are not accessible
     let xcSite: Site | null = null;
-    const activeProfile = await this.profileManager.getActiveProfile();
+    const activeContext = await this.contextManager.getActiveContext();
 
-    if (activeProfile && siteCode) {
+    if (activeContext && siteCode) {
       try {
-        const xcClient = await this.profileManager.getClient(activeProfile.name);
+        const xcClient = await this.contextManager.getClient(activeContext.name);
         if (xcClient) {
           xcSite = (await xcClient.findRegionalEdgeBySiteCode(siteCode)) || null;
         }
