@@ -62,14 +62,19 @@ function getCurrentVersion(): string {
  */
 async function fetchLatestRelease(): Promise<GitHubRelease> {
   return new Promise((resolve, reject) => {
+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+    const headers: Record<string, string> = {
+      'User-Agent': 'vscode-f5xc-tools',
+      Accept: 'application/vnd.github.v3+json',
+    };
+    if (token) {
+      headers.Authorization = `token ${token}`;
+    }
     const options = {
       hostname: 'api.github.com',
       path: `/repos/${UPSTREAM_REPO}/releases/latest`,
       method: 'GET',
-      headers: {
-        'User-Agent': 'vscode-f5xc-tools',
-        Accept: 'application/vnd.github.v3+json',
-      },
+      headers,
     };
 
     const req = https.request(options, (res) => {
