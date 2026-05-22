@@ -1,6 +1,6 @@
 {
   "name": "f5xc-tools",
-  "displayName": "F5 Distributed Cloud Tools",
+  "displayName": "F5 XC Platform Tools",
   "description": "Manage F5 Distributed Cloud resources directly from VS Code",
   "version": "2.2605.220210",
   "publisher": "f5xc-salesdemos",
