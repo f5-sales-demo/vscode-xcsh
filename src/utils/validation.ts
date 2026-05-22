@@ -312,6 +312,18 @@ export function validateResourcePayload(
           message: `${formatFieldName(fieldPath)}: value ${value} exceeds maximum of ${constraint.maximum}`,
         });
       }
+      if (
+        constraint.multipleOf !== undefined &&
+        constraint.multipleOf !== 0 &&
+        value % constraint.multipleOf !== 0
+      ) {
+        constraintViolations.push({
+          fieldPath,
+          value,
+          constraint: `multipleOf: ${constraint.multipleOf}`,
+          message: `${formatFieldName(fieldPath)}: value ${value} is not a multiple of ${constraint.multipleOf}`,
+        });
+      }
     }
   }
 
