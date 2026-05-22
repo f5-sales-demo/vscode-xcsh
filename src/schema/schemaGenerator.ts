@@ -123,13 +123,15 @@ function markRequiredAtPath(specSchema: SchemaProperty, path: string): void {
     const part = isArrayItem ? rawPart.slice(0, -2) : rawPart;
     const isLast = i === parts.length - 1;
 
+    // Mark this segment required on its parent (whether leaf or intermediate)
+    if (!currentObj.required) {
+      currentObj.required = [];
+    }
+    if (!currentObj.required.includes(part)) {
+      currentObj.required.push(part);
+    }
+
     if (isLast) {
-      if (!currentObj.required) {
-        currentObj.required = [];
-      }
-      if (!currentObj.required.includes(part)) {
-        currentObj.required.push(part);
-      }
       return;
     }
 
