@@ -6,13 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import {
-  type AuthProvider,
-  type CertAuthConfig,
-  CertAuthProvider,
-  type TokenAuthConfig,
-  TokenAuthProvider,
-} from '../api/auth';
+import { type AuthProvider, type TokenAuthConfig, TokenAuthProvider } from '../api/auth';
 import { F5XCClient } from '../api/client';
 import { ConfigurationError } from '../utils/errors';
 import { getLogger } from '../utils/logger';
@@ -333,18 +327,9 @@ export class ProfileManager {
         apiToken: profile.apiToken,
       };
       authProvider = new TokenAuthProvider(config);
-    } else if (profile.p12Bundle || (profile.cert && profile.key)) {
-      const config: CertAuthConfig = {
-        apiUrl: profile.apiUrl,
-        p12Bundle: profile.p12Bundle,
-        cert: profile.cert,
-        key: profile.key,
-      };
-      authProvider = new CertAuthProvider(config);
     } else {
       throw new ConfigurationError(
-        `No valid credentials configured for profile "${profile.name}". ` +
-          'Provide apiToken, p12Bundle, or both cert and key.',
+        `No valid credentials configured for profile "${profile.name}". ` + 'Provide apiToken.',
       );
     }
 
