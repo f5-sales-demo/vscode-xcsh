@@ -11,8 +11,8 @@
  *       └── profile-2.json
  */
 
-import * as path from 'path';
-import * as os from 'os';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
 /** Application name for XDG directories - shared across F5 XC tools */
 const APP_NAME = 'f5xc';

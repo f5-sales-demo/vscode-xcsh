@@ -6,9 +6,9 @@
  */
 
 import * as vscode from 'vscode';
-import { CompletionHelper } from '../utils/completionHelper';
+import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
-import { SchemaProperty } from '../schema/schemaGenerator';
+import * as CompletionHelper from '../utils/completionHelper';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -61,10 +61,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     const completions: vscode.CompletionItem[] = [];
 
     // Case 1: Empty file or at root level
-    if (
-      jsonContext.path.length === 0 ||
-      (jsonContext.path.length === 1 && jsonContext.path[0] === '')
-    ) {
+    if (jsonContext.path.length === 0 || (jsonContext.path.length === 1 && jsonContext.path[0] === '')) {
       completions.push(...this.generateRootCompletions(schema, jsonContext.indentString));
     }
     // Case 2: Inside an object, waiting for property
@@ -89,22 +86,14 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Generate completions for root-level structure (metadata, spec)
    */
-  private generateRootCompletions(
-    schema: SchemaProperty,
-    indentString: string,
-  ): vscode.CompletionItem[] {
+  private generateRootCompletions(schema: SchemaProperty, indentString: string): vscode.CompletionItem[] {
     const completions: vscode.CompletionItem[] = [];
 
     // Full resource template
     const fullTemplate = this.createFullResourceTemplate(schema, indentString);
-    const fullItem = new vscode.CompletionItem(
-      'Full resource template',
-      vscode.CompletionItemKind.Snippet,
-    );
+    const fullItem = new vscode.CompletionItem('Full resource template', vscode.CompletionItemKind.Snippet);
     fullItem.insertText = new vscode.SnippetString(fullTemplate);
-    fullItem.documentation = new vscode.MarkdownString(
-      'Complete F5 XC resource structure with metadata and spec',
-    );
+    fullItem.documentation = new vscode.MarkdownString('Complete F5 XC resource structure with metadata and spec');
     fullItem.sortText = '0'; // Show first
     fullItem.detail = 'Complete resource template';
     completions.push(fullItem);
@@ -113,14 +102,9 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     if (schema.properties) {
       for (const [propName, propSchema] of Object.entries(schema.properties)) {
         const template = this.createSectionTemplate(propName, propSchema, indentString);
-        const item = new vscode.CompletionItem(
-          `${propName} section`,
-          vscode.CompletionItemKind.Snippet,
-        );
+        const item = new vscode.CompletionItem(`${propName} section`, vscode.CompletionItemKind.Snippet);
         item.insertText = new vscode.SnippetString(template);
-        item.documentation = new vscode.MarkdownString(
-          propSchema.description || `${propName} section template`,
-        );
+        item.documentation = new vscode.MarkdownString(propSchema.description || `${propName} section template`);
         item.sortText = `1-${propName}`;
         item.detail = `${propName} template`;
         completions.push(item);
@@ -182,18 +166,11 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
         docs.push(`**Max length:** ${propSchema.maxLength}`);
       }
 
-      if (
-        propSchema.examples &&
-        Array.isArray(propSchema.examples) &&
-        propSchema.examples.length > 0
-      ) {
+      if (propSchema.examples && Array.isArray(propSchema.examples) && propSchema.examples.length > 0) {
         docs.push(`**Example:** \`${JSON.stringify(propSchema.examples[0])}\``);
       }
 
-      if (
-        propSchema['x-f5xc-conflicts-with'] &&
-        Array.isArray(propSchema['x-f5xc-conflicts-with'])
-      ) {
+      if (propSchema['x-f5xc-conflicts-with'] && Array.isArray(propSchema['x-f5xc-conflicts-with'])) {
         const conflicts = propSchema['x-f5xc-conflicts-with'].map((f) => `\`${f}\``).join(', ');
         docs.push(`**Conflicts with:** ${conflicts}`);
       }
@@ -220,10 +197,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Generate completions for values (after colon)
    */
-  private generateValueCompletions(
-    schema: SchemaProperty,
-    context: { indentString: string },
-  ): vscode.CompletionItem[] {
+  private generateValueCompletions(schema: SchemaProperty, context: { indentString: string }): vscode.CompletionItem[] {
     const completions: vscode.CompletionItem[] = [];
 
     // For object types, provide template completion
@@ -236,9 +210,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
 
       const item = new vscode.CompletionItem('Object template', vscode.CompletionItemKind.Snippet);
       item.insertText = new vscode.SnippetString(template);
-      item.documentation = new vscode.MarkdownString(
-        'Complete object structure with default values',
-      );
+      item.documentation = new vscode.MarkdownString('Complete object structure with default values');
       item.sortText = '0';
       completions.push(item);
 
@@ -250,14 +222,9 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
       );
 
       if (minimalTemplate !== template) {
-        const minimalItem = new vscode.CompletionItem(
-          'Minimal template',
-          vscode.CompletionItemKind.Snippet,
-        );
+        const minimalItem = new vscode.CompletionItem('Minimal template', vscode.CompletionItemKind.Snippet);
         minimalItem.insertText = new vscode.SnippetString(minimalTemplate);
-        minimalItem.documentation = new vscode.MarkdownString(
-          'Minimal object with required fields only',
-        );
+        minimalItem.documentation = new vscode.MarkdownString('Minimal object with required fields only');
         minimalItem.sortText = '1';
         completions.push(minimalItem);
       }
@@ -274,10 +241,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     // For enums, provide enum values
     if (schema.enum) {
       for (const enumValue of schema.enum) {
-        const item = new vscode.CompletionItem(
-          String(enumValue),
-          vscode.CompletionItemKind.EnumMember,
-        );
+        const item = new vscode.CompletionItem(String(enumValue), vscode.CompletionItemKind.EnumMember);
         item.insertText = JSON.stringify(enumValue);
         completions.push(item);
       }
@@ -290,7 +254,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
    * Create full resource template
    */
   private createFullResourceTemplate(schema: SchemaProperty, baseIndent: string): string {
-    const indent1 = baseIndent + '  ';
+    const indent1 = `${baseIndent}  `;
     const lines: string[] = [];
 
     lines.push('{');
@@ -300,7 +264,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     // metadata section
     if (schema.properties?.metadata) {
       lines.push(`${indent1}"metadata": {`);
-      const indent2 = indent1 + '  ';
+      const indent2 = `${indent1}  `;
 
       // Required: name
       lines.push(`${indent2}"name": "\${${tabStop++}:resource-name}",`);
@@ -353,11 +317,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Create section template (metadata or spec)
    */
-  private createSectionTemplate(
-    sectionName: string,
-    schema: SchemaProperty,
-    baseIndent: string,
-  ): string {
+  private createSectionTemplate(sectionName: string, schema: SchemaProperty, baseIndent: string): string {
     const template = CompletionHelper.generateObjectTemplate(schema, baseIndent, true);
     return `"${sectionName}": ${template}`;
   }
@@ -365,11 +325,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Create property insertion text
    */
-  private createPropertyInsertText(
-    propName: string,
-    propSchema: SchemaProperty,
-    indentString: string,
-  ): string {
+  private createPropertyInsertText(propName: string, propSchema: SchemaProperty, indentString: string): string {
     const recommendedValue = propSchema['x-f5xc-recommended-value'];
     const defaultValue = propSchema.default;
     const value = recommendedValue ?? defaultValue;

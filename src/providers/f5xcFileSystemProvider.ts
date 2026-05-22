@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
+import type { Resource } from '../api/client';
 import { RESOURCE_TYPES } from '../api/resourceTypes';
-import { Resource } from '../api/client';
+import type { ProfileManager } from '../config/profiles';
+import { showError, showInfo } from '../utils/errors';
 import { getLogger } from '../utils/logger';
-import { showInfo, showError } from '../utils/errors';
 
 const logger = getLogger();
 
@@ -66,15 +66,8 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
   /**
    * Create an F5 XC URI from components
    */
-  static createUri(
-    profileName: string,
-    namespace: string,
-    resourceType: string,
-    resourceName: string,
-  ): vscode.Uri {
-    return vscode.Uri.parse(
-      `f5xc://${profileName}/${namespace}/${resourceType}/${resourceName}.json`,
-    );
+  static createUri(profileName: string, namespace: string, resourceType: string, resourceName: string): vscode.Uri {
+    return vscode.Uri.parse(`f5xc://${profileName}/${namespace}/${resourceType}/${resourceName}.json`);
   }
 
   watch(): vscode.Disposable {
@@ -119,7 +112,11 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
 
     // Return cached content if available
     if (this.fileContents.has(key)) {
-      return this.fileContents.get(key)!;
+      const cached = this.fileContents.get(key);
+      if (cached) {
+        return cached;
+      }
+      throw vscode.FileSystemError.FileNotFound(uri);
     }
 
     // Fetch from API
@@ -135,13 +132,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
       const apiBase = resourceTypeInfo.apiBase || 'config';
 
       // Get the full resource (without GET_RSP_FORMAT_FOR_REPLACE which returns spec-only)
-      const response = await client.get(
-        namespace,
-        resourceTypeInfo.apiPath,
-        resourceName,
-        undefined,
-        apiBase,
-      );
+      const response = await client.get(namespace, resourceTypeInfo.apiPath, resourceName, undefined, apiBase);
 
       // Handle different F5 XC API response structures
       const responseAny = response as unknown as Record<string, unknown>;
@@ -248,7 +239,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
       const wrapperKeys = ['object', 'get_spec', 'replace_spec', 'create_form', 'replace_form'];
       for (const key of wrapperKeys) {
         const wrapper = parsedContent[key] as Record<string, unknown> | undefined;
-        if (wrapper && wrapper.metadata && wrapper.spec) {
+        if (wrapper?.metadata && wrapper.spec) {
           metadata = wrapper.metadata as Record<string, unknown>;
           spec = wrapper.spec as Record<string, unknown>;
           break;
@@ -287,9 +278,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
     const metadataNamespace = metadata.namespace as string | undefined;
 
     if (metadataName && metadataName !== resourceName) {
-      showError(
-        `Resource name in JSON (${metadataName}) does not match file name (${resourceName})`,
-      );
+      showError(`Resource name in JSON (${metadataName}) does not match file name (${resourceName})`);
       throw vscode.FileSystemError.NoPermissions('Resource name mismatch');
     }
 
@@ -316,13 +305,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
           cancellable: false,
         },
         async () => {
-          await client.replace(
-            namespace,
-            resourceTypeInfo.apiPath,
-            resourceName,
-            requestBody,
-            apiBase,
-          );
+          await client.replace(namespace, resourceTypeInfo.apiPath, resourceName, requestBody, apiBase);
         },
       );
 

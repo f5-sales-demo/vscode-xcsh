@@ -60,9 +60,7 @@ export const POP_COORDINATES: Record<string, Coordinates> = {
  * Parse location components from Cloud Status PoP name
  * Pattern: "City (code), State/Region, Country" or "City, Country" or "City"
  */
-export function parsePopLocation(
-  popName: string,
-): { city: string; region?: string; country?: string } | null {
+export function parsePopLocation(popName: string): { city: string; region?: string; country?: string } | null {
   // Remove site code in parentheses first
   const cleanName = popName.replace(/\s*\([^)]+\)/, '').trim();
   const parts = cleanName.split(',').map((p) => p.trim());

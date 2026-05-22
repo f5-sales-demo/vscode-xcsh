@@ -10,33 +10,34 @@
  */
 
 import {
+  type CommonError,
+  type DangerLevel,
   GENERATED_RESOURCE_TYPES,
-  GeneratedResourceTypeInfo,
-  DangerLevel,
-  OperationMetadata,
-  ResourceOperationMetadata,
-  SideEffects,
-  CommonError,
+  type GeneratedResourceTypeInfo,
+  type OperationMetadata,
+  type ResourceOperationMetadata,
+  type SideEffects,
 } from '../generated/resourceTypesBase';
 
 // Re-export operation metadata types for use by other modules
-export type { DangerLevel, OperationMetadata, ResourceOperationMetadata, SideEffects, CommonError };
+export type { CommonError, DangerLevel, OperationMetadata, ResourceOperationMetadata, SideEffects };
 
 /**
  * CRUD operation types for metadata lookup
  */
 export type CrudOperation = 'list' | 'get' | 'create' | 'update' | 'delete';
+
 import {
-  BUILT_IN_NAMESPACES,
   API_ENDPOINTS,
+  BUILT_IN_NAMESPACES,
   isBuiltInNamespace as generatedIsBuiltInNamespace,
 } from '../generated/constants';
 import {
-  getLocalCategoryForDomain,
-  isPreviewDomain,
+  getDomainComplexity,
   getDomainTierRequirement,
   getDomainUseCases,
-  getDomainComplexity,
+  getLocalCategoryForDomain,
+  isPreviewDomain,
 } from '../generated/domainCategories';
 
 /**
@@ -1015,7 +1016,7 @@ function mergeResourceType(
   // Start with defaults
   // For namespaceScope: use override first, then generated, then default to 'any'
   const result: ResourceTypeInfo = {
-    apiPath: override.apiPath || generated?.apiPath || key + 's',
+    apiPath: override.apiPath || generated?.apiPath || `${key}s`,
     displayName: override.displayName || generated?.displayName || key,
     description: generated?.description,
     schemaFile: generated?.schemaFile,
@@ -1149,10 +1150,7 @@ export function isBuiltInNamespace(namespace: string): boolean {
  * - 'shared': Only available in shared namespace (rare)
  * - 'any': Available in user namespaces (shared, default, custom) but NOT system
  */
-export function isResourceTypeAvailableForNamespace(
-  resourceType: ResourceTypeInfo,
-  namespace: string,
-): boolean {
+export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeInfo, namespace: string): boolean {
   const scope = resourceType.namespaceScope || 'any';
 
   switch (scope) {
@@ -1162,7 +1160,6 @@ export function isResourceTypeAvailableForNamespace(
     case 'shared':
       // Shared-scoped resources only appear in shared namespace
       return namespace === 'shared';
-    case 'any':
     default:
       // Resources with 'any' scope (parameterized {namespace} paths) are available
       // in user namespaces (shared, default, custom) but NOT in system namespace.
@@ -1208,7 +1205,7 @@ export function getCategorizedResourceTypesForNamespace(
 }
 
 // Re-export BUILT_IN_NAMESPACES for backwards compatibility
-export { BUILT_IN_NAMESPACES, API_ENDPOINTS };
+export { API_ENDPOINTS, BUILT_IN_NAMESPACES };
 
 // =====================================================
 // Operation Metadata Helper Functions
@@ -1221,10 +1218,7 @@ export { BUILT_IN_NAMESPACES, API_ENDPOINTS };
  * @param operation - The CRUD operation type
  * @returns The operation metadata or undefined if not available
  */
-export function getOperationMetadata(
-  resourceKey: string,
-  operation: CrudOperation,
-): OperationMetadata | undefined {
+export function getOperationMetadata(resourceKey: string, operation: CrudOperation): OperationMetadata | undefined {
   const generated = GENERATED_RESOURCE_TYPES[resourceKey];
   return generated?.operationMetadata?.[operation];
 }
@@ -1237,10 +1231,7 @@ export function getOperationMetadata(
  * @param operation - The CRUD operation type (default: 'delete' as most common use case)
  * @returns The danger level ('low', 'medium', or 'high')
  */
-export function getDangerLevel(
-  resourceKey: string,
-  operation: CrudOperation = 'delete',
-): DangerLevel {
+export function getDangerLevel(resourceKey: string, operation: CrudOperation = 'delete'): DangerLevel {
   const metadata = getOperationMetadata(resourceKey, operation);
   return metadata?.dangerLevel ?? 'medium';
 }
@@ -1252,10 +1243,7 @@ export function getDangerLevel(
  * @param operation - The CRUD operation type
  * @returns The purpose string or undefined
  */
-export function getOperationPurpose(
-  resourceKey: string,
-  operation: CrudOperation,
-): string | undefined {
+export function getOperationPurpose(resourceKey: string, operation: CrudOperation): string | undefined {
   const metadata = getOperationMetadata(resourceKey, operation);
   return metadata?.purpose;
 }
@@ -1279,10 +1267,7 @@ export function getRequiredFields(resourceKey: string, operation: 'create' | 'up
  * @param operation - The CRUD operation type
  * @returns Side effects object or undefined
  */
-export function getSideEffects(
-  resourceKey: string,
-  operation: CrudOperation,
-): SideEffects | undefined {
+export function getSideEffects(resourceKey: string, operation: CrudOperation): SideEffects | undefined {
   const metadata = getOperationMetadata(resourceKey, operation);
   return metadata?.sideEffects;
 }
@@ -1354,9 +1339,7 @@ export function getPrerequisites(resourceKey: string, operation: CrudOperation):
  * @param resourceKey - The resource type key
  * @returns The full ResourceOperationMetadata or undefined
  */
-export function getAllOperationMetadata(
-  resourceKey: string,
-): ResourceOperationMetadata | undefined {
+export function getAllOperationMetadata(resourceKey: string): ResourceOperationMetadata | undefined {
   const generated = GENERATED_RESOURCE_TYPES[resourceKey];
   return generated?.operationMetadata;
 }
@@ -1509,10 +1492,7 @@ export function isFieldServerDefaulted(resourceKey: string, fieldPath: string): 
  * @param operation - The operation type ('create' or 'update'), defaults to 'create'
  * @returns Array of field paths that user must provide
  */
-export function getUserRequiredFields(
-  resourceKey: string,
-  operation: 'create' | 'update' = 'create',
-): string[] {
+export function getUserRequiredFields(resourceKey: string, operation: 'create' | 'update' = 'create'): string[] {
   const generated = GENERATED_RESOURCE_TYPES[resourceKey];
   const fieldMetadata = generated?.fieldMetadata;
   if (!fieldMetadata) {
@@ -1693,7 +1673,7 @@ export function getFieldConstraints(resourceKey: string): Record<
     }
   > = {};
   for (const [path, meta] of Object.entries(fields)) {
-    const c = (meta as Record<string, unknown>)['constraints'];
+    const c = (meta as Record<string, unknown>).constraints;
     if (c && typeof c === 'object') {
       result[path] = c;
     }
@@ -1714,7 +1694,7 @@ export function getFieldConflicts(resourceKey: string): Record<string, string[]>
 
   const result: Record<string, string[]> = {};
   for (const [path, meta] of Object.entries(fields)) {
-    const cw = (meta as Record<string, unknown>)['conflictsWith'];
+    const cw = (meta as Record<string, unknown>).conflictsWith;
     if (Array.isArray(cw) && cw.length > 0) {
       result[path] = cw as string[];
     }
@@ -1731,7 +1711,7 @@ export function getFieldDescription(resourceKey: string, fieldPath: string): str
   if (!meta) {
     return undefined;
   }
-  return (meta as Record<string, unknown>)['descriptionShort'] as string | undefined;
+  return (meta as Record<string, unknown>).descriptionShort as string | undefined;
 }
 
 /**

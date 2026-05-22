@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
-import { RESOURCE_TYPES, ResourceTypeInfo } from '../api/resourceTypes';
+import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
+import type { ProfileManager } from '../config/profiles';
 import { getLogger } from '../utils/logger';
-import { filterResource, getFilterOptionsForViewMode, ViewMode } from '../utils/resourceFilter';
+import { filterResource, getFilterOptionsForViewMode, type ViewMode } from '../utils/resourceFilter';
 
 const logger = getLogger();
 
@@ -65,15 +65,8 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
   /**
    * Create an F5 XC View URI from components
    */
-  static createUri(
-    profileName: string,
-    namespace: string,
-    resourceType: string,
-    resourceName: string,
-  ): vscode.Uri {
-    return vscode.Uri.parse(
-      `f5xc-view://${profileName}/${namespace}/${resourceType}/${resourceName}.json`,
-    );
+  static createUri(profileName: string, namespace: string, resourceType: string, resourceName: string): vscode.Uri {
+    return vscode.Uri.parse(`f5xc-view://${profileName}/${namespace}/${resourceType}/${resourceName}.json`);
   }
 
   /**
@@ -96,7 +89,7 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
 
     // Return cached content if available
     if (this.contentCache.has(cacheKey)) {
-      return this.contentCache.get(cacheKey)!;
+      return this.contentCache.get(cacheKey) ?? '';
     }
 
     try {
@@ -116,10 +109,7 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
       // Apply view mode filtering
       const viewMode = getViewMode();
       const filterOptions = getFilterOptionsForViewMode(viewMode);
-      const filteredResource = filterResource(
-        resource as unknown as Record<string, unknown>,
-        filterOptions,
-      );
+      const filteredResource = filterResource(resource as unknown as Record<string, unknown>, filterOptions);
 
       const content = JSON.stringify(filteredResource, null, 2);
 

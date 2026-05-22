@@ -1,27 +1,27 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
+import { registerCloudStatusCommands } from './commands/cloudStatus';
+import { registerCrudCommands } from './commands/crud';
+import { registerDiagramCommands } from './commands/diagram';
+import { registerObservabilityCommands } from './commands/observability';
+import { registerProfileCommands } from './commands/profile';
 import { ProfileManager } from './config/profiles';
+import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
+import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
+import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
+import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
+import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
+import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
+import { F5XCViewProvider } from './providers/f5xcViewProvider';
+import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
+import { SubscriptionDashboardProvider } from './providers/subscriptionDashboardProvider';
+import { getSchemaRegistry } from './schema/schemaRegistry';
+import { CloudStatusProvider } from './tree/cloudStatusProvider';
 import { F5XCExplorerProvider } from './tree/f5xcExplorer';
 import { ProfilesProvider } from './tree/profilesProvider';
-import { CloudStatusProvider } from './tree/cloudStatusProvider';
 import { SubscriptionProvider } from './tree/subscriptionProvider';
-import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
-import { F5XCViewProvider } from './providers/f5xcViewProvider';
-import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
-import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
-import { SubscriptionDashboardProvider } from './providers/subscriptionDashboardProvider';
-import { registerCrudCommands } from './commands/crud';
-import { registerProfileCommands } from './commands/profile';
-import { registerObservabilityCommands } from './commands/observability';
-import { registerDiagramCommands } from './commands/diagram';
-import { registerCloudStatusCommands } from './commands/cloudStatus';
-import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
-import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
-import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
-import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
-import { getSchemaRegistry } from './schema/schemaRegistry';
-import { getLogger, Logger } from './utils/logger';
+import { getLogger, type Logger } from './utils/logger';
 
 let logger: Logger;
 
@@ -66,9 +66,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Initialize and register the view provider for read-only resource viewing
   const viewProvider = new F5XCViewProvider(profileManager);
-  context.subscriptions.push(
-    vscode.workspace.registerTextDocumentContentProvider('f5xc-view', viewProvider),
-  );
+  context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('f5xc-view', viewProvider));
 
   // Initialize the describe provider for formatted resource descriptions
   const describeProvider = new F5XCDescribeProvider(profileManager);
@@ -76,9 +74,7 @@ export function activate(context: vscode.ExtensionContext): void {
   // Initialize and register the schema provider for JSON IntelliSense
   console.log('[Extension] Registering F5XC Schema Provider');
   const schemaProvider = new F5XCSchemaProvider();
-  context.subscriptions.push(
-    vscode.workspace.registerTextDocumentContentProvider('f5xc-schema', schemaProvider),
-  );
+  context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('f5xc-schema', schemaProvider));
   console.log('[Extension] Schema provider registered');
 
   // Pre-warm schema cache for commonly used resource types
@@ -86,10 +82,7 @@ export function activate(context: vscode.ExtensionContext): void {
   console.log('[Extension] Pre-warming schema cache for common resource types');
   schemaRegistry.prewarmCache(['http_loadbalancer', 'origin_pool', 'healthcheck', 'app_firewall']);
   const cacheStats = schemaRegistry.getCacheStats();
-  console.log(
-    '[Extension] Schema cache stats:',
-    `${cacheStats.cachedCount}/${cacheStats.availableCount}`,
-  );
+  console.log('[Extension] Schema cache stats:', `${cacheStats.cachedCount}/${cacheStats.availableCount}`);
 
   // Register completion providers for enhanced IntelliSense
   try {
@@ -116,10 +109,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // Register inline completion provider (ghost text)
     const inlineCompletionProvider = new F5XCInlineCompletionProvider();
     context.subscriptions.push(
-      vscode.languages.registerInlineCompletionItemProvider(
-        f5xcDocumentSelector,
-        inlineCompletionProvider,
-      ),
+      vscode.languages.registerInlineCompletionItemProvider(f5xcDocumentSelector, inlineCompletionProvider),
     );
 
     logger.info('Completion providers registered successfully');
@@ -158,26 +148,23 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register addon activation command (for programmatic access)
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      'f5xc.activateAddon',
-      async (addonName: string, profileName?: string) => {
-        const activeProfile = await profileManager.getActiveProfile();
-        const profile = profileName || activeProfile?.name;
-        if (!profile) {
-          void vscode.window.showWarningMessage('No active profile selected');
-          return;
-        }
-        if (!addonName) {
-          void vscode.window.showWarningMessage('Addon name is required');
-          return;
-        }
-        // Show the plan dashboard which handles activation
-        await subscriptionDashboardProvider.showPlan(profile);
-        void vscode.window.showInformationMessage(
-          `To activate "${addonName}", click the Activate button in the Plan dashboard.`,
-        );
-      },
-    ),
+    vscode.commands.registerCommand('f5xc.activateAddon', async (addonName: string, profileName?: string) => {
+      const activeProfile = await profileManager.getActiveProfile();
+      const profile = profileName || activeProfile?.name;
+      if (!profile) {
+        void vscode.window.showWarningMessage('No active profile selected');
+        return;
+      }
+      if (!addonName) {
+        void vscode.window.showWarningMessage('Addon name is required');
+        return;
+      }
+      // Show the plan dashboard which handles activation
+      await subscriptionDashboardProvider.showPlan(profile);
+      void vscode.window.showInformationMessage(
+        `To activate "${addonName}", click the Activate button in the Plan dashboard.`,
+      );
+    }),
   );
 
   // Register tree views
@@ -217,14 +204,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerProfileCommands(context, profileManager, profilesProvider, explorerProvider);
 
   // Register CRUD commands
-  registerCrudCommands(
-    context,
-    explorerProvider,
-    profileManager,
-    fsProvider,
-    viewProvider,
-    describeProvider,
-  );
+  registerCrudCommands(context, explorerProvider, profileManager, fsProvider, viewProvider, describeProvider);
 
   // Register observability commands
   registerObservabilityCommands(context, profileManager);
@@ -236,11 +216,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerCloudStatusCommands(context, cloudStatusProvider, cloudStatusDashboardProvider);
 
   // Register healthcheck form provider
-  const healthcheckFormProvider = new HealthcheckFormProvider(
-    profileManager,
-    explorerProvider,
-    describeProvider,
-  );
+  const healthcheckFormProvider = new HealthcheckFormProvider(profileManager, explorerProvider, describeProvider);
   context.subscriptions.push(
     vscode.commands.registerCommand('f5xc.createHealthcheckForm', async (arg?: unknown) => {
       // Extract namespace from context if available

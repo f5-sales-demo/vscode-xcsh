@@ -62,9 +62,7 @@ export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
     }
 
     if (!resourceType) {
-      logger.warn(
-        `Invalid schema URI format: ${uri.toString()}, authority: ${uri.authority}, path: ${uri.path}`,
-      );
+      logger.warn(`Invalid schema URI format: ${uri.toString()}, authority: ${uri.authority}, path: ${uri.path}`);
       console.log('[SchemaProvider] Invalid URI format - no resource type extracted');
       console.log('[SchemaProvider] Authority:', JSON.stringify(uri.authority));
       console.log('[SchemaProvider] Path:', JSON.stringify(uri.path));
@@ -136,10 +134,7 @@ export function configureJsonSchemaAssociations(): void {
   const resourceTypes = registry.getAvailableResourceTypes();
 
   // Create schema associations for each resource type
-  const schemaAssociations: Record<string, string[]> = { ...existingSchemas } as Record<
-    string,
-    string[]
-  >;
+  const schemaAssociations: Record<string, string[]> = { ...existingSchemas } as Record<string, string[]>;
 
   for (const resourceType of resourceTypes) {
     const schemaUri = `f5xc-schema://schemas/${resourceType}.json`;

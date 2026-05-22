@@ -15,8 +15,8 @@
  * 3. Generate menu schema showing resources per namespace type
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
 
 /**
@@ -162,7 +162,7 @@ const CATEGORY_MAPPINGS: { pattern: RegExp; category: string; icon: string }[] =
  */
 function extractSchemaId(filename: string): string | null {
   const match = filename.match(/public\.(ves\.io\.schema\.[^.]+(?:\.[^.]+)*?)\.ves-swagger\.json$/);
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
   return null;
@@ -204,8 +204,7 @@ function deriveScope(paths: PathAnalysis[]): { scope: NamespaceScope; reason: st
   if (hasNamespaceParam) {
     return {
       scope: 'any',
-      reason:
-        'Has parameterized {namespace} path - available in user namespaces (shared, default, custom)',
+      reason: 'Has parameterized {namespace} path - available in user namespaces (shared, default, custom)',
     };
   }
 
@@ -284,15 +283,12 @@ function parseSpec(filePath: string): ResourceAnalysis | null {
 
     // Extract display name and description
     const displayName =
-      spec.info?.title ||
-      resourceKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+      spec.info?.title || resourceKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
     const descriptionRaw = spec.info?.description || '';
 
     // Determine API base from paths
     const pathKeys = Object.keys(spec.paths || {});
-    const apiBase: 'config' | 'web' = pathKeys.some((p) => p.startsWith('/api/web'))
-      ? 'web'
-      : 'config';
+    const apiBase: 'config' | 'web' = pathKeys.some((p) => p.startsWith('/api/web')) ? 'web' : 'config';
 
     // Analyze all paths
     const paths = pathKeys.map(analyzePath);
@@ -330,7 +326,6 @@ function isResourceAvailableForNamespace(
     case 'shared':
       // Shared-scoped resources only appear in shared namespace
       return namespaceType === 'shared';
-    case 'any':
     default:
       // 'any' scope means user namespaces (shared, default, custom) but NOT system
       return namespaceType !== 'system';
@@ -372,7 +367,7 @@ function buildNamespaceSchema(
     categories[category].resources.push({
       key: resource.resourceKey,
       displayName: resource.displayName,
-      apiPath: resource.resourceKey + 's', // Simplified - actual apiPath would need more logic
+      apiPath: `${resource.resourceKey}s`, // Simplified - actual apiPath would need more logic
       scope: resource.derivedScope,
     });
 

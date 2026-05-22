@@ -8,10 +8,10 @@
  * no timestamps, random values, or non-deterministic ordering.
  */
 
-import * as crypto from 'crypto';
-import * as path from 'path';
-import { parseAllDomainFiles, ParsedSpecInfo } from '../../../scripts/generators/spec-parser';
+import * as crypto from 'node:crypto';
+import * as path from 'node:path';
 import { generateResourceTypesContent } from '../../../scripts/generators/resource-type-generator';
+import { type ParsedSpecInfo, parseAllDomainFiles } from '../../../scripts/generators/spec-parser';
 
 const DOMAINS_DIR = path.resolve(__dirname, '../../../docs/specifications/api/domains');
 

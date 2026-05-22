@@ -17,7 +17,7 @@ type NamespaceScope = 'any' | 'system' | 'shared';
 
 function extractSchemaId(filename: string): string | null {
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
-  return match && match[1] ? match[1] : null;
+  return match?.[1] ? match[1] : null;
 }
 
 function deriveResourceKey(schemaId: string): string | null {
@@ -38,9 +38,9 @@ function deriveResourceKey(schemaId: string): string | null {
 
 function deriveApiPathSuffix(resourceKey: string): string {
   if (resourceKey.endsWith('s')) {
-    return resourceKey + 'es';
+    return `${resourceKey}es`;
   }
-  return resourceKey + 's';
+  return `${resourceKey}s`;
 }
 
 function deriveNamespaceScope(fullPath: string | null): NamespaceScope {
@@ -75,19 +75,16 @@ function formatDisplayName(title: string | undefined, resourceKey: string): stri
     return cleaned;
   }
 
-  return (
-    resourceKey
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ') + 's'
-  );
+  return `${resourceKey
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')}s`;
 }
 
 describe('Generator Utilities', () => {
   describe('extractSchemaId', () => {
     it('should extract schema ID from valid filename', () => {
-      const filename =
-        'docs-cloud-f5-com.0073.public.ves.io.schema.views.http_loadbalancer.ves-swagger.json';
+      const filename = 'docs-cloud-f5-com.0073.public.ves.io.schema.views.http_loadbalancer.ves-swagger.json';
       expect(extractSchemaId(filename)).toBe('ves.io.schema.views.http_loadbalancer');
     });
 
@@ -103,8 +100,7 @@ describe('Generator Utilities', () => {
     });
 
     it('should handle nested schema IDs', () => {
-      const filename =
-        'docs-cloud-f5-com.0042.public.ves.io.schema.api_sec.api_crawler.ves-swagger.json';
+      const filename = 'docs-cloud-f5-com.0042.public.ves.io.schema.api_sec.api_crawler.ves-swagger.json';
       expect(extractSchemaId(filename)).toBe('ves.io.schema.api_sec.api_crawler');
     });
   });
@@ -154,9 +150,7 @@ describe('Generator Utilities', () => {
     });
 
     it('should return any for parameterized namespace paths', () => {
-      expect(deriveNamespaceScope('/api/config/namespaces/{namespace}/http_loadbalancers')).toBe(
-        'any',
-      );
+      expect(deriveNamespaceScope('/api/config/namespaces/{namespace}/http_loadbalancers')).toBe('any');
       expect(deriveNamespaceScope('/api/config/namespaces/{ns}/resources')).toBe('any');
     });
 
@@ -245,7 +239,7 @@ describe('Generated Files Contract', () => {
   it('should have required fields in resource types', () => {
     const generated = require('../../generated/resourceTypesBase');
 
-    const httpLb = generated.GENERATED_RESOURCE_TYPES['http_loadbalancer'];
+    const httpLb = generated.GENERATED_RESOURCE_TYPES.http_loadbalancer;
     expect(httpLb).toBeDefined();
     expect(httpLb.apiPath).toBeDefined();
     expect(httpLb.displayName).toBeDefined();

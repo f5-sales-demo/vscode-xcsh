@@ -6,13 +6,13 @@
  */
 
 import * as vscode from 'vscode';
-import {
-  generateSchemaForResourceType,
-  generateGenericSchema,
-  getSchemaResourceTypes,
-  F5XCJsonSchema,
-} from './schemaGenerator';
 import { getLogger } from '../utils/logger';
+import {
+  type F5XCJsonSchema,
+  generateGenericSchema,
+  generateSchemaForResourceType,
+  getSchemaResourceTypes,
+} from './schemaGenerator';
 
 const logger = getLogger();
 
@@ -49,7 +49,7 @@ export class SchemaRegistry {
   getOrGenerateSchema(resourceType: string): F5XCJsonSchema | null {
     // Check cache first
     if (this.schemas.has(resourceType)) {
-      return this.schemas.get(resourceType)!;
+      return this.schemas.get(resourceType) ?? null;
     }
 
     // Generate schema
@@ -118,12 +118,7 @@ export class SchemaRegistry {
    * This can improve performance for frequently accessed resources.
    */
   prewarmCache(resourceTypes?: string[]): void {
-    const typesToWarm = resourceTypes || [
-      'http_loadbalancer',
-      'origin_pool',
-      'healthcheck',
-      'app_firewall',
-    ];
+    const typesToWarm = resourceTypes || ['http_loadbalancer', 'origin_pool', 'healthcheck', 'app_firewall'];
 
     for (const type of typesToWarm) {
       this.getOrGenerateSchema(type);

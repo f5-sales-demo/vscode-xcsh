@@ -6,22 +6,22 @@
  */
 
 import * as vscode from 'vscode';
+import type { Site } from '../api/client';
 import {
   CloudStatusClient,
-  Component,
-  ComponentStatus,
-  Incident,
-  ScheduledMaintenance,
-  SummaryResponse,
-  getStatusDisplayText,
-  getIncidentStatusText,
+  type Component,
+  type ComponentStatus,
   extractSiteCode,
+  getIncidentStatusText,
+  getStatusDisplayText,
+  type Incident,
+  type ScheduledMaintenance,
+  type SummaryResponse,
 } from '../api/cloudStatus';
-import { Site } from '../api/client';
-import { ProfileManager } from '../config/profiles';
-import { getLogger } from '../utils/logger';
-import { getPopCoordinates, formatCoordinates, Coordinates } from '../api/popCoordinates';
 import { geocodeLocation } from '../api/geocoder';
+import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/popCoordinates';
+import type { ProfileManager } from '../config/profiles';
+import { getLogger } from '../utils/logger';
 
 /**
  * WebView provider for Cloud Status Dashboard
@@ -46,16 +46,11 @@ export class CloudStatusDashboardProvider {
       return;
     }
 
-    this.panel = vscode.window.createWebviewPanel(
-      'cloudStatusDashboard',
-      'F5 Cloud Status',
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [],
-      },
-    );
+    this.panel = vscode.window.createWebviewPanel('cloudStatusDashboard', 'F5 Cloud Status', vscode.ViewColumn.One, {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+      localResourceRoots: [],
+    });
 
     this.panel.onDidDispose(() => {
       this.panel = undefined;
@@ -184,7 +179,7 @@ export class CloudStatusDashboardProvider {
    */
   private getWebviewContent(summary: SummaryResponse): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
 
     // Group components by their group_id
     const groups = new Map<string, Component>();
@@ -201,7 +196,7 @@ export class CloudStatusDashboardProvider {
     for (const component of summary.components) {
       if (!component.group) {
         if (component.group_id && componentsByGroup.has(component.group_id)) {
-          componentsByGroup.get(component.group_id)!.push(component);
+          componentsByGroup.get(component.group_id)?.push(component);
         } else {
           standaloneComponents.push(component);
         }
@@ -242,9 +237,7 @@ export class CloudStatusDashboardProvider {
         : '';
 
     // Build maintenance HTML
-    const activeMaintenance = summary.scheduled_maintenances.filter(
-      (m) => m.status !== 'completed',
-    );
+    const activeMaintenance = summary.scheduled_maintenances.filter((m) => m.status !== 'completed');
     const maintenanceHtml =
       activeMaintenance.length > 0
         ? `
@@ -263,9 +256,7 @@ export class CloudStatusDashboardProvider {
     // Overall status banner
     const overallStatus = summary.status;
     const statusBannerClass =
-      overallStatus.indicator === 'none'
-        ? 'banner-operational'
-        : `banner-${overallStatus.indicator}`;
+      overallStatus.indicator === 'none' ? 'banner-operational' : `banner-${overallStatus.indicator}`;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -335,11 +326,7 @@ export class CloudStatusDashboardProvider {
   /**
    * Render a component group (collapsible)
    */
-  private renderComponentGroup(
-    group: Component,
-    children: Component[],
-    worstStatus: ComponentStatus,
-  ): string {
+  private renderComponentGroup(group: Component, children: Component[], worstStatus: ComponentStatus): string {
     const statusClass = this.getStatusColor(worstStatus);
     const componentsHtml = children
       .sort((a, b) => a.position - b.position)
@@ -435,7 +422,7 @@ export class CloudStatusDashboardProvider {
    */
   private getErrorContent(message: string): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -928,10 +915,7 @@ export class CloudStatusDashboardProvider {
   /**
    * Generate HTML content for maintenance details
    */
-  private getMaintenanceDetailsContent(
-    maintenance: ScheduledMaintenance,
-    webview: vscode.Webview,
-  ): string {
+  private getMaintenanceDetailsContent(maintenance: ScheduledMaintenance, webview: vscode.Webview): string {
     const nonce = this.getNonce();
     const cspSource = webview.cspSource;
     const scheduledFor = new Date(maintenance.scheduled_for).toLocaleString();
@@ -1303,9 +1287,7 @@ export class CloudStatusDashboardProvider {
     const nonce = this.getNonce();
     const cspSource = webview.cspSource;
     const startedAt = new Date(incident.started_at).toLocaleString();
-    const resolvedAt = incident.resolved_at
-      ? new Date(incident.resolved_at).toLocaleString()
-      : 'Ongoing';
+    const resolvedAt = incident.resolved_at ? new Date(incident.resolved_at).toLocaleString() : 'Ongoing';
     const createdAt = new Date(incident.created_at).toLocaleString();
     const updatedAt = new Date(incident.updated_at).toLocaleString();
     const affectedComponents = incident.components.map((c) => c.name);
@@ -1466,11 +1448,7 @@ export class CloudStatusDashboardProvider {
     // Fetch related incidents for this component
     const relatedIncidents = await this.client.getIncidentsForComponent(component.id);
 
-    panel.webview.html = this.getComponentDetailsContent(
-      component,
-      relatedIncidents,
-      panel.webview,
-    );
+    panel.webview.html = this.getComponentDetailsContent(component, relatedIncidents, panel.webview);
 
     panel.webview.onDidReceiveMessage(async (message: { command: string }) => {
       switch (message.command) {
@@ -1484,18 +1462,12 @@ export class CloudStatusDashboardProvider {
   /**
    * Generate HTML content for component details
    */
-  private getComponentDetailsContent(
-    component: Component,
-    incidents: Incident[],
-    webview: vscode.Webview,
-  ): string {
+  private getComponentDetailsContent(component: Component, incidents: Incident[], webview: vscode.Webview): string {
     const nonce = this.getNonce();
     const cspSource = webview.cspSource;
     const createdAt = new Date(component.created_at).toLocaleString();
     const updatedAt = new Date(component.updated_at).toLocaleString();
-    const startDate = component.start_date
-      ? new Date(component.start_date).toLocaleDateString()
-      : 'N/A';
+    const startDate = component.start_date ? new Date(component.start_date).toLocaleDateString() : 'N/A';
 
     // Separate active and resolved incidents
     const activeIncidents = incidents.filter((i) => i.status !== 'resolved');
@@ -1531,9 +1503,7 @@ export class CloudStatusDashboardProvider {
         ? resolvedIncidents
             .map((incident) => {
               const startedAt = new Date(incident.started_at).toLocaleString();
-              const resolvedAt = incident.resolved_at
-                ? new Date(incident.resolved_at).toLocaleString()
-                : 'N/A';
+              const resolvedAt = incident.resolved_at ? new Date(incident.resolved_at).toLocaleString() : 'N/A';
               return `
               <div class="incident-card resolved">
                 <div class="incident-header">
@@ -1731,16 +1701,11 @@ export class CloudStatusDashboardProvider {
    * Show PoP (Regional Edge) details in a WebView panel
    */
   async showPoPDetails(component: Component): Promise<void> {
-    const panel = vscode.window.createWebviewPanel(
-      'popDetails',
-      `PoP: ${component.name}`,
-      vscode.ViewColumn.One,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: false,
-        localResourceRoots: [],
-      },
-    );
+    const panel = vscode.window.createWebviewPanel('popDetails', `PoP: ${component.name}`, vscode.ViewColumn.One, {
+      enableScripts: true,
+      retainContextWhenHidden: false,
+      localResourceRoots: [],
+    });
 
     // Extract site code from PoP name (e.g., "Ashburn (dc12)" -> "dc12")
     const siteCode = extractSiteCode(component.name);
@@ -1762,10 +1727,7 @@ export class CloudStatusDashboardProvider {
       } catch (error) {
         // Log error and fall back to Cloud Status data only
         const logger = getLogger();
-        logger.error(
-          `[showPoPDetails] Error fetching XC data`,
-          error instanceof Error ? error : undefined,
-        );
+        logger.error(`[showPoPDetails] Error fetching XC data`, error instanceof Error ? error : undefined);
         xcSite = null;
       }
     }
@@ -1847,9 +1809,7 @@ export class CloudStatusDashboardProvider {
         ? resolvedIncidents
             .map((incident) => {
               const startedAt = new Date(incident.started_at).toLocaleString();
-              const resolvedAt = incident.resolved_at
-                ? new Date(incident.resolved_at).toLocaleString()
-                : 'N/A';
+              const resolvedAt = incident.resolved_at ? new Date(incident.resolved_at).toLocaleString() : 'N/A';
               return `
               <div class="incident-card resolved">
                 <div class="incident-header">
@@ -1871,14 +1831,14 @@ export class CloudStatusDashboardProvider {
     let xcDetailsHtml: string;
     if (xcSite) {
       const siteObj = xcSite as unknown as Record<string, unknown>;
-      const labels = (siteObj['labels'] as Record<string, string>) || {};
+      const labels = (siteObj.labels as Record<string, string>) || {};
 
       // Extract data from root-level fields and labels
-      const siteName = (siteObj['name'] as string) || xcSite.metadata?.name || 'Unknown';
+      const siteName = (siteObj.name as string) || xcSite.metadata?.name || 'Unknown';
       const region = labels['ves.io/region'] || '';
       const country = labels['ves.io/country'] || '';
       const siteType = labels['ves.io/siteType'] || '';
-      const tenant = (siteObj['tenant'] as string) || '';
+      const tenant = (siteObj.tenant as string) || '';
 
       // Format label values for display (remove "ves-io-" prefix if present)
       const formatLabel = (value: string): string => {

@@ -20,8 +20,8 @@
  *   npx ts-node scripts/version.ts --json    # Output JSON format
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const OPENAPI_PATH = path.join(PROJECT_ROOT, 'docs/specifications/api/openapi.json');
@@ -143,7 +143,7 @@ function updatePackageJson(version: string): void {
     const versionInfo = generateVersionInfo(version.includes('BETA'));
     pkg.version = versionInfo.semver;
 
-    fs.writeFileSync(PACKAGE_JSON_PATH, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
+    fs.writeFileSync(PACKAGE_JSON_PATH, `${JSON.stringify(pkg, null, 2)}\n`, 'utf-8');
     console.log(`Updated package.json version to: ${pkg.version}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

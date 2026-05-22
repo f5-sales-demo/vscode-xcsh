@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ResourceNode } from '../tree/f5xcExplorer';
-import { ProfileManager } from '../config/profiles';
+import type { ProfileManager } from '../config/profiles';
 import { F5XCDiagramProvider } from '../providers/f5xcDiagramProvider';
-import { withErrorHandling, showWarning } from '../utils/errors';
+import type { ResourceNode } from '../tree/f5xcExplorer';
+import { showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -12,10 +12,7 @@ const logger = getLogger();
 /**
  * Register diagram commands for F5 XC HTTP Load Balancers
  */
-export function registerDiagramCommands(
-  context: vscode.ExtensionContext,
-  profileManager: ProfileManager,
-): void {
+export function registerDiagramCommands(context: vscode.ExtensionContext, profileManager: ProfileManager): void {
   // Create diagram provider instance
   const diagramProvider = new F5XCDiagramProvider(profileManager);
 

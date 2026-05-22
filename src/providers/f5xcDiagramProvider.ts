@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
+import type { ProfileManager } from '../config/profiles';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -204,11 +204,7 @@ export class F5XCDiagramProvider {
       const client = await this.profileManager.getClient(profileName);
 
       // Fetch HTTP Load Balancer configuration
-      const lbConfig = (await client.get(
-        namespace,
-        'http_loadbalancers',
-        resourceName,
-      )) as HttpLoadBalancerConfig;
+      const lbConfig = (await client.get(namespace, 'http_loadbalancers', resourceName)) as HttpLoadBalancerConfig;
 
       // Collect all origin pool references
       const poolRefs = this.collectOriginPoolRefs(lbConfig, namespace);
@@ -217,11 +213,7 @@ export class F5XCDiagramProvider {
       const originPools = new Map<string, OriginPoolConfig>();
       for (const ref of poolRefs) {
         try {
-          const poolConfig = (await client.get(
-            ref.namespace,
-            'origin_pools',
-            ref.name,
-          )) as OriginPoolConfig;
+          const poolConfig = (await client.get(ref.namespace, 'origin_pools', ref.name)) as OriginPoolConfig;
           originPools.set(`${ref.namespace}/${ref.name}`, poolConfig);
         } catch (error) {
           const errMessage = error instanceof Error ? error.message : String(error);
@@ -256,26 +248,24 @@ export class F5XCDiagramProvider {
         });
 
         // Set up message handler for export/copy actions
-        this.panel.webview.onDidReceiveMessage(
-          async (message: { command: string; data?: string }) => {
-            switch (message.command) {
-              case 'copyMermaid':
-                await vscode.env.clipboard.writeText(mermaidCode);
-                void vscode.window.showInformationMessage('Mermaid code copied to clipboard');
-                break;
-              case 'exportSvg':
-                if (message.data) {
-                  await this.exportDiagram(message.data, 'svg', resourceName);
-                }
-                break;
-              case 'exportPng':
-                if (message.data) {
-                  await this.exportDiagram(message.data, 'png', resourceName);
-                }
-                break;
-            }
-          },
-        );
+        this.panel.webview.onDidReceiveMessage(async (message: { command: string; data?: string }) => {
+          switch (message.command) {
+            case 'copyMermaid':
+              await vscode.env.clipboard.writeText(mermaidCode);
+              void vscode.window.showInformationMessage('Mermaid code copied to clipboard');
+              break;
+            case 'exportSvg':
+              if (message.data) {
+                await this.exportDiagram(message.data, 'svg', resourceName);
+              }
+              break;
+            case 'exportPng':
+              if (message.data) {
+                await this.exportDiagram(message.data, 'png', resourceName);
+              }
+              break;
+          }
+        });
       }
 
       this.panel.title = `Diagram: ${resourceName}`;
@@ -290,11 +280,7 @@ export class F5XCDiagramProvider {
   /**
    * Export diagram to file
    */
-  private async exportDiagram(
-    data: string,
-    format: 'svg' | 'png',
-    resourceName: string,
-  ): Promise<void> {
+  private async exportDiagram(data: string, format: 'svg' | 'png', resourceName: string): Promise<void> {
     const uri = await vscode.window.showSaveDialog({
       defaultUri: vscode.Uri.file(`${resourceName}-diagram.${format}`),
       filters: {
@@ -341,12 +327,16 @@ export class F5XCDiagramProvider {
     };
 
     // Default route pools
-    lbConfig.spec?.default_route_pools?.forEach((p) => addRef(p.pool));
+    for (const p of lbConfig.spec?.default_route_pools ?? []) {
+      addRef(p.pool);
+    }
 
     // Route-specific pools
-    lbConfig.spec?.routes?.forEach((route) => {
-      route.simple_route?.origin_pools?.forEach((p) => addRef(p.pool));
-    });
+    for (const route of lbConfig.spec?.routes ?? []) {
+      for (const p of route.simple_route?.origin_pools ?? []) {
+        addRef(p.pool);
+      }
+    }
 
     return refs;
   }
@@ -369,8 +359,7 @@ export class F5XCDiagramProvider {
 
     // Determine load balancer type
     let lbType = 'Load Balancer';
-    const isPrivate =
-      spec?.advertise_custom?.advertise_where && spec.advertise_custom.advertise_where.length > 0;
+    const isPrivate = spec?.advertise_custom?.advertise_where && spec.advertise_custom.advertise_where.length > 0;
     if (isPrivate) {
       lbType = 'Private Load Balancer';
     } else if (spec?.advertise_on_public_default_vip || spec?.advertise_on_public) {
@@ -753,7 +742,7 @@ export class F5XCDiagramProvider {
    */
   private getWebviewContent(mermaidCode: string, resourceName: string): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
 
     return `<!DOCTYPE html>
 <html lang="en">

@@ -230,9 +230,7 @@ export class CloudStatusClient {
    */
   async getIncidentsForComponent(componentId: string): Promise<Incident[]> {
     const response = await this.getIncidents();
-    return response.incidents.filter((incident) =>
-      incident.components.some((c) => c.id === componentId),
-    );
+    return response.incidents.filter((incident) => incident.components.some((c) => c.id === componentId));
   }
 
   /**
@@ -307,9 +305,7 @@ export function getStatusSeverity(status: ComponentStatus): number {
 /**
  * Get incident status display text
  */
-export function getIncidentStatusText(
-  status: Incident['status'] | ScheduledMaintenance['status'],
-): string {
+export function getIncidentStatusText(status: Incident['status'] | ScheduledMaintenance['status']): string {
   switch (status) {
     case 'investigating':
       return 'Investigating';
@@ -341,7 +337,7 @@ export function getIncidentStatusText(
  */
 export function extractSiteCode(popName: string): string | null {
   const match = popName.match(/\(([a-z0-9-]+)\)/i);
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
   return null;
@@ -354,8 +350,6 @@ export function extractSiteCode(popName: string): string | null {
 export function isPoP(component: Component): boolean {
   const result = component.description?.includes('Edge PoP') ?? false;
   // Debug logging - can be removed after verification
-  console.log(
-    `[isPoP] name="${component.name}", description="${component.description}", result=${result}`,
-  );
+  console.log(`[isPoP] name="${component.name}", description="${component.description}", result=${result}`);
   return result;
 }

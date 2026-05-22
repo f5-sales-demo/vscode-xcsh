@@ -1,11 +1,11 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import {
-  Coordinates,
+  type Coordinates,
+  formatCoordinates,
+  getPopCoordinates,
   POP_COORDINATES,
   parsePopLocation,
-  getPopCoordinates,
-  formatCoordinates,
 } from '../../api/popCoordinates';
 
 describe('POP_COORDINATES', () => {
@@ -26,7 +26,7 @@ describe('POP_COORDINATES', () => {
   });
 
   it('should have Ashburn coordinates for dc12', () => {
-    expect(POP_COORDINATES['dc12']).toEqual({
+    expect(POP_COORDINATES.dc12).toEqual({
       latitude: 39.0438,
       longitude: -77.4874,
     });
@@ -171,11 +171,7 @@ describe('getPopCoordinates', () => {
       longitude: 60.0,
     });
 
-    const result = await getPopCoordinates(
-      'unknown',
-      'Ashburn (unknown), VA, United States',
-      mockGeocoder,
-    );
+    const result = await getPopCoordinates('unknown', 'Ashburn (unknown), VA, United States', mockGeocoder);
     expect(result).toEqual({
       latitude: 50.0,
       longitude: 60.0,

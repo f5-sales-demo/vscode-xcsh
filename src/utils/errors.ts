@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { getLogger } from './logger';
 import { getEnrichedErrorMessage } from '../api/resourceTypes';
+import { getLogger } from './logger';
 
 /**
  * Custom error class for F5 XC API errors
@@ -137,11 +137,7 @@ export async function withErrorHandling<T>(
       // Try to get a smart error message if we have resource context
       let smartMessage: string | undefined;
       if (options?.resourceTypeKey && options?.operation) {
-        smartMessage = getEnrichedErrorMessage(
-          options.resourceTypeKey,
-          options.operation,
-          error.statusCode,
-        );
+        smartMessage = getEnrichedErrorMessage(options.resourceTypeKey, options.operation, error.statusCode);
       }
 
       if (error.isUnauthorized) {

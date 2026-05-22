@@ -14,9 +14,9 @@
  *   npx ts-node scripts/check-specs.ts --warn       # Warn only, don't fail
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as https from 'https';
+import * as fs from 'node:fs';
+import * as https from 'node:https';
+import * as path from 'node:path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const OPENAPI_PATH = path.join(PROJECT_ROOT, 'docs/specifications/api/openapi.json');
@@ -62,14 +62,19 @@ function getCurrentVersion(): string {
  */
 async function fetchLatestRelease(): Promise<GitHubRelease> {
   return new Promise((resolve, reject) => {
+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
+    const headers: Record<string, string> = {
+      'User-Agent': 'vscode-f5xc-tools',
+      Accept: 'application/vnd.github.v3+json',
+    };
+    if (token) {
+      headers.Authorization = `token ${token}`;
+    }
     const options = {
       hostname: 'api.github.com',
       path: `/repos/${UPSTREAM_REPO}/releases/latest`,
       method: 'GET',
-      headers: {
-        'User-Agent': 'vscode-f5xc-tools',
-        Accept: 'application/vnd.github.v3+json',
-      },
+      headers,
     };
 
     const req = https.request(options, (res) => {
@@ -129,7 +134,7 @@ async function checkSpecFreshness(): Promise<SpecStatus> {
  * Run sync-specs script to update specs
  */
 async function runSync(): Promise<boolean> {
-  const { spawn } = await import('child_process');
+  const { spawn } = await import('node:child_process');
 
   return new Promise((resolve) => {
     console.log('🔄 Syncing specs from upstream...');

@@ -10,10 +10,10 @@
  *   npx ts-node scripts/sync-specs.ts --force    # Force sync even if up-to-date
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as https from 'https';
-import { execFileSync } from 'child_process';
+import { execFileSync } from 'node:child_process';
+import * as fs from 'node:fs';
+import * as https from 'node:https';
+import * as path from 'node:path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const SPECS_DIR = path.join(PROJECT_ROOT, 'docs/specifications/api');
@@ -40,7 +40,7 @@ async function fetchLatestRelease(): Promise<GitHubRelease> {
     // Use GH_TOKEN or GITHUB_TOKEN if available (for CI rate limits)
     const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
     if (token) {
-      headers['Authorization'] = `token ${token}`;
+      headers.Authorization = `token ${token}`;
     }
 
     const options = {
@@ -128,10 +128,9 @@ function extractZip(zipPath: string, destDir: string): void {
   try {
     execFileSync('unzip', ['-o', zipPath, '-d', destDir], { stdio: 'pipe' });
   } catch (error) {
-    throw new Error(
-      `Failed to extract zip: ${error instanceof Error ? error.message : String(error)}`,
-      { cause: error },
-    );
+    throw new Error(`Failed to extract zip: ${error instanceof Error ? error.message : String(error)}`, {
+      cause: error,
+    });
   }
 }
 

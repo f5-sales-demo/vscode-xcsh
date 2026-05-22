@@ -5,10 +5,10 @@
  */
 
 import {
-  validateResourcePayload,
-  isFieldRequired,
   getRequiredFieldsSummary,
-  ValidationResult,
+  isFieldRequired,
+  type ValidationResult,
+  validateResourcePayload,
 } from '../../utils/validation';
 
 describe('Validation Utilities', () => {
@@ -188,11 +188,7 @@ describe('Validation Utilities', () => {
         metadata: { name: 'test' },
       };
 
-      const result: ValidationResult = validateResourcePayload(
-        'http_loadbalancer',
-        'create',
-        payload,
-      );
+      const result: ValidationResult = validateResourcePayload('http_loadbalancer', 'create', payload);
 
       expect(result).toHaveProperty('serverDefaultedFields');
       expect(Array.isArray(result.serverDefaultedFields)).toBe(true);
@@ -203,11 +199,7 @@ describe('Validation Utilities', () => {
         metadata: { name: 'test' },
       };
 
-      const result: ValidationResult = validateResourcePayload(
-        'http_loadbalancer',
-        'create',
-        payload,
-      );
+      const result: ValidationResult = validateResourcePayload('http_loadbalancer', 'create', payload);
 
       expect(result).toHaveProperty('hints');
       expect(Array.isArray(result.hints)).toBe(true);
@@ -218,11 +210,7 @@ describe('Validation Utilities', () => {
         metadata: { name: 'test' },
       };
 
-      const result: ValidationResult = validateResourcePayload(
-        'http_loadbalancer',
-        'create',
-        payload,
-      );
+      const result: ValidationResult = validateResourcePayload('http_loadbalancer', 'create', payload);
 
       // Check all properties exist
       expect(result).toHaveProperty('valid');
@@ -417,9 +405,7 @@ describe('Validation Utilities', () => {
       const result = validateResourcePayload('unknown_resource', 'create', payload);
 
       // recommendedValueFields should be undefined or empty for unknown resources
-      expect(
-        result.recommendedValueFields === undefined || result.recommendedValueFields.length === 0,
-      ).toBe(true);
+      expect(result.recommendedValueFields === undefined || result.recommendedValueFields.length === 0).toBe(true);
     });
 
     it('should keep recommended value fields separate from server defaulted fields', () => {
@@ -433,9 +419,7 @@ describe('Validation Utilities', () => {
       // Recommended value fields and server defaulted fields should be separate concepts
       // No overlap expected
       if (result.recommendedValueFields && result.recommendedValueFields.length > 0) {
-        const overlap = result.recommendedValueFields.filter((f) =>
-          result.serverDefaultedFields.includes(f),
-        );
+        const overlap = result.recommendedValueFields.filter((f) => result.serverDefaultedFields.includes(f));
         // Fields with recommended values shouldn't also be in serverDefaultedFields
         // (they are different metadata attributes)
         expect(Array.isArray(overlap)).toBe(true);

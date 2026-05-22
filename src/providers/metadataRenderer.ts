@@ -15,11 +15,7 @@ interface ConstraintInput {
 }
 
 function esc(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 export function renderBestPractices(bp: BestPracticesInput | undefined): string {
@@ -30,10 +26,7 @@ export function renderBestPractices(bp: BestPracticesInput | undefined): string 
 
   if (bp.commonErrors && bp.commonErrors.length > 0) {
     const rows = bp.commonErrors
-      .map(
-        (e) =>
-          `<tr><td><code>${e.code}</code></td><td>${esc(e.message)}</td><td>${esc(e.resolution)}</td></tr>`,
-      )
+      .map((e) => `<tr><td><code>${e.code}</code></td><td>${esc(e.message)}</td><td>${esc(e.resolution)}</td></tr>`)
       .join('');
     parts.push(
       `<div class="bp-section"><h4>Common Errors</h4><table class="bp-table"><thead><tr><th>Code</th><th>Error</th><th>Resolution</th></tr></thead><tbody>${rows}</tbody></table></div>`,
@@ -99,8 +92,8 @@ export function renderPerformanceHint(responseTime: string | undefined): string 
   }
   try {
     const parsed = JSON.parse(responseTime) as Record<string, unknown>;
-    const p50 = parsed['p50_ms'];
-    const p95 = parsed['p95_ms'];
+    const p50 = parsed.p50_ms;
+    const p95 = parsed.p95_ms;
     if (typeof p50 === 'number' || typeof p95 === 'number') {
       const parts: string[] = [];
       if (typeof p50 === 'number') {

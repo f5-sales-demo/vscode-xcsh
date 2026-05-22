@@ -1,15 +1,15 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import {
-  F5XCApiError,
-  ConfigurationError,
-  AuthenticationError,
-  withErrorHandling,
-  showError,
-  showWarning,
-  showInfo,
-} from '../../utils/errors';
 import * as vscode from 'vscode';
+import {
+  AuthenticationError,
+  ConfigurationError,
+  F5XCApiError,
+  showError,
+  showInfo,
+  showWarning,
+  withErrorHandling,
+} from '../../utils/errors';
 
 // Mock vscode
 jest.mock('vscode', () => ({
@@ -173,9 +173,7 @@ describe('F5XCApiError', () => {
 
     it('should return permission denied message for 403', () => {
       const error = new F5XCApiError(403, 'Forbidden');
-      expect(error.userFriendlyMessage).toBe(
-        'Permission denied. You do not have access to perform this operation.',
-      );
+      expect(error.userFriendlyMessage).toBe('Permission denied. You do not have access to perform this operation.');
     });
 
     it('should return not found message for 404', () => {
@@ -190,9 +188,7 @@ describe('F5XCApiError', () => {
 
     it('should return conflict message for 409', () => {
       const error = new F5XCApiError(409, 'Conflict');
-      expect(error.userFriendlyMessage).toBe(
-        'Resource conflict. The resource may have been modified.',
-      );
+      expect(error.userFriendlyMessage).toBe('Resource conflict. The resource may have been modified.');
     });
 
     it('should return server error message for 500+', () => {
@@ -302,9 +298,7 @@ describe('withErrorHandling', () => {
     const operation = jest.fn().mockRejectedValue('string error');
     const result = await withErrorHandling(operation, 'Test operation');
     expect(result).toBeUndefined();
-    expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(
-      'Test operation: An unexpected error occurred',
-    );
+    expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Test operation: An unexpected error occurred');
   });
 });
 

@@ -4,11 +4,7 @@
  * Unit tests for the Schema Registry
  */
 
-import {
-  SchemaRegistry,
-  getSchemaRegistry,
-  resetSchemaRegistry,
-} from '../../schema/schemaRegistry';
+import { getSchemaRegistry, resetSchemaRegistry, SchemaRegistry } from '../../schema/schemaRegistry';
 
 // Mock vscode module
 jest.mock(
@@ -85,7 +81,7 @@ describe('Schema Registry', () => {
       const schema = registry.getOrGenerateSchema('http_loadbalancer');
 
       expect(schema).not.toBeNull();
-      expect(schema!.$id).toContain('http_loadbalancer');
+      expect(schema?.$id).toContain('http_loadbalancer');
     });
 
     it('should cache schema after first generation', () => {
@@ -318,8 +314,8 @@ describe('Schema Registry', () => {
 
       // Rapidly access schemas
       for (let i = 0; i < 100; i++) {
-        const type = types[i % types.length];
-        const schema = registry.getOrGenerateSchema(type!);
+        const type = types[i % types.length] ?? 'http_loadbalancer';
+        const schema = registry.getOrGenerateSchema(type);
         expect(schema).not.toBeNull();
       }
 

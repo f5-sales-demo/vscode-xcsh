@@ -7,8 +7,8 @@
  * resource type information for code generation.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
 
 /**
@@ -370,7 +370,7 @@ interface Operation {
  */
 export function extractSchemaId(filename: string): string | null {
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
-  return match && match[1] ? match[1] : null;
+  return match?.[1] ? match[1] : null;
 }
 
 /**
@@ -405,11 +405,11 @@ export function deriveApiPathSuffix(resourceKey: string): string {
   // Most resources just add 's' for plural
   // Special case: already ends in 's' (rare)
   if (resourceKey.endsWith('s')) {
-    return resourceKey + 'es';
+    return `${resourceKey}es`;
   }
   // Handle 'y' ending -> 'ies' (e.g., 'policy' -> 'policies')
   // But F5 XC uses 'policys' not 'policies'
-  return resourceKey + 's';
+  return `${resourceKey}s`;
 }
 
 /**
@@ -476,14 +476,12 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
   // Universal pattern for extended paths with service segment
   // Matches: /api/{base}/{service}/namespaces/{ns}/resource_types
   // Example: /api/config/dns/namespaces/{ns}/dns_zones
-  const extendedPattern =
-    /^\/api\/([a-z_-]+)\/([a-z_]+)\/namespaces\/(?:\{[^}]+\}|[a-z]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
+  const extendedPattern = /^\/api\/([a-z_-]+)\/([a-z_]+)\/namespaces\/(?:\{[^}]+\}|[a-z]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
 
   // Universal pattern for standard namespace-scoped paths
   // Matches: /api/{base}/namespaces/{ns}/resource_types
   // Example: /api/infraprotect/namespaces/{ns}/infraprotect_asns
-  const namespacePattern =
-    /^\/api\/([a-z_-]+)\/namespaces\/(?:\{[^}]+\}|[a-z]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
+  const namespacePattern = /^\/api\/([a-z_-]+)\/namespaces\/(?:\{[^}]+\}|[a-z]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
 
   // Universal pattern for tenant-level resources (no namespace)
   // Matches: /api/{base}/resource_types
@@ -492,7 +490,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
   // First priority: Look for extended paths with service segments
   for (const pathKey of pathKeys) {
     const match = pathKey.match(extendedPattern);
-    if (match && match[1] && match[2] && match[3]) {
+    if (match?.[1] && match[2] && match[3]) {
       return {
         fullPath: pathKey,
         apiBase: match[1],
@@ -507,7 +505,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
   // Second priority: Standard namespace-scoped paths
   for (const pathKey of pathKeys) {
     const match = pathKey.match(namespacePattern);
-    if (match && match[1] && match[2]) {
+    if (match?.[1] && match[2]) {
       return {
         fullPath: pathKey,
         apiBase: match[1],
@@ -521,7 +519,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
   // Third priority: Check tenant-level paths (no namespace)
   for (const pathKey of pathKeys) {
     const match = pathKey.match(tenantPattern);
-    if (match && match[1] && match[2]) {
+    if (match?.[1] && match[2]) {
       // Skip if it matches a namespace pattern (would have matched above)
       if (pathKey.includes('/namespaces/')) {
         continue;
@@ -596,12 +594,10 @@ export function formatDisplayName(title: string | undefined, resourceKey: string
   }
 
   // Fallback: format from resource key
-  return (
-    resourceKey
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ') + 's'
-  );
+  return `${resourceKey
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')}s`;
 }
 
 /**
@@ -675,9 +671,7 @@ export function parseSpecFile(filePath: string): ParsedSpecInfo | null {
 
   // Get documentation URL
   const operationUrl = extractDocUrl(spec);
-  const documentationUrl = operationUrl
-    ? transformToGeneralDocUrl(operationUrl, schemaId)
-    : undefined;
+  const documentationUrl = operationUrl ? transformToGeneralDocUrl(operationUrl, schemaId) : undefined;
 
   // Build the fullApiPath with service segment if present
   let fullApiPath: string;
@@ -753,7 +747,7 @@ export function deriveResourceKeyFromApiPath(apiPath: string): string {
   // Remove trailing 's' for singular form
   if (apiPath.endsWith('ies')) {
     // policies -> policy (but F5 XC uses policys, so this may not apply)
-    return apiPath.slice(0, -3) + 'y';
+    return `${apiPath.slice(0, -3)}y`;
   }
   if (apiPath.endsWith('ses')) {
     // classes -> class
@@ -777,7 +771,7 @@ function deriveSchemaIdFromPath(apiPath: string, pathItem: PathItem): string {
       // Extract schema ID from operationId
       // "ves.io.schema.app_firewall.API.Create" -> "ves.io.schema.app_firewall"
       const match = operation.operationId.match(/^(ves\.io\.schema\.[^.]+(?:\.[^.]+)*?)\.API\./);
-      if (match && match[1]) {
+      if (match?.[1]) {
         return match[1];
       }
     }
@@ -892,7 +886,7 @@ function extractOperationMetadata(operation: Operation | undefined): OperationMe
   } else if (rt !== null && rt !== undefined && typeof rt === 'object') {
     // Strip time-varying fields (e.g., last_measured) for deterministic output
     const rtCopy = { ...rt };
-    delete rtCopy['last_measured'];
+    delete rtCopy.last_measured;
     result.discoveredResponseTime = JSON.stringify(rtCopy);
   }
 
@@ -992,12 +986,11 @@ function extractFieldMetadataFromProperty(
   const hasExample = prop['x-f5xc-example'] !== undefined;
   const hasConstraints = prop['x-f5xc-constraints'] !== undefined;
   const hasMinConfig = prop['x-f5xc-minimum-configuration'] === true;
-  const hasConflicts =
-    Array.isArray(prop['x-f5xc-conflicts-with']) && prop['x-f5xc-conflicts-with'].length > 0;
+  const hasConflicts = Array.isArray(prop['x-f5xc-conflicts-with']) && prop['x-f5xc-conflicts-with'].length > 0;
   const hasRecOneof = prop['x-f5xc-recommended-oneof-variant'] !== undefined;
 
   // Determine effective recommended value with priority
-  let effectiveRecommendedValue: unknown = undefined;
+  let effectiveRecommendedValue: unknown;
 
   if (hasRecommendedValue) {
     // Priority 1: Explicit recommended value (highest priority)
@@ -1076,45 +1069,45 @@ function extractFieldMetadataFromProperty(
     if (rawC && typeof rawC === 'object') {
       const c = rawC;
       const ci: ConstraintInfo = {};
-      if (typeof c['constraintType'] === 'string') {
-        ci.constraintType = c['constraintType'];
+      if (typeof c.constraintType === 'string') {
+        ci.constraintType = c.constraintType;
       }
-      if (typeof c['category'] === 'string') {
-        ci.category = c['category'];
+      if (typeof c.category === 'string') {
+        ci.category = c.category;
       }
-      if (typeof c['maxLength'] === 'number') {
-        ci.maxLength = c['maxLength'];
+      if (typeof c.maxLength === 'number') {
+        ci.maxLength = c.maxLength;
       }
-      if (typeof c['minLength'] === 'number') {
-        ci.minLength = c['minLength'];
+      if (typeof c.minLength === 'number') {
+        ci.minLength = c.minLength;
       }
-      if (typeof c['pattern'] === 'string') {
-        ci.pattern = c['pattern'];
+      if (typeof c.pattern === 'string') {
+        ci.pattern = c.pattern;
       }
-      if (typeof c['format'] === 'string') {
-        ci.format = c['format'];
+      if (typeof c.format === 'string') {
+        ci.format = c.format;
       }
-      if (typeof c['formatDescription'] === 'string') {
-        ci.formatDescription = c['formatDescription'];
+      if (typeof c.formatDescription === 'string') {
+        ci.formatDescription = c.formatDescription;
       }
-      if (typeof c['deterministic'] === 'boolean') {
-        ci.deterministic = c['deterministic'];
+      if (typeof c.deterministic === 'boolean') {
+        ci.deterministic = c.deterministic;
       }
-      if (typeof c['minimum'] === 'number') {
-        ci.minimum = c['minimum'];
+      if (typeof c.minimum === 'number') {
+        ci.minimum = c.minimum;
       }
-      if (typeof c['maximum'] === 'number') {
-        ci.maximum = c['maximum'];
+      if (typeof c.maximum === 'number') {
+        ci.maximum = c.maximum;
       }
-      if (typeof c['multipleOf'] === 'number') {
-        ci.multipleOf = c['multipleOf'];
+      if (typeof c.multipleOf === 'number') {
+        ci.multipleOf = c.multipleOf;
       }
-      if (c['characterSet'] && typeof c['characterSet'] === 'object') {
-        const cs = c['characterSet'] as Record<string, unknown>;
+      if (c.characterSet && typeof c.characterSet === 'object') {
+        const cs = c.characterSet as Record<string, unknown>;
         ci.characterSet = {
-          allowed: typeof cs['allowed'] === 'string' ? cs['allowed'] : undefined,
-          restricted: typeof cs['restricted'] === 'string' ? cs['restricted'] : undefined,
-          description: typeof cs['description'] === 'string' ? cs['description'] : undefined,
+          allowed: typeof cs.allowed === 'string' ? cs.allowed : undefined,
+          restricted: typeof cs.restricted === 'string' ? cs.restricted : undefined,
+          description: typeof cs.description === 'string' ? cs.description : undefined,
         };
       }
       if (Object.keys(ci).length > 0) {
@@ -1146,7 +1139,7 @@ function extractFieldMetadataFromProperty(
   if (prop.$ref) {
     const refName = prop.$ref.replace('#/components/schemas/', '');
     const refSchema = schemas[refName];
-    if (refSchema && refSchema.properties) {
+    if (refSchema?.properties) {
       for (const [propName, propValue] of Object.entries(refSchema.properties)) {
         const childPath = basePath ? `${basePath}.${propName}` : propName;
         extractFieldMetadataFromProperty(propValue, childPath, metadata, schemas);
@@ -1170,16 +1163,11 @@ function extractFieldMetadataFromProperty(
   }
 
   // Handle allOf composition — recurse into each allOf item with same basePath
-  const rawAllOf = (property as Record<string, unknown>)['allOf'];
+  const rawAllOf = (property as Record<string, unknown>).allOf;
   if (Array.isArray(rawAllOf)) {
     for (const allOfItem of rawAllOf) {
       if (allOfItem && typeof allOfItem === 'object') {
-        extractFieldMetadataFromProperty(
-          allOfItem as Record<string, unknown>,
-          basePath,
-          metadata,
-          schemas,
-        );
+        extractFieldMetadataFromProperty(allOfItem as Record<string, unknown>, basePath, metadata, schemas);
       }
     }
   }
@@ -1232,10 +1220,7 @@ function extractFieldMetadataFromSchema(
  * @param resourceKey - The resource key (e.g., 'app_firewall')
  * @returns The schema name if found
  */
-function findCreateSpecSchemaName(
-  schemas: Record<string, SchemaObject>,
-  resourceKey: string,
-): string | undefined {
+function findCreateSpecSchemaName(schemas: Record<string, SchemaObject>, resourceKey: string): string | undefined {
   // Convert resource key to schema prefix patterns
   // e.g., 'http_loadbalancer' -> 'http_loadbalancer', 'httpLoadbalancer', 'http_Loadbalancer'
   // Also handle views-prefixed schemas (e.g., 'viewsorigin_poolCreateSpecType' for 'origin_pool')
@@ -1243,7 +1228,7 @@ function findCreateSpecSchemaName(
     `${resourceKey}CreateSpecType`,
     `${resourceKey}SpecType`,
     // Handle cases where resource name is camelCased in schema
-    resourceKey.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()) + 'CreateSpecType',
+    `${resourceKey.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())}CreateSpecType`,
     // Handle views-prefixed schemas (origin_pool, http_loadbalancer, etc.)
     `views${resourceKey}CreateSpecType`,
     `views${resourceKey}SpecType`,
@@ -1383,8 +1368,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
   // Pattern for list endpoints (plural resource path)
   // Matches: /api/config/namespaces/{metadata.namespace}/http_loadbalancers
   // Also matches extended paths: /api/config/dns/namespaces/{ns}/dns_zones
-  const listEndpointPattern =
-    /^\/api\/([a-z_-]+)(?:\/([a-z_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z_]+)$/;
+  const listEndpointPattern = /^\/api\/([a-z_-]+)(?:\/([a-z_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z_]+)$/;
 
   const seen = new Set<string>();
 

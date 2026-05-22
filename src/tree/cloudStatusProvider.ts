@@ -8,15 +8,15 @@
 import * as vscode from 'vscode';
 import {
   CloudStatusClient,
-  Component,
-  ComponentStatus,
-  Incident,
-  ScheduledMaintenance,
-  getStatusDisplayText,
+  type Component,
+  type ComponentStatus,
   getIncidentStatusText,
+  getStatusDisplayText,
+  type Incident,
   isPoP,
+  type ScheduledMaintenance,
 } from '../api/cloudStatus';
-import { CloudStatusTreeItem, CloudStatusContext } from './cloudStatusTypes';
+import { CloudStatusContext, type CloudStatusTreeItem } from './cloudStatusTypes';
 
 /**
  * Get ThemeIcon for component status
@@ -62,9 +62,7 @@ function getIncidentIcon(impact: string): vscode.ThemeIcon {
  * Tree data provider for Cloud Status
  */
 export class CloudStatusProvider implements vscode.TreeDataProvider<CloudStatusTreeItem> {
-  private readonly _onDidChangeTreeData = new vscode.EventEmitter<
-    CloudStatusTreeItem | undefined
-  >();
+  private readonly _onDidChangeTreeData = new vscode.EventEmitter<CloudStatusTreeItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private readonly client: CloudStatusClient;
@@ -109,7 +107,7 @@ export class CloudStatusProvider implements vscode.TreeDataProvider<CloudStatusT
       for (const component of summary.components) {
         if (!component.group) {
           if (component.group_id && componentsByGroup.has(component.group_id)) {
-            componentsByGroup.get(component.group_id)!.push(component);
+            componentsByGroup.get(component.group_id)?.push(component);
           } else {
             standaloneComponents.push(component);
           }
@@ -136,9 +134,7 @@ export class CloudStatusProvider implements vscode.TreeDataProvider<CloudStatusT
       }
 
       // Add scheduled maintenance if any
-      const activeMaintenance = summary.scheduled_maintenances.filter(
-        (m) => m.status !== 'completed',
-      );
+      const activeMaintenance = summary.scheduled_maintenances.filter((m) => m.status !== 'completed');
       if (activeMaintenance.length > 0) {
         items.push(new MaintenanceGroupNode(activeMaintenance));
       }
@@ -171,9 +167,7 @@ class ComponentGroupNode implements CloudStatusTreeItem {
   }
 
   getChildren(): Promise<CloudStatusTreeItem[]> {
-    return Promise.resolve(
-      this.children.sort((a, b) => a.position - b.position).map((c) => new ComponentNode(c)),
-    );
+    return Promise.resolve(this.children.sort((a, b) => a.position - b.position).map((c) => new ComponentNode(c)));
   }
 
   private getWorstStatus(): ComponentStatus {
@@ -307,10 +301,7 @@ class MaintenanceGroupNode implements CloudStatusTreeItem {
     const label = `Scheduled Maintenance (${this.maintenances.length})`;
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
     item.contextValue = CloudStatusContext.MAINTENANCE_GROUP;
-    item.iconPath = new vscode.ThemeIcon(
-      'calendar',
-      new vscode.ThemeColor('list.deemphasizedForeground'),
-    );
+    item.iconPath = new vscode.ThemeIcon('calendar', new vscode.ThemeColor('list.deemphasizedForeground'));
     item.tooltip = `${this.maintenances.length} scheduled maintenance${this.maintenances.length === 1 ? '' : 's'}`;
     return item;
   }
@@ -329,10 +320,7 @@ class MaintenanceNode implements CloudStatusTreeItem {
   getTreeItem(): vscode.TreeItem {
     const item = new vscode.TreeItem(this.maintenance.name, vscode.TreeItemCollapsibleState.None);
     item.contextValue = CloudStatusContext.MAINTENANCE;
-    item.iconPath = new vscode.ThemeIcon(
-      'tools',
-      new vscode.ThemeColor('list.deemphasizedForeground'),
-    );
+    item.iconPath = new vscode.ThemeIcon('tools', new vscode.ThemeColor('list.deemphasizedForeground'));
     item.description = getIncidentStatusText(this.maintenance.status);
 
     const scheduledFor = new Date(this.maintenance.scheduled_for).toLocaleString();

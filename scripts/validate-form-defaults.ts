@@ -10,9 +10,9 @@
  * - 1: Mismatches found or validation errors
  */
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { GENERATED_RESOURCE_TYPES } from '../src/generated/resourceTypesBase';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const FORM_FILE = path.join(__dirname, '../src/providers/healthcheckFormProvider.ts');
 
@@ -40,7 +40,7 @@ function extractFormDefaults(): FormDefault[] {
   lines.forEach((line, index) => {
     // Check for status codes specifically
     const statusMatch = line.match(statusCodeRegex);
-    if (statusMatch && statusMatch[1]) {
+    if (statusMatch?.[1]) {
       defaults.push({
         fieldName: 'expected-status-codes',
         formValue: statusMatch[1],
@@ -52,20 +52,11 @@ function extractFormDefaults(): FormDefault[] {
 
     // Check for regular fields
     const match = line.match(valueRegex);
-    if (match && match[1] && match[2]) {
+    if (match?.[1] && match[2]) {
       const id = match[1];
       const value = match[2];
       // Skip non-healthcheck fields
-      if (
-        ![
-          'interval',
-          'timeout',
-          'jitter',
-          'healthy-threshold',
-          'unhealthy-threshold',
-          'path',
-        ].includes(id)
-      ) {
+      if (!['interval', 'timeout', 'jitter', 'healthy-threshold', 'unhealthy-threshold', 'path'].includes(id)) {
         return;
       }
       defaults.push({
@@ -158,22 +149,16 @@ function validateDefaults(): boolean {
     field.specValue = getSpecRecommendation(field.fieldName);
 
     if (field.specValue === undefined) {
-      console.log(
-        `${field.fieldName.padEnd(24)} | ${field.formValue.padEnd(10)} | (no spec)      | SKIP`,
-      );
+      console.log(`${field.fieldName.padEnd(24)} | ${field.formValue.padEnd(10)} | (no spec)      | SKIP`);
       return;
     }
 
-    const specStr = Array.isArray(field.specValue)
-      ? JSON.stringify(field.specValue)
-      : String(field.specValue);
+    const specStr = Array.isArray(field.specValue) ? JSON.stringify(field.specValue) : String(field.specValue);
 
     const match = valuesMatch(field.formValue, field.specValue);
     const status = match ? '✅ MATCH' : '❌ MISMATCH';
 
-    console.log(
-      `${field.fieldName.padEnd(24)} | ${field.formValue.padEnd(10)} | ${specStr.padEnd(14)} | ${status}`,
-    );
+    console.log(`${field.fieldName.padEnd(24)} | ${field.formValue.padEnd(10)} | ${specStr.padEnd(14)} | ${status}`);
 
     if (!match) {
       hasErrors = true;

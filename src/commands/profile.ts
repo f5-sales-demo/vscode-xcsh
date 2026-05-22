@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager, Profile } from '../config/profiles';
-import { ProfilesProvider, ProfileTreeItem } from '../tree/profilesProvider';
-import { F5XCExplorerProvider } from '../tree/f5xcExplorer';
-import { withErrorHandling, showInfo, showWarning } from '../utils/errors';
+import type { Profile, ProfileManager } from '../config/profiles';
+import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
+import type { ProfilesProvider, ProfileTreeItem } from '../tree/profilesProvider';
+import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 
 /**
  * Register profile management commands
@@ -49,7 +49,7 @@ export function registerProfileCommands(
           value: 'https://',
           ignoreFocusOut: true,
           validateInput: (value) => {
-            if (!value || !value.startsWith('https://')) {
+            if (!value?.startsWith('https://')) {
               return 'API URL must start with https://';
             }
             try {
@@ -75,8 +75,7 @@ export function registerProfileCommands(
             },
             {
               label: 'P12 Certificate Bundle',
-              description:
-                'Use a P12/PFX certificate file (password from F5XC_P12_PASSWORD env var)',
+              description: 'Use a P12/PFX certificate file (password from F5XC_P12_PASSWORD env var)',
               value: 'p12Bundle',
             },
             {
@@ -206,9 +205,7 @@ export function registerProfileCommands(
         if (validating) {
           showInfo(`Profile "${name}" added and validated successfully`);
         } else {
-          showWarning(
-            `Profile "${name}" added but credentials could not be validated. Check your settings.`,
-          );
+          showWarning(`Profile "${name}" added but credentials could not be validated. Check your settings.`);
         }
 
         profilesProvider.refresh();
@@ -295,7 +292,7 @@ export function registerProfileCommands(
               value: profile.apiUrl,
               ignoreFocusOut: true,
               validateInput: (value) => {
-                if (!value || !value.startsWith('https://')) {
+                if (!value?.startsWith('https://')) {
                   return 'API URL must start with https://';
                 }
                 return null;

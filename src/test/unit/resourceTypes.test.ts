@@ -5,38 +5,38 @@
  */
 
 import {
-  RESOURCE_TYPES,
-  ResourceCategory,
-  ResourceTypeInfo,
-  getResourceTypesByCategory,
   getCategorizedResourceTypes,
-  getResourceTypeByApiPath,
-  getResourceTypeKeys,
-  getCategoryIcon,
-  isResourceTypeAvailableForNamespace,
-  getResourceTypesForNamespace,
   getCategorizedResourceTypesForNamespace,
+  getCategoryIcon,
   getDangerLevel,
+  getFieldDefaults,
+  getFieldMetadata,
   getOperationPurpose,
-  getRequiredFields,
-  isResourceTypePreview,
-  getResourceTypeTierRequirement,
-  getRecommendedValues,
   getRecommendedValue,
   getRecommendedValueFields,
-  hasRecommendedValue,
+  getRecommendedValues,
+  getRequiredFields,
+  getResourceTypeByApiPath,
+  getResourceTypeKeys,
+  getResourceTypesByCategory,
+  getResourceTypesForNamespace,
+  getResourceTypeTierRequirement,
   getServerDefaultFields,
-  getFieldDefaults,
   getUserRequiredFields,
-  getFieldMetadata,
+  hasRecommendedValue,
+  isResourceTypeAvailableForNamespace,
+  isResourceTypePreview,
+  RESOURCE_TYPES,
+  ResourceCategory,
+  type ResourceTypeInfo,
 } from '../../api/resourceTypes';
 
 describe('Resource Types Registry', () => {
   describe('RESOURCE_TYPES constant', () => {
     it('should contain HTTP load balancer resource type', () => {
       expect(RESOURCE_TYPES.http_loadbalancer).toBeDefined();
-      expect(RESOURCE_TYPES.http_loadbalancer!.displayName).toBe('HTTP Load Balancers');
-      expect(RESOURCE_TYPES.http_loadbalancer!.category).toBe(ResourceCategory.LoadBalancing);
+      expect(RESOURCE_TYPES.http_loadbalancer?.displayName).toBe('HTTP Load Balancers');
+      expect(RESOURCE_TYPES.http_loadbalancer?.category).toBe(ResourceCategory.LoadBalancing);
     });
 
     it('should have valid structure for all resource types', () => {
@@ -74,9 +74,7 @@ describe('Resource Types Registry', () => {
       const loadBalancingTypes = getResourceTypesByCategory(ResourceCategory.LoadBalancing);
 
       expect(loadBalancingTypes.length).toBeGreaterThan(0);
-      expect(loadBalancingTypes.every((r) => r.category === ResourceCategory.LoadBalancing)).toBe(
-        true,
-      );
+      expect(loadBalancingTypes.every((r) => r.category === ResourceCategory.LoadBalancing)).toBe(true);
     });
 
     it('should return security resource types', () => {
@@ -117,7 +115,7 @@ describe('Resource Types Registry', () => {
       const loadBalancing = categorized.get(ResourceCategory.LoadBalancing);
 
       expect(loadBalancing).toBeDefined();
-      expect(loadBalancing!.length).toBeGreaterThan(0);
+      expect(loadBalancing?.length).toBeGreaterThan(0);
     });
 
     it('should have all non-empty categories', () => {
@@ -267,51 +265,66 @@ describe('Resource Types Registry', () => {
 
   describe('Resource type features', () => {
     it('should have supportsLogs flag for http_loadbalancer', () => {
-      expect(RESOURCE_TYPES.http_loadbalancer!.supportsLogs).toBe(true);
+      expect(RESOURCE_TYPES.http_loadbalancer?.supportsLogs).toBe(true);
     });
 
     it('should have supportsMetrics flag for http_loadbalancer', () => {
-      expect(RESOURCE_TYPES.http_loadbalancer!.supportsMetrics).toBe(true);
+      expect(RESOURCE_TYPES.http_loadbalancer?.supportsMetrics).toBe(true);
     });
 
     it('should have supportsCustomOps flag for http_loadbalancer', () => {
-      expect(RESOURCE_TYPES.http_loadbalancer!.supportsCustomOps).toBe(true);
+      expect(RESOURCE_TYPES.http_loadbalancer?.supportsCustomOps).toBe(true);
     });
 
     it('should have schemaFile for http_loadbalancer', () => {
-      expect(RESOURCE_TYPES.http_loadbalancer!.schemaFile).toBeDefined();
+      expect(RESOURCE_TYPES.http_loadbalancer?.schemaFile).toBeDefined();
       // schemaFile now uses domain-based files (e.g., "virtual.json") instead of resource-specific files
-      expect(RESOURCE_TYPES.http_loadbalancer!.schemaFile).toMatch(/\.json$/);
+      expect(RESOURCE_TYPES.http_loadbalancer?.schemaFile).toMatch(/\.json$/);
     });
 
     it('should have description for http_loadbalancer', () => {
-      expect(RESOURCE_TYPES.http_loadbalancer!.description).toBeDefined();
-      expect(RESOURCE_TYPES.http_loadbalancer!.description!.length).toBeGreaterThan(0);
+      expect(RESOURCE_TYPES.http_loadbalancer?.description).toBeDefined();
+      expect(RESOURCE_TYPES.http_loadbalancer?.description?.length).toBeGreaterThan(0);
     });
   });
 
   describe('Namespace scope filtering', () => {
+    const baseResource = RESOURCE_TYPES.http_loadbalancer;
+
     describe('isResourceTypeAvailableForNamespace', () => {
+      beforeAll(() => {
+        expect(baseResource).toBeDefined();
+      });
+
       // System scope tests - resources with literal /namespaces/system/ paths
       it('should return true for system-scoped resource in system namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const systemResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'system',
         };
         expect(isResourceTypeAvailableForNamespace(systemResource, 'system')).toBe(true);
       });
 
       it('should return false for system-scoped resource in custom namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const systemResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'system',
         };
         expect(isResourceTypeAvailableForNamespace(systemResource, 'my-namespace')).toBe(false);
       });
 
       it('should return false for system-scoped resource in shared namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const systemResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'system',
         };
         expect(isResourceTypeAvailableForNamespace(systemResource, 'shared')).toBe(false);
@@ -320,8 +333,11 @@ describe('Resource Types Registry', () => {
       // Any scope tests - resources with {namespace} placeholder or tenant-level
       // These should be available in user namespaces (shared, default, custom) but NOT system
       it('should return false for any-scoped resource in system namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const anyResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'any',
         };
         // System namespace is reserved for system-level resources only
@@ -329,32 +345,44 @@ describe('Resource Types Registry', () => {
       });
 
       it('should return true for any-scoped resource in shared namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const anyResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'any',
         };
         expect(isResourceTypeAvailableForNamespace(anyResource, 'shared')).toBe(true);
       });
 
       it('should return true for any-scoped resource in custom namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const anyResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'any',
         };
         expect(isResourceTypeAvailableForNamespace(anyResource, 'my-custom-ns')).toBe(true);
       });
 
       it('should return true for any-scoped resource in default namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const anyResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'any',
         };
         expect(isResourceTypeAvailableForNamespace(anyResource, 'default')).toBe(true);
       });
 
       it('should default to any scope when namespaceScope is undefined', () => {
+        if (!baseResource) {
+          return;
+        }
         const undefinedScopeResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: undefined,
         };
         // Defaults to 'any' scope - available in user namespaces but NOT system
@@ -365,24 +393,33 @@ describe('Resource Types Registry', () => {
 
       // Shared scope tests - resources with literal /namespaces/shared/ paths (rare)
       it('should return true for shared-scoped resource in shared namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const sharedResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'shared',
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'shared')).toBe(true);
       });
 
       it('should return false for shared-scoped resource in system namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const sharedResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'shared',
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'system')).toBe(false);
       });
 
       it('should return false for shared-scoped resource in custom namespace', () => {
+        if (!baseResource) {
+          return;
+        }
         const sharedResource: ResourceTypeInfo = {
-          ...RESOURCE_TYPES.http_loadbalancer!,
+          ...baseResource,
           namespaceScope: 'shared',
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'my-ns')).toBe(false);
@@ -403,7 +440,7 @@ describe('Resource Types Registry', () => {
       it('should include system-only resources for system namespace', () => {
         const filtered = getResourceTypesForNamespace('system');
         // Find a known system-scoped resource (aws_vpc_site is manually set to system)
-        const awsVpcSite = filtered['aws_vpc_site'];
+        const awsVpcSite = filtered.aws_vpc_site;
         expect(awsVpcSite).toBeDefined();
       });
 
@@ -414,9 +451,9 @@ describe('Resource Types Registry', () => {
         const customFiltered = getResourceTypesForNamespace('my-custom-namespace');
 
         // HTTP Load Balancer has any scope and should be in shared and custom, but NOT system
-        expect(systemFiltered['http_loadbalancer']).toBeUndefined();
-        expect(sharedFiltered['http_loadbalancer']).toBeDefined();
-        expect(customFiltered['http_loadbalancer']).toBeDefined();
+        expect(systemFiltered.http_loadbalancer).toBeUndefined();
+        expect(sharedFiltered.http_loadbalancer).toBeDefined();
+        expect(customFiltered.http_loadbalancer).toBeDefined();
       });
 
       it('should filter out system-only resources for shared namespace', () => {
@@ -760,15 +797,15 @@ describe('Resource Types Registry', () => {
       it('should have serverDefaultFields in fieldMetadata', () => {
         const fieldMetadata = getFieldMetadata('origin_pool');
         expect(fieldMetadata).toBeDefined();
-        expect(fieldMetadata!.serverDefaultFields).toBeDefined();
-        expect(fieldMetadata!.serverDefaultFields!.length).toBeGreaterThan(0);
+        expect(fieldMetadata?.serverDefaultFields).toBeDefined();
+        expect(fieldMetadata?.serverDefaultFields?.length).toBeGreaterThan(0);
       });
 
       it('should have userRequiredFields in fieldMetadata', () => {
         const fieldMetadata = getFieldMetadata('origin_pool');
         expect(fieldMetadata).toBeDefined();
-        expect(fieldMetadata!.userRequiredFields).toBeDefined();
-        expect(fieldMetadata!.userRequiredFields!.length).toBeGreaterThan(0);
+        expect(fieldMetadata?.userRequiredFields).toBeDefined();
+        expect(fieldMetadata?.userRequiredFields?.length).toBeGreaterThan(0);
       });
     });
   });

@@ -5,8 +5,8 @@
  */
 
 import {
-  generateSchemaForResourceType,
   generateGenericSchema,
+  generateSchemaForResourceType,
   getSchemaResourceTypes,
   hasDetailedFieldMetadata,
 } from '../../schema/schemaGenerator';
@@ -17,27 +17,27 @@ describe('Schema Generator', () => {
       const schema = generateSchemaForResourceType('http_loadbalancer');
 
       expect(schema).not.toBeNull();
-      expect(schema!.$schema).toBe('http://json-schema.org/draft-07/schema#');
-      expect(schema!.$id).toBe('f5xc-schema://schemas/http_loadbalancer.json');
-      expect(schema!.title).toContain('F5 XC');
-      expect(schema!.type).toBe('object');
+      expect(schema?.$schema).toBe('http://json-schema.org/draft-07/schema#');
+      expect(schema?.$id).toBe('f5xc-schema://schemas/http_loadbalancer.json');
+      expect(schema?.title).toContain('F5 XC');
+      expect(schema?.type).toBe('object');
     });
 
     it('should include metadata and spec properties', () => {
       const schema = generateSchemaForResourceType('http_loadbalancer');
 
       expect(schema).not.toBeNull();
-      expect(schema!.properties).toHaveProperty('metadata');
-      expect(schema!.properties).toHaveProperty('spec');
-      expect(schema!.required).toContain('metadata');
-      expect(schema!.required).toContain('spec');
+      expect(schema?.properties).toHaveProperty('metadata');
+      expect(schema?.properties).toHaveProperty('spec');
+      expect(schema?.required).toContain('metadata');
+      expect(schema?.required).toContain('spec');
     });
 
     it('should generate metadata schema with standard fields', () => {
       const schema = generateSchemaForResourceType('http_loadbalancer');
 
       expect(schema).not.toBeNull();
-      const metadata = schema!.properties.metadata as {
+      const metadata = schema?.properties.metadata as {
         type: string;
         properties: Record<string, unknown>;
       };
@@ -56,16 +56,16 @@ describe('Schema Generator', () => {
       const schema = generateSchemaForResourceType('http_loadbalancer');
 
       expect(schema).not.toBeNull();
-      const metadata = schema!.properties.metadata as {
+      const metadata = schema?.properties.metadata as {
         required: string[];
         properties: Record<string, Record<string, unknown>>;
       };
       expect(metadata).toBeDefined();
       expect(metadata.required).toContain('name');
       expect(metadata.properties).toBeDefined();
-      const nameField = metadata.properties['name']!;
+      const nameField = metadata.properties.name;
       expect(nameField).toBeDefined();
-      expect(nameField['x-f5xc-required']).toBe(true);
+      expect(nameField?.['x-f5xc-required']).toBe(true);
     });
 
     it('should return null for unknown resource type', () => {
@@ -78,33 +78,33 @@ describe('Schema Generator', () => {
       const schema = generateSchemaForResourceType('healthcheck');
 
       expect(schema).not.toBeNull();
-      expect(schema!.title).toContain('Health Check');
-      expect(schema!.properties.spec).toBeDefined();
+      expect(schema?.title).toContain('Health Check');
+      expect(schema?.properties.spec).toBeDefined();
     });
 
     it('should include description from resource type', () => {
       const schema = generateSchemaForResourceType('healthcheck');
 
       expect(schema).not.toBeNull();
-      expect(schema!.description).toBeDefined();
-      expect(typeof schema!.description).toBe('string');
-      expect(schema!.description!.length).toBeGreaterThan(0);
+      expect(schema?.description).toBeDefined();
+      expect(typeof schema?.description).toBe('string');
+      expect(schema?.description?.length).toBeGreaterThan(0);
     });
 
     it('should generate schema for origin_pool', () => {
       const schema = generateSchemaForResourceType('origin_pool');
 
       expect(schema).not.toBeNull();
-      expect(schema!.$id).toBe('f5xc-schema://schemas/origin_pool.json');
-      expect(schema!.properties.metadata).toBeDefined();
-      expect(schema!.properties.spec).toBeDefined();
+      expect(schema?.$id).toBe('f5xc-schema://schemas/origin_pool.json');
+      expect(schema?.properties.metadata).toBeDefined();
+      expect(schema?.properties.spec).toBeDefined();
     });
 
     it('should generate schema for app_firewall', () => {
       const schema = generateSchemaForResourceType('app_firewall');
 
       expect(schema).not.toBeNull();
-      expect(schema!.$id).toBe('f5xc-schema://schemas/app_firewall.json');
+      expect(schema?.$id).toBe('f5xc-schema://schemas/app_firewall.json');
     });
 
     it('should handle resource types without field metadata', () => {
@@ -113,10 +113,10 @@ describe('Schema Generator', () => {
 
       // Should still generate a valid schema
       expect(schema).not.toBeNull();
-      expect(schema!.properties.metadata).toBeDefined();
-      expect(schema!.properties.spec).toBeDefined();
+      expect(schema?.properties.metadata).toBeDefined();
+      expect(schema?.properties.spec).toBeDefined();
       // spec should allow additional properties when no field metadata
-      const spec = schema!.properties.spec as { additionalProperties: boolean };
+      const spec = schema?.properties.spec as { additionalProperties: boolean };
       expect(spec.additionalProperties).toBe(true);
     });
   });
@@ -224,11 +224,11 @@ describe('Schema Generator', () => {
         expect(schema).not.toBeNull();
 
         // Validate required JSON Schema properties
-        expect(schema!.$schema).toBe('http://json-schema.org/draft-07/schema#');
-        expect(schema!.$id).toMatch(/^f5xc-schema:\/\/schemas\/[a-z_]+\.json$/);
-        expect(schema!.type).toBe('object');
-        expect(schema!.properties).toBeDefined();
-        expect(typeof schema!.properties).toBe('object');
+        expect(schema?.$schema).toBe('http://json-schema.org/draft-07/schema#');
+        expect(schema?.$id).toMatch(/^f5xc-schema:\/\/schemas\/[a-z_]+\.json$/);
+        expect(schema?.type).toBe('object');
+        expect(schema?.properties).toBeDefined();
+        expect(typeof schema?.properties).toBe('object');
       }
     });
 
@@ -240,8 +240,8 @@ describe('Schema Generator', () => {
       expect(schema2).not.toBeNull();
 
       // Metadata schemas should be structurally identical
-      const meta1 = schema1!.properties.metadata as { properties?: Record<string, unknown> };
-      const meta2 = schema2!.properties.metadata as { properties?: Record<string, unknown> };
+      const meta1 = schema1?.properties.metadata as { properties?: Record<string, unknown> };
+      const meta2 = schema2?.properties.metadata as { properties?: Record<string, unknown> };
       const meta1Keys = Object.keys(meta1.properties || {}).sort();
       const meta2Keys = Object.keys(meta2.properties || {}).sort();
 
@@ -255,20 +255,20 @@ describe('Schema Generator', () => {
 
       expect(schema).not.toBeNull();
       // metadata.name should always be marked as required
-      const metadata = schema!.properties.metadata as {
+      const metadata = schema?.properties.metadata as {
         properties: Record<string, Record<string, unknown>>;
       };
       expect(metadata.properties).toBeDefined();
-      const nameField = metadata.properties['name']!;
+      const nameField = metadata.properties.name;
       expect(nameField).toBeDefined();
-      expect(nameField['x-f5xc-required']).toBe(true);
+      expect(nameField?.['x-f5xc-required']).toBe(true);
     });
 
     it('should include recommended values as defaults when available', () => {
       const schema = generateSchemaForResourceType('healthcheck');
 
       expect(schema).not.toBeNull();
-      const spec = schema!.properties.spec as { properties: Record<string, unknown> };
+      const spec = schema?.properties.spec as { properties: Record<string, unknown> };
 
       // healthcheck has recommended values for interval, timeout, etc.
       // These should appear as defaults in the schema
@@ -280,7 +280,7 @@ describe('Schema Generator', () => {
 
       expect(schema).not.toBeNull();
       // Should have spec properties that include server default markers
-      const spec = schema!.properties.spec as { type: string };
+      const spec = schema?.properties.spec as { type: string };
       expect(spec.type).toBe('object');
     });
   });
@@ -339,7 +339,7 @@ describe('Schema Generator', () => {
       it(`returns a non-null schema for "${typeKey}"`, () => {
         const schema = generateSchemaForResourceType(typeKey);
         expect(schema).not.toBeNull();
-        expect(schema!.type).toBe('object');
+        expect(schema?.type).toBe('object');
       });
     }
   });
@@ -406,7 +406,7 @@ describe('Schema Generator', () => {
     it('generates valid schema for resource types with array fields', () => {
       const schema = generateSchemaForResourceType('origin_pool');
       expect(schema).not.toBeNull();
-      expect(schema!.properties.spec).toBeDefined();
+      expect(schema?.properties.spec).toBeDefined();
       // After fix, schema should be valid and not crash
     });
 
@@ -468,18 +468,18 @@ describe('Schema Generator', () => {
       const parsed = JSON.parse(schemaStr) as Record<string, unknown>;
       const allRequired: string[] = [];
       function collectRequired(obj: Record<string, unknown>) {
-        if (Array.isArray(obj['required'])) {
-          allRequired.push(...(obj['required'] as string[]));
+        if (Array.isArray(obj.required)) {
+          allRequired.push(...(obj.required as string[]));
         }
-        if (obj['properties'] && typeof obj['properties'] === 'object') {
-          for (const v of Object.values(obj['properties'] as Record<string, unknown>)) {
+        if (obj.properties && typeof obj.properties === 'object') {
+          for (const v of Object.values(obj.properties as Record<string, unknown>)) {
             if (v && typeof v === 'object') {
               collectRequired(v as Record<string, unknown>);
             }
           }
         }
-        if (obj['items'] && typeof obj['items'] === 'object') {
-          collectRequired(obj['items'] as Record<string, unknown>);
+        if (obj.items && typeof obj.items === 'object') {
+          collectRequired(obj.items as Record<string, unknown>);
         }
       }
       collectRequired(parsed);
@@ -496,9 +496,7 @@ describe('Schema Generator', () => {
       let testedNested = false;
 
       for (const [key, rt] of Object.entries(TYPES)) {
-        const fm = (rt as Record<string, unknown>).fieldMetadata as
-          | { userRequiredFields?: string[] }
-          | undefined;
+        const fm = (rt as Record<string, unknown>).fieldMetadata as { userRequiredFields?: string[] } | undefined;
         if (!fm?.userRequiredFields) {
           continue;
         }
@@ -519,22 +517,18 @@ describe('Schema Generator', () => {
         const parsed = JSON.parse(schemaStr) as Record<string, unknown>;
         let foundNestedRequired = false;
         function checkNestedRequired(obj: Record<string, unknown>, depth: number) {
-          if (
-            depth > 0 &&
-            Array.isArray(obj['required']) &&
-            (obj['required'] as string[]).length > 0
-          ) {
+          if (depth > 0 && Array.isArray(obj.required) && (obj.required as string[]).length > 0) {
             foundNestedRequired = true;
           }
-          if (obj['properties'] && typeof obj['properties'] === 'object') {
-            for (const v of Object.values(obj['properties'] as Record<string, unknown>)) {
+          if (obj.properties && typeof obj.properties === 'object') {
+            for (const v of Object.values(obj.properties as Record<string, unknown>)) {
               if (v && typeof v === 'object') {
                 checkNestedRequired(v as Record<string, unknown>, depth + 1);
               }
             }
           }
-          if (obj['items'] && typeof obj['items'] === 'object') {
-            checkNestedRequired(obj['items'] as Record<string, unknown>, depth + 1);
+          if (obj.items && typeof obj.items === 'object') {
+            checkNestedRequired(obj.items as Record<string, unknown>, depth + 1);
           }
         }
         checkNestedRequired(parsed, 0);

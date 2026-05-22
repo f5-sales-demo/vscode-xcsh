@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import { F5XCClient, ListOptions } from '../../api/client';
-import { ResourceTypeInfo, ResourceCategory } from '../../api/resourceTypes';
+import { F5XCClient, type ListOptions } from '../../api/client';
+import { ResourceCategory, type ResourceTypeInfo } from '../../api/resourceTypes';
 
 describe('F5XCClient', () => {
   describe('buildListOptions', () => {

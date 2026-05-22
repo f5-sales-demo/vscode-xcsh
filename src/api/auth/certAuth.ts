@@ -7,13 +7,13 @@
  * 2. Cert + Key: Direct PEM file paths (no password needed)
  */
 
-import * as https from 'https';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
+import * as https from 'node:https';
 import * as forge from 'node-forge';
-import { AuthProvider, CertAuthConfig } from './index';
-import { getLogger } from '../../utils/logger';
-import { AuthenticationError } from '../../utils/errors';
 import { API_ENDPOINTS } from '../../generated/constants';
+import { AuthenticationError } from '../../utils/errors';
+import { getLogger } from '../../utils/logger';
+import type { AuthProvider, CertAuthConfig } from './index';
 
 /**
  * Certificate-based authentication provider for F5 XC mTLS
@@ -35,9 +35,7 @@ export class CertAuthProvider implements AuthProvider {
 
     // Validate config
     if (this.p12Bundle && (this.certPath || this.keyPath)) {
-      throw new AuthenticationError(
-        'Cannot specify both p12Bundle and cert/key paths. Use one method only.',
-      );
+      throw new AuthenticationError('Cannot specify both p12Bundle and cert/key paths. Use one method only.');
     }
 
     if (!this.p12Bundle && (!this.certPath || !this.keyPath)) {
@@ -100,7 +98,7 @@ export class CertAuthProvider implements AuthProvider {
       }
 
       const certBag = certBagArray[0];
-      if (!certBag || !certBag.cert) {
+      if (!certBag?.cert) {
         throw new AuthenticationError('Invalid certificate in P12 file');
       }
 
@@ -123,7 +121,7 @@ export class CertAuthProvider implements AuthProvider {
       }
 
       const keyBag = keyBagArray[0];
-      if (!keyBag || !keyBag.key) {
+      if (!keyBag?.key) {
         throw new AuthenticationError('Invalid private key in P12 file');
       }
 
@@ -146,9 +144,7 @@ export class CertAuthProvider implements AuthProvider {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
       if (errorMessage.includes('Invalid password')) {
-        throw new AuthenticationError(
-          'Invalid P12 password. Set F5XC_P12_PASSWORD environment variable.',
-        );
+        throw new AuthenticationError('Invalid P12 password. Set F5XC_P12_PASSWORD environment variable.');
       }
 
       throw new AuthenticationError(`Failed to load P12 certificate: ${errorMessage}`);

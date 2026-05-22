@@ -7,17 +7,17 @@
 
 import * as vscode from 'vscode';
 import {
-  AuthProvider,
-  TokenAuthProvider,
+  type AuthProvider,
+  type CertAuthConfig,
   CertAuthProvider,
-  TokenAuthConfig,
-  CertAuthConfig,
+  type TokenAuthConfig,
+  TokenAuthProvider,
 } from '../api/auth';
 import { F5XCClient } from '../api/client';
-import { getLogger } from '../utils/logger';
 import { ConfigurationError } from '../utils/errors';
-import { Profile, XDGProfileManager, xdgProfileManager } from './xdgProfiles';
-import { getProfilesDir, getActiveProfilePath } from './paths';
+import { getLogger } from '../utils/logger';
+import { getActiveProfilePath, getProfilesDir } from './paths';
+import { type Profile, type XDGProfileManager, xdgProfileManager } from './xdgProfiles';
 
 // Re-export Profile for consumers
 export type { Profile } from './xdgProfiles';
@@ -254,17 +254,13 @@ export class ProfileManager {
 
           if (isValid) {
             this.logger.info('Using environment variable credentials');
-            this.logger.debug(
-              `Creating client for profile: ${profileName}, apiUrl: ${envProfile.apiUrl}`,
-            );
+            this.logger.debug(`Creating client for profile: ${profileName}, apiUrl: ${envProfile.apiUrl}`);
             const client = new F5XCClient(envProfile.apiUrl, envAuthProvider);
             this.authProviderCache.set(profileName, envAuthProvider);
             this.clientCache.set(profileName, client);
             return client;
           } else {
-            this.logger.warn(
-              'Environment variable credentials are invalid, falling back to profile credentials',
-            );
+            this.logger.warn('Environment variable credentials are invalid, falling back to profile credentials');
             envAuthProvider.dispose();
           }
         } catch (error) {

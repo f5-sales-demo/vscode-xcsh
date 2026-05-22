@@ -4,7 +4,7 @@
  * Unit tests for the ProfileManager with XDG-compliant storage
  */
 
-import { ProfileManager, Profile } from '../../config/profiles';
+import { type Profile, ProfileManager } from '../../config/profiles';
 
 // Mock the logger
 jest.mock('../../utils/logger', () => ({
@@ -276,9 +276,7 @@ describe('ProfileManager', () => {
         apiToken: 'new-token',
       };
 
-      await expect(profileManager.addProfile(profile)).rejects.toThrow(
-        'Profile "existing" already exists',
-      );
+      await expect(profileManager.addProfile(profile)).rejects.toThrow('Profile "existing" already exists');
     });
   });
 
@@ -296,9 +294,9 @@ describe('ProfileManager', () => {
     });
 
     it('should throw error for non-existent profile', async () => {
-      await expect(
-        profileManager.updateProfile('nonexistent', { apiUrl: 'https://new.example.com' }),
-      ).rejects.toThrow('Profile "nonexistent" not found');
+      await expect(profileManager.updateProfile('nonexistent', { apiUrl: 'https://new.example.com' })).rejects.toThrow(
+        'Profile "nonexistent" not found',
+      );
     });
 
     it('should not change profile name', async () => {
@@ -347,9 +345,7 @@ describe('ProfileManager', () => {
     });
 
     it('should throw error for non-existent profile', async () => {
-      await expect(profileManager.removeProfile('nonexistent')).rejects.toThrow(
-        'Profile "nonexistent" not found',
-      );
+      await expect(profileManager.removeProfile('nonexistent')).rejects.toThrow('Profile "nonexistent" not found');
     });
   });
 
@@ -372,9 +368,7 @@ describe('ProfileManager', () => {
     });
 
     it('should throw error for non-existent profile', async () => {
-      await expect(profileManager.setActiveProfile('nonexistent')).rejects.toThrow(
-        'Profile "nonexistent" not found',
-      );
+      await expect(profileManager.setActiveProfile('nonexistent')).rejects.toThrow('Profile "nonexistent" not found');
     });
   });
 

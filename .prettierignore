@@ -1,24 +1,13 @@
-# Build outputs
+# Auto-generated files -- do not reformat
+**/src/gen/
+**/src/v2/gen/
+**/src/generated/
+**/*.gen.ts
+**/*.gen.js
+**/*.gen.d.ts
+
+# Build and release output
 dist/
-out/
-
-# Dependencies
-node_modules/
-
-# Git
-.git/
-
-# Lock files
-package-lock.json
-
-# API specifications (auto-generated, large files)
-docs/specifications/api/
-
-# VSCode extension package
-*.vsix
-
-# Coverage reports
-coverage/
-
-# Serena memories (managed by tool)
-.serena/memories/
+build/
+release/
+vendor/

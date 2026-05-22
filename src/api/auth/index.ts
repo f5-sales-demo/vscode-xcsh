@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import * as https from 'https';
+import type * as https from 'node:https';
 
 /**
  * Authentication provider interface for F5 XC API
@@ -49,9 +49,7 @@ export interface CertAuthConfig {
 /**
  * Combined auth configuration
  */
-export type AuthConfig =
-  | { type: 'token'; config: TokenAuthConfig }
-  | { type: 'cert'; config: CertAuthConfig };
+export type AuthConfig = { type: 'token'; config: TokenAuthConfig } | { type: 'cert'; config: CertAuthConfig };
 
-export { TokenAuthProvider } from './tokenAuth';
 export { CertAuthProvider } from './certAuth';
+export { TokenAuthProvider } from './tokenAuth';

@@ -5,8 +5,8 @@
  * Nominatim (OpenStreetMap) geocoding wrapper for location lookup
  */
 
-import { Coordinates } from './popCoordinates';
 import { getLogger } from '../utils/logger';
+import type { Coordinates } from './popCoordinates';
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const logger = getLogger();

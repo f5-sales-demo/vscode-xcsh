@@ -22,7 +22,9 @@ export class EventEmitter<T> {
   };
 
   fire(data: T): void {
-    this.listeners.forEach((listener) => listener(data));
+    for (const listener of this.listeners) {
+      listener(data);
+    }
   }
 
   dispose(): void {
@@ -164,9 +166,7 @@ export const window = {
     onDidExpandElement: jest.fn(),
   })),
   registerTreeDataProvider: jest.fn(),
-  withProgress: jest.fn((_options, task) =>
-    task({ report: jest.fn() }, { isCancellationRequested: false }),
-  ),
+  withProgress: jest.fn((_options, task) => task({ report: jest.fn() }, { isCancellationRequested: false })),
   activeTextEditor: undefined,
   visibleTextEditors: [],
   onDidChangeActiveTextEditor: jest.fn(),
@@ -239,7 +239,9 @@ export class Disposable {
 
   static from(...disposables: { dispose: () => void }[]): Disposable {
     return new Disposable(() => {
-      disposables.forEach((d) => d.dispose());
+      for (const d of disposables) {
+        d.dispose();
+      }
     });
   }
 

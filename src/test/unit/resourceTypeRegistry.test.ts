@@ -9,23 +9,23 @@
  */
 
 import {
-  RESOURCE_TYPES,
   getCategorizedResourceTypes,
+  getCommonErrors,
+  getDangerLevel,
+  getFieldMetadata,
+  getPrerequisites,
+  getRecommendedValueFields,
+  getRecommendedValues,
   getResourceTypeByApiPath,
   getResourceTypeKeys,
-  isResourceTypeAvailableForNamespace,
   getResourceTypesForNamespace,
-  getDangerLevel,
-  requiresConfirmation,
-  getPrerequisites,
-  getCommonErrors,
   getServerDefaultFields,
   getUserRequiredFields,
-  getFieldMetadata,
   isFieldUserRequired,
-  getRecommendedValues,
-  getRecommendedValueFields,
+  isResourceTypeAvailableForNamespace,
   isResourceTypePreview,
+  RESOURCE_TYPES,
+  requiresConfirmation,
 } from '../../api/resourceTypes';
 import { GENERATED_RESOURCE_TYPES } from '../../generated/resourceTypesBase';
 
@@ -110,7 +110,7 @@ describe('Resource Type Registry (comprehensive)', () => {
     it('resolves http_loadbalancers to a resource type', () => {
       const rt = getResourceTypeByApiPath('http_loadbalancers');
       expect(rt).toBeDefined();
-      expect(rt!.displayName).toBe('HTTP Load Balancers');
+      expect(rt?.displayName).toBe('HTTP Load Balancers');
     });
 
     it('returns undefined for an unknown path', () => {
@@ -123,7 +123,11 @@ describe('Resource Type Registry (comprehensive)', () => {
   // ---------------------------------------------------------------------------
   describe('namespace scope helpers', () => {
     it('http_loadbalancer is available in the default namespace', () => {
-      const info = RESOURCE_TYPES['http_loadbalancer']!;
+      const info = RESOURCE_TYPES.http_loadbalancer;
+      expect(info).toBeDefined();
+      if (!info) {
+        return;
+      }
       expect(isResourceTypeAvailableForNamespace(info, 'default')).toBe(true);
     });
 
@@ -313,11 +317,7 @@ describe('Resource Type Registry (comprehensive)', () => {
     it('at least one resource has fieldMetadata with constrainedFields', () => {
       let found = false;
       for (const rt of Object.values(GENERATED_RESOURCE_TYPES)) {
-        if (
-          rt.fieldMetadata &&
-          rt.fieldMetadata.constrainedFields &&
-          rt.fieldMetadata.constrainedFields.length > 0
-        ) {
+        if (rt.fieldMetadata?.constrainedFields && rt.fieldMetadata.constrainedFields.length > 0) {
           found = true;
           break;
         }

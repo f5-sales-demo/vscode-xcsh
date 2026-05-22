@@ -12,11 +12,11 @@
  * testMatch gating, so the suite is never discovered.
  */
 
-import * as https from 'https';
-import * as url from 'url';
+import * as https from 'node:https';
+import * as url from 'node:url';
 
-const API_URL = process.env['F5XC_API_URL'] ?? '';
-const API_TOKEN = process.env['F5XC_API_TOKEN'] ?? '';
+const API_URL = process.env.F5XC_API_URL ?? '';
+const API_TOKEN = process.env.F5XC_API_TOKEN ?? '';
 
 /**
  * Minimal HTTPS GET/POST helper — returns { statusCode, body }.

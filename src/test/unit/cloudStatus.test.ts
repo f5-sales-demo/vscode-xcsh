@@ -2,11 +2,11 @@
 
 import {
   CloudStatusClient,
+  type ComponentStatus,
+  getIncidentStatusText,
   getStatusDisplayText,
   getStatusSeverity,
-  getIncidentStatusText,
-  ComponentStatus,
-  SummaryResponse,
+  type SummaryResponse,
 } from '../../api/cloudStatus';
 
 // Mock global fetch
@@ -230,10 +230,7 @@ describe('CloudStatusClient', () => {
 
       const result = await client.getStatus();
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://www.f5cloudstatus.com/api/v2/status.json',
-        expect.any(Object),
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://www.f5cloudstatus.com/api/v2/status.json', expect.any(Object));
       expect(result.status.indicator).toBe('none');
     });
   });
@@ -274,10 +271,7 @@ describe('CloudStatusClient', () => {
 
       const result = await client.getIncidents();
 
-      expect(mockFetch).toHaveBeenCalledWith(
-        'https://www.f5cloudstatus.com/api/v2/incidents.json',
-        expect.any(Object),
-      );
+      expect(mockFetch).toHaveBeenCalledWith('https://www.f5cloudstatus.com/api/v2/incidents.json', expect.any(Object));
       expect(result.incidents).toHaveLength(0);
     });
   });

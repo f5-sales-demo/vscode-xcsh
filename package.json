@@ -598,7 +598,8 @@
   "lint-staged": {
     "*.ts": [
       "eslint --fix --max-warnings=0",
-      "prettier --write"
+      "biome check --fix",
+      "biome format --write"
     ],
     "*.{json,yaml,yml}": [
       "prettier --write"

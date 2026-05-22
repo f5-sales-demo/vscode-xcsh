@@ -7,14 +7,14 @@
  * to verify resource discovery, field metadata extraction, and operation metadata.
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 import {
+  type DangerLevel,
+  type NamespaceScope,
+  type ParsedSpecInfo,
   parseAllDomainFiles,
-  ParsedSpecInfo,
-  NamespaceScope,
-  ResourceFieldMetadata,
-  ResourceOperationMetadata,
-  DangerLevel,
+  type ResourceFieldMetadata,
+  type ResourceOperationMetadata,
 } from '../../../scripts/generators/spec-parser';
 
 const DOMAINS_DIR = path.resolve(__dirname, '../../../docs/specifications/api/domains');
@@ -576,15 +576,9 @@ describe('Spec Parser - parseAllDomainFiles', () => {
           continue;
         }
         for (const meta of Object.values(r.fieldMetadata.fields)) {
-          if (
-            meta.constraints &&
-            (meta.constraints.minimum !== undefined || meta.constraints.maximum !== undefined)
-          ) {
+          if (meta.constraints && (meta.constraints.minimum !== undefined || meta.constraints.maximum !== undefined)) {
             foundNumeric = true;
-            expect(
-              typeof meta.constraints.minimum === 'number' ||
-                meta.constraints.minimum === undefined,
-            ).toBe(true);
+            expect(typeof meta.constraints.minimum === 'number' || meta.constraints.minimum === undefined).toBe(true);
             break;
           }
         }

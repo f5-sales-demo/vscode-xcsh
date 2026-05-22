@@ -9,14 +9,11 @@
  * Usage: npx ts-node scripts/generate-resource-types.ts
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import {
-  generateResourceTypesFromDomainFiles,
-  ParsedSpecInfo,
-} from './generators/resource-type-generator';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { writeConstantsFile } from './generators/constants-generator';
 import { generateDomainCategoriesFile } from './generators/domain-category-generator';
+import { generateResourceTypesFromDomainFiles, type ParsedSpecInfo } from './generators/resource-type-generator';
 
 // Use domain-based specs (new upstream format with x-f5xc-cli-domain)
 const DOMAIN_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api', 'domains');
@@ -28,11 +25,7 @@ const DOMAIN_CATEGORIES_OUTPUT = path.join(GENERATED_DIR, 'domainCategories.ts')
 const INDEX_OUTPUT = path.join(GENERATED_DIR, 'index.ts');
 const INDEX_JSON_PATH = path.join(SPECS_DIR, 'index.json');
 const SCOPE_OVERRIDES_PATH = path.join(__dirname, 'generators', 'namespace-scope-overrides.json');
-const DISPLAY_NAME_OVERRIDES_PATH = path.join(
-  __dirname,
-  'generators',
-  'display-name-overrides.json',
-);
+const DISPLAY_NAME_OVERRIDES_PATH = path.join(__dirname, 'generators', 'display-name-overrides.json');
 
 /**
  * Generate the barrel export file for the generated module

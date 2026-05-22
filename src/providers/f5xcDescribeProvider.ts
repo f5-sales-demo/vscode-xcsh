@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
-import { RESOURCE_TYPES, ResourceTypeInfo } from '../api/resourceTypes';
+import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
+import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
+import type { ProfileManager } from '../config/profiles';
 import { API_ENDPOINTS } from '../generated/constants';
-import { getLogger } from '../utils/logger';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
-import { getQuotaForResourceType, QuotaItem } from '../api/subscription';
-import { renderBestPractices } from './metadataRenderer';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
+import { getLogger } from '../utils/logger';
+import { renderBestPractices } from './metadataRenderer';
 
 const logger = getLogger();
 
@@ -197,41 +197,34 @@ export class F5XCDescribeProvider {
       if (this.panel) {
         this.panel.reveal(vscode.ViewColumn.Beside);
       } else {
-        this.panel = vscode.window.createWebviewPanel(
-          'f5xcDescribe',
-          `${resourceName}`,
-          vscode.ViewColumn.Beside,
-          {
-            enableScripts: true,
-            retainContextWhenHidden: true,
-            localResourceRoots: [],
-          },
-        );
+        this.panel = vscode.window.createWebviewPanel('f5xcDescribe', `${resourceName}`, vscode.ViewColumn.Beside, {
+          enableScripts: true,
+          retainContextWhenHidden: true,
+          localResourceRoots: [],
+        });
 
         this.panel.onDidDispose(() => {
           this.panel = undefined;
         });
 
         // Set up message handler
-        this.panel.webview.onDidReceiveMessage(
-          async (message: { command: string; resourceType?: string }) => {
-            switch (message.command) {
-              case 'editResource':
-                await vscode.commands.executeCommand('f5xc.edit', {
-                  profileName,
-                  namespace,
-                  resourceType,
-                  resourceName,
-                });
-                break;
-              case 'openDocumentation': {
-                const docUrl = this.getDocumentationUrl(resourceType);
-                await vscode.env.openExternal(vscode.Uri.parse(docUrl));
-                break;
-              }
+        this.panel.webview.onDidReceiveMessage(async (message: { command: string; resourceType?: string }) => {
+          switch (message.command) {
+            case 'editResource':
+              await vscode.commands.executeCommand('f5xc.edit', {
+                profileName,
+                namespace,
+                resourceType,
+                resourceName,
+              });
+              break;
+            case 'openDocumentation': {
+              const docUrl = this.getDocumentationUrl(resourceType);
+              await vscode.env.openExternal(vscode.Uri.parse(docUrl));
+              break;
             }
-          },
-        );
+          }
+        });
       }
 
       this.panel.title = resourceName;
@@ -254,9 +247,7 @@ export class F5XCDescribeProvider {
         }
 
         if (quotaInfo) {
-          logger.info(
-            `Found quota info: ${quotaInfo.displayName} - ${quotaInfo.usage}/${quotaInfo.limit}`,
-          );
+          logger.info(`Found quota info: ${quotaInfo.displayName} - ${quotaInfo.usage}/${quotaInfo.limit}`);
         } else {
           logger.info(`No quota info found for ${resourceType}`);
         }
@@ -300,16 +291,11 @@ export class F5XCDescribeProvider {
       if (this.panel) {
         this.panel.reveal(vscode.ViewColumn.Beside);
       } else {
-        this.panel = vscode.window.createWebviewPanel(
-          'f5xcDescribe',
-          namespaceName,
-          vscode.ViewColumn.Beside,
-          {
-            enableScripts: true,
-            retainContextWhenHidden: true,
-            localResourceRoots: [],
-          },
-        );
+        this.panel = vscode.window.createWebviewPanel('f5xcDescribe', namespaceName, vscode.ViewColumn.Beside, {
+          enableScripts: true,
+          retainContextWhenHidden: true,
+          localResourceRoots: [],
+        });
 
         this.panel.onDidDispose(() => {
           this.panel = undefined;
@@ -345,7 +331,7 @@ export class F5XCDescribeProvider {
     quotaInfo?: QuotaItem,
   ): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
     const metadata = resource.metadata as Record<string, unknown> | undefined;
     const systemMetadata = resource.system_metadata as Record<string, unknown> | undefined;
     const spec = resource.spec as Record<string, unknown> | undefined;
@@ -633,11 +619,7 @@ export class F5XCDescribeProvider {
 
     // 5. API Protection
     const apiFields: FieldDefinition[] = [];
-    const apiDefStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_api_definition',
-      'api_definition',
-    );
+    const apiDefStatus = this.getEnableDisableStatus(spec || {}, 'disable_api_definition', 'api_definition');
     if (apiDefStatus) {
       apiFields.push({
         key: 'API Definition',
@@ -645,11 +627,7 @@ export class F5XCDescribeProvider {
         status: apiDefStatus.enabled ? 'enabled' : 'disabled',
       });
     }
-    const apiDiscStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_api_discovery',
-      'enable_api_discovery',
-    );
+    const apiDiscStatus = this.getEnableDisableStatus(spec || {}, 'disable_api_discovery', 'enable_api_discovery');
     if (apiDiscStatus) {
       apiFields.push({
         key: 'API Discovery',
@@ -662,11 +640,7 @@ export class F5XCDescribeProvider {
       apiFields.push({ key: 'Sensitive Data Discovery', value: 'Default' });
     }
     // API Testing
-    const apiTestingStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_api_testing',
-      'api_testing_config',
-    );
+    const apiTestingStatus = this.getEnableDisableStatus(spec || {}, 'disable_api_testing', 'api_testing_config');
     if (apiTestingStatus) {
       apiFields.push({
         key: 'API Testing',
@@ -758,11 +732,7 @@ export class F5XCDescribeProvider {
 
     // 8. Client-Side Defense (separate section)
     const csdFields: FieldDefinition[] = [];
-    const csdStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_client_side_defense',
-      'client_side_defense',
-    );
+    const csdStatus = this.getEnableDisableStatus(spec || {}, 'disable_client_side_defense', 'client_side_defense');
     if (csdStatus) {
       csdFields.push({
         key: 'Client-Side Defense',
@@ -783,11 +753,7 @@ export class F5XCDescribeProvider {
       securityFields.push({ key: 'Service Policies', value: 'Custom' });
     }
     // IP Reputation
-    const ipRepStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_ip_reputation',
-      'enable_ip_reputation',
-    );
+    const ipRepStatus = this.getEnableDisableStatus(spec || {}, 'disable_ip_reputation', 'enable_ip_reputation');
     if (ipRepStatus) {
       securityFields.push({
         key: 'IP Reputation',
@@ -796,11 +762,7 @@ export class F5XCDescribeProvider {
       });
     }
     // Threat Mesh
-    const threatMeshStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_threat_mesh',
-      'enable_threat_mesh',
-    );
+    const threatMeshStatus = this.getEnableDisableStatus(spec || {}, 'disable_threat_mesh', 'enable_threat_mesh');
     if (threatMeshStatus) {
       securityFields.push({
         key: 'Threat Mesh',
@@ -1245,15 +1207,11 @@ export class F5XCDescribeProvider {
       metadataFields.push({ key: 'Creator', value: String(systemMetadata.creator_id) });
     }
     // Creation timestamp
-    const createTime = this.formatTimestamp(
-      systemMetadata?.creation_timestamp as string | undefined,
-    );
+    const createTime = this.formatTimestamp(systemMetadata?.creation_timestamp as string | undefined);
     if (createTime) {
       metadataFields.push({ key: 'Created', value: createTime });
     }
-    const modTime = this.formatTimestamp(
-      systemMetadata?.modification_timestamp as string | undefined,
-    );
+    const modTime = this.formatTimestamp(systemMetadata?.modification_timestamp as string | undefined);
     if (modTime) {
       metadataFields.push({ key: 'Last Modified', value: modTime });
     }
@@ -1296,8 +1254,7 @@ export class F5XCDescribeProvider {
    */
   private renderSection(section: SectionDefinition): string {
     // Show "Not Configured" for empty sections (no fields and no sub-groups)
-    const hasContent =
-      section.fields.length > 0 || (section.subGroups && section.subGroups.length > 0);
+    const hasContent = section.fields.length > 0 || (section.subGroups && section.subGroups.length > 0);
     if (!hasContent) {
       return `
       <section class="section" id="section-${section.id}">
@@ -1328,15 +1285,11 @@ export class F5XCDescribeProvider {
       : '';
 
     // Build sub-groups HTML
-    const subGroupsHtml = section.subGroups
-      ? section.subGroups.map((sg) => this.renderSubGroup(sg)).join('\n')
-      : '';
+    const subGroupsHtml = section.subGroups ? section.subGroups.map((sg) => this.renderSubGroup(sg)).join('\n') : '';
 
     // Build ungrouped fields HTML
     const ungroupedFieldsHtml =
-      section.fields.length > 0
-        ? `<div class="ungrouped-fields">${this.renderFields(section.fields)}</div>`
-        : '';
+      section.fields.length > 0 ? `<div class="ungrouped-fields">${this.renderFields(section.fields)}</div>` : '';
 
     return `
       <section class="section" id="section-${section.id}">
@@ -2109,7 +2062,7 @@ export class F5XCDescribeProvider {
   private renderBestPracticesPanel(apiPath: string): string {
     const resourceKey = apiPath.endsWith('s') ? apiPath.slice(0, -1) : apiPath;
     const generated = GENERATED_RESOURCE_TYPES[resourceKey];
-    const bp = (generated as Record<string, unknown> | undefined)?.['bestPractices'] as
+    const bp = (generated as Record<string, unknown> | undefined)?.bestPractices as
       | {
           commonErrors?: Array<{
             code: number;

@@ -1,39 +1,39 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager, Profile } from '../config/profiles';
 import { F5XCClient } from '../api/client';
 import {
-  RESOURCE_TYPES,
+  BUILT_IN_NAMESPACES,
   getCategorizedResourceTypesForNamespace,
   getCategoryIcon,
-  ResourceTypeInfo,
-  isResourceTypeAvailableForNamespace,
-  BUILT_IN_NAMESPACES,
-  isBuiltInNamespace,
+  getCommonErrors,
   getDangerLevel,
   getOperationPurpose,
   getPrerequisites,
-  getCommonErrors,
-  isResourceTypePreview,
-  getResourceTypeTierRequirement,
   getResourceDomain,
+  getResourceTypeTierRequirement,
+  isBuiltInNamespace,
+  isResourceTypeAvailableForNamespace,
+  isResourceTypePreview,
+  RESOURCE_TYPES,
+  type ResourceTypeInfo,
 } from '../api/resourceTypes';
+import type { Profile, ProfileManager } from '../config/profiles';
 import {
-  getDomainsForCategory,
-  getDomainMetadata,
   getDomainComplexity,
+  getDomainMetadata,
+  getDomainsForCategory,
   getDomainUseCases,
-  UiCategory,
+  type UiCategory,
 } from '../generated/domainCategories';
 import { getLogger } from '../utils/logger';
 import {
-  F5XCTreeItem,
+  type CategoryNodeData,
+  type F5XCTreeItem,
+  type NamespaceNodeData,
+  type ResourceNodeData,
+  type ResourceTypeNodeData,
   TreeItemContext,
-  NamespaceNodeData,
-  CategoryNodeData,
-  ResourceTypeNodeData,
-  ResourceNodeData,
 } from './treeTypes';
 
 /**
@@ -47,10 +47,7 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
   private readonly clientFactory: (profile: Profile) => Promise<F5XCClient>;
   private readonly logger = getLogger();
 
-  constructor(
-    profileManager: ProfileManager,
-    clientFactory: (profile: Profile) => Promise<F5XCClient>,
-  ) {
+  constructor(profileManager: ProfileManager, clientFactory: (profile: Profile) => Promise<F5XCClient>) {
     this.profileManager = profileManager;
     this.clientFactory = clientFactory;
   }
@@ -207,9 +204,7 @@ export class NamespaceNode implements F5XCTreeItem {
   getTreeItem(): vscode.TreeItem {
     const item = new vscode.TreeItem(this.data.name, vscode.TreeItemCollapsibleState.Collapsed);
     // Use differentiated context value for built-in vs custom namespaces
-    item.contextValue = this.data.isBuiltIn
-      ? TreeItemContext.NAMESPACE_BUILTIN
-      : TreeItemContext.NAMESPACE_CUSTOM;
+    item.contextValue = this.data.isBuiltIn ? TreeItemContext.NAMESPACE_BUILTIN : TreeItemContext.NAMESPACE_CUSTOM;
     item.iconPath = new vscode.ThemeIcon('folder');
     item.tooltip = `Namespace: demo-app}`;
     return item;
@@ -271,9 +266,7 @@ class CategoryNode implements F5XCTreeItem {
       for (const domain of domainsInCategory.slice(0, 3)) {
         const meta = getDomainMetadata(domain);
         if (meta) {
-          tooltip.appendMarkdown(
-            `${meta.icon} **${meta.title.replace(/^F5 XC /, '').replace(/ API$/, '')}**\n`,
-          );
+          tooltip.appendMarkdown(`${meta.icon} **${meta.title.replace(/^F5 XC /, '').replace(/ API$/, '')}**\n`);
           tooltip.appendMarkdown(`${meta.description_short}\n\n`);
         }
       }
@@ -292,8 +285,7 @@ class CategoryNode implements F5XCTreeItem {
     // Filter by category AND namespace scope
     const types = Object.entries(RESOURCE_TYPES).filter(
       ([, info]) =>
-        info.category === this.data.category &&
-        isResourceTypeAvailableForNamespace(info, this.data.namespace),
+        info.category === this.data.category && isResourceTypeAvailableForNamespace(info, this.data.namespace),
     );
 
     return Promise.resolve(
@@ -332,9 +324,7 @@ class ResourceTypeNode implements F5XCTreeItem {
     const tierRequirement = getResourceTypeTierRequirement(this.data.resourceTypeKey);
 
     // Add preview badge to display name if applicable
-    const displayName = isPreview
-      ? `${this.data.resourceType.displayName} 🧪`
-      : this.data.resourceType.displayName;
+    const displayName = isPreview ? `${this.data.resourceType.displayName} 🧪` : this.data.resourceType.displayName;
 
     const item = new vscode.TreeItem(displayName, vscode.TreeItemCollapsibleState.Collapsed);
     item.contextValue = `${TreeItemContext.RESOURCE_TYPE}:${this.data.resourceTypeKey}`;
@@ -364,8 +354,7 @@ class ResourceTypeNode implements F5XCTreeItem {
       const complexity = getDomainComplexity(domain);
       if (complexity) {
         const complexityLabel = complexity.charAt(0).toUpperCase() + complexity.slice(1);
-        const complexityIcon =
-          complexity === 'expert' ? '🔴' : complexity === 'advanced' ? '🟡' : '🟢';
+        const complexityIcon = complexity === 'expert' ? '🔴' : complexity === 'advanced' ? '🟡' : '🟢';
         tooltip.appendMarkdown(`**Complexity**: ${complexityIcon} ${complexityLabel}\n\n`);
       }
 
@@ -428,11 +417,7 @@ class ResourceTypeNode implements F5XCTreeItem {
 
       const client = await this.clientFactory(profile);
       const listOptions = F5XCClient.buildListOptions(this.data.resourceType);
-      const resources = await client.listWithOptions(
-        this.data.namespace,
-        this.data.resourceType.apiPath,
-        listOptions,
-      );
+      const resources = await client.listWithOptions(this.data.namespace, this.data.resourceType.apiPath, listOptions);
 
       return (
         resources
@@ -472,9 +457,7 @@ class ResourceTypeNode implements F5XCTreeItem {
             );
 
             if (name === 'unknown') {
-              this.logger.warn(
-                `Could not extract name from resource. Keys: ${Object.keys(resourceAny).join(', ')}`,
-              );
+              this.logger.warn(`Could not extract name from resource. Keys: ${Object.keys(resourceAny).join(', ')}`);
             }
 
             return {
@@ -502,9 +485,7 @@ class ResourceTypeNode implements F5XCTreeItem {
               resourceTypeKey: this.data.resourceTypeKey,
               profileName: this.data.profileName,
               metadata: r.metadata,
-              fullResourceData: this.data.resourceType.useListDataForDescribe
-                ? r.fullResourceData
-                : undefined,
+              fullResourceData: this.data.resourceType.useListDataForDescribe ? r.fullResourceData : undefined,
             });
           })
       );
@@ -547,8 +528,7 @@ export class ResourceNode implements F5XCTreeItem {
     }
     // Show danger level with appropriate indicator
     const dangerIcon = deleteDanger === 'high' ? '⚠️' : deleteDanger === 'medium' ? '⚡' : '✓';
-    const dangerText =
-      deleteDanger === 'high' ? 'High Risk' : deleteDanger === 'medium' ? 'Medium' : 'Low';
+    const dangerText = deleteDanger === 'high' ? 'High Risk' : deleteDanger === 'medium' ? 'Medium' : 'Low';
     tooltip.appendMarkdown(`- Delete: ${dangerIcon} ${dangerText}`);
     if (deletePurpose) {
       tooltip.appendMarkdown(` - ${deletePurpose}`);

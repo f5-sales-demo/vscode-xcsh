@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import * as https from 'https';
-import { AuthProvider, TokenAuthConfig } from './index';
-import { getLogger } from '../../utils/logger';
+import * as https from 'node:https';
 import { API_ENDPOINTS } from '../../generated/constants';
+import { getLogger } from '../../utils/logger';
+import type { AuthProvider, TokenAuthConfig } from './index';
 
 /**
  * API Token-based authentication provider for F5 XC

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import * as vscode from 'vscode';
-import { ResourceCategory, ResourceTypeInfo } from '../api/resourceTypes';
+import type * as vscode from 'vscode';
+import type { ResourceCategory, ResourceTypeInfo } from '../api/resourceTypes';
 
 /**
  * Base interface for all tree items

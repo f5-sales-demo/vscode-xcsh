@@ -5,9 +5,9 @@
  * This file is the entry point for running VSCode extension integration tests
  */
 
-import * as path from 'path';
-import Mocha from 'mocha';
+import * as path from 'node:path';
 import { glob } from 'glob';
+import Mocha from 'mocha';
 
 export async function run(): Promise<void> {
   // Create the mocha test

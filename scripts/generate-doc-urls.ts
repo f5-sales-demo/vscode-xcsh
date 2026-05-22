@@ -9,8 +9,8 @@
  * Usage: npx ts-node scripts/generate-doc-urls.ts
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 interface SpecInfo {
   schemaId: string;
@@ -39,7 +39,7 @@ const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'generated', 'documentatio
 function extractSchemaId(filename: string): string | null {
   // Pattern: docs-cloud-f5-com.NNNN.public.<schema-id>.ves-swagger.json
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
-  return match && match[1] ? match[1] : null;
+  return match?.[1] ? match[1] : null;
 }
 
 /**
@@ -62,12 +62,12 @@ function deriveResourceType(schemaId: string): string | null {
   if (afterSchema[0] === 'views' && afterSchema.length > 1) {
     const resourceName = afterSchema[1];
     // Convert to plural form used in RESOURCE_TYPES (e.g., http_loadbalancer -> http_loadbalancers)
-    return resourceName + 's';
+    return `${resourceName}s`;
   }
 
   // Otherwise take the first part after schema
   const resourceName = afterSchema[0];
-  return resourceName + 's';
+  return `${resourceName}s`;
 }
 
 /**

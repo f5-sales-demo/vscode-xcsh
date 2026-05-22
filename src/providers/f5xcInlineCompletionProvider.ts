@@ -6,9 +6,9 @@
  */
 
 import * as vscode from 'vscode';
-import { CompletionHelper } from '../utils/completionHelper';
+import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
-import { SchemaProperty } from '../schema/schemaGenerator';
+import * as CompletionHelper from '../utils/completionHelper';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -70,9 +70,7 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
       return undefined;
     }
 
-    logger.debug(
-      `Inline completion for property: ${jsonContext.propertyName} at path: ${jsonContext.path.join('.')}`,
-    );
+    logger.debug(`Inline completion for property: ${jsonContext.propertyName} at path: ${jsonContext.path.join('.')}`);
 
     // Find the schema for this property
     const propertyPath = [...jsonContext.path, jsonContext.propertyName];
@@ -89,10 +87,7 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
     }
 
     // Format value for JSON
-    const formattedValue = this.formatValueForInlineCompletion(
-      recommendedValue,
-      propertySchema.type,
-    );
+    const formattedValue = this.formatValueForInlineCompletion(recommendedValue, propertySchema.type);
 
     if (!formattedValue) {
       return undefined;
@@ -102,9 +97,7 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
     if (typeof formattedValue === 'string' && propertySchema) {
       // Extract the raw string value (strip JSON quotes) for constraint checks
       const rawValue =
-        formattedValue.startsWith('"') && formattedValue.endsWith('"')
-          ? formattedValue.slice(1, -1)
-          : formattedValue;
+        formattedValue.startsWith('"') && formattedValue.endsWith('"') ? formattedValue.slice(1, -1) : formattedValue;
       if (typeof propertySchema.pattern === 'string') {
         try {
           if (!new RegExp(propertySchema.pattern).test(rawValue)) {
@@ -114,10 +107,7 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
           /* skip invalid regex */
         }
       }
-      if (
-        typeof propertySchema.maxLength === 'number' &&
-        rawValue.length > propertySchema.maxLength
-      ) {
+      if (typeof propertySchema.maxLength === 'number' && rawValue.length > propertySchema.maxLength) {
         return [];
       }
     }
@@ -155,10 +145,7 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
   /**
    * Format value for inline completion (ghost text)
    */
-  private formatValueForInlineCompletion(
-    value: unknown,
-    type?: string | string[],
-  ): string | undefined {
+  private formatValueForInlineCompletion(value: unknown, type?: string | string[]): string | undefined {
     if (value === null) {
       return 'null';
     }

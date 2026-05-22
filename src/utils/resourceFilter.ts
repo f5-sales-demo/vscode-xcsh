@@ -76,12 +76,7 @@ export const FULL_API_OPTIONS: ResourceFilterOptions = {
  * Check if a value is an empty object
  */
 function isEmptyObject(value: unknown): boolean {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    !Array.isArray(value) &&
-    Object.keys(value).length === 0
-  );
+  return typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value).length === 0;
 }
 
 /**
@@ -172,10 +167,7 @@ function filterObject(
 /**
  * Filter metadata object, removing empty fields like description
  */
-function filterMetadata(
-  metadata: Record<string, unknown>,
-  options: ResourceFilterOptions,
-): Record<string, unknown> {
+function filterMetadata(metadata: Record<string, unknown>, options: ResourceFilterOptions): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(metadata)) {

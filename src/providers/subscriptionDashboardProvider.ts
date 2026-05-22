@@ -5,18 +5,18 @@
  */
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
 import {
+  type AccessStatus,
+  type AddonService,
+  createAddonSubscription,
+  getAddonActivationStatus,
   getCurrentPlan,
   getQuotaUsage,
-  getAddonActivationStatus,
-  createAddonSubscription,
-  PlanInfo,
-  QuotaUsage,
-  QuotaItem,
-  AddonService,
-  AccessStatus,
+  type PlanInfo,
+  type QuotaItem,
+  type QuotaUsage,
 } from '../api/subscription';
+import type { ProfileManager } from '../config/profiles';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -163,11 +163,7 @@ export class SubscriptionDashboardProvider {
   /**
    * Handle addon activation request from webview
    */
-  private async handleActivateAddon(
-    addonName: string,
-    addonDisplayName: string,
-    profileName: string,
-  ): Promise<void> {
+  private async handleActivateAddon(addonName: string, addonDisplayName: string, profileName: string): Promise<void> {
     // Show confirmation dialog
     const confirm = await vscode.window.showInformationMessage(
       `Activate "${addonDisplayName}"?\n\nThis will create a pending subscription request. Activation may require approval from F5 support.`,
@@ -244,12 +240,9 @@ export class SubscriptionDashboardProvider {
   /**
    * Generate Plan dashboard HTML
    */
-  private getPlanWebviewContent(
-    planInfo: PlanInfo,
-    accessStatuses: Map<string, AccessStatus>,
-  ): string {
+  private getPlanWebviewContent(planInfo: PlanInfo, accessStatuses: Map<string, AccessStatus>): string {
     const nonce = this.getNonce();
-    const cspSource = this.planPanel!.webview.cspSource;
+    const cspSource = this.planPanel?.webview.cspSource;
 
     const tierBadge =
       planInfo.tier === 'advanced'
@@ -414,9 +407,7 @@ export class SubscriptionDashboardProvider {
     const tierLabel = addon.tier === 'advanced' ? 'Advanced' : 'Standard';
 
     // Show addon name only when there are multiple addons in the same category
-    const nameHtml = showName
-      ? `<span class="addon-name">${this.escapeHtml(addon.displayName)}</span>`
-      : '';
+    const nameHtml = showName ? `<span class="addon-name">${this.escapeHtml(addon.displayName)}</span>` : '';
 
     // Generate activate button for available (not active) addons
     let actionHtml = '';
@@ -463,9 +454,6 @@ export class SubscriptionDashboardProvider {
             Not Available
           </button>
         `;
-
-      case 'AS_AC_ALLOWED':
-      case 'AS_AC_NONE':
       default:
         return `
           <button class="activate-btn" onclick="activateAddon('${escapedName}', '${escapedDisplayName}')" title="Request activation for this addon">
@@ -480,7 +468,7 @@ export class SubscriptionDashboardProvider {
    */
   private getQuotasWebviewContent(quotaUsage: QuotaUsage): string {
     const nonce = this.getNonce();
-    const cspSource = this.quotasPanel!.webview.cspSource;
+    const cspSource = this.quotasPanel?.webview.cspSource;
 
     // Calculate summary stats
     const allItems = [...quotaUsage.objects, ...quotaUsage.resources];

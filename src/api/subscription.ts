@@ -9,8 +9,8 @@
  * - GET /api/web/namespaces/{namespace}/quota/limits - Quota limits only
  */
 
-import { F5XCClient } from './client';
 import { getLogger } from '../utils/logger';
+import type { F5XCClient } from './client';
 
 const logger = getLogger();
 
@@ -34,14 +34,7 @@ export interface AddonService {
 /**
  * Addon service categories
  */
-export type AddonCategory =
-  | 'bot_defense'
-  | 'waap'
-  | 'securemesh'
-  | 'appstack'
-  | 'dns'
-  | 'observability'
-  | 'other';
+export type AddonCategory = 'bot_defense' | 'waap' | 'securemesh' | 'appstack' | 'dns' | 'observability' | 'other';
 
 /**
  * Current plan information from /api/web/namespaces/system/usage_plans/current
@@ -163,8 +156,7 @@ function parseAddonService(service: ApiAddonService | string): AddonService {
     derivedDisplayName = tier === 'advanced' ? 'Bot Defense Advanced' : 'Bot Defense Standard';
   } else if (lowerName.includes('waap')) {
     category = 'waap';
-    derivedDisplayName =
-      tier === 'advanced' ? 'Web App & API Protection Advanced' : 'Web App & API Protection';
+    derivedDisplayName = tier === 'advanced' ? 'Web App & API Protection Advanced' : 'Web App & API Protection';
   } else if (lowerName.includes('securemesh')) {
     category = 'securemesh';
     derivedDisplayName = tier === 'advanced' ? 'SecureMesh Advanced' : 'SecureMesh Standard';
@@ -216,8 +208,7 @@ function parseQuotaItems(items: Record<string, QuotaUsageItem>): QuotaItem[] {
       return {
         key,
         // The key itself is the display name in the new API format
-        displayName:
-          value.display_name || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        displayName: value.display_name || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
         description: value.description,
         limit,
         usage,
@@ -233,9 +224,7 @@ function parseQuotaItems(items: Record<string, QuotaUsageItem>): QuotaItem[] {
 export async function getCurrentPlan(client: F5XCClient): Promise<PlanInfo> {
   logger.debug('Fetching current usage plan');
 
-  const response = await client.customRequest<UsagePlanResponse>(
-    '/api/web/namespaces/system/usage_plans/current',
-  );
+  const response = await client.customRequest<UsagePlanResponse>('/api/web/namespaces/system/usage_plans/current');
 
   // Find the current plan from the plans array (new format) or use plan object (legacy format)
   let plan: UsagePlanItem | undefined;
@@ -257,11 +246,7 @@ export async function getCurrentPlan(client: F5XCClient): Promise<PlanInfo> {
   const tenantType = (plan.tenant_type || '').toLowerCase();
   const planName = (plan.name || plan.title || '').toLowerCase();
 
-  if (
-    tenantType === 'enterprise' ||
-    planName.includes('organization') ||
-    planName.includes('advanced')
-  ) {
+  if (tenantType === 'enterprise' || planName.includes('organization') || planName.includes('advanced')) {
     tier = 'advanced';
   }
 
@@ -283,15 +268,10 @@ export async function getCurrentPlan(client: F5XCClient): Promise<PlanInfo> {
 /**
  * Get quota usage for a namespace
  */
-export async function getQuotaUsage(
-  client: F5XCClient,
-  namespace: string = 'system',
-): Promise<QuotaUsage> {
+export async function getQuotaUsage(client: F5XCClient, namespace: string = 'system'): Promise<QuotaUsage> {
   logger.debug(`Fetching quota usage for namespace: ${namespace}`);
 
-  const response = await client.customRequest<QuotaUsageResponse>(
-    `/api/web/namespaces/${namespace}/quota/usage`,
-  );
+  const response = await client.customRequest<QuotaUsageResponse>(`/api/web/namespaces/${namespace}/quota/usage`);
 
   // New API format: all quotas are in quota_usage object
   if (response.quota_usage) {
@@ -386,15 +366,10 @@ export async function getQuotaForResourceType(
     const staticMatch = allItems.find((item) => {
       const itemKeyLower = item.key.toLowerCase();
       const itemDisplayLower = item.displayName.toLowerCase();
-      return (
-        mappedKeys.some((k) => itemKeyLower.includes(k)) ||
-        mappedKeys.some((k) => itemDisplayLower.includes(k))
-      );
+      return mappedKeys.some((k) => itemKeyLower.includes(k)) || mappedKeys.some((k) => itemDisplayLower.includes(k));
     });
     if (staticMatch) {
-      logger.info(
-        `Found quota via static mapping: ${staticMatch.key} (${staticMatch.displayName})`,
-      );
+      logger.info(`Found quota via static mapping: ${staticMatch.key} (${staticMatch.displayName})`);
       return staticMatch;
     }
   }
@@ -628,9 +603,7 @@ export async function createAddonSubscription(
     },
   );
 
-  logger.info(
-    `Addon subscription created: ${response.metadata?.name}, status: ${response.spec?.status}`,
-  );
+  logger.info(`Addon subscription created: ${response.metadata?.name}, status: ${response.spec?.status}`);
 
   return response;
 }

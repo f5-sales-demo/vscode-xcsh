@@ -89,7 +89,7 @@ describe('TokenAuthProvider', () => {
 
   describe('validate', () => {
     it('should return true for successful validation (mocked)', async () => {
-      const https = require('https');
+      const https = require('node:https');
 
       // Mock successful request
       const mockRequest: MockRequest = {
@@ -104,10 +104,7 @@ describe('TokenAuthProvider', () => {
       };
 
       https.request.mockImplementation(
-        (
-          _options: unknown,
-          callback: (res: { statusCode: number; resume: () => void }) => void,
-        ) => {
+        (_options: unknown, callback: (res: { statusCode: number; resume: () => void }) => void) => {
           // Call callback asynchronously
           setTimeout(() => callback(mockResponse), 0);
           return mockRequest;
@@ -120,7 +117,7 @@ describe('TokenAuthProvider', () => {
     });
 
     it('should return false for 401 response', async () => {
-      const https = require('https');
+      const https = require('node:https');
 
       const mockRequest: MockRequest = {
         on: jest.fn((): MockRequest => mockRequest),
@@ -134,10 +131,7 @@ describe('TokenAuthProvider', () => {
       };
 
       https.request.mockImplementation(
-        (
-          _options: unknown,
-          callback: (res: { statusCode: number; resume: () => void }) => void,
-        ) => {
+        (_options: unknown, callback: (res: { statusCode: number; resume: () => void }) => void) => {
           setTimeout(() => callback(mockResponse), 0);
           return mockRequest;
         },
@@ -149,7 +143,7 @@ describe('TokenAuthProvider', () => {
     });
 
     it('should return false for 403 response', async () => {
-      const https = require('https');
+      const https = require('node:https');
 
       const mockRequest: MockRequest = {
         on: jest.fn((): MockRequest => mockRequest),
@@ -163,10 +157,7 @@ describe('TokenAuthProvider', () => {
       };
 
       https.request.mockImplementation(
-        (
-          _options: unknown,
-          callback: (res: { statusCode: number; resume: () => void }) => void,
-        ) => {
+        (_options: unknown, callback: (res: { statusCode: number; resume: () => void }) => void) => {
           setTimeout(() => callback(mockResponse), 0);
           return mockRequest;
         },
@@ -178,7 +169,7 @@ describe('TokenAuthProvider', () => {
     });
 
     it('should return false for network error', async () => {
-      const https = require('https');
+      const https = require('node:https');
 
       const mockRequest: MockRequest = {
         on: jest.fn((event: string, callback: (err?: Error) => void): MockRequest => {
@@ -199,7 +190,7 @@ describe('TokenAuthProvider', () => {
     });
 
     it('should return false for timeout', async () => {
-      const https = require('https');
+      const https = require('node:https');
 
       const mockRequest: MockRequest = {
         on: jest.fn((event: string, callback: () => void): MockRequest => {
@@ -358,7 +349,7 @@ describe('TokenAuthProvider validation URL construction', () => {
   });
 
   it('should construct correct validation URL', async () => {
-    const https = require('https');
+    const https = require('node:https');
 
     const mockRequest: MockRequest = {
       on: jest.fn((): MockRequest => mockRequest),
