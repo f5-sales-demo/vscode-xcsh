@@ -28,6 +28,9 @@ export interface SchemaProperty {
   pattern?: string;
   maxLength?: number;
   minLength?: number;
+  minimum?: number;
+  maximum?: number;
+  multipleOf?: number;
   examples?: unknown[];
   // F5 XC custom extensions for IntelliSense hints
   'x-f5xc-required'?: boolean;
@@ -258,6 +261,15 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
     }
     if (typeof constraints.minLength === 'number') {
       props.minLength = constraints.minLength;
+    }
+    if (typeof constraints.minimum === 'number') {
+      props.minimum = constraints.minimum;
+    }
+    if (typeof constraints.maximum === 'number') {
+      props.maximum = constraints.maximum;
+    }
+    if (typeof constraints.multipleOf === 'number') {
+      props.multipleOf = constraints.multipleOf;
     }
     if (typeof constraints.formatDescription === 'string') {
       props['x-f5xc-format-description'] = constraints.formatDescription;
