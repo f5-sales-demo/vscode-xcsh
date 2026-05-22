@@ -183,8 +183,8 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
     for (const field of fieldMetadata.userRequiredFields) {
       if (field.startsWith('spec.')) {
         const specPath = field.replace('spec.', '');
-        // Only add top-level fields to required array
-        const topLevelField = specPath.split('.')[0];
+        // Only add top-level fields to required array, stripping [] array notation
+        const topLevelField = (specPath.split('.')[0] ?? '').replace('[]', '');
         if (topLevelField && !requiredTopLevel.includes(topLevelField)) {
           requiredTopLevel.push(topLevelField);
         }
