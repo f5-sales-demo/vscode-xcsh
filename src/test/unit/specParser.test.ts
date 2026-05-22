@@ -7,14 +7,14 @@
  * to verify resource discovery, field metadata extraction, and operation metadata.
  */
 
-import * as path from 'path';
+import * as path from 'node:path';
 import {
+  type DangerLevel,
+  type NamespaceScope,
+  type ParsedSpecInfo,
   parseAllDomainFiles,
-  ParsedSpecInfo,
-  NamespaceScope,
-  ResourceFieldMetadata,
-  ResourceOperationMetadata,
-  DangerLevel,
+  type ResourceFieldMetadata,
+  type ResourceOperationMetadata,
 } from '../../../scripts/generators/spec-parser';
 
 const DOMAINS_DIR = path.resolve(__dirname, '../../../docs/specifications/api/domains');

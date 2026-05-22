@@ -5,18 +5,18 @@
  */
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
 import {
+  type AccessStatus,
+  type AddonService,
+  createAddonSubscription,
+  getAddonActivationStatus,
   getCurrentPlan,
   getQuotaUsage,
-  getAddonActivationStatus,
-  createAddonSubscription,
-  PlanInfo,
-  QuotaUsage,
-  QuotaItem,
-  AddonService,
-  AccessStatus,
+  type PlanInfo,
+  type QuotaItem,
+  type QuotaUsage,
 } from '../api/subscription';
+import type { ProfileManager } from '../config/profiles';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -249,7 +249,7 @@ export class SubscriptionDashboardProvider {
     accessStatuses: Map<string, AccessStatus>,
   ): string {
     const nonce = this.getNonce();
-    const cspSource = this.planPanel!.webview.cspSource;
+    const cspSource = this.planPanel?.webview.cspSource;
 
     const tierBadge =
       planInfo.tier === 'advanced'
@@ -463,9 +463,6 @@ export class SubscriptionDashboardProvider {
             Not Available
           </button>
         `;
-
-      case 'AS_AC_ALLOWED':
-      case 'AS_AC_NONE':
       default:
         return `
           <button class="activate-btn" onclick="activateAddon('${escapedName}', '${escapedDisplayName}')" title="Request activation for this addon">
@@ -480,7 +477,7 @@ export class SubscriptionDashboardProvider {
    */
   private getQuotasWebviewContent(quotaUsage: QuotaUsage): string {
     const nonce = this.getNonce();
-    const cspSource = this.quotasPanel!.webview.cspSource;
+    const cspSource = this.quotasPanel?.webview.cspSource;
 
     // Calculate summary stats
     const allItems = [...quotaUsage.objects, ...quotaUsage.resources];

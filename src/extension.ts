@@ -1,27 +1,27 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
+import { registerCloudStatusCommands } from './commands/cloudStatus';
+import { registerCrudCommands } from './commands/crud';
+import { registerDiagramCommands } from './commands/diagram';
+import { registerObservabilityCommands } from './commands/observability';
+import { registerProfileCommands } from './commands/profile';
 import { ProfileManager } from './config/profiles';
+import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
+import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
+import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
+import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
+import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
+import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
+import { F5XCViewProvider } from './providers/f5xcViewProvider';
+import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
+import { SubscriptionDashboardProvider } from './providers/subscriptionDashboardProvider';
+import { getSchemaRegistry } from './schema/schemaRegistry';
+import { CloudStatusProvider } from './tree/cloudStatusProvider';
 import { F5XCExplorerProvider } from './tree/f5xcExplorer';
 import { ProfilesProvider } from './tree/profilesProvider';
-import { CloudStatusProvider } from './tree/cloudStatusProvider';
 import { SubscriptionProvider } from './tree/subscriptionProvider';
-import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
-import { F5XCViewProvider } from './providers/f5xcViewProvider';
-import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
-import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
-import { SubscriptionDashboardProvider } from './providers/subscriptionDashboardProvider';
-import { registerCrudCommands } from './commands/crud';
-import { registerProfileCommands } from './commands/profile';
-import { registerObservabilityCommands } from './commands/observability';
-import { registerDiagramCommands } from './commands/diagram';
-import { registerCloudStatusCommands } from './commands/cloudStatus';
-import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
-import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
-import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
-import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
-import { getSchemaRegistry } from './schema/schemaRegistry';
-import { getLogger, Logger } from './utils/logger';
+import { getLogger, type Logger } from './utils/logger';
 
 let logger: Logger;
 

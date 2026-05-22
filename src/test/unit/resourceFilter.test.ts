@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import {
-  filterResource,
-  getFilterOptionsForViewMode,
   CONSOLE_VIEW_OPTIONS,
   FULL_API_OPTIONS,
+  filterResource,
+  getFilterOptionsForViewMode,
 } from '../../utils/resourceFilter';
 
 describe('resourceFilter', () => {

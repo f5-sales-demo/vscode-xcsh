@@ -15,8 +15,8 @@
  * 3. Generate menu schema showing resources per namespace type
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
 
 /**
@@ -162,7 +162,7 @@ const CATEGORY_MAPPINGS: { pattern: RegExp; category: string; icon: string }[] =
  */
 function extractSchemaId(filename: string): string | null {
   const match = filename.match(/public\.(ves\.io\.schema\.[^.]+(?:\.[^.]+)*?)\.ves-swagger\.json$/);
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
   return null;
@@ -330,7 +330,6 @@ function isResourceAvailableForNamespace(
     case 'shared':
       // Shared-scoped resources only appear in shared namespace
       return namespaceType === 'shared';
-    case 'any':
     default:
       // 'any' scope means user namespaces (shared, default, custom) but NOT system
       return namespaceType !== 'system';
@@ -372,7 +371,7 @@ function buildNamespaceSchema(
     categories[category].resources.push({
       key: resource.resourceKey,
       displayName: resource.displayName,
-      apiPath: resource.resourceKey + 's', // Simplified - actual apiPath would need more logic
+      apiPath: `${resource.resourceKey}s`, // Simplified - actual apiPath would need more logic
       scope: resource.derivedScope,
     });
 

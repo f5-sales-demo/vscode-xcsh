@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
-import { F5XCExplorerProvider } from '../tree/f5xcExplorer';
-import { F5XCDescribeProvider } from './f5xcDescribeProvider';
-import { Resource } from '../api/client';
-import { getLogger } from '../utils/logger';
-import { showInfo, showError } from '../utils/errors';
-import { getQuotaForResourceType, QuotaItem } from '../api/subscription';
+import type { Resource } from '../api/client';
 import { getFieldConstraints } from '../api/resourceTypes';
+import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
+import type { ProfileManager } from '../config/profiles';
+import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
+import { showError, showInfo } from '../utils/errors';
+import { getLogger } from '../utils/logger';
+import type { F5XCDescribeProvider } from './f5xcDescribeProvider';
 
 const logger = getLogger();
 
@@ -509,7 +509,7 @@ export class HealthcheckFormProvider {
   private getWebviewContent(namespaces: string[], quotaInfo?: QuotaItem): string {
     const nonce = this.getNonce();
     const quotaExceeded = quotaInfo ? quotaInfo.usage >= quotaInfo.limit : false;
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
 
     // Debug logging for CSP
     console.log('[Healthcheck] Nonce:', nonce);

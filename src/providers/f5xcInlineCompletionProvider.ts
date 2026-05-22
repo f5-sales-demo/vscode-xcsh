@@ -6,9 +6,9 @@
  */
 
 import * as vscode from 'vscode';
-import { CompletionHelper } from '../utils/completionHelper';
+import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
-import { SchemaProperty } from '../schema/schemaGenerator';
+import * as CompletionHelper from '../utils/completionHelper';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();

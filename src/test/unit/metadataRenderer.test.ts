@@ -2,8 +2,8 @@
 
 import {
   renderBestPractices,
-  renderConstraintBadge,
   renderConflictWarning,
+  renderConstraintBadge,
   renderDangerBadge,
   renderPerformanceHint,
 } from '../../providers/metadataRenderer';

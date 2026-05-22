@@ -1,26 +1,31 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { F5XCExplorerProvider, ResourceNode, NamespaceNode } from '../tree/f5xcExplorer';
-import { ProfileManager } from '../config/profiles';
+import type { Resource } from '../api/client';
+import {
+  getDangerLevel,
+  getFieldDefaults,
+  getRecommendedValueFields,
+  getRecommendedValues,
+  getResourceTypeByApiPath,
+  getServerDefaultFields,
+  getSideEffects,
+  isBuiltInNamespace,
+  RESOURCE_TYPES,
+} from '../api/resourceTypes';
+import type { ProfileManager } from '../config/profiles';
+import type { F5XCDescribeProvider } from '../providers/f5xcDescribeProvider';
 import { F5XCFileSystemProvider } from '../providers/f5xcFileSystemProvider';
 import { F5XCViewProvider } from '../providers/f5xcViewProvider';
-import { F5XCDescribeProvider } from '../providers/f5xcDescribeProvider';
-import { withErrorHandling, showInfo, showWarning } from '../utils/errors';
+import type { F5XCExplorerProvider, NamespaceNode, ResourceNode } from '../tree/f5xcExplorer';
+import type { ResourceNodeData } from '../tree/treeTypes';
+import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 import {
-  RESOURCE_TYPES,
-  getResourceTypeByApiPath,
-  isBuiltInNamespace,
-  getDangerLevel,
-  getSideEffects,
-  getFieldDefaults,
-  getServerDefaultFields,
-  getRecommendedValues,
-  getRecommendedValueFields,
-} from '../api/resourceTypes';
-import { filterResource, getFilterOptionsForViewMode, ViewMode } from '../utils/resourceFilter';
-import { ResourceNodeData } from '../tree/treeTypes';
+  filterResource,
+  getFilterOptionsForViewMode,
+  type ViewMode,
+} from '../utils/resourceFilter';
 import { validateResourcePayload } from '../utils/validation';
 
 const logger = getLogger();
@@ -332,16 +337,11 @@ export function registerCrudCommands(
 
         // Validate the resource payload before proceeding
         const operation = exists ? 'update' : 'create';
-        const validationResult = validateResourcePayload(
-          resourceTypeKey,
-          operation,
-          resource,
-        );
+        const validationResult = validateResourcePayload(resourceTypeKey, operation, resource);
 
         // If validation fails, show warning with option to continue
         if (!validationResult.valid) {
-          const warningMessage =
-            validationResult.warnings.join('\n\n') + '\n\nDo you want to continue anyway?';
+          const warningMessage = `${validationResult.warnings.join('\n\n')}\n\nDo you want to continue anyway?`;
 
           const continueAnyway = await vscode.window.showWarningMessage(
             warningMessage,
@@ -375,8 +375,7 @@ export function registerCrudCommands(
             cancellable: false,
           },
           async () => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-            const resourceData = resource as any;
+            const resourceData = resource as Resource;
             if (exists) {
               await client.replace(
                 namespace,
@@ -991,7 +990,7 @@ function detectResourceType(fileName: string, _resource: object): string | undef
 
   for (const pattern of patterns) {
     const match = fileName.match(pattern);
-    if (match && match[1]) {
+    if (match?.[1]) {
       const typeKey = match[1];
       if (RESOURCE_TYPES[typeKey]) {
         return typeKey;

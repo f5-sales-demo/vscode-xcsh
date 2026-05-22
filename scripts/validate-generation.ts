@@ -12,8 +12,8 @@
  * Usage: npx ts-node scripts/validate-generation.ts
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as ts from 'typescript';
 
 const GENERATED_DIR = path.join(__dirname, '..', 'src', 'generated');
@@ -72,11 +72,12 @@ function extractResourceTypes(filePath: string): Set<string> {
 
   // Match pattern like: key_name: { ... }
   const regex = /^\s+([a-z_]+):\s*\{/gm;
-  let match;
-  while ((match = regex.exec(content)) !== null) {
+  let match: RegExpExecArray | null = regex.exec(content);
+  while (match !== null) {
     if (match[1]) {
       keys.add(match[1]);
     }
+    match = regex.exec(content);
   }
 
   return keys;
@@ -92,14 +93,15 @@ function checkDuplicateKeys(filePath: string): string[] {
 
   // Match pattern like: key_name: { ... }
   const regex = /^\s+([a-z_]+):\s*\{/gm;
-  let match;
-  while ((match = regex.exec(content)) !== null) {
+  let match: RegExpExecArray | null = regex.exec(content);
+  while (match !== null) {
     if (match[1]) {
       if (keys.includes(match[1])) {
         duplicates.push(match[1]);
       }
       keys.push(match[1]);
     }
+    match = regex.exec(content);
   }
 
   return duplicates;

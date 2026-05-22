@@ -9,8 +9,8 @@
  * - GET /api/web/namespaces/{namespace}/quota/limits - Quota limits only
  */
 
-import { F5XCClient } from './client';
 import { getLogger } from '../utils/logger';
+import type { F5XCClient } from './client';
 
 const logger = getLogger();
 

@@ -6,22 +6,22 @@
  */
 
 import * as vscode from 'vscode';
+import type { Site } from '../api/client';
 import {
   CloudStatusClient,
-  Component,
-  ComponentStatus,
-  Incident,
-  ScheduledMaintenance,
-  SummaryResponse,
-  getStatusDisplayText,
-  getIncidentStatusText,
+  type Component,
+  type ComponentStatus,
   extractSiteCode,
+  getIncidentStatusText,
+  getStatusDisplayText,
+  type Incident,
+  type ScheduledMaintenance,
+  type SummaryResponse,
 } from '../api/cloudStatus';
-import { Site } from '../api/client';
-import { ProfileManager } from '../config/profiles';
-import { getLogger } from '../utils/logger';
-import { getPopCoordinates, formatCoordinates, Coordinates } from '../api/popCoordinates';
 import { geocodeLocation } from '../api/geocoder';
+import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/popCoordinates';
+import type { ProfileManager } from '../config/profiles';
+import { getLogger } from '../utils/logger';
 
 /**
  * WebView provider for Cloud Status Dashboard
@@ -184,7 +184,7 @@ export class CloudStatusDashboardProvider {
    */
   private getWebviewContent(summary: SummaryResponse): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
 
     // Group components by their group_id
     const groups = new Map<string, Component>();
@@ -201,7 +201,7 @@ export class CloudStatusDashboardProvider {
     for (const component of summary.components) {
       if (!component.group) {
         if (component.group_id && componentsByGroup.has(component.group_id)) {
-          componentsByGroup.get(component.group_id)!.push(component);
+          componentsByGroup.get(component.group_id)?.push(component);
         } else {
           standaloneComponents.push(component);
         }
@@ -435,7 +435,7 @@ export class CloudStatusDashboardProvider {
    */
   private getErrorContent(message: string): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1871,14 +1871,14 @@ export class CloudStatusDashboardProvider {
     let xcDetailsHtml: string;
     if (xcSite) {
       const siteObj = xcSite as unknown as Record<string, unknown>;
-      const labels = (siteObj['labels'] as Record<string, string>) || {};
+      const labels = (siteObj.labels as Record<string, string>) || {};
 
       // Extract data from root-level fields and labels
-      const siteName = (siteObj['name'] as string) || xcSite.metadata?.name || 'Unknown';
+      const siteName = (siteObj.name as string) || xcSite.metadata?.name || 'Unknown';
       const region = labels['ves.io/region'] || '';
       const country = labels['ves.io/country'] || '';
       const siteType = labels['ves.io/siteType'] || '';
-      const tenant = (siteObj['tenant'] as string) || '';
+      const tenant = (siteObj.tenant as string) || '';
 
       // Format label values for display (remove "ves-io-" prefix if present)
       const formatLabel = (value: string): string => {

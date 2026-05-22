@@ -1,39 +1,39 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager, Profile } from '../config/profiles';
 import { F5XCClient } from '../api/client';
 import {
-  RESOURCE_TYPES,
+  BUILT_IN_NAMESPACES,
   getCategorizedResourceTypesForNamespace,
   getCategoryIcon,
-  ResourceTypeInfo,
-  isResourceTypeAvailableForNamespace,
-  BUILT_IN_NAMESPACES,
-  isBuiltInNamespace,
+  getCommonErrors,
   getDangerLevel,
   getOperationPurpose,
   getPrerequisites,
-  getCommonErrors,
-  isResourceTypePreview,
-  getResourceTypeTierRequirement,
   getResourceDomain,
+  getResourceTypeTierRequirement,
+  isBuiltInNamespace,
+  isResourceTypeAvailableForNamespace,
+  isResourceTypePreview,
+  RESOURCE_TYPES,
+  type ResourceTypeInfo,
 } from '../api/resourceTypes';
+import type { Profile, ProfileManager } from '../config/profiles';
 import {
-  getDomainsForCategory,
-  getDomainMetadata,
   getDomainComplexity,
+  getDomainMetadata,
+  getDomainsForCategory,
   getDomainUseCases,
-  UiCategory,
+  type UiCategory,
 } from '../generated/domainCategories';
 import { getLogger } from '../utils/logger';
 import {
-  F5XCTreeItem,
+  type CategoryNodeData,
+  type F5XCTreeItem,
+  type NamespaceNodeData,
+  type ResourceNodeData,
+  type ResourceTypeNodeData,
   TreeItemContext,
-  NamespaceNodeData,
-  CategoryNodeData,
-  ResourceTypeNodeData,
-  ResourceNodeData,
 } from './treeTypes';
 
 /**

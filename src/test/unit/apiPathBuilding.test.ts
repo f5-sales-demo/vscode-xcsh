@@ -13,9 +13,12 @@ import { RESOURCE_TYPES } from '../../api/resourceTypes';
 
 describe('API path building — F5XCClient.buildListOptions', () => {
   it('returns apiBase "config" for http_loadbalancer (default)', () => {
-    const info = RESOURCE_TYPES['http_loadbalancer']!;
+    const info = RESOURCE_TYPES.http_loadbalancer;
+    expect(info).toBeDefined();
+    if (!info) {
+      return;
+    }
     const opts = F5XCClient.buildListOptions(info);
-    // apiBase is undefined when it defaults to 'config'
     expect(opts.apiBase === undefined || opts.apiBase === 'config').toBe(true);
   });
 
@@ -81,7 +84,11 @@ describe('API path building — F5XCClient.buildListOptions', () => {
   });
 
   it('passes through labelFilter argument', () => {
-    const info = RESOURCE_TYPES['http_loadbalancer']!;
+    const info = RESOURCE_TYPES.http_loadbalancer;
+    expect(info).toBeDefined();
+    if (!info) {
+      return;
+    }
     const opts = F5XCClient.buildListOptions(info, 'env=prod');
     expect(opts.labelFilter).toBe('env=prod');
   });

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager, Profile } from '../config/profiles';
-import { F5XCTreeItem } from './treeTypes';
+import type { Profile, ProfileManager } from '../config/profiles';
+import type { F5XCTreeItem } from './treeTypes';
 
 /**
  * Tree data provider for the Profiles view

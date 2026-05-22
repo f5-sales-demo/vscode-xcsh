@@ -341,7 +341,7 @@ export function getIncidentStatusText(
  */
 export function extractSiteCode(popName: string): string | null {
   const match = popName.match(/\(([a-z0-9-]+)\)/i);
-  if (match && match[1]) {
+  if (match?.[1]) {
     return match[1];
   }
   return null;

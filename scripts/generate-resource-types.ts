@@ -9,14 +9,14 @@
  * Usage: npx ts-node scripts/generate-resource-types.ts
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import {
-  generateResourceTypesFromDomainFiles,
-  ParsedSpecInfo,
-} from './generators/resource-type-generator';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { writeConstantsFile } from './generators/constants-generator';
 import { generateDomainCategoriesFile } from './generators/domain-category-generator';
+import {
+  generateResourceTypesFromDomainFiles,
+  type ParsedSpecInfo,
+} from './generators/resource-type-generator';
 
 // Use domain-based specs (new upstream format with x-f5xc-cli-domain)
 const DOMAIN_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api', 'domains');

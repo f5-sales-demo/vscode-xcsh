@@ -6,8 +6,8 @@
  */
 
 import * as vscode from 'vscode';
-import { CloudStatusProvider } from '../tree/cloudStatusProvider';
-import { CloudStatusDashboardProvider } from '../providers/cloudStatusDashboardProvider';
+import type { CloudStatusDashboardProvider } from '../providers/cloudStatusDashboardProvider';
+import type { CloudStatusProvider } from '../tree/cloudStatusProvider';
 
 /**
  * Register Cloud Status commands

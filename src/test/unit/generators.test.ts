@@ -17,7 +17,7 @@ type NamespaceScope = 'any' | 'system' | 'shared';
 
 function extractSchemaId(filename: string): string | null {
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
-  return match && match[1] ? match[1] : null;
+  return match?.[1] ? match[1] : null;
 }
 
 function deriveResourceKey(schemaId: string): string | null {
@@ -38,9 +38,9 @@ function deriveResourceKey(schemaId: string): string | null {
 
 function deriveApiPathSuffix(resourceKey: string): string {
   if (resourceKey.endsWith('s')) {
-    return resourceKey + 'es';
+    return `${resourceKey}es`;
   }
-  return resourceKey + 's';
+  return `${resourceKey}s`;
 }
 
 function deriveNamespaceScope(fullPath: string | null): NamespaceScope {
@@ -75,12 +75,10 @@ function formatDisplayName(title: string | undefined, resourceKey: string): stri
     return cleaned;
   }
 
-  return (
-    resourceKey
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ') + 's'
-  );
+  return `${resourceKey
+    .split('_')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')}s`;
 }
 
 describe('Generator Utilities', () => {
@@ -245,7 +243,7 @@ describe('Generated Files Contract', () => {
   it('should have required fields in resource types', () => {
     const generated = require('../../generated/resourceTypesBase');
 
-    const httpLb = generated.GENERATED_RESOURCE_TYPES['http_loadbalancer'];
+    const httpLb = generated.GENERATED_RESOURCE_TYPES.http_loadbalancer;
     expect(httpLb).toBeDefined();
     expect(httpLb.apiPath).toBeDefined();
     expect(httpLb.displayName).toBeDefined();

@@ -5,10 +5,10 @@
  */
 
 import {
-  validateResourcePayload,
-  isFieldRequired,
   getRequiredFieldsSummary,
-  ValidationResult,
+  isFieldRequired,
+  type ValidationResult,
+  validateResourcePayload,
 } from '../../utils/validation';
 
 describe('Validation Utilities', () => {

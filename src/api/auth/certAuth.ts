@@ -7,13 +7,13 @@
  * 2. Cert + Key: Direct PEM file paths (no password needed)
  */
 
-import * as https from 'https';
-import * as fs from 'fs';
+import * as fs from 'node:fs';
+import * as https from 'node:https';
 import * as forge from 'node-forge';
-import { AuthProvider, CertAuthConfig } from './index';
-import { getLogger } from '../../utils/logger';
-import { AuthenticationError } from '../../utils/errors';
 import { API_ENDPOINTS } from '../../generated/constants';
+import { AuthenticationError } from '../../utils/errors';
+import { getLogger } from '../../utils/logger';
+import type { AuthProvider, CertAuthConfig } from './index';
 
 /**
  * Certificate-based authentication provider for F5 XC mTLS
@@ -100,7 +100,7 @@ export class CertAuthProvider implements AuthProvider {
       }
 
       const certBag = certBagArray[0];
-      if (!certBag || !certBag.cert) {
+      if (!certBag?.cert) {
         throw new AuthenticationError('Invalid certificate in P12 file');
       }
 
@@ -123,7 +123,7 @@ export class CertAuthProvider implements AuthProvider {
       }
 
       const keyBag = keyBagArray[0];
-      if (!keyBag || !keyBag.key) {
+      if (!keyBag?.key) {
         throw new AuthenticationError('Invalid private key in P12 file');
       }
 

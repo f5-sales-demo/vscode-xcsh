@@ -1,14 +1,14 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
-import { RESOURCE_TYPES, ResourceTypeInfo } from '../api/resourceTypes';
+import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
+import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
+import type { ProfileManager } from '../config/profiles';
 import { API_ENDPOINTS } from '../generated/constants';
-import { getLogger } from '../utils/logger';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
-import { getQuotaForResourceType, QuotaItem } from '../api/subscription';
-import { renderBestPractices } from './metadataRenderer';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
+import { getLogger } from '../utils/logger';
+import { renderBestPractices } from './metadataRenderer';
 
 const logger = getLogger();
 
@@ -345,7 +345,7 @@ export class F5XCDescribeProvider {
     quotaInfo?: QuotaItem,
   ): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
     const metadata = resource.metadata as Record<string, unknown> | undefined;
     const systemMetadata = resource.system_metadata as Record<string, unknown> | undefined;
     const spec = resource.spec as Record<string, unknown> | undefined;
@@ -2109,7 +2109,7 @@ export class F5XCDescribeProvider {
   private renderBestPracticesPanel(apiPath: string): string {
     const resourceKey = apiPath.endsWith('s') ? apiPath.slice(0, -1) : apiPath;
     const generated = GENERATED_RESOURCE_TYPES[resourceKey];
-    const bp = (generated as Record<string, unknown> | undefined)?.['bestPractices'] as
+    const bp = (generated as Record<string, unknown> | undefined)?.bestPractices as
       | {
           commonErrors?: Array<{
             code: number;

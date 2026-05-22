@@ -4,12 +4,12 @@
  * Schema module exports for F5 XC JSON IntelliSense.
  */
 
+export type { F5XCJsonSchema, SchemaProperty } from './schemaGenerator';
 export {
-  generateSchemaForResourceType,
   generateGenericSchema,
+  generateSchemaForResourceType,
   getSchemaResourceTypes,
   hasDetailedFieldMetadata,
 } from './schemaGenerator';
-export type { F5XCJsonSchema, SchemaProperty } from './schemaGenerator';
 
-export { SchemaRegistry, getSchemaRegistry, resetSchemaRegistry } from './schemaRegistry';
+export { getSchemaRegistry, resetSchemaRegistry, SchemaRegistry } from './schemaRegistry';

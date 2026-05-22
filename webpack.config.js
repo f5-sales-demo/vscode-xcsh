@@ -1,9 +1,8 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 //@ts-check
-'use strict';
 
-const path = require('path');
+const path = require('node:path');
 
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
 

@@ -8,16 +8,16 @@
  * Active profile at: ~/.config/f5xc/active_profile
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
-  getConfigDir,
-  getProfilesDir,
-  getActiveProfilePath,
-  getProfilePath,
-  isValidProfileName,
-  FILE_MODE,
   DIR_MODE,
+  FILE_MODE,
+  getActiveProfilePath,
+  getConfigDir,
+  getProfilePath,
+  getProfilesDir,
+  isValidProfileName,
 } from './paths';
 
 /**

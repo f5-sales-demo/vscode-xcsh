@@ -6,9 +6,9 @@
  */
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
-import { F5XCTreeItem } from './treeTypes';
+import type { ProfileManager } from '../config/profiles';
 import { PlanNode, QuotasNode } from './subscriptionNodes';
+import type { F5XCTreeItem } from './treeTypes';
 
 /**
  * Tree data provider for the Subscription view

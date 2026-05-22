@@ -99,8 +99,8 @@ export function renderPerformanceHint(responseTime: string | undefined): string 
   }
   try {
     const parsed = JSON.parse(responseTime) as Record<string, unknown>;
-    const p50 = parsed['p50_ms'];
-    const p95 = parsed['p95_ms'];
+    const p50 = parsed.p50_ms;
+    const p95 = parsed.p95_ms;
     if (typeof p50 === 'number' || typeof p95 === 'number') {
       const parts: string[] = [];
       if (typeof p50 === 'number') {

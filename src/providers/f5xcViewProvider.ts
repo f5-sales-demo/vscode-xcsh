@@ -1,10 +1,14 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
-import { RESOURCE_TYPES, ResourceTypeInfo } from '../api/resourceTypes';
+import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
+import type { ProfileManager } from '../config/profiles';
 import { getLogger } from '../utils/logger';
-import { filterResource, getFilterOptionsForViewMode, ViewMode } from '../utils/resourceFilter';
+import {
+  filterResource,
+  getFilterOptionsForViewMode,
+  type ViewMode,
+} from '../utils/resourceFilter';
 
 const logger = getLogger();
 
@@ -96,7 +100,7 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
 
     // Return cached content if available
     if (this.contentCache.has(cacheKey)) {
-      return this.contentCache.get(cacheKey)!;
+      return this.contentCache.get(cacheKey) ?? '';
     }
 
     try {

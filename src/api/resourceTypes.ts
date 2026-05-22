@@ -10,33 +10,34 @@
  */
 
 import {
+  type CommonError,
+  type DangerLevel,
   GENERATED_RESOURCE_TYPES,
-  GeneratedResourceTypeInfo,
-  DangerLevel,
-  OperationMetadata,
-  ResourceOperationMetadata,
-  SideEffects,
-  CommonError,
+  type GeneratedResourceTypeInfo,
+  type OperationMetadata,
+  type ResourceOperationMetadata,
+  type SideEffects,
 } from '../generated/resourceTypesBase';
 
 // Re-export operation metadata types for use by other modules
-export type { DangerLevel, OperationMetadata, ResourceOperationMetadata, SideEffects, CommonError };
+export type { CommonError, DangerLevel, OperationMetadata, ResourceOperationMetadata, SideEffects };
 
 /**
  * CRUD operation types for metadata lookup
  */
 export type CrudOperation = 'list' | 'get' | 'create' | 'update' | 'delete';
+
 import {
-  BUILT_IN_NAMESPACES,
   API_ENDPOINTS,
+  BUILT_IN_NAMESPACES,
   isBuiltInNamespace as generatedIsBuiltInNamespace,
 } from '../generated/constants';
 import {
-  getLocalCategoryForDomain,
-  isPreviewDomain,
+  getDomainComplexity,
   getDomainTierRequirement,
   getDomainUseCases,
-  getDomainComplexity,
+  getLocalCategoryForDomain,
+  isPreviewDomain,
 } from '../generated/domainCategories';
 
 /**
@@ -1015,7 +1016,7 @@ function mergeResourceType(
   // Start with defaults
   // For namespaceScope: use override first, then generated, then default to 'any'
   const result: ResourceTypeInfo = {
-    apiPath: override.apiPath || generated?.apiPath || key + 's',
+    apiPath: override.apiPath || generated?.apiPath || `${key}s`,
     displayName: override.displayName || generated?.displayName || key,
     description: generated?.description,
     schemaFile: generated?.schemaFile,
@@ -1162,7 +1163,6 @@ export function isResourceTypeAvailableForNamespace(
     case 'shared':
       // Shared-scoped resources only appear in shared namespace
       return namespace === 'shared';
-    case 'any':
     default:
       // Resources with 'any' scope (parameterized {namespace} paths) are available
       // in user namespaces (shared, default, custom) but NOT in system namespace.
@@ -1208,7 +1208,7 @@ export function getCategorizedResourceTypesForNamespace(
 }
 
 // Re-export BUILT_IN_NAMESPACES for backwards compatibility
-export { BUILT_IN_NAMESPACES, API_ENDPOINTS };
+export { API_ENDPOINTS, BUILT_IN_NAMESPACES };
 
 // =====================================================
 // Operation Metadata Helper Functions
@@ -1693,7 +1693,7 @@ export function getFieldConstraints(resourceKey: string): Record<
     }
   > = {};
   for (const [path, meta] of Object.entries(fields)) {
-    const c = (meta as Record<string, unknown>)['constraints'];
+    const c = (meta as Record<string, unknown>).constraints;
     if (c && typeof c === 'object') {
       result[path] = c;
     }
@@ -1714,7 +1714,7 @@ export function getFieldConflicts(resourceKey: string): Record<string, string[]>
 
   const result: Record<string, string[]> = {};
   for (const [path, meta] of Object.entries(fields)) {
-    const cw = (meta as Record<string, unknown>)['conflictsWith'];
+    const cw = (meta as Record<string, unknown>).conflictsWith;
     if (Array.isArray(cw) && cw.length > 0) {
       result[path] = cw as string[];
     }
@@ -1731,7 +1731,7 @@ export function getFieldDescription(resourceKey: string, fieldPath: string): str
   if (!meta) {
     return undefined;
   }
-  return (meta as Record<string, unknown>)['descriptionShort'] as string | undefined;
+  return (meta as Record<string, unknown>).descriptionShort as string | undefined;
 }
 
 /**

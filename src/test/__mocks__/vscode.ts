@@ -22,7 +22,9 @@ export class EventEmitter<T> {
   };
 
   fire(data: T): void {
-    this.listeners.forEach((listener) => listener(data));
+    for (const listener of this.listeners) {
+      listener(data);
+    }
   }
 
   dispose(): void {
@@ -239,7 +241,9 @@ export class Disposable {
 
   static from(...disposables: { dispose: () => void }[]): Disposable {
     return new Disposable(() => {
-      disposables.forEach((d) => d.dispose());
+      for (const d of disposables) {
+        d.dispose();
+      }
     });
   }
 

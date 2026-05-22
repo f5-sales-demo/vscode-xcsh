@@ -9,14 +9,15 @@
  */
 
 import {
-  getRequiredFields,
-  isFieldServerDefaulted,
-  getUserRequiredFields,
-  getServerDefaultFields,
-  getRecommendedValueFields,
+  getFieldConflicts,
+  getFieldConstraints,
   getRecommendedValue,
+  getRecommendedValueFields,
+  getRequiredFields,
+  getServerDefaultFields,
+  getUserRequiredFields,
+  isFieldServerDefaulted,
 } from '../api/resourceTypes';
-import { getFieldConstraints, getFieldConflicts } from '../api/resourceTypes';
 
 export interface ConstraintViolation {
   fieldPath: string;

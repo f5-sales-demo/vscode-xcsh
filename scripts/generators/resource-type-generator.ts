@@ -11,27 +11,27 @@
  * during generation to ensure scope corrections are part of the generated output.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import {
-  ParsedSpecInfo,
-  parseAllSpecs,
+  type NamespaceScope,
+  type ParsedSpecInfo,
   parseAllDomainFiles,
-  NamespaceScope,
-  ResourceOperationMetadata,
+  parseAllSpecs,
+  type ResourceOperationMetadata,
 } from './spec-parser';
 
 // Re-export types that are used in generated output
 export type {
-  OperationMetadata,
-  DangerLevel,
   CommonError,
-  PerformanceImpact,
-  SideEffects,
-  ResourceOperationMetadata,
-  ResourceFieldMetadata,
+  DangerLevel,
   FieldMetadata,
   FieldRequiredFor,
+  OperationMetadata,
+  PerformanceImpact,
+  ResourceFieldMetadata,
+  ResourceOperationMetadata,
+  SideEffects,
 } from './spec-parser';
 
 /**
@@ -135,7 +135,7 @@ function applyDisplayNameOverrides(
 }
 
 // Re-export types for use by other modules
-export { ParsedSpecInfo, NamespaceScope } from './spec-parser';
+export { NamespaceScope, ParsedSpecInfo } from './spec-parser';
 
 /**
  * Serializable field metadata for generated output.
@@ -284,7 +284,7 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
         genMeta.recommendedValue = meta.recommendedValue;
       }
       if (meta.type) {
-        (genMeta as Record<string, unknown>)['type'] = meta.type;
+        (genMeta as Record<string, unknown>).type = meta.type;
       }
       if (meta.descriptionShort !== undefined) {
         genMeta.descriptionShort = meta.descriptionShort;

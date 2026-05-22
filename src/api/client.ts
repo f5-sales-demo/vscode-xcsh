@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import * as https from 'https';
-import { AuthProvider } from './auth';
+import * as https from 'node:https';
 import { F5XCApiError } from '../utils/errors';
 import { getLogger } from '../utils/logger';
-import { ApiBase, ResourceTypeInfo, API_ENDPOINTS } from './resourceTypes';
+import type { AuthProvider } from './auth';
+import { API_ENDPOINTS, type ApiBase, type ResourceTypeInfo } from './resourceTypes';
 
 /**
  * Options for list operations
@@ -201,7 +201,7 @@ export class F5XCClient {
 
     const queryParams: Record<string, string> = {};
     if (responseFormat) {
-      queryParams['response_format'] = responseFormat;
+      queryParams.response_format = responseFormat;
     }
 
     return this.request<T>({
@@ -242,7 +242,7 @@ export class F5XCClient {
 
     const queryParams: Record<string, string> = {};
     if (responseFormat) {
-      queryParams['response_format'] = responseFormat;
+      queryParams.response_format = responseFormat;
     }
 
     return this.request<T>({
@@ -302,7 +302,7 @@ export class F5XCClient {
 
     const queryParams: Record<string, string> = {};
     if (labelFilter) {
-      queryParams['label_filter'] = labelFilter;
+      queryParams.label_filter = labelFilter;
     }
 
     const response = await this.request<Record<string, unknown>>({
@@ -371,7 +371,7 @@ export class F5XCClient {
 
     const queryParams: Record<string, string> = {};
     if (failIfReferred) {
-      queryParams['fail_if_referred'] = 'true';
+      queryParams.fail_if_referred = 'true';
     }
 
     await this.request<void>({
@@ -440,7 +440,7 @@ export class F5XCClient {
     // Helper to get site name from root level or metadata
     const getSiteName = (site: Site): string | undefined => {
       const siteObj = site as unknown as Record<string, unknown>;
-      return (siteObj['name'] as string) || site.metadata?.name;
+      return (siteObj.name as string) || site.metadata?.name;
     };
 
     // Find sites with the matching code in their name
@@ -535,7 +535,9 @@ export class F5XCClient {
       const params = new URLSearchParams();
       for (const [key, value] of Object.entries(queryParams)) {
         if (Array.isArray(value)) {
-          value.forEach((v) => params.append(key, v));
+          for (const v of value) {
+            params.append(key, v);
+          }
         } else {
           params.append(key, value);
         }
@@ -635,7 +637,7 @@ export class F5XCClient {
   private getTokenFingerprint(): string {
     try {
       const headers = this.authProvider.getHeaders();
-      const auth = headers['Authorization'] || '';
+      const auth = headers.Authorization || '';
       const token = auth.replace('APIToken ', '');
       if (token.length < 12) {
         return 'invalid-length';

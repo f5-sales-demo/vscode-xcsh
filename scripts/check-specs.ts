@@ -14,9 +14,9 @@
  *   npx ts-node scripts/check-specs.ts --warn       # Warn only, don't fail
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as https from 'https';
+import * as fs from 'node:fs';
+import * as https from 'node:https';
+import * as path from 'node:path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const OPENAPI_PATH = path.join(PROJECT_ROOT, 'docs/specifications/api/openapi.json');
@@ -129,7 +129,7 @@ async function checkSpecFreshness(): Promise<SpecStatus> {
  * Run sync-specs script to update specs
  */
 async function runSync(): Promise<boolean> {
-  const { spawn } = await import('child_process');
+  const { spawn } = await import('node:child_process');
 
   return new Promise((resolve) => {
     console.log('🔄 Syncing specs from upstream...');

@@ -5,7 +5,7 @@
  * Types and interfaces for the Cloud Status tree view
  */
 
-import * as vscode from 'vscode';
+import type * as vscode from 'vscode';
 
 /**
  * Interface for Cloud Status tree items

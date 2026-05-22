@@ -6,9 +6,9 @@
  */
 
 import * as vscode from 'vscode';
-import { CompletionHelper } from '../utils/completionHelper';
+import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
-import { SchemaProperty } from '../schema/schemaGenerator';
+import * as CompletionHelper from '../utils/completionHelper';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -290,7 +290,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
    * Create full resource template
    */
   private createFullResourceTemplate(schema: SchemaProperty, baseIndent: string): string {
-    const indent1 = baseIndent + '  ';
+    const indent1 = `${baseIndent}  `;
     const lines: string[] = [];
 
     lines.push('{');
@@ -300,7 +300,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     // metadata section
     if (schema.properties?.metadata) {
       lines.push(`${indent1}"metadata": {`);
-      const indent2 = indent1 + '  ';
+      const indent2 = `${indent1}  `;
 
       // Required: name
       lines.push(`${indent2}"name": "\${${tabStop++}:resource-name}",`);

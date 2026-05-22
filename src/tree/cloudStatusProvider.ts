@@ -8,15 +8,15 @@
 import * as vscode from 'vscode';
 import {
   CloudStatusClient,
-  Component,
-  ComponentStatus,
-  Incident,
-  ScheduledMaintenance,
-  getStatusDisplayText,
+  type Component,
+  type ComponentStatus,
   getIncidentStatusText,
+  getStatusDisplayText,
+  type Incident,
   isPoP,
+  type ScheduledMaintenance,
 } from '../api/cloudStatus';
-import { CloudStatusTreeItem, CloudStatusContext } from './cloudStatusTypes';
+import { CloudStatusContext, type CloudStatusTreeItem } from './cloudStatusTypes';
 
 /**
  * Get ThemeIcon for component status
@@ -109,7 +109,7 @@ export class CloudStatusProvider implements vscode.TreeDataProvider<CloudStatusT
       for (const component of summary.components) {
         if (!component.group) {
           if (component.group_id && componentsByGroup.has(component.group_id)) {
-            componentsByGroup.get(component.group_id)!.push(component);
+            componentsByGroup.get(component.group_id)?.push(component);
           } else {
             standaloneComponents.push(component);
           }

@@ -7,8 +7,8 @@
 
 import {
   GENERATED_RESOURCE_TYPES,
-  GeneratedResourceTypeInfo,
-  GeneratedFieldMetadata,
+  type GeneratedFieldMetadata,
+  type GeneratedResourceTypeInfo,
 } from '../generated/resourceTypesBase';
 
 /**
@@ -86,7 +86,7 @@ function setNestedProperty(
       if (isLast) {
         Object.assign(items, props);
       } else {
-        current = items.properties!;
+        current = items.properties ?? {};
       }
     } else if (isLast) {
       if (!current[part]) {
@@ -103,7 +103,7 @@ function setNestedProperty(
       if (!current[part].type) {
         current[part].type = 'object';
       }
-      current = current[part].properties!;
+      current = current[part]?.properties ?? {};
     }
   }
 }
@@ -207,7 +207,7 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
 
   const fieldMetadata = resourceType.fieldMetadata;
 
-  if (!fieldMetadata || !fieldMetadata.fields) {
+  if (!fieldMetadata?.fields) {
     // No field metadata available - return basic schema
     specSchema.additionalProperties = true;
     return specSchema;
@@ -223,7 +223,7 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
     const specPath = fieldPath.replace('spec.', '');
     const props = buildFieldProperties(metadata);
 
-    setNestedProperty(specSchema.properties!, specPath, props);
+    setNestedProperty(specSchema.properties ?? {}, specPath, props);
   }
 
   // Mark required fields at each nesting level
@@ -254,7 +254,7 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
   }
 
   // Use explicit type from field metadata when available
-  const metaType = (metadata as Record<string, unknown>)['type'];
+  const metaType = (metadata as Record<string, unknown>).type;
   if (typeof metaType === 'string' && metaType.length > 0) {
     props.type = metaType;
   }
@@ -270,7 +270,7 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
   // Mark server default fields
   if (metadata.serverDefault) {
     props['x-f5xc-server-default'] = true;
-    props.description = (props.description || '') + ' (Server provides default value)';
+    props.description = `${props.description || ''} (Server provides default value)`;
   }
 
   // Mark required fields

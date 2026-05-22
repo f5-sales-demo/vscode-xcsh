@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ResourceNode } from '../tree/f5xcExplorer';
-import { ProfileManager } from '../config/profiles';
-import { withErrorHandling, showInfo, showWarning } from '../utils/errors';
+import type { ProfileManager } from '../config/profiles';
+import type { ResourceNode } from '../tree/f5xcExplorer';
+import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();

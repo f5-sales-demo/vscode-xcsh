@@ -5,7 +5,7 @@
  */
 
 import * as vscode from 'vscode';
-import { F5XCTreeItem, TreeItemContext } from './treeTypes';
+import { type F5XCTreeItem, TreeItemContext } from './treeTypes';
 
 /**
  * Top-level Subscription group node

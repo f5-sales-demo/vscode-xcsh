@@ -7,8 +7,8 @@
  * are correctly structured and contain the expected data.
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 const SPEC_ROOT = path.resolve(__dirname, '../../../docs/specifications/api');
 const DOMAINS_DIR = path.join(SPEC_ROOT, 'domains');

@@ -4,7 +4,7 @@
  * Unit tests for the ProfileManager with XDG-compliant storage
  */
 
-import { ProfileManager, Profile } from '../../config/profiles';
+import { type Profile, ProfileManager } from '../../config/profiles';
 
 // Mock the logger
 jest.mock('../../utils/logger', () => ({

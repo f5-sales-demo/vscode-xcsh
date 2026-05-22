@@ -2,11 +2,11 @@
 
 import {
   CloudStatusClient,
+  type ComponentStatus,
+  getIncidentStatusText,
   getStatusDisplayText,
   getStatusSeverity,
-  getIncidentStatusText,
-  ComponentStatus,
-  SummaryResponse,
+  type SummaryResponse,
 } from '../../api/cloudStatus';
 
 // Mock global fetch

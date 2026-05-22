@@ -1,15 +1,15 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import {
-  F5XCApiError,
-  ConfigurationError,
-  AuthenticationError,
-  withErrorHandling,
-  showError,
-  showWarning,
-  showInfo,
-} from '../../utils/errors';
 import * as vscode from 'vscode';
+import {
+  AuthenticationError,
+  ConfigurationError,
+  F5XCApiError,
+  showError,
+  showInfo,
+  showWarning,
+  withErrorHandling,
+} from '../../utils/errors';
 
 // Mock vscode
 jest.mock('vscode', () => ({

@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { getLogger } from './logger';
 import { getEnrichedErrorMessage } from '../api/resourceTypes';
+import { getLogger } from './logger';
 
 /**
  * Custom error class for F5 XC API errors

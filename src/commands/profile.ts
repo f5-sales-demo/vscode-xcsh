@@ -1,10 +1,10 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager, Profile } from '../config/profiles';
-import { ProfilesProvider, ProfileTreeItem } from '../tree/profilesProvider';
-import { F5XCExplorerProvider } from '../tree/f5xcExplorer';
-import { withErrorHandling, showInfo, showWarning } from '../utils/errors';
+import type { Profile, ProfileManager } from '../config/profiles';
+import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
+import type { ProfilesProvider, ProfileTreeItem } from '../tree/profilesProvider';
+import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 
 /**
  * Register profile management commands
@@ -49,7 +49,7 @@ export function registerProfileCommands(
           value: 'https://',
           ignoreFocusOut: true,
           validateInput: (value) => {
-            if (!value || !value.startsWith('https://')) {
+            if (!value?.startsWith('https://')) {
               return 'API URL must start with https://';
             }
             try {
@@ -295,7 +295,7 @@ export function registerProfileCommands(
               value: profile.apiUrl,
               ignoreFocusOut: true,
               validateInput: (value) => {
-                if (!value || !value.startsWith('https://')) {
+                if (!value?.startsWith('https://')) {
                   return 'API URL must start with https://';
                 }
                 return null;

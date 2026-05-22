@@ -8,7 +8,7 @@ module.exports = {
   testMatch: [
     '**/unit/**/*.test.ts',
     // Include integration live tests only when F5XC_API_URL is set
-    ...(process.env['F5XC_API_URL'] ? ['**/integration/live*.test.ts'] : []),
+    ...(process.env.F5XC_API_URL ? ['**/integration/live*.test.ts'] : []),
   ],
   moduleFileExtensions: ['ts', 'js', 'json'],
   collectCoverageFrom: [
@@ -53,7 +53,7 @@ module.exports = {
     '/dist/',
     '/out/',
     // Skip integration tests by default unless env var is set
-    ...(process.env['F5XC_API_URL'] ? [] : ['/integration/']),
+    ...(process.env.F5XC_API_URL ? [] : ['/integration/']),
   ],
   verbose: true,
 };

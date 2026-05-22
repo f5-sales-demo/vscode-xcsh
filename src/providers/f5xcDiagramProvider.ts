@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { ProfileManager } from '../config/profiles';
+import type { ProfileManager } from '../config/profiles';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -341,12 +341,16 @@ export class F5XCDiagramProvider {
     };
 
     // Default route pools
-    lbConfig.spec?.default_route_pools?.forEach((p) => addRef(p.pool));
+    for (const p of lbConfig.spec?.default_route_pools ?? []) {
+      addRef(p.pool);
+    }
 
     // Route-specific pools
-    lbConfig.spec?.routes?.forEach((route) => {
-      route.simple_route?.origin_pools?.forEach((p) => addRef(p.pool));
-    });
+    for (const route of lbConfig.spec?.routes ?? []) {
+      for (const p of route.simple_route?.origin_pools ?? []) {
+        addRef(p.pool);
+      }
+    }
 
     return refs;
   }
@@ -753,7 +757,7 @@ export class F5XCDiagramProvider {
    */
   private getWebviewContent(mermaidCode: string, resourceName: string): string {
     const nonce = this.getNonce();
-    const cspSource = this.panel!.webview.cspSource;
+    const cspSource = this.panel?.webview.cspSource;
 
     return `<!DOCTYPE html>
 <html lang="en">

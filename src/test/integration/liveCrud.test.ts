@@ -14,12 +14,12 @@
  * testMatch gating, so the suite is never discovered.
  */
 
-import { F5XCClient, Resource } from '../../api/client';
 import { TokenAuthProvider } from '../../api/auth/tokenAuth';
+import { F5XCClient, type Resource } from '../../api/client';
 import { F5XCApiError } from '../../utils/errors';
 
-const API_URL = process.env['F5XC_API_URL'] ?? '';
-const API_TOKEN = process.env['F5XC_API_TOKEN'] ?? '';
+const API_URL = process.env.F5XC_API_URL ?? '';
+const API_TOKEN = process.env.F5XC_API_TOKEN ?? '';
 const NAMESPACE = 'default';
 const PREFIX = `test-sp3-${Date.now()}`;
 
@@ -81,7 +81,7 @@ describe('Healthcheck CRUD lifecycle', () => {
     // Some items may have name at root level or under metadata
     const names = items.map((item) => {
       const asRecord = item as unknown as Record<string, unknown>;
-      return asRecord['name'] || item.metadata?.name;
+      return asRecord.name || item.metadata?.name;
     });
     expect(names).toContain(hcName);
   }, 30000);
