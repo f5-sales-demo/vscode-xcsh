@@ -440,4 +440,113 @@ describe('Schema Generator', () => {
       expect(str).toBeTruthy();
     });
   });
+
+  describe('nested required field propagation', () => {
+    it('marks single-level required fields at spec level', () => {
+      const schema = generateSchemaForResourceType('http_loadbalancer');
+      if (!schema) {
+        return;
+      }
+      const spec = schema.properties.spec as { required?: string[] };
+      // spec.required should exist and contain at least one entry
+      if (spec.required) {
+        expect(Array.isArray(spec.required)).toBe(true);
+        // No [] entries should appear
+        for (const r of spec.required) {
+          expect(r).not.toContain('[]');
+        }
+      }
+    });
+
+    it('does not include [] in any required array', () => {
+      const schema = generateSchemaForResourceType('http_loadbalancer');
+      if (!schema) {
+        return;
+      }
+      const schemaStr = JSON.stringify(schema);
+      // Parse back and walk all required arrays
+      const parsed = JSON.parse(schemaStr) as Record<string, unknown>;
+      const allRequired: string[] = [];
+      function collectRequired(obj: Record<string, unknown>) {
+        if (Array.isArray(obj['required'])) {
+          allRequired.push(...(obj['required'] as string[]));
+        }
+        if (obj['properties'] && typeof obj['properties'] === 'object') {
+          for (const v of Object.values(obj['properties'] as Record<string, unknown>)) {
+            if (v && typeof v === 'object') {
+              collectRequired(v as Record<string, unknown>);
+            }
+          }
+        }
+        if (obj['items'] && typeof obj['items'] === 'object') {
+          collectRequired(obj['items'] as Record<string, unknown>);
+        }
+      }
+      collectRequired(parsed);
+      for (const r of allRequired) {
+        expect(r).not.toContain('[]');
+      }
+    });
+
+    it('propagates required to nested object levels', () => {
+      // Generate schema for a resource that has nested required fields
+      // Look for any resource where required fields have dots (nested)
+      const resourceTypes = require('../../generated/resourceTypesBase');
+      const TYPES = resourceTypes.GENERATED_RESOURCE_TYPES;
+      let testedNested = false;
+
+      for (const [key, rt] of Object.entries(TYPES)) {
+        const fm = (rt as Record<string, unknown>).fieldMetadata as
+          | { userRequiredFields?: string[] }
+          | undefined;
+        if (!fm?.userRequiredFields) {
+          continue;
+        }
+        const nestedRequired = fm.userRequiredFields.filter(
+          (f: string) => f.startsWith('spec.') && f.replace('spec.', '').split('.').length > 1,
+        );
+        if (nestedRequired.length === 0) {
+          continue;
+        }
+
+        const schema = generateSchemaForResourceType(key);
+        if (!schema) {
+          continue;
+        }
+
+        // Walk the schema and check that nested levels have required arrays
+        const schemaStr = JSON.stringify(schema);
+        const parsed = JSON.parse(schemaStr) as Record<string, unknown>;
+        let foundNestedRequired = false;
+        function checkNestedRequired(obj: Record<string, unknown>, depth: number) {
+          if (
+            depth > 0 &&
+            Array.isArray(obj['required']) &&
+            (obj['required'] as string[]).length > 0
+          ) {
+            foundNestedRequired = true;
+          }
+          if (obj['properties'] && typeof obj['properties'] === 'object') {
+            for (const v of Object.values(obj['properties'] as Record<string, unknown>)) {
+              if (v && typeof v === 'object') {
+                checkNestedRequired(v as Record<string, unknown>, depth + 1);
+              }
+            }
+          }
+          if (obj['items'] && typeof obj['items'] === 'object') {
+            checkNestedRequired(obj['items'] as Record<string, unknown>, depth + 1);
+          }
+        }
+        checkNestedRequired(parsed, 0);
+
+        if (foundNestedRequired) {
+          testedNested = true;
+          break;
+        }
+      }
+
+      // At least one resource should have nested required
+      expect(testedNested).toBe(true);
+    });
+  });
 });

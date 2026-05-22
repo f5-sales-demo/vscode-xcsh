@@ -109,6 +109,50 @@ function setNestedProperty(
 }
 
 /**
+ * Walk a spec schema along a dot-separated path and mark the leaf segment
+ * as required on its parent object.  Handles `[]` array notation by
+ * descending into `items`.
+ */
+function markRequiredAtPath(specSchema: SchemaProperty, path: string): void {
+  const parts = path.split('.');
+  let currentObj: SchemaProperty = specSchema;
+
+  for (let i = 0; i < parts.length; i++) {
+    const rawPart = parts[i] as string;
+    const isArrayItem = rawPart.endsWith('[]');
+    const part = isArrayItem ? rawPart.slice(0, -2) : rawPart;
+    const isLast = i === parts.length - 1;
+
+    if (isLast) {
+      if (!currentObj.required) {
+        currentObj.required = [];
+      }
+      if (!currentObj.required.includes(part)) {
+        currentObj.required.push(part);
+      }
+      return;
+    }
+
+    if (!currentObj.properties) {
+      return;
+    }
+    const child = currentObj.properties[part];
+    if (!child) {
+      return;
+    }
+
+    if (isArrayItem) {
+      if (!child.items) {
+        return;
+      }
+      currentObj = child.items;
+    } else {
+      currentObj = child;
+    }
+  }
+}
+
+/**
  * Build metadata schema with standard F5 XC resource metadata fields
  */
 function buildMetadataSchema(): SchemaProperty {
@@ -180,21 +224,13 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
     setNestedProperty(specSchema.properties!, specPath, props);
   }
 
-  // Mark required fields
+  // Mark required fields at each nesting level
   if (fieldMetadata.userRequiredFields && fieldMetadata.userRequiredFields.length > 0) {
-    const requiredTopLevel: string[] = [];
     for (const field of fieldMetadata.userRequiredFields) {
       if (field.startsWith('spec.')) {
         const specPath = field.replace('spec.', '');
-        // Only add top-level fields to required array, stripping [] array notation
-        const topLevelField = (specPath.split('.')[0] ?? '').replace('[]', '');
-        if (topLevelField && !requiredTopLevel.includes(topLevelField)) {
-          requiredTopLevel.push(topLevelField);
-        }
+        markRequiredAtPath(specSchema, specPath);
       }
-    }
-    if (requiredTopLevel.length > 0) {
-      specSchema.required = requiredTopLevel;
     }
   }
 
