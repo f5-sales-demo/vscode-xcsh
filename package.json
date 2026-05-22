@@ -597,6 +597,7 @@
   },
   "lint-staged": {
     "*.ts": [
+      "eslint --fix --max-warnings=0",
       "biome check --fix",
       "biome format --write"
     ],
