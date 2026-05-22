@@ -78,7 +78,9 @@ describe('ContextManager', () => {
     const stat = fs.statSync(filePath);
     // Node reports mode including file type bits; mask to permission bits
     const perms = stat.mode & 0o777;
-    expect(perms).toBe(0o600);
+    if (process.platform !== 'win32') {
+      expect(perms).toBe(0o600);
+    }
     mgr.dispose();
   });
 
@@ -297,7 +299,9 @@ describe('ContextManager', () => {
 
     const stat = fs.statSync(contextsDir);
     const perms = stat.mode & 0o777;
-    expect(perms).toBe(0o700);
+    if (process.platform !== 'win32') {
+      expect(perms).toBe(0o700);
+    }
     mgr.dispose();
   });
 
