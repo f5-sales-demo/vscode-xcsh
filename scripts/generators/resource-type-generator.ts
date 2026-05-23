@@ -14,10 +14,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  loadValidationData,
   type NamespaceScope,
   type ParsedSpecInfo,
   parseAllDomainFiles,
   parseAllSpecs,
+  type ResourceFieldMetadata,
   type ResourceOperationMetadata,
 } from './spec-parser';
 
@@ -691,14 +693,55 @@ export function generateResourceTypesFromDomainFiles(
   scopeOverridesPath?: string,
   displayNameOverridesPath?: string,
 ): ParsedSpecInfo[] {
-  const specs = parseAllDomainFiles(domainDir);
+  const allParsed = parseAllDomainFiles(domainDir);
 
-  if (specs.length === 0) {
+  if (allParsed.length === 0) {
     console.error('No specs parsed successfully from domain files');
     return [];
   }
 
-  console.log(`Parsed ${specs.length} resource types from domain files`);
+  console.log(`Parsed ${allParsed.length} resource types from domain files`);
+
+  // Merge validation.json data into fieldMetadata
+  const validationPath = path.join(domainDir, 'validation.json');
+  const validationData = loadValidationData(validationPath);
+  let validationMergeCount = 0;
+
+  if (validationData) {
+    for (const spec of allParsed) {
+      const valEntry = validationData.required_fields.resources[spec.resourceKey];
+      if (!valEntry) {
+        continue;
+      }
+
+      // Ensure fieldMetadata exists with empty defaults
+      if (!spec.fieldMetadata) {
+        const defaultMeta: ResourceFieldMetadata = {
+          fields: {},
+          serverDefaultFields: [],
+          userRequiredFields: [],
+          minimumConfigFields: [],
+          constrainedFields: [],
+        };
+        spec.fieldMetadata = defaultMeta;
+      }
+
+      // Override userRequiredFields with validation create array
+      if (Array.isArray(valEntry.create)) {
+        spec.fieldMetadata.userRequiredFields = valEntry.create;
+      }
+
+      // Override minimumConfigFields with validation minimum_config array
+      if (Array.isArray(valEntry.minimum_config)) {
+        spec.fieldMetadata.minimumConfigFields = valEntry.minimum_config;
+      }
+
+      validationMergeCount++;
+    }
+    console.log(`  Merged validation data for ${validationMergeCount} resources`);
+  }
+
+  const specs = allParsed;
 
   // Apply namespace scope overrides if provided
   if (scopeOverridesPath) {

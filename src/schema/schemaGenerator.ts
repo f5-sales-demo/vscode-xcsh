@@ -38,6 +38,7 @@ export interface SchemaProperty {
   'x-f5xc-recommended-value'?: unknown;
   'x-f5xc-conflicts-with'?: string[];
   'x-f5xc-format-description'?: string;
+  'x-f5xc-description-short'?: string;
 }
 
 /**
@@ -318,6 +319,11 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
   // Add conflicts as custom extension
   if (Array.isArray(metadata.conflictsWith) && metadata.conflictsWith.length > 0) {
     props['x-f5xc-conflicts-with'] = metadata.conflictsWith;
+  }
+
+  // Preserve short description for tooltip detail field
+  if (metadata.descriptionShort) {
+    props['x-f5xc-description-short'] = metadata.descriptionShort;
   }
 
   return props;

@@ -10,6 +10,7 @@ import { ContextManager } from './config/contextManager';
 import { migrateProfilesToContexts } from './config/contextMigration';
 import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
 import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
+import { registerConflictDiagnostics } from './providers/f5xcConflictDiagnosticProvider';
 import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
 import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
 import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
@@ -276,6 +277,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Activate xcsh shell assistant integration
   void activateXcsh(context, contextManager);
+
+  // Register conflict diagnostics provider
+  registerConflictDiagnostics(context);
 
   logger.info('F5 Distributed Cloud extension activated successfully');
 }

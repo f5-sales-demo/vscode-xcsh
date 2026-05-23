@@ -186,7 +186,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
         item.sortText = `2-${propName}`;
       }
 
-      item.detail = this.getPropertyDetail(propSchema, isRequired);
+      item.detail = propSchema['x-f5xc-description-short'] ?? this.getPropertyDetail(propSchema, isRequired);
 
       completions.push(item);
     }

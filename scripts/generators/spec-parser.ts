@@ -1502,6 +1502,51 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
   return results;
 }
 
+// ============================================================================
+// Validation data loading functions
+// ============================================================================
+
+/**
+ * A single resource entry in validation.json required_fields.resources.
+ * Contains arrays of field paths required for create and minimum_config.
+ */
+export interface ValidationResourceEntry {
+  create?: string[];
+  minimum_config?: string[];
+}
+
+/**
+ * Shape of the validation.json file used to override fieldMetadata during generation.
+ */
+export interface ValidationData {
+  required_fields: {
+    resources: Record<string, ValidationResourceEntry>;
+  };
+}
+
+/**
+ * Load and parse validation.json from the given path.
+ * Returns null if the file does not exist, cannot be read, or is malformed.
+ *
+ * @param validationPath - Absolute path to the validation.json file
+ * @returns Parsed ValidationData or null on any error
+ */
+export function loadValidationData(validationPath: string): ValidationData | null {
+  try {
+    if (!fs.existsSync(validationPath)) {
+      return null;
+    }
+    const content = fs.readFileSync(validationPath, 'utf-8');
+    const data = JSON.parse(content) as ValidationData;
+    if (!data.required_fields?.resources) {
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Parse all domain files in a directory.
  * Domain files contain merged specs grouped by F5 XC domain (waf, virtual, dns, etc.)
