@@ -221,9 +221,14 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     needs: [test, build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name == 'push' &&
+      !contains(github.event.head_commit.message, 'chore(release)')
     permissions:
       contents: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
@@ -252,21 +257,12 @@ jobs:
           VERSION=$(echo "$VERSION_JSON" | jq -r '.version')
           SEMVER=$(echo "$VERSION_JSON" | jq -r '.semver')
           UPSTREAM=$(echo "$VERSION_JSON" | jq -r '.upstream')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "semver=$SEMVER" >> $GITHUB_OUTPUT
-          echo "upstream=$UPSTREAM" >> $GITHUB_OUTPUT
+          {
+            echo "version=$VERSION"
+            echo "semver=$SEMVER"
+            echo "upstream=$UPSTREAM"
+          } >> "$GITHUB_OUTPUT"
           echo "📦 Version: v$VERSION (semver: $SEMVER, upstream: $UPSTREAM)"
-
-      - name: Update package.json version
-        env:
-          HUSKY: 0
-        run: |
-          npm run version:update
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
-          git commit -m "chore(release): v${{ steps.version.outputs.version }} [skip ci]" || echo "No changes to commit"
-          git push
 
       - name: Create and push tag
         run: |
@@ -274,6 +270,46 @@ jobs:
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
           echo "🏷️ Created tag: $TAG"
+
+      - name: Create version bump PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HUSKY: 0
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SEMVER="${{ steps.version.outputs.semver }}"
+          BRANCH="chore/release-v${VERSION}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          npm run version:update
+          git add package.json
+          git commit -m "chore(release): v${VERSION}"
+          git push origin "$BRANCH"
+
+          ISSUE_URL=$(gh issue create \
+            --title "chore(release): v${VERSION}" \
+            --body "Automated version bump to v${VERSION}." 2>&1) || true
+          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
+
+          PR_BODY="Closes #${ISSUE_NUMBER}
+
+          ## Summary
+          - Update package.json version to ${SEMVER}
+
+          Automated release version bump."
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore(release): v${VERSION}" \
+            --body "$PR_BODY"
+
+          gh pr merge "$BRANCH" --auto --squash || echo "Auto-merge enabled (will merge when checks pass)"
+
+          echo "✅ Version bump PR created for v${VERSION}"
 
       - name: Download VSIX artifact
         uses: actions/download-artifact@v8
@@ -286,7 +322,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
-          VSIX_FILE=$(ls *.vsix)
+          VSIX_FILE=$(ls ./*.vsix)
 
           # Generate release notes from recent commits
           NOTES=$(git log --oneline -10 --no-merges --format="- %s")
@@ -308,7 +344,7 @@ jobs:
 
       - name: Find VSIX file
         id: vsix
-        run: echo "filename=$(ls *.vsix)" >> $GITHUB_OUTPUT
+        run: echo "filename=$(ls ./*.vsix)" >> "$GITHUB_OUTPUT"
 
       - name: Publish to Open VSX Registry
         if: ${{ !contains(github.ref, 'BETA') }}
