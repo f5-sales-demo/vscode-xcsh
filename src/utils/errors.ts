@@ -145,11 +145,11 @@ export async function withErrorHandling<T>(
         const message = smartMessage || error.userFriendlyMessage;
         const action = await vscode.window.showErrorMessage(
           `${message}\n\nIf you recently updated credentials, try clearing the auth cache.`,
-          'Configure Profile',
+          'Configure Context',
           'Clear Auth Cache',
         );
-        if (action === 'Configure Profile') {
-          await vscode.commands.executeCommand('f5xc.editProfile');
+        if (action === 'Configure Context') {
+          await vscode.commands.executeCommand('f5xc.editContext');
         } else if (action === 'Clear Auth Cache') {
           await vscode.commands.executeCommand('f5xc.clearAuthCache');
         }
@@ -175,9 +175,9 @@ export async function withErrorHandling<T>(
         await vscode.commands.executeCommand('workbench.action.openSettings', 'f5xc');
       }
     } else if (error instanceof AuthenticationError) {
-      const action = await vscode.window.showErrorMessage(error.message, 'Configure Profile');
-      if (action === 'Configure Profile') {
-        await vscode.commands.executeCommand('f5xc.addProfile');
+      const action = await vscode.window.showErrorMessage(error.message, 'Configure Context');
+      if (action === 'Configure Context') {
+        await vscode.commands.executeCommand('f5xc.addContext');
       }
     } else if (error instanceof Error) {
       void vscode.window.showErrorMessage(`${context}: ${error.message}`);

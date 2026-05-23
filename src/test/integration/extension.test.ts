@@ -42,10 +42,10 @@ suite('Extension Test Suite', () => {
     // Check for core commands
     const expectedCommands = [
       'f5xc.refresh',
-      'f5xc.addProfile',
-      'f5xc.editProfile',
-      'f5xc.deleteProfile',
-      'f5xc.setActiveProfile',
+      'f5xc.addContext',
+      'f5xc.editContext',
+      'f5xc.deleteContext',
+      'f5xc.setActiveContext',
       'f5xc.create',
       'f5xc.get',
       'f5xc.edit',
@@ -84,16 +84,16 @@ suite('Extension Test Suite', () => {
   });
 });
 
-suite('Profile Management Test Suite', () => {
-  test('Add profile command should be executable', async () => {
-    // We can't fully test add profile without mocking the input boxes
+suite('Context Management Test Suite', () => {
+  test('Add context command should be executable', async () => {
+    // We can't fully test add context without mocking the input boxes
     // but we can verify the command exists and doesn't throw synchronously
     const commands = await vscode.commands.getCommands(true);
-    assert.ok(commands.includes('f5xc.addProfile'), 'addProfile command should exist');
+    assert.ok(commands.includes('f5xc.addContext'), 'addContext command should exist');
   });
 
   test('Refresh command should execute without error', async () => {
-    // The refresh command should work even with no profiles
+    // The refresh command should work even with no contexts
     try {
       await vscode.commands.executeCommand('f5xc.refresh');
       assert.ok(true, 'Refresh command executed successfully');
