@@ -108,14 +108,14 @@
       "f5xc-explorer": [
         {
           "id": "f5xc.profiles",
-          "name": "Profiles",
-          "contextualTitle": "F5 XC Profiles"
+          "name": "Contexts",
+          "contextualTitle": "F5 XC Contexts"
         },
         {
           "id": "f5xc.subscription",
           "name": "Subscription",
           "contextualTitle": "F5 XC Subscription",
-          "when": "f5xc.hasActiveProfile"
+          "when": "f5xc.hasActiveContext"
         },
         {
           "id": "f5xc.explorer",
@@ -132,32 +132,32 @@
     "viewsWelcome": [
       {
         "view": "f5xc.explorer",
-        "contents": "No F5 XC profile configured.\n[Add Profile](command:f5xc.addProfile)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
-        "when": "!f5xc.hasActiveProfile"
+        "contents": "No F5 XC context configured.\n[Add Context](command:f5xc.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
+        "when": "!f5xc.hasActiveContext"
       }
     ],
     "commands": [
       {
-        "command": "f5xc.addProfile",
-        "title": "Add Profile",
+        "command": "f5xc.addContext",
+        "title": "Add Context",
         "category": "F5 XC",
         "icon": "$(add)"
       },
       {
-        "command": "f5xc.editProfile",
-        "title": "Edit Profile",
+        "command": "f5xc.editContext",
+        "title": "Edit Context",
         "category": "F5 XC",
         "icon": "$(edit)"
       },
       {
-        "command": "f5xc.deleteProfile",
-        "title": "Delete Profile",
+        "command": "f5xc.deleteContext",
+        "title": "Delete Context",
         "category": "F5 XC",
         "icon": "$(trash)"
       },
       {
-        "command": "f5xc.setActiveProfile",
-        "title": "Set as Active Profile",
+        "command": "f5xc.setActiveContext",
+        "title": "Set as Active Context",
         "category": "F5 XC",
         "icon": "$(check)"
       },
@@ -348,7 +348,7 @@
           "group": "navigation@1"
         },
         {
-          "command": "f5xc.addProfile",
+          "command": "f5xc.addContext",
           "when": "view == f5xc.profiles",
           "group": "navigation"
         },
@@ -370,17 +370,17 @@
       ],
       "view/item/context": [
         {
-          "command": "f5xc.setActiveProfile",
+          "command": "f5xc.setActiveContext",
           "when": "view == f5xc.profiles && viewItem == profile",
           "group": "inline"
         },
         {
-          "command": "f5xc.editProfile",
+          "command": "f5xc.editContext",
           "when": "view == f5xc.profiles && viewItem == profile",
           "group": "1_profile@1"
         },
         {
-          "command": "f5xc.deleteProfile",
+          "command": "f5xc.deleteContext",
           "when": "view == f5xc.profiles && viewItem == profile",
           "group": "1_profile@2"
         },
@@ -494,7 +494,7 @@
       ],
       "commandPalette": [
         {
-          "command": "f5xc.setActiveProfile",
+          "command": "f5xc.setActiveContext",
           "when": "false"
         },
         {
