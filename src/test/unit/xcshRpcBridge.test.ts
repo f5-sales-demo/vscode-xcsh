@@ -97,7 +97,7 @@ describe('XcshRpcBridge', () => {
     const written = Buffer.concat(chunks).toString('utf-8');
     const parsed = JSON.parse(written.trim());
     expect(parsed.type).toBe('prompt');
-    expect(parsed.text).toBe('What is F5 XC?');
+    expect(parsed.message).toBe('What is F5 XC?');
   });
 
   it('sends abort command', () => {
