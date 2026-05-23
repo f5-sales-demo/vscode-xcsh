@@ -682,6 +682,7 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.4.0",
+    "marked": "^15.0.12",
     "node-forge": "^1.4.0"
   },
   "devDependencies": {

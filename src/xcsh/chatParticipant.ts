@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import type { ContextManagerInterface, F5XCContext } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
-import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './types';
+import type { ToolExecutionEnd, ToolExecutionStart } from './types';
 
 const PARTICIPANT_ID = 'f5xc.xcsh';
 
@@ -80,7 +80,7 @@ export function registerChatParticipant(
     const messagePromise = new Promise<void>((resolve, reject) => {
       // Stream message updates as markdown
       disposables.push(
-        rpcBridge.onEvent<MessageUpdate>('message_update', (event) => {
+        rpcBridge.onMessageStream((event) => {
           stream.markdown(event.text);
         }),
       );
