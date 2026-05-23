@@ -96,7 +96,7 @@ export class XcshRpcBridge implements vscode.Disposable {
    * Fire-and-forget: send a prompt to xcsh.
    */
   prompt(text: string, options?: Record<string, unknown>): void {
-    const cmd: RpcCommand = { type: 'prompt', text, ...options };
+    const cmd: RpcCommand = { type: 'prompt', message: text, ...options };
     this.stdin.write(`${JSON.stringify(cmd)}\n`);
   }
 
