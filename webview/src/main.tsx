@@ -3,6 +3,7 @@
 
 import ReactDOM from 'react-dom/client';
 import { SessionView } from './components/SessionView';
+import type { ExtensionMessage } from './lib/protocol';
 import { initProtocol, on } from './lib/protocol';
 import { createNewSession, getActiveSession } from './state/sessions';
 import './styles/webview.css';
@@ -24,7 +25,7 @@ export function subscribeWelcome(fn: () => void): () => void {
   return () => welcomeListeners.delete(fn);
 }
 
-export function getWelcomeState() {
+export function getWelcomeState(): WelcomeState {
   return welcomeState;
 }
 
@@ -32,41 +33,46 @@ export function getWelcomeState() {
 initProtocol();
 createNewSession();
 
-// Wire protocol events to active session
-on('message_update', (msg) => {
+function handleMessageUpdate(msg: ExtensionMessage): void {
   const session = getActiveSession();
-  if (session) {
-    session.appendAssistantText(msg.text as string);
+  if (session && typeof msg.text === 'string') {
+    session.appendAssistantText(msg.text);
   }
-});
+}
 
-on('tool_execution_start', (msg) => {
+function handleToolStart(msg: ExtensionMessage): void {
   const session = getActiveSession();
-  if (session) {
-    session.addToolStart(msg.toolName as string, msg.toolCallId as string);
+  if (session && typeof msg.toolName === 'string' && typeof msg.toolCallId === 'string') {
+    session.addToolStart(msg.toolName, msg.toolCallId);
   }
-});
+}
 
-on('tool_execution_end', (msg) => {
+function handleToolEnd(msg: ExtensionMessage): void {
   const session = getActiveSession();
-  if (session) {
-    session.endToolUse(msg.toolCallId as string);
+  if (session && typeof msg.toolCallId === 'string') {
+    session.endToolUse(msg.toolCallId);
   }
-});
+}
 
-on('turn_end', () => {
+function handleTurnEnd(): void {
   const session = getActiveSession();
   if (session) {
     session.endTurn();
   }
-});
+}
 
-on('welcome_state', (msg) => {
-  welcomeState = msg as WelcomeState;
+function handleWelcomeState(msg: ExtensionMessage): void {
+  welcomeState = msg as unknown as WelcomeState;
   for (const fn of welcomeListeners) {
     fn();
   }
-});
+}
+
+on('message_update', handleMessageUpdate);
+on('tool_execution_start', handleToolStart);
+on('tool_execution_end', handleToolEnd);
+on('turn_end', handleTurnEnd);
+on('welcome_state', handleWelcomeState);
 
 const rootEl = document.getElementById('root');
 if (rootEl) {
