@@ -23,6 +23,7 @@ import { ContextProvider } from './tree/contextProvider';
 import { F5XCExplorerProvider } from './tree/f5xcExplorer';
 import { SubscriptionProvider } from './tree/subscriptionProvider';
 import { getLogger, type Logger } from './utils/logger';
+import { activateXcsh } from './xcsh/index';
 
 let logger: Logger;
 
@@ -272,6 +273,9 @@ export function activate(context: vscode.ExtensionContext): void {
     subscriptionProvider.refresh();
     void updateHasActiveContext();
   });
+
+  // Activate xcsh shell assistant integration
+  void activateXcsh(context, contextManager);
 
   logger.info('F5 Distributed Cloud extension activated successfully');
 }

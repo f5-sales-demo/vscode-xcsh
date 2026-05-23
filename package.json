@@ -92,6 +92,54 @@
           "type": "boolean",
           "default": true,
           "description": "Show preview/beta APIs in the explorer. Preview APIs are marked with 🧪 badge."
+        },
+        "f5xc.xcsh.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable xcsh shell assistant integration"
+        },
+        "f5xc.xcsh.path": {
+          "type": "string",
+          "default": "",
+          "description": "Custom path to the xcsh binary. Leave empty for auto-detection."
+        },
+        "f5xc.xcsh.showChatPanel": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the xcsh Chat panel in the sidebar"
+        },
+        "f5xc.xcsh.chatParticipantEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Register @xcsh as a Copilot Chat participant"
+        },
+        "f5xc.xcsh.languageModelEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Register xcsh as a VS Code language model provider"
+        },
+        "f5xc.xcsh.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start the xcsh process on extension activation"
+        },
+        "f5xc.xcsh.defaultModel": {
+          "type": "string",
+          "default": "",
+          "description": "Default AI model for xcsh sessions"
+        },
+        "f5xc.xcsh.thinkingLevel": {
+          "type": "string",
+          "enum": [
+            "off",
+            "minimal",
+            "low",
+            "medium",
+            "high",
+            "xhigh"
+          ],
+          "default": "medium",
+          "description": "Thinking level for xcsh AI responses"
         }
       }
     },
@@ -126,6 +174,11 @@
           "id": "f5xc.cloudStatus",
           "name": "Cloud Status",
           "contextualTitle": "F5 Cloud Status"
+        },
+        {
+          "id": "f5xc.xcshChat",
+          "name": "xcsh Chat",
+          "type": "webview"
         }
       ]
     },
@@ -338,6 +391,24 @@
         "title": "Create Healthcheck (Form)",
         "category": "F5 XC",
         "icon": "$(add)"
+      },
+      {
+        "command": "f5xc.xcsh.openTerminal",
+        "title": "Open xcsh Terminal",
+        "category": "F5 XC",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "f5xc.xcsh.openChatPanel",
+        "title": "Open xcsh Chat",
+        "category": "F5 XC",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "f5xc.xcsh.restart",
+        "title": "Restart xcsh",
+        "category": "F5 XC",
+        "icon": "$(debug-restart)"
       }
     ],
     "menus": {
