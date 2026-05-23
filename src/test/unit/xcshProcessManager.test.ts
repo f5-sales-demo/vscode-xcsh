@@ -2,6 +2,7 @@
 
 import * as childProcess from 'node:child_process';
 import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 jest.mock('node:child_process');
 jest.mock('node:fs');
@@ -77,10 +78,11 @@ describe('findXcshBinary', () => {
       }
       throw new Error('not found');
     });
-    mockedExistsSync.mockImplementation((p) => p === '/usr/local/lib/node_modules/.bin/xcsh');
+    const expectedPath = path.join('/usr/local/lib/node_modules', '.bin', 'xcsh');
+    mockedExistsSync.mockImplementation((p) => p === expectedPath);
 
     const result = findXcshBinary();
-    expect(result).toBe('/usr/local/lib/node_modules/.bin/xcsh');
+    expect(result).toBe(expectedPath);
   });
 
   it('returns null when xcsh is not found anywhere', () => {
