@@ -313,11 +313,16 @@ jobs:
 
           echo "✅ Version bump PR created for v${VERSION}"
 
-      - name: Download VSIX artifact
-        uses: actions/download-artifact@v8
-        with:
-          name: vscode-f5xc-tools-vsix
-          path: ./
+      - name: Update package.json version for VSIX
+        env:
+          HUSKY: 0
+        run: npm run version:update
+
+      - name: Build release VSIX
+        run: |
+          npm run package
+          npm install -g @vscode/vsce
+          vsce package --no-dependencies
 
       - name: Create GitHub Release
         env:
