@@ -1,13 +1,19 @@
 // src/test/unit/webview/sessions.test.ts
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+type SessionsModule = typeof import('../../../../webview/src/state/sessions');
+
+function loadSessions(): SessionsModule {
+  return require('webview/src/state/sessions') as SessionsModule;
+}
+
 describe('sessions manager', () => {
   beforeEach(() => {
     jest.resetModules();
   });
 
-  it('createNewSession creates and activates a session', async () => {
-    const { createNewSession, getActiveSession, getSessions } = await import('../../../webview/src/state/sessions');
+  it('createNewSession creates and activates a session', () => {
+    const { createNewSession, getActiveSession, getSessions } = loadSessions();
     const session = createNewSession();
     expect(session).toBeDefined();
     expect(session.id).toBeDefined();
@@ -15,8 +21,8 @@ describe('sessions manager', () => {
     expect(getSessions()).toContain(session);
   });
 
-  it('subscribe notifies on session changes', async () => {
-    const { createNewSession, subscribe } = await import('../../../webview/src/state/sessions');
+  it('subscribe notifies on session changes', () => {
+    const { createNewSession, subscribe } = loadSessions();
     const calls: number[] = [];
     const unsub = subscribe(() => calls.push(1));
     createNewSession();
@@ -24,8 +30,8 @@ describe('sessions manager', () => {
     unsub();
   });
 
-  it('multiple sessions are tracked', async () => {
-    const { createNewSession, getActiveSession, getSessions } = await import('../../../webview/src/state/sessions');
+  it('multiple sessions are tracked', () => {
+    const { createNewSession, getActiveSession, getSessions } = loadSessions();
     const s1 = createNewSession();
     const s2 = createNewSession();
     expect(getSessions()).toContain(s1);

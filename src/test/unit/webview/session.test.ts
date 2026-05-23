@@ -1,8 +1,8 @@
 // src/test/unit/webview/session.test.ts
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import type { AssistantMessage } from '../../../webview/src/state/session';
-import { createSession } from '../../../webview/src/state/session';
+import type { AssistantMessage } from 'webview/src/state/session';
+import { createSession } from 'webview/src/state/session';
 
 describe('session state', () => {
   it('creates a session with default values', () => {

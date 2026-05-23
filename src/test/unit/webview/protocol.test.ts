@@ -4,7 +4,7 @@
 type ProtocolModule = typeof import('../../../../webview/src/lib/protocol');
 
 function loadProtocol(): ProtocolModule {
-  return require('../../../../webview/src/lib/protocol') as ProtocolModule;
+  return require('webview/src/lib/protocol') as ProtocolModule;
 }
 
 describe('webview protocol', () => {
