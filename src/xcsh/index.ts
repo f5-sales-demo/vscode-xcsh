@@ -6,11 +6,40 @@ import { deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { ChatPanelProvider } from './chatPanelProvider';
 import { registerChatParticipant } from './chatParticipant';
-import { HOST_TOOL_DEFINITIONS } from './hostTools';
+import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerLanguageModelProvider } from './languageModelProvider';
 import { XcshProcessManager } from './processManager';
 import { XcshRpcBridge } from './rpcBridge';
 import { registerTerminalIntegration } from './terminalIntegration';
+import type { RpcCommand, RpcHostToolCall } from './types';
+
+function registerHostToolsOnBridge(bridge: XcshRpcBridge): void {
+  const logger = getLogger();
+
+  bridge
+    .sendCommand({
+      type: 'set_host_tools',
+      tools: HOST_TOOL_DEFINITIONS,
+    })
+    .then(() => {
+      logger.info(`Registered ${String(HOST_TOOL_DEFINITIONS.length)} host tools with xcsh`);
+    })
+    .catch((err: unknown) => {
+      logger.warn(
+        'Failed to register host tools (xcsh may not support set_host_tools yet)',
+        err instanceof Error ? err : new Error(String(err)),
+      );
+    });
+
+  bridge.onEvent('host_tool_call', (event) => {
+    const call = event as unknown as RpcHostToolCall;
+    void handleHostToolCall(call).then((result) => {
+      bridge.sendCommand(result as unknown as RpcCommand).catch((err: unknown) => {
+        logger.error('Failed to send host tool result', err instanceof Error ? err : new Error(String(err)));
+      });
+    });
+  });
+}
 
 /**
  * Activate the xcsh subsystem.
@@ -80,28 +109,16 @@ export async function activateXcsh(
       await setEnvFromContext();
       processManager.restart();
 
-      // Re-init RPC bridge with new process streams
       const newProcess = processManager.getProcess();
       if (newProcess?.stdin && newProcess?.stdout) {
-        const newBridge = new XcshRpcBridge(newProcess.stdin, newProcess.stdout);
-        newBridge.init();
+        rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
+        registerHostToolsOnBridge(rpcBridge);
       }
     }),
   );
 
-  // Register host tools via RPC
-  try {
-    await rpcBridge.sendCommand({
-      type: 'set_host_tools',
-      tools: HOST_TOOL_DEFINITIONS,
-    });
-    logger.info(`Registered ${String(HOST_TOOL_DEFINITIONS.length)} host tools with xcsh`);
-  } catch (err) {
-    logger.warn(
-      'Failed to register host tools (xcsh may not support set_host_tools yet)',
-      err instanceof Error ? err : new Error(String(err)),
-    );
-  }
+  // Register host tools and handler
+  registerHostToolsOnBridge(rpcBridge);
 
   // Conditionally register Chat Participant
   if (config.get<boolean>('xcsh.chatParticipantEnabled', true)) {
@@ -149,6 +166,13 @@ export async function activateXcsh(
     vscode.commands.registerCommand('f5xc.xcsh.restart', async () => {
       await setEnvFromContext();
       processManager.restart();
+
+      const newProcess = processManager.getProcess();
+      if (newProcess?.stdin && newProcess?.stdout) {
+        rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
+        registerHostToolsOnBridge(rpcBridge);
+      }
+
       void vscode.window.showInformationMessage('xcsh restarted');
       logger.info('xcsh restarted via command');
     }),
