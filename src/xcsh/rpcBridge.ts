@@ -27,8 +27,8 @@ interface PendingCommand {
  */
 export class XcshRpcBridge implements vscode.Disposable {
   private readonly logger = getLogger();
-  private readonly stdin: Writable;
-  private readonly stdout: Readable;
+  private stdin: Writable;
+  private stdout: Readable;
   private rl: readline.Interface | null = null;
 
   private readonly pendingCommands = new Map<string, PendingCommand>();
@@ -209,6 +209,22 @@ export class XcshRpcBridge implements vscode.Disposable {
         }
       }
     }
+  }
+
+  // ───────── reconnection ─────────
+
+  reconnect(newStdin: Writable, newStdout: Readable): void {
+    for (const [, pending] of this.pendingCommands) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error('Bridge reconnecting'));
+    }
+    this.pendingCommands.clear();
+    this.rl?.close();
+    this.rl = null;
+
+    this.stdin = newStdin;
+    this.stdout = newStdout;
+    this.init();
   }
 
   // ───────── disposal ─────────
