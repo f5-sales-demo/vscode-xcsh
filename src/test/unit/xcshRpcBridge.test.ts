@@ -117,8 +117,12 @@ describe('XcshRpcBridge', () => {
       texts.push(event.text);
     });
 
-    stdout.write(`${JSON.stringify({ type: 'message_update', text: 'first' })}\n`);
-    stdout.write(`${JSON.stringify({ type: 'message_update', text: 'second' })}\n`);
+    stdout.write(
+      `${JSON.stringify({ type: 'message_update', assistantMessageEvent: { type: 'text_delta', delta: 'first' } })}\n`,
+    );
+    stdout.write(
+      `${JSON.stringify({ type: 'message_update', assistantMessageEvent: { type: 'text_delta', delta: 'second' } })}\n`,
+    );
 
     await new Promise((resolve) => {
       setTimeout(resolve, 50);

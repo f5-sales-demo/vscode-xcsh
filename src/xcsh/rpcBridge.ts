@@ -152,10 +152,21 @@ export class XcshRpcBridge implements vscode.Disposable {
   }
 
   /**
-   * Convenience: listen for message_update events.
+   * Convenience: listen for assistant text deltas from message_update events.
+   *
+   * xcsh message_update events have nested structure:
+   *   { type: "message_update", assistantMessageEvent: { type: "text_delta", delta: "chunk" } }
+   * This method extracts the text delta and dispatches a simplified { text } object.
    */
   onMessageStream(handler: (event: MessageUpdate) => void): vscode.Disposable {
-    return this.onEvent<MessageUpdate>('message_update', handler);
+    return this.onEvent('message_update', (raw) => {
+      const assistantEvent = (raw as Record<string, unknown>).assistantMessageEvent as
+        | { type: string; delta?: string }
+        | undefined;
+      if (assistantEvent?.type === 'text_delta' && typeof assistantEvent.delta === 'string') {
+        handler({ type: 'message_update', text: assistantEvent.delta });
+      }
+    });
   }
 
   // ───────── internal line processing ─────────
