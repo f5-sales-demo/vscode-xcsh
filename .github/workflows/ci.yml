@@ -275,7 +275,7 @@ jobs:
 
       - name: Create version bump PR
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           HUSKY: 0
         run: |
           VERSION="${{ steps.version.outputs.version }}"
@@ -321,7 +321,7 @@ jobs:
 
       - name: Create GitHub Release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
           VSIX_FILE=$(ls ./*.vsix)
