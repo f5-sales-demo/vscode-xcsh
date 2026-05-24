@@ -3,20 +3,21 @@
 
 import { useSyncExternalStore } from 'react';
 import { CheckIcon, CrossIcon } from '../assets/icons';
-import { PiLogo } from '../assets/pi-logo';
+import { F5AsciiLogo } from '../assets/pi-logo';
 import { getWelcomeState, subscribeWelcome } from '../main';
 
 export function EmptyState() {
   const welcome = useSyncExternalStore(subscribeWelcome, getWelcomeState);
 
   return (
-    <div className="emptyState">
-      <div className="emptyStateContent">
-        <div className="emptyStateLogo">
-          <PiLogo size={80} />
+    <div className="welcomeBox">
+      <div className="welcomeBoxVersion">{welcome.version ? `xcsh ${welcome.version}` : 'xcsh'}</div>
+      <div className="welcomeContent">
+        <div className="welcomeLeft">
+          <F5AsciiLogo />
         </div>
-        <div className="emptyStateInfo">
-          <div className="emptyStateVersion">xcsh {welcome.version ?? ''}</div>
+        <div className="welcomeDivider" />
+        <div className="welcomeRight">
           {welcome.modelProvider && (
             <div className="emptyStateSection">
               <div className="emptyStateSectionTitle">Model Provider</div>
