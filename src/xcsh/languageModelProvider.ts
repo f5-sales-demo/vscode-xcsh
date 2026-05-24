@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
-import type { MessageUpdate, RpcToolCall } from './types';
+import type { RpcToolCall } from './types';
 
 const MODEL_ID = 'f5xc-xcsh';
 const MODEL_NAME = 'F5 XC Shell Assistant';
@@ -97,11 +97,17 @@ export function registerLanguageModelProvider(
         return;
       }
 
-      await new Promise<void>((resolve) => {
+      await new Promise<void>((resolve, reject) => {
         const disposables: vscode.Disposable[] = [];
 
+        const cleanup = (): void => {
+          for (const d of disposables) {
+            d.dispose();
+          }
+        };
+
         disposables.push(
-          rpcBridge.onEvent<MessageUpdate>('message_update', (event) => {
+          rpcBridge.onMessageStream((event) => {
             progress.report(new vscode.LanguageModelTextPart(event.text));
           }),
         );
@@ -114,18 +120,22 @@ export function registerLanguageModelProvider(
 
         disposables.push(
           rpcBridge.onEvent('stream_end', () => {
-            for (const d of disposables) {
-              d.dispose();
-            }
+            cleanup();
             resolve();
+          }),
+        );
+
+        disposables.push(
+          rpcBridge.onEvent('error', (event) => {
+            cleanup();
+            const msg = (event as Record<string, unknown>).message;
+            reject(new Error(typeof msg === 'string' ? msg : 'xcsh streaming error'));
           }),
         );
 
         token.onCancellationRequested(() => {
           rpcBridge.abort();
-          for (const d of disposables) {
-            d.dispose();
-          }
+          cleanup();
           resolve();
         });
 

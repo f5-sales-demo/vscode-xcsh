@@ -114,20 +114,36 @@ export function registerChatParticipant(
   ): Promise<vscode.ChatResult> => {
     // Handle slash commands before the default path
     if (request.command === 'status') {
-      const integrations = await rpcBridge.getIntegrations();
-      stream.markdown(formatStatusResponse(integrations));
+      try {
+        const integrations = await rpcBridge.getIntegrations();
+        stream.markdown(formatStatusResponse(integrations));
+      } catch {
+        stream.markdown('Unable to fetch integration status. Is xcsh running?');
+      }
       return { metadata: { command: 'status' } };
     }
 
     if (request.command === 'context') {
-      const activeCtx = await contextManager.getActiveContext();
-      stream.markdown(formatContextResponse(activeCtx));
+      try {
+        const activeCtx = await contextManager.getActiveContext();
+        stream.markdown(formatContextResponse(activeCtx));
+      } catch {
+        stream.markdown('Unable to fetch context. Is xcsh running?');
+      }
       return { metadata: { command: 'context' } };
     }
 
     if (request.command === 'resources') {
-      const response = await rpcBridge.sendCommand({ type: 'list_resources' });
-      stream.markdown(typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2));
+      try {
+        const response = await rpcBridge.sendCommand({ type: 'list_resources' });
+        if (response.success) {
+          stream.markdown(typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2));
+        } else {
+          stream.markdown(`**Error:** ${response.error ?? 'Unknown error listing resources'}`);
+        }
+      } catch {
+        stream.markdown('Unable to list resources. Is xcsh running?');
+      }
       return { metadata: { command: 'resources' } };
     }
 
