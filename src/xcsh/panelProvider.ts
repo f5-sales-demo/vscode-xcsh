@@ -98,37 +98,43 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     }
 
     this.rpcBridge
-      .getState()
-      .then((state) => {
+      .getIntegrations()
+      .then((data) => {
         void view.webview.postMessage({
           type: 'from-extension',
           message: {
             type: 'welcome_state',
-            version: 'v18.77.0',
-            model: state.model?.name ?? state.model?.modelId ?? 'unknown',
-            modelProvider: state.model?.provider ?? 'anthropic',
-            integrations: [
-              { name: 'F5 XC Context', connected: true },
-              { name: 'GitLab', connected: true },
-              { name: 'GitHub', connected: true },
-              { name: 'Salesforce', connected: true },
-              { name: 'Azure', connected: true },
-              { name: 'AWS', connected: true },
-              { name: 'Google Cloud', connected: true },
-            ],
+            version: `v${data.version}`,
+            model: data.model.provider ?? 'unknown',
+            modelProvider: data.model.state === 'connected' ? data.model.provider : undefined,
+            integrations: data.services,
           },
         });
       })
       .catch(() => {
-        void view.webview.postMessage({
-          type: 'from-extension',
-          message: {
-            type: 'welcome_state',
-            version: 'v18.77.0',
-            modelProvider: 'anthropic',
-            integrations: [],
-          },
-        });
+        this.rpcBridge
+          .getState()
+          .then((state) => {
+            void view.webview.postMessage({
+              type: 'from-extension',
+              message: {
+                type: 'welcome_state',
+                version: 'xcsh',
+                model: state.model?.name ?? state.model?.modelId ?? 'unknown',
+                modelProvider: state.model?.provider ?? 'anthropic',
+                integrations: [],
+              },
+            });
+          })
+          .catch(() => {
+            void view.webview.postMessage({
+              type: 'from-extension',
+              message: {
+                type: 'welcome_state',
+                integrations: [],
+              },
+            });
+          });
       });
   }
 

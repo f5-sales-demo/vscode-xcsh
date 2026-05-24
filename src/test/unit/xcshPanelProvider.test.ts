@@ -21,6 +21,7 @@ describe('XcshPanelProvider', () => {
       prompt: jest.fn(),
       abort: jest.fn(),
       getState: jest.fn(),
+      getIntegrations: jest.fn(),
       sendCommand: jest.fn(),
     } as unknown as XcshRpcBridge;
     const provider = new XcshPanelProvider(mockUri, mockBridge);

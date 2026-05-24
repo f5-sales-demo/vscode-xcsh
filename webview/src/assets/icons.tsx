@@ -46,3 +46,19 @@ export function CrossIcon() {
     </svg>
   );
 }
+
+export function WarningIcon() {
+  return (
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M7.56 1.47a.75.75 0 01.88 0l.06.05 6.25 10.5a.75.75 0 01-.6 1.23H1.85a.75.75 0 01-.6-1.23L7.5 1.52l.06-.05zM8 3.24L2.65 12.25h10.7L8 3.24zM8 10a.75.75 0 110 1.5.75.75 0 010-1.5zm0-4.5a.75.75 0 01.75.75v2.5a.75.75 0 01-1.5 0v-2.5A.75.75 0 018 5.5z" />
+    </svg>
+  );
+}
+
+export function DashIcon() {
+  return (
+    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+      <path d="M4 8a.75.75 0 01.75-.75h6.5a.75.75 0 010 1.5h-6.5A.75.75 0 014 8z" />
+    </svg>
+  );
+}

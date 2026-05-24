@@ -45,6 +45,22 @@ export interface RpcResponse {
   error?: string;
 }
 
+// ───────── Integration Health ─────────
+
+export type ServiceState = 'connected' | 'unauthenticated' | 'unavailable';
+
+export interface ServiceStatus {
+  name: string;
+  state: ServiceState;
+  hint?: string;
+}
+
+export interface IntegrationsResponse {
+  version: string;
+  model: { state: string; provider?: string; latencyMs?: number };
+  services: ServiceStatus[];
+}
+
 // ───────── Events ─────────
 
 export interface RpcEvent {

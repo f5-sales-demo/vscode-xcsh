@@ -2,9 +2,20 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import { useSyncExternalStore } from 'react';
-import { CheckIcon, CrossIcon } from '../assets/icons';
+import { CheckIcon, DashIcon, WarningIcon } from '../assets/icons';
 import { F5AsciiLogo } from '../assets/pi-logo';
 import { getWelcomeState, subscribeWelcome } from '../main';
+
+function stateIcon(state: 'connected' | 'unauthenticated' | 'unavailable') {
+  switch (state) {
+    case 'connected':
+      return <CheckIcon />;
+    case 'unauthenticated':
+      return <WarningIcon />;
+    case 'unavailable':
+      return <DashIcon />;
+  }
+}
 
 export function EmptyState() {
   const welcome = useSyncExternalStore(subscribeWelcome, getWelcomeState);
@@ -34,10 +45,9 @@ export function EmptyState() {
               <div className="emptyStateDivider" />
               {welcome.integrations.map((integration) => (
                 <div key={integration.name} className="emptyStateCheck">
-                  <span className={`checkIcon ${integration.connected ? 'connected' : 'disconnected'}`}>
-                    {integration.connected ? <CheckIcon /> : <CrossIcon />}
-                  </span>
+                  <span className={`checkIcon ${integration.state}`}>{stateIcon(integration.state)}</span>
                   <span>{integration.name}</span>
+                  {integration.hint && <span className="hintText">{integration.hint}</span>}
                 </div>
               ))}
             </div>
