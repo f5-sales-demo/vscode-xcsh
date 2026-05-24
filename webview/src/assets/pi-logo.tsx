@@ -1,29 +1,65 @@
 // webview/src/assets/pi-logo.tsx
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
+// ASCII art sourced from xcsh welcome screen
 
-export function PiLogo({ size = 80 }: { size?: number }) {
+const F5_LOGO_LINES = [
+  '                   ________',
+  '              (▒▒▒▒▓▓▓▓▓▓▓▓▒▒▒▒)',
+  '         (▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒)',
+  '      (▒▒▓▓▓▓██████████▓▓▓▓█████████████)',
+  '    (▒▓▓▓▓██████▒▒▒▒▒███▓▓██████████████▒)',
+  '   (▒▓▓▓▓██████▒▓▓▓▓▓▒▒▒▓██▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒)',
+  '  (▒▓▓▓▓▓██████▓▓▓▓▓▓▓▓▓██▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒)',
+  ' (▒▓▓███████████████▓▓▓▓█████████████▓▓▓▓▓▓▒)',
+  '(▒▓▓▓▒▒▒███████▒▒▒▒▒▓▓▓████████████████▓▓▓▓▓▒)',
+  '|▒▓▓▓▓▓▓▒██████▓▓▓▓▓▓▓████████████████████▓▓▒|',
+  '|▒▓▓▓▓▓▓▓██████▓▓▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒██████████▓▒|',
+  '(▒▓▓▓▓▓▓▓██████▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒████████▒▒)',
+  ' (▒▓▓▓▓▓▓██████▓▓▓▓▓▓▓███▓▓▓▓▓▓▓▓▓▓▒▒▒████▒▒)',
+  '  (▒▓▓▓▓▓██████▓▓▓▓▓▓█████▓▓▓▓▓▓▓▓▓▓▓▓███▒▒)',
+  '   (▒▒██████████▓▓▓▓▓▒██████▓▓▓▓▓▓▓▓███▒▒▒)',
+  '    (▒▒▒▒▒██████████▓▓▒▒█████████████▒▒▓▒)',
+  '      (▒▓▓▒▒▒▒▒▒▒▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒)',
+  '         (▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒)',
+  '              (▒▒▒▒▓▓▓▓▓▓▓▓▒▒▒▒)',
+];
+
+function colorChar(char: string): { text: string; className: string } {
+  if (char === '▓') {
+    return { text: '█', className: 'asciiRed' };
+  }
+  if (char === '█') {
+    return { text: '█', className: 'asciiWhite' };
+  }
+  if (char === '▒') {
+    return { text: '▒', className: 'asciiShadow' };
+  }
+  if ('()|_'.includes(char)) {
+    return { text: char, className: 'asciiRed' };
+  }
+  return { text: char, className: '' };
+}
+
+export function F5AsciiLogo() {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="F5 logo"
-    >
-      <circle cx="50" cy="50" r="48" fill="#e01f27" />
-      <text
-        x="50"
-        y="68"
-        textAnchor="middle"
-        fontSize="52"
-        fontWeight="bold"
-        fontFamily="Arial, sans-serif"
-        fill="white"
-      >
-        f5
-      </text>
-    </svg>
+    <pre className="asciiLogo" role="img" aria-label="F5 logo">
+      {F5_LOGO_LINES.map((line, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: static array
+        <div key={i} className="asciiLine">
+          {[...line].map((char, j) => {
+            const { text, className } = colorChar(char);
+            return className ? (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static character array
+              <span key={j} className={className}>
+                {text}
+              </span>
+            ) : (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static character array
+              <span key={j}>{text}</span>
+            );
+          })}
+        </div>
+      ))}
+    </pre>
   );
 }
