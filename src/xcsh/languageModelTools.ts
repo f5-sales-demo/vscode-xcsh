@@ -17,6 +17,19 @@ interface OpenFileInput {
   line?: number;
 }
 
+// ───────── Path Resolution ─────────
+
+export function resolveFilePath(inputPath: string): vscode.Uri {
+  if (inputPath.startsWith('/') || /^[a-zA-Z]:/.test(inputPath)) {
+    return vscode.Uri.file(inputPath);
+  }
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
+  if (workspaceRoot) {
+    return vscode.Uri.joinPath(workspaceRoot, inputPath);
+  }
+  return vscode.Uri.file(inputPath);
+}
+
 // ───────── Read File Tool ─────────
 
 export class ReadFileTool implements vscode.LanguageModelTool<ReadFileInput> {
@@ -39,7 +52,7 @@ export class ReadFileTool implements vscode.LanguageModelTool<ReadFileInput> {
     _token: vscode.CancellationToken,
   ): Promise<vscode.LanguageModelToolResult> {
     try {
-      const uri = vscode.Uri.file(options.input.path);
+      const uri = resolveFilePath(options.input.path);
       const content = await vscode.workspace.fs.readFile(uri);
       return new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(new TextDecoder().decode(content))]);
     } catch (err) {
@@ -67,14 +80,10 @@ export class GetSelectionTool implements vscode.LanguageModelTool<Record<string,
   ): Promise<vscode.LanguageModelToolResult> {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      return Promise.resolve(
-        new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart('No active editor or selection')]),
-      );
+      return Promise.resolve(new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart('')]));
     }
     const text = editor.document.getText(editor.selection);
-    return Promise.resolve(
-      new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(text || 'No text selected')]),
-    );
+    return Promise.resolve(new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(text)]));
   }
 }
 
@@ -97,21 +106,19 @@ export class GetDiagnosticsTool implements vscode.LanguageModelTool<GetDiagnosti
     options: vscode.LanguageModelToolInvocationOptions<GetDiagnosticsInput>,
     _token: vscode.CancellationToken,
   ): Promise<vscode.LanguageModelToolResult> {
-    const uri = vscode.Uri.file(options.input.path);
+    const uri = resolveFilePath(options.input.path);
     const diagnostics = vscode.languages.getDiagnostics(uri);
 
-    if (diagnostics.length === 0) {
-      return Promise.resolve(
-        new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart('No diagnostics found for this file.')]),
-      );
-    }
+    const items = diagnostics.map((d) => ({
+      severity: SEVERITY_LABELS[d.severity] ?? 'Unknown',
+      line: d.range.start.line + 1,
+      message: d.message,
+      source: d.source ?? 'unknown',
+    }));
 
-    const lines = diagnostics.map((d) => {
-      const severity = SEVERITY_LABELS[d.severity] ?? 'Unknown';
-      return `[${severity}] line ${String(d.range.start.line)}: ${d.message} (${d.source ?? 'unknown'})`;
-    });
-
-    return Promise.resolve(new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(lines.join('\n'))]));
+    return Promise.resolve(
+      new vscode.LanguageModelToolResult([new vscode.LanguageModelTextPart(JSON.stringify(items))]),
+    );
   }
 }
 
@@ -138,7 +145,7 @@ export class OpenFileTool implements vscode.LanguageModelTool<OpenFileInput> {
     _token: vscode.CancellationToken,
   ): Promise<vscode.LanguageModelToolResult> {
     try {
-      const uri = vscode.Uri.file(options.input.path);
+      const uri = resolveFilePath(options.input.path);
       const doc = await vscode.workspace.openTextDocument(uri);
 
       const showOptions: vscode.TextDocumentShowOptions = {};

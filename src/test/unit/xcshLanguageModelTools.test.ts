@@ -7,6 +7,7 @@ import {
   OpenFileTool,
   ReadFileTool,
   registerLanguageModelTools,
+  resolveFilePath,
 } from '../../xcsh/languageModelTools';
 
 describe('ReadFileTool', () => {
@@ -74,21 +75,21 @@ describe('GetSelectionTool', () => {
     Object.defineProperty(vscode.window, 'activeTextEditor', { value: undefined, writable: true });
   });
 
-  it('invoke returns empty message when no editor', async () => {
+  it('invoke returns empty string when no editor', async () => {
     Object.defineProperty(vscode.window, 'activeTextEditor', { value: undefined, writable: true });
 
     const result = await tool.invoke(
       { input: {} } as vscode.LanguageModelToolInvocationOptions<Record<string, never>>,
       { isCancellationRequested: false, onCancellationRequested: jest.fn() },
     );
-    expect((result.content[0] as vscode.LanguageModelTextPart).value).toContain('No active editor');
+    expect((result.content[0] as vscode.LanguageModelTextPart).value).toBe('');
   });
 });
 
 describe('GetDiagnosticsTool', () => {
   const tool = new GetDiagnosticsTool();
 
-  it('invoke returns diagnostics as JSON', async () => {
+  it('invoke returns diagnostics as JSON array', async () => {
     const mockDiagnostics = [
       {
         range: { start: { line: 5, character: 0 }, end: { line: 5, character: 10 } },
@@ -104,18 +105,22 @@ describe('GetDiagnosticsTool', () => {
       { isCancellationRequested: false, onCancellationRequested: jest.fn() },
     );
     const text = (result.content[0] as vscode.LanguageModelTextPart).value;
-    expect(text).toContain('Type error');
-    expect(text).toContain('line 5');
+    const parsed = JSON.parse(text) as Array<{ severity: string; line: number; message: string; source: string }>;
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]?.severity).toBe('Error');
+    expect(parsed[0]?.line).toBe(6);
+    expect(parsed[0]?.message).toBe('Type error');
+    expect(parsed[0]?.source).toBe('ts');
   });
 
-  it('invoke returns no-diagnostics message for clean file', async () => {
+  it('invoke returns empty JSON array for clean file', async () => {
     (vscode.languages.getDiagnostics as jest.Mock).mockReturnValue([]);
 
     const result = await tool.invoke(
       { input: { path: '/workspace/clean.ts' } } as vscode.LanguageModelToolInvocationOptions<{ path: string }>,
       { isCancellationRequested: false, onCancellationRequested: jest.fn() },
     );
-    expect((result.content[0] as vscode.LanguageModelTextPart).value).toContain('No diagnostics');
+    expect((result.content[0] as vscode.LanguageModelTextPart).value).toBe('[]');
   });
 });
 
@@ -133,6 +138,32 @@ describe('OpenFileTool', () => {
     expect(vscode.workspace.openTextDocument).toHaveBeenCalled();
     expect(vscode.window.showTextDocument).toHaveBeenCalled();
     expect((result.content[0] as vscode.LanguageModelTextPart).value).toContain('/test.ts');
+  });
+});
+
+describe('resolveFilePath', () => {
+  it('returns absolute path as-is', () => {
+    const uri = resolveFilePath('/home/user/file.ts');
+    expect(uri.fsPath).toBe('/home/user/file.ts');
+  });
+
+  it('resolves relative path against workspace root', () => {
+    const mockUri = { fsPath: '/workspace' };
+    Object.defineProperty(vscode.workspace, 'workspaceFolders', {
+      value: [{ uri: mockUri }],
+      writable: true,
+    });
+
+    const uri = resolveFilePath('src/index.ts');
+    expect(uri.fsPath).toContain('src/index.ts');
+
+    Object.defineProperty(vscode.workspace, 'workspaceFolders', { value: undefined, writable: true });
+  });
+
+  it('falls back to Uri.file for relative path with no workspace', () => {
+    Object.defineProperty(vscode.workspace, 'workspaceFolders', { value: undefined, writable: true });
+    const uri = resolveFilePath('relative/path.ts');
+    expect(uri.fsPath).toContain('relative/path.ts');
   });
 });
 
