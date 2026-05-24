@@ -83,17 +83,15 @@ export function activate(context: vscode.ExtensionContext): void {
   const describeProvider = new F5XCDescribeProvider(contextManager);
 
   // Initialize and register the schema provider for JSON IntelliSense
-  console.log('[Extension] Registering F5XC Schema Provider');
   const schemaProvider = new F5XCSchemaProvider();
   context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('f5xc-schema', schemaProvider));
-  console.log('[Extension] Schema provider registered');
+  logger.debug('Schema provider registered');
 
   // Pre-warm schema cache for commonly used resource types
   const schemaRegistry = getSchemaRegistry();
-  console.log('[Extension] Pre-warming schema cache for common resource types');
   schemaRegistry.prewarmCache(['http_loadbalancer', 'origin_pool', 'healthcheck', 'app_firewall']);
   const cacheStats = schemaRegistry.getCacheStats();
-  console.log('[Extension] Schema cache stats:', `${cacheStats.cachedCount}/${cacheStats.availableCount}`);
+  logger.debug(`Schema cache: ${cacheStats.cachedCount}/${cacheStats.availableCount}`);
 
   // Register completion providers for enhanced IntelliSense
   try {

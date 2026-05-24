@@ -126,8 +126,8 @@ export class XcshRpcBridge implements vscode.Disposable {
     return response.data as RpcSessionState;
   }
 
-  async setModel(modelId: string): Promise<void> {
-    const response = await this.sendCommand({ type: 'set_model', modelId });
+  async setModel(provider: string, modelId: string): Promise<void> {
+    const response = await this.sendCommand({ type: 'set_model', provider, modelId });
     if (!response.success) {
       throw new Error(response.error ?? 'Failed to set model');
     }

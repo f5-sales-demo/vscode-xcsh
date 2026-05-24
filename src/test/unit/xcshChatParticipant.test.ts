@@ -66,6 +66,25 @@ describe('formatStatusResponse', () => {
     expect(result).toContain('AWS');
     expect(result).toContain('unavailable');
   });
+
+  it('uses Unicode icons instead of codicons', () => {
+    const integrations = {
+      version: '1.0.0',
+      model: { state: 'connected' },
+      services: [
+        { name: 'Connected', state: 'connected' as const },
+        { name: 'Unauth', state: 'unauthenticated' as const },
+        { name: 'Missing', state: 'unavailable' as const },
+      ],
+    };
+    const result = formatStatusResponse(integrations);
+    expect(result).toContain('✅');
+    expect(result).toContain('⚠️');
+    expect(result).toContain('⭘');
+    expect(result).not.toContain('$(check)');
+    expect(result).not.toContain('$(warning)');
+    expect(result).not.toContain('$(circle-slash)');
+  });
 });
 
 describe('formatContextResponse', () => {
