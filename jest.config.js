@@ -14,6 +14,7 @@ const sharedTransform = {
 
 const sharedModuleNameMapper = {
   '^vscode$': '<rootDir>/src/test/__mocks__/vscode.ts',
+  '^webview/(.*)$': '<rootDir>/webview/$1',
 };
 
 /** @type {import('jest').Config} */
@@ -73,7 +74,6 @@ module.exports = {
       testMatch: ['**/*.test.ts'],
       testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
       moduleFileExtensions: ['ts', 'js', 'json'],
-      moduleDirectories: ['node_modules', '<rootDir>'],
       moduleNameMapper: sharedModuleNameMapper,
       transform: sharedTransform,
     },
