@@ -116,6 +116,22 @@ export interface RpcHostToolCancel {
   targetId: string;
 }
 
+// ───────── Tool Calling (LM Provider) ─────────
+
+export interface RpcToolCall extends RpcEvent {
+  type: 'tool_call';
+  toolCallId: string;
+  toolName: string;
+  arguments: Record<string, unknown>;
+}
+
+export interface RpcToolResult {
+  type: 'tool_result';
+  toolCallId: string;
+  result: unknown;
+  isError?: boolean;
+}
+
 // ───────── Extension UI ─────────
 
 export interface ExtensionUIRequest {

@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import type { ContextManagerInterface } from '../config/contextTypes';
 import { deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
-import { ChatPanelProvider } from './chatPanelProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerLanguageModelProvider } from './languageModelProvider';
@@ -152,20 +151,6 @@ export async function activateXcsh(
         err instanceof Error ? err : new Error(String(err)),
       );
     }
-  }
-
-  // Conditionally register Chat Panel
-  if (config.get<boolean>('xcsh.showChatPanel', true)) {
-    const chatPanelProvider = new ChatPanelProvider(extensionContext.extensionUri, rpcBridge);
-    extensionContext.subscriptions.push(
-      vscode.window.registerWebviewViewProvider(ChatPanelProvider.viewType, chatPanelProvider),
-    );
-
-    extensionContext.subscriptions.push(
-      vscode.commands.registerCommand('f5xc.xcsh.openChatPanel', () => {
-        void vscode.commands.executeCommand('f5xc.xcshChat.focus');
-      }),
-    );
   }
 
   // Register the xcsh panel (activity bar fallback + secondary sidebar)

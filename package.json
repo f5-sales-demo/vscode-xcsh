@@ -103,11 +103,6 @@
           "default": "",
           "description": "Custom path to the xcsh binary. Leave empty for auto-detection."
         },
-        "f5xc.xcsh.showChatPanel": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show the xcsh Chat panel in the sidebar"
-        },
         "f5xc.xcsh.chatParticipantEnabled": {
           "type": "boolean",
           "default": true,
@@ -217,11 +212,6 @@
           "id": "f5xc.cloudStatus",
           "name": "Cloud Status",
           "contextualTitle": "F5 Cloud Status"
-        },
-        {
-          "id": "f5xc.xcshChat",
-          "name": "xcsh Chat",
-          "type": "webview"
         }
       ]
     },
@@ -440,12 +430,6 @@
         "title": "Open xcsh Terminal",
         "category": "F5 XC",
         "icon": "$(terminal)"
-      },
-      {
-        "command": "f5xc.xcsh.openChatPanel",
-        "title": "Open xcsh Chat",
-        "category": "F5 XC",
-        "icon": "$(comment-discussion)"
       },
       {
         "command": "f5xc.xcsh.restart",
