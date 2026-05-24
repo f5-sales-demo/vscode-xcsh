@@ -1,0 +1,13 @@
+metadata:
+  name: my-app-lb
+  namespace: demo-app
+spec:
+  domains:
+    - my-app.example.com
+  http:
+    dns_volterra_managed: true
+  default_route_pools:
+    - pool:
+        name: my-app-pool
+        namespace: demo-app
+      weight: 1

@@ -37,3 +37,39 @@ describe('RPC tool call types', () => {
     expect(result.isError).toBe(true);
   });
 });
+
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+describe('Agent Skills validation', () => {
+  const skillsDir = path.resolve(__dirname, '../../../skills');
+  const expectedSkills = ['f5xc-resource-management', 'f5xc-troubleshooting', 'f5xc-configuration-authoring'];
+
+  for (const skillName of expectedSkills) {
+    it(`${skillName}/SKILL.md exists and has valid frontmatter`, () => {
+      const skillPath = path.join(skillsDir, skillName, 'SKILL.md');
+      expect(fs.existsSync(skillPath)).toBe(true);
+
+      const content = fs.readFileSync(skillPath, 'utf-8');
+
+      expect(content.startsWith('---')).toBe(true);
+      const endOfFrontmatter = content.indexOf('---', 3);
+      expect(endOfFrontmatter).toBeGreaterThan(3);
+
+      const frontmatter = content.slice(3, endOfFrontmatter);
+      expect(frontmatter).toContain('name:');
+      expect(frontmatter).toContain('description:');
+
+      const nameMatch = frontmatter.match(/name:\s*(.+)/);
+      expect(nameMatch).not.toBeNull();
+      expect(nameMatch?.[1]?.trim()).toBe(skillName);
+    });
+  }
+
+  it('resource-management has example files', () => {
+    const examplesDir = path.join(skillsDir, 'f5xc-resource-management', 'examples');
+    expect(fs.existsSync(path.join(examplesDir, 'http-load-balancer.yaml'))).toBe(true);
+    expect(fs.existsSync(path.join(examplesDir, 'origin-pool.yaml'))).toBe(true);
+    expect(fs.existsSync(path.join(examplesDir, 'health-check.yaml'))).toBe(true);
+  });
+});
