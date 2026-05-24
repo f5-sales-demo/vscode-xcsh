@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
-import type { MessageUpdate } from './types';
+import type { MessageUpdate, RpcToolCall } from './types';
 
 const MODEL_ID = 'f5xc-xcsh';
 const MODEL_NAME = 'F5 XC Shell Assistant';
@@ -32,7 +32,7 @@ export function convertMessagesToPrompt(messages: SimpleChatMessage[]): string {
 /**
  * Extract text content from a LanguageModelChatRequestMessage's content array.
  */
-function extractTextFromContent(content: ReadonlyArray<unknown>): string {
+export function extractTextFromMessageContent(content: ReadonlyArray<unknown>): string {
   const parts: string[] = [];
   for (const part of content) {
     if (part instanceof vscode.LanguageModelTextPart) {
@@ -66,7 +66,7 @@ export function registerLanguageModelProvider(
     maxInputTokens: 200_000,
     maxOutputTokens: 16_000,
     capabilities: {
-      toolCalling: false,
+      toolCalling: true,
       imageInput: false,
     },
   };
@@ -89,7 +89,7 @@ export function registerLanguageModelProvider(
       // Convert LanguageModelChatRequestMessages to simple format
       const simpleMessages: SimpleChatMessage[] = messages.map((msg) => ({
         role: msg.role === vscode.LanguageModelChatMessageRole.User ? 'user' : 'assistant',
-        content: extractTextFromContent(msg.content),
+        content: extractTextFromMessageContent(msg.content),
       }));
 
       const promptText = convertMessagesToPrompt(simpleMessages);
@@ -103,6 +103,12 @@ export function registerLanguageModelProvider(
         disposables.push(
           rpcBridge.onEvent<MessageUpdate>('message_update', (event) => {
             progress.report(new vscode.LanguageModelTextPart(event.text));
+          }),
+        );
+
+        disposables.push(
+          rpcBridge.onEvent<RpcToolCall>('tool_call', (event) => {
+            progress.report(new vscode.LanguageModelToolCallPart(event.toolCallId, event.toolName, event.arguments));
           }),
         );
 
@@ -132,7 +138,7 @@ export function registerLanguageModelProvider(
       text: string | vscode.LanguageModelChatRequestMessage,
       _token: vscode.CancellationToken,
     ): Thenable<number> {
-      const str = typeof text === 'string' ? text : extractTextFromContent(text.content);
+      const str = typeof text === 'string' ? text : extractTextFromMessageContent(text.content);
       return Promise.resolve(Math.ceil(str.length / 4));
     },
   };
