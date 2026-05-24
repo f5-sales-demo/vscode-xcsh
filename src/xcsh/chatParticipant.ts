@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import type { ContextManagerInterface, F5XCContext } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
-import type { ToolExecutionEnd, ToolExecutionStart } from './types';
+import type { IntegrationsResponse, ToolExecutionEnd, ToolExecutionStart } from './types';
 
 const PARTICIPANT_ID = 'f5xc.xcsh';
 
@@ -40,6 +40,59 @@ export function buildPromptWithContext(userPrompt: string, ctx: F5XCContext | nu
   return parts.join('\n\n');
 }
 
+export function formatStatusResponse(integrations: IntegrationsResponse): string {
+  const lines: string[] = [`**xcsh** v${integrations.version}\n`, '| Integration | Status | Action |', '|---|---|---|'];
+  for (const svc of integrations.services) {
+    const icon =
+      svc.state === 'connected' ? '$(check)' : svc.state === 'unauthenticated' ? '$(warning)' : '$(circle-slash)';
+    const action = svc.hint ?? '';
+    lines.push(`| ${icon} ${svc.name} | ${svc.state} | ${action} |`);
+  }
+  return lines.join('\n');
+}
+
+export function formatContextResponse(ctx: F5XCContext | null): string {
+  if (!ctx) {
+    return 'No active F5 XC context. Use the **F5 XC: Add Context** command to configure one.';
+  }
+  const maskedUrl = ctx.apiUrl.replace(/\/api$/, '');
+  return [
+    `**Active Context:** ${ctx.name}`,
+    `**Console:** ${maskedUrl}`,
+    `**Namespace:** ${ctx.defaultNamespace}`,
+  ].join('\n\n');
+}
+
+interface ChatFollowup {
+  prompt: string;
+  label: string;
+}
+
+export function buildFollowups(command: string | undefined): ChatFollowup[] {
+  switch (command) {
+    case 'status':
+      return [
+        { prompt: 'Show my active context details', label: 'View Context' },
+        { prompt: 'List resources in current namespace', label: 'List Resources' },
+      ];
+    case 'context':
+      return [
+        { prompt: 'List resources in current namespace', label: 'List Resources' },
+        { prompt: 'Show integration health status', label: 'Check Status' },
+      ];
+    case 'resources':
+      return [
+        { prompt: 'Show details for a specific resource', label: 'Resource Details' },
+        { prompt: 'Check the health of my sites', label: 'Check Site Health' },
+      ];
+    default:
+      return [
+        { prompt: 'Show integration health status', label: 'Check Status' },
+        { prompt: 'List resources in current namespace', label: 'List Resources' },
+      ];
+  }
+}
+
 /**
  * Register the `@xcsh` chat participant in GitHub Copilot Chat.
  *
@@ -58,7 +111,26 @@ export function registerChatParticipant(
     _chatContext: vscode.ChatContext,
     stream: vscode.ChatResponseStream,
     token: vscode.CancellationToken,
-  ): Promise<void> => {
+  ): Promise<vscode.ChatResult> => {
+    // Handle slash commands before the default path
+    if (request.command === 'status') {
+      const integrations = await rpcBridge.getIntegrations();
+      stream.markdown(formatStatusResponse(integrations));
+      return { metadata: { command: 'status' } };
+    }
+
+    if (request.command === 'context') {
+      const activeCtx = await contextManager.getActiveContext();
+      stream.markdown(formatContextResponse(activeCtx));
+      return { metadata: { command: 'context' } };
+    }
+
+    if (request.command === 'resources') {
+      const response = await rpcBridge.sendCommand({ type: 'list_resources' });
+      stream.markdown(typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2));
+      return { metadata: { command: 'resources' } };
+    }
+
     const activeCtx = await contextManager.getActiveContext();
 
     // Gather file context from active editor
@@ -135,10 +207,23 @@ export function registerChatParticipant(
         d.dispose();
       }
     }
+
+    return { metadata: { command: undefined } };
   };
 
   const participant = vscode.chat.createChatParticipant(PARTICIPANT_ID, handler);
   participant.iconPath = vscode.Uri.joinPath(extensionContext.extensionUri, 'resources', 'f5-icon.svg');
+
+  participant.followupProvider = {
+    provideFollowups(result: vscode.ChatResult): vscode.ChatFollowup[] {
+      const cmd = typeof result.metadata?.command === 'string' ? result.metadata.command : undefined;
+      return buildFollowups(cmd);
+    },
+  };
+
+  participant.onDidReceiveFeedback((feedback: vscode.ChatResultFeedback) => {
+    logger.info(`Chat feedback: ${String(feedback.kind)}`);
+  });
 
   extensionContext.subscriptions.push(participant);
 

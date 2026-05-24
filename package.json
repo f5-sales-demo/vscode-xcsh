@@ -764,6 +764,58 @@
         "vendor": "f5xc",
         "displayName": "F5 XC Shell Assistant"
       }
+    ],
+    "chatParticipants": [
+      {
+        "id": "f5xc.xcsh",
+        "name": "xcsh",
+        "fullName": "F5 XC Shell Assistant",
+        "description": "Ask about F5 Distributed Cloud resources, configuration, and troubleshooting",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "status",
+            "description": "Show F5 XC integration health and connection status"
+          },
+          {
+            "name": "context",
+            "description": "Show active F5 XC context details (tenant, namespace, API URL)"
+          },
+          {
+            "name": "resources",
+            "description": "List resources in the current namespace"
+          }
+        ],
+        "disambiguation": [
+          {
+            "category": "f5xc_networking",
+            "description": "Questions about F5 Distributed Cloud networking, load balancers, origin pools, routes, DNS, CDN, virtual hosts, and HTTP load balancer configuration",
+            "examples": [
+              "Create an HTTP load balancer",
+              "What origin pools are configured?",
+              "Show me the route table for this namespace"
+            ]
+          },
+          {
+            "category": "f5xc_security",
+            "description": "Questions about F5 Distributed Cloud security, WAF policies, service policies, DDoS protection, bot defense, API security, and application firewall configuration",
+            "examples": [
+              "Configure a WAF policy for my app",
+              "Show blocked requests in the last hour",
+              "What service policies are active?"
+            ]
+          },
+          {
+            "category": "f5xc_infrastructure",
+            "description": "Questions about F5 Distributed Cloud sites, site health, cloud connectors, network connectors, fleet management, and infrastructure status",
+            "examples": [
+              "Check site health for my AWS site",
+              "List all registered sites",
+              "Show cloud connector status"
+            ]
+          }
+        ]
+      }
     ]
   },
   "scripts": {
