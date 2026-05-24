@@ -314,6 +314,95 @@ export class Range {
   }
 }
 
+// Mock LanguageModelTextPart
+export class LanguageModelTextPart {
+  constructor(public readonly value: string) {}
+}
+
+// Mock LanguageModelToolCallPart
+export class LanguageModelToolCallPart {
+  constructor(
+    public readonly callId: string,
+    public readonly name: string,
+    public readonly input: unknown,
+  ) {}
+}
+
+// Mock LanguageModelToolResultPart
+export class LanguageModelToolResultPart {
+  constructor(
+    public readonly callId: string,
+    public readonly content: unknown[],
+  ) {}
+}
+
+// Mock LanguageModelToolResult
+export class LanguageModelToolResult {
+  constructor(public readonly content: unknown[]) {}
+}
+
+// Mock LanguageModelChatMessageRole
+export enum LanguageModelChatMessageRole {
+  User = 1,
+  Assistant = 2,
+}
+
+// Mock languages
+export const languages = {
+  getDiagnostics: jest.fn(() => []),
+  registerCompletionItemProvider: jest.fn(),
+  registerHoverProvider: jest.fn(),
+  createDiagnosticCollection: jest.fn(() => ({
+    set: jest.fn(),
+    delete: jest.fn(),
+    clear: jest.fn(),
+    dispose: jest.fn(),
+  })),
+};
+
+// Mock lm namespace
+export const lm = {
+  registerTool: jest.fn(() => ({ dispose: jest.fn() })),
+  registerLanguageModelChatProvider: jest.fn(() => ({ dispose: jest.fn() })),
+  tools: [],
+};
+
+// Mock chat namespace
+export const chat = {
+  createChatParticipant: jest.fn(() => ({
+    iconPath: undefined,
+    followupProvider: undefined,
+    onDidReceiveFeedback: jest.fn(() => ({ dispose: jest.fn() })),
+    dispose: jest.fn(),
+  })),
+};
+
+// Mock DiagnosticSeverity
+export enum DiagnosticSeverity {
+  Error = 0,
+  Warning = 1,
+  Information = 2,
+  Hint = 3,
+}
+
+// Mock MarkdownString
+export class MarkdownString {
+  value: string;
+  isTrusted?: boolean;
+  supportThemeIcons?: boolean;
+  constructor(value?: string) {
+    this.value = value ?? '';
+  }
+  appendText(text: string): this {
+    this.value += text;
+    return this;
+  }
+  appendMarkdown(markdown: string): this {
+    this.value += markdown;
+    return this;
+  }
+}
+
 // Export default for CommonJS compatibility
 export default {
   EventEmitter,
@@ -332,4 +421,14 @@ export default {
   CancellationTokenSource,
   Position,
   Range,
+  LanguageModelTextPart,
+  LanguageModelToolCallPart,
+  LanguageModelToolResultPart,
+  LanguageModelToolResult,
+  LanguageModelChatMessageRole,
+  languages,
+  lm,
+  chat,
+  DiagnosticSeverity,
+  MarkdownString,
 };
