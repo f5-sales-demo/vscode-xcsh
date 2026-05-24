@@ -8,6 +8,7 @@ import { ChatPanelProvider } from './chatPanelProvider';
 import { registerChatParticipant } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerLanguageModelProvider } from './languageModelProvider';
+import { XcshPanelProvider } from './panelProvider';
 import { XcshProcessManager } from './processManager';
 import { XcshRpcBridge } from './rpcBridge';
 import { registerTerminalIntegration } from './terminalIntegration';
@@ -157,6 +158,29 @@ export async function activateXcsh(
       }),
     );
   }
+
+  // Register the Claude Code-style xcsh panel
+  const panelProvider = new XcshPanelProvider(extensionContext.extensionUri, rpcBridge);
+  extensionContext.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewType, panelProvider),
+  );
+
+  extensionContext.subscriptions.push(
+    vscode.commands.registerCommand('f5xc.xcsh.openPanel', () => {
+      const panelMode = vscode.workspace.getConfiguration('f5xc').get<string>('xcsh.panelMode', 'webview');
+      if (panelMode === 'terminal') {
+        void vscode.commands.executeCommand('f5xc.xcsh.openTerminal');
+      } else {
+        void vscode.commands.executeCommand('f5xc.xcshPanel.focus');
+      }
+    }),
+  );
+
+  extensionContext.subscriptions.push(
+    vscode.commands.registerCommand('f5xc.xcsh.newSession', () => {
+      void vscode.commands.executeCommand('f5xc.xcshPanel.focus');
+    }),
+  );
 
   // Register terminal integration
   registerTerminalIntegration(extensionContext, contextManager);

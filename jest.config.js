@@ -1,16 +1,33 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+const sharedTransform = {
+  '^.+\\.ts$': [
+    'ts-jest',
+    {
+      tsconfig: 'tsconfig.test.json',
+      diagnostics: {
+        ignoreCodes: [151002, 2554, 2307, 7016, 7026, 17004, 7006],
+      },
+    },
+  ],
+};
+
+const sharedModuleNameMapper = {
+  '^vscode$': '<rootDir>/src/test/__mocks__/vscode.ts',
+};
+
 /** @type {import('jest').Config} */
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: [
-    '**/unit/**/*.test.ts',
-    // Include integration live tests only when F5XC_API_URL is set
-    ...(process.env.F5XC_API_URL ? ['**/integration/live*.test.ts'] : []),
-  ],
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageThreshold: {
+    global: {
+      branches: 10,
+      functions: 20,
+      lines: 19,
+      statements: 19,
+    },
+  },
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',
@@ -24,36 +41,43 @@ module.exports = {
     '!src/tree/subscriptionNodes.ts',
     '!src/tree/subscriptionProvider.ts',
   ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-  coverageThreshold: {
-    global: {
-      branches: 10,
-      functions: 20,
-      lines: 19,
-      statements: 19,
-    },
-  },
-  moduleNameMapper: {
-    '^vscode$': '<rootDir>/src/test/__mocks__/vscode.ts',
-  },
-  transform: {
-    '^.+\\.ts$': [
-      'ts-jest',
-      {
-        tsconfig: 'tsconfig.test.json',
-        diagnostics: {
-          ignoreCodes: [151002, 2554],
-        },
-      },
-    ],
-  },
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    '/out/',
-    // Skip integration tests by default unless env var is set
-    ...(process.env.F5XC_API_URL ? [] : ['/integration/']),
-  ],
   verbose: true,
+  projects: [
+    {
+      displayName: 'node',
+      preset: 'ts-jest',
+      testEnvironment: 'node',
+      roots: ['<rootDir>/src'],
+      testMatch: ['**/unit/**/*.test.ts', ...(process.env.F5XC_API_URL ? ['**/integration/live*.test.ts'] : [])],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        '/dist/',
+        '/out/',
+        ...(process.env.F5XC_API_URL ? [] : ['/integration/']),
+      ],
+      moduleFileExtensions: ['ts', 'js', 'json'],
+      moduleNameMapper: sharedModuleNameMapper,
+      transform: sharedTransform,
+    },
+    {
+      displayName: 'webview',
+      preset: 'ts-jest',
+      testEnvironment: 'jsdom',
+      roots: ['<rootDir>/webview'],
+      testMatch: ['**/__tests__/**/*.test.ts'],
+      testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
+      moduleFileExtensions: ['ts', 'js', 'json'],
+      transform: {
+        '^.+\\.ts$': [
+          'ts-jest',
+          {
+            tsconfig: '<rootDir>/webview/tsconfig.test.json',
+            diagnostics: {
+              ignoreCodes: [151002, 2554, 2307, 7016, 7026, 17004, 7006],
+            },
+          },
+        ],
+      },
+    },
+  ],
 };

@@ -27,7 +27,7 @@ const extensionConfig = {
     rules: [
       {
         test: /\.ts$/,
-        exclude: /node_modules/,
+        exclude: /node_modules|webview/,
         use: [
           {
             loader: 'ts-loader',

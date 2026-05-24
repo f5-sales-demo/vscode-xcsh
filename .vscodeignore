@@ -36,3 +36,5 @@ commitlint.config.js
 eslint.config.mjs
 jest.config.js
 mkdocs.yml
+!dist/webview/**
+webview/**

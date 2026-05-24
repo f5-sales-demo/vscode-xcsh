@@ -140,6 +140,19 @@
           ],
           "default": "medium",
           "description": "Thinking level for xcsh AI responses"
+        },
+        "f5xc.xcsh.panelMode": {
+          "type": "string",
+          "enum": [
+            "webview",
+            "terminal"
+          ],
+          "default": "webview",
+          "enumDescriptions": [
+            "Rich integrated chat panel (recommended)",
+            "Classic CLI terminal experience"
+          ],
+          "description": "xcsh panel experience: rich webview or classic CLI terminal"
         }
       }
     },
@@ -149,10 +162,22 @@
           "id": "f5xc-explorer",
           "title": "F5 Distributed Cloud",
           "icon": "resources/f5-icon.svg"
+        },
+        {
+          "id": "xcsh-panel",
+          "title": "xcsh",
+          "icon": "resources/pi-icon.svg"
         }
       ]
     },
     "views": {
+      "xcsh-panel": [
+        {
+          "id": "f5xc.xcshPanel",
+          "name": "xcsh",
+          "type": "webview"
+        }
+      ],
       "f5xc-explorer": [
         {
           "id": "f5xc.profiles",
@@ -409,6 +434,18 @@
         "title": "Restart xcsh",
         "category": "F5 XC",
         "icon": "$(debug-restart)"
+      },
+      {
+        "command": "f5xc.xcsh.openPanel",
+        "title": "Open xcsh Panel",
+        "category": "F5 XC",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "f5xc.xcsh.newSession",
+        "title": "New xcsh Session",
+        "category": "F5 XC",
+        "icon": "$(add)"
       }
     ],
     "menus": {
@@ -637,13 +674,15 @@
     "validate:forms": "npx ts-node scripts/validate-form-defaults.ts",
     "compile": "npm run generate && webpack",
     "watch": "npm run generate && webpack --watch",
-    "package": "npm run generate && webpack --mode production --devtool hidden-source-map",
+    "package": "npm run generate && npm run build:webview && webpack --mode production --devtool hidden-source-map",
+    "build:webview": "cd webview && npx vite build",
+    "dev:webview": "cd webview && npx vite",
     "build:ci-local": "npm ci && npm run specs:ensure && npm run generate && npm run package && npx @vscode/vsce package --no-dependencies",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint && npm run validate:forms",
-    "lint": "eslint src scripts",
-    "lint:fix": "eslint src scripts --fix",
+    "lint": "eslint src scripts webview/src",
+    "lint:fix": "eslint src scripts webview/src --fix",
     "test": "npm run test:unit",
     "test:unit": "jest",
     "test:integration": "npm run compile-tests && vscode-test",
@@ -667,7 +706,7 @@
     "audit:security": "npm audit --audit-level=high"
   },
   "lint-staged": {
-    "*.ts": [
+    "*.{ts,tsx}": [
       "eslint --fix --max-warnings=0",
       "biome check --fix",
       "biome format --write"
@@ -682,8 +721,11 @@
   },
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.4.0",
+    "dompurify": "^3.2.6",
     "marked": "^15.0.12",
-    "node-forge": "^1.4.0"
+    "node-forge": "^1.4.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.1",
@@ -696,9 +738,12 @@
     "@types/mocha": "^10.0.6",
     "@types/node": "^25.9.1",
     "@types/node-forge": "^1.3.11",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
     "@types/vscode": "^1.120.0",
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
+    "@vitejs/plugin-react": "^4.5.2",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.3.8",
     "eslint": "^10.4.0",
@@ -707,6 +752,7 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
     "lint-staged": "^17.0.5",
     "markdownlint-cli": "^0.48.0",
     "prettier": "^3.8.3",
@@ -716,6 +762,7 @@
     "ts-loader": "^9.5.7",
     "typescript": "^5.3.3",
     "typescript-eslint": "^8.59.4",
+    "vite": "^6.3.5",
     "webpack": "^5.107.1",
     "webpack-cli": "^7.0.2"
   }
