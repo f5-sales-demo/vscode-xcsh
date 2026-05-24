@@ -30,13 +30,6 @@ export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
    * VSCode's JSON language service calls this when it needs a schema.
    */
   provideTextDocumentContent(uri: vscode.Uri): string {
-    // Debug logging
-    console.log('[SchemaProvider] provideTextDocumentContent called');
-    console.log('[SchemaProvider] URI:', uri.toString());
-    console.log('[SchemaProvider] URI scheme:', uri.scheme);
-    console.log('[SchemaProvider] URI authority:', uri.authority);
-    console.log('[SchemaProvider] URI path:', uri.path);
-
     // Parse the URI to extract resource type
     // URI format: f5xc-schema://schemas/{resourceType}.json
     // VSCode parses this as:
@@ -63,21 +56,13 @@ export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
 
     if (!resourceType) {
       logger.warn(`Invalid schema URI format: ${uri.toString()}, authority: ${uri.authority}, path: ${uri.path}`);
-      console.log('[SchemaProvider] Invalid URI format - no resource type extracted');
-      console.log('[SchemaProvider] Authority:', JSON.stringify(uri.authority));
-      console.log('[SchemaProvider] Path:', JSON.stringify(uri.path));
       return this.getErrorSchema(uri.toString());
     }
 
-    console.log('[SchemaProvider] Resource type extracted:', resourceType);
     logger.debug(`Providing schema for resource type: ${resourceType}`);
 
     const registry = getSchemaRegistry();
-    const schemaContent = registry.getSchemaContent(resourceType);
-    console.log('[SchemaProvider] Schema content length:', schemaContent.length);
-    console.log('[SchemaProvider] Schema preview:', schemaContent.substring(0, 200));
-
-    return schemaContent;
+    return registry.getSchemaContent(resourceType);
   }
 
   /**

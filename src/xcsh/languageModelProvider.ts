@@ -119,7 +119,7 @@ export function registerLanguageModelProvider(
         );
 
         disposables.push(
-          rpcBridge.onEvent('stream_end', () => {
+          rpcBridge.onEvent('turn_end', () => {
             cleanup();
             resolve();
           }),

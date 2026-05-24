@@ -203,6 +203,29 @@ describe('XcshRpcBridge', () => {
     expect(awsService?.hint).toBe('run: aws configure');
   });
 
+  it('setModel sends provider and modelId', async () => {
+    const promise = bridge.setModel('anthropic', 'claude-sonnet-4-6');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+    expect(sent.type).toBe('set_model');
+    expect(sent.provider).toBe('anthropic');
+    expect(sent.modelId).toBe('claude-sonnet-4-6');
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_model',
+      success: true,
+      data: { provider: 'anthropic', modelId: 'claude-sonnet-4-6' },
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await promise;
+  });
+
   it('getIntegrations throws on failure response', async () => {
     const promise = bridge.getIntegrations();
 

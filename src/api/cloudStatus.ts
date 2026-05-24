@@ -348,8 +348,5 @@ export function extractSiteCode(popName: string): string | null {
  * PoPs have descriptions containing "Edge PoP"
  */
 export function isPoP(component: Component): boolean {
-  const result = component.description?.includes('Edge PoP') ?? false;
-  // Debug logging - can be removed after verification
-  console.log(`[isPoP] name="${component.name}", description="${component.description}", result=${result}`);
-  return result;
+  return component.description?.includes('Edge PoP') ?? false;
 }

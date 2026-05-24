@@ -43,8 +43,7 @@ export function buildPromptWithContext(userPrompt: string, ctx: F5XCContext | nu
 export function formatStatusResponse(integrations: IntegrationsResponse): string {
   const lines: string[] = [`**xcsh** v${integrations.version}\n`, '| Integration | Status | Action |', '|---|---|---|'];
   for (const svc of integrations.services) {
-    const icon =
-      svc.state === 'connected' ? '$(check)' : svc.state === 'unauthenticated' ? '$(warning)' : '$(circle-slash)';
+    const icon = svc.state === 'connected' ? '✅' : svc.state === 'unauthenticated' ? '⚠️' : '⭘';
     const action = svc.hint ?? '';
     lines.push(`| ${icon} ${svc.name} | ${svc.state} | ${action} |`);
   }
@@ -135,14 +134,23 @@ export function registerChatParticipant(
 
     if (request.command === 'resources') {
       try {
-        const response = await rpcBridge.sendCommand({ type: 'list_resources' });
-        if (response.success) {
-          stream.markdown(typeof response.data === 'string' ? response.data : JSON.stringify(response.data, null, 2));
+        const activeCtx = await contextManager.getActiveContext();
+        if (!activeCtx) {
+          stream.markdown('No active F5 XC context. Use the **F5 XC: Add Context** command to configure one.');
         } else {
-          stream.markdown(`**Error:** ${response.error ?? 'Unknown error listing resources'}`);
+          const maskedUrl = activeCtx.apiUrl.replace(/\/api$/, '');
+          stream.markdown(
+            [
+              `**Resources for:** ${activeCtx.name}`,
+              `**Console:** ${maskedUrl}`,
+              `**Namespace:** ${activeCtx.defaultNamespace}`,
+              '',
+              'Browse resources in the **F5 Distributed Cloud** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
+            ].join('\n\n'),
+          );
         }
       } catch {
-        stream.markdown('Unable to list resources. Is xcsh running?');
+        stream.markdown('Unable to fetch context. Is xcsh running?');
       }
       return { metadata: { command: 'resources' } };
     }
@@ -187,9 +195,8 @@ export function registerChatParticipant(
         }),
       );
 
-      // Listen for stream_end to know when response is complete
       disposables.push(
-        rpcBridge.onEvent('stream_end', () => {
+        rpcBridge.onEvent('turn_end', () => {
           resolve();
         }),
       );

@@ -497,13 +497,6 @@ export class HealthcheckFormProvider {
     const quotaExceeded = quotaInfo ? quotaInfo.usage >= quotaInfo.limit : false;
     const cspSource = this.panel?.webview.cspSource;
 
-    // Debug logging for CSP
-    console.log('[Healthcheck] Nonce:', nonce);
-    console.log('[Healthcheck] CSP Source:', cspSource);
-
-    const csp = `default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource} https://cdn.jsdelivr.net;`;
-    console.log('[Healthcheck] CSP:', csp);
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -532,7 +525,6 @@ export class HealthcheckFormProvider {
       vsCodeCheckbox()
     );
 
-    console.log('[Healthcheck] Toolkit loaded from CDN');
   </script>
   <style>
     ${this.getStyles()}
