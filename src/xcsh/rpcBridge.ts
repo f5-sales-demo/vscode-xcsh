@@ -5,7 +5,15 @@ import * as readline from 'node:readline';
 import type { Readable, Writable } from 'node:stream';
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
-import type { MessageUpdate, ModelInfo, RpcCommand, RpcEvent, RpcResponse, RpcSessionState } from './types';
+import type {
+  IntegrationsResponse,
+  MessageUpdate,
+  ModelInfo,
+  RpcCommand,
+  RpcEvent,
+  RpcResponse,
+  RpcSessionState,
+} from './types';
 
 const COMMAND_TIMEOUT_MS = 30_000;
 
@@ -131,6 +139,14 @@ export class XcshRpcBridge implements vscode.Disposable {
       throw new Error(response.error ?? 'Failed to get available models');
     }
     return (response.data as { models: ModelInfo[] }).models;
+  }
+
+  async getIntegrations(): Promise<IntegrationsResponse> {
+    const response = await this.sendCommand({ type: 'get_integrations' });
+    if (!response.success) {
+      throw new Error(response.error ?? 'Failed to get integrations');
+    }
+    return response.data as IntegrationsResponse;
   }
 
   // ───────── event handling ─────────

@@ -12,7 +12,7 @@ interface WelcomeState {
   version?: string;
   model?: string;
   modelProvider?: string;
-  integrations?: Array<{ name: string; connected: boolean }>;
+  integrations?: Array<{ name: string; state: 'connected' | 'unauthenticated' | 'unavailable'; hint?: string }>;
 }
 
 // Welcome state store

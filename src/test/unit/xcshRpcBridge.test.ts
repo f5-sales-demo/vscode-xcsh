@@ -168,4 +168,58 @@ describe('XcshRpcBridge', () => {
 
     expect(received).toHaveLength(1);
   });
+
+  it('getIntegrations sends command and returns data', async () => {
+    const promise = bridge.getIntegrations();
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+    expect(sent.type).toBe('get_integrations');
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'get_integrations',
+      success: true,
+      data: {
+        version: '18.77.2',
+        model: { state: 'connected', provider: 'anthropic' },
+        services: [
+          { name: 'GitHub', state: 'connected' },
+          { name: 'AWS', state: 'unauthenticated', hint: 'run: aws configure' },
+        ],
+      },
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    const result = await promise;
+    expect(result.version).toBe('18.77.2');
+    expect(result.model.state).toBe('connected');
+    expect(result.services).toHaveLength(2);
+    const awsService = result.services.find((s) => s.name === 'AWS');
+    expect(awsService?.state).toBe('unauthenticated');
+    expect(awsService?.hint).toBe('run: aws configure');
+  });
+
+  it('getIntegrations throws on failure response', async () => {
+    const promise = bridge.getIntegrations();
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'get_integrations',
+      success: false,
+      error: 'Not supported',
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await expect(promise).rejects.toThrow('Not supported');
+  });
 });
