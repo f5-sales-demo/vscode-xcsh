@@ -64,11 +64,12 @@ module.exports = {
       preset: 'ts-jest',
       testEnvironment: 'jsdom',
       roots: ['<rootDir>/webview'],
-      testMatch: ['**/__tests__/**/*.test.ts'],
+      testMatch: ['**/__tests__/**/*.test.ts?(x)'],
       testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
-      moduleFileExtensions: ['ts', 'js', 'json'],
+      moduleFileExtensions: ['tsx', 'ts', 'js', 'json'],
+      setupFilesAfterEnv: ['@testing-library/jest-dom'],
       transform: {
-        '^.+\\.ts$': [
+        '^.+\\.tsx?$': [
           'ts-jest',
           {
             tsconfig: '<rootDir>/webview/tsconfig.test.json',
