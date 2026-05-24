@@ -73,7 +73,7 @@ module.exports = {
       testMatch: ['**/*.test.ts'],
       testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
       moduleFileExtensions: ['ts', 'js', 'json'],
-      modulePaths: ['<rootDir>'],
+      moduleDirectories: ['node_modules', '<rootDir>'],
       moduleNameMapper: sharedModuleNameMapper,
       transform: sharedTransform,
     },
