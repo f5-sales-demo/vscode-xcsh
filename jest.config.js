@@ -69,7 +69,7 @@ module.exports = {
       displayName: 'webview',
       preset: 'ts-jest',
       testEnvironment: 'jsdom',
-      roots: ['<rootDir>/src/test/unit/webview'],
+      roots: ['<rootDir>/src/test/unit/webview', '<rootDir>/webview'],
       testMatch: ['**/*.test.ts'],
       testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
       moduleFileExtensions: ['ts', 'js', 'json'],
