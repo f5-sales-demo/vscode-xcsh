@@ -816,6 +816,17 @@
           }
         ]
       }
+    ],
+    "chatSkills": [
+      {
+        "path": "./skills/f5xc-resource-management/SKILL.md"
+      },
+      {
+        "path": "./skills/f5xc-troubleshooting/SKILL.md"
+      },
+      {
+        "path": "./skills/f5xc-configuration-authoring/SKILL.md"
+      }
     ]
   },
   "scripts": {

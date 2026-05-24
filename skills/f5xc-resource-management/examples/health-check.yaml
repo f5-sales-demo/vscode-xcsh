@@ -1,0 +1,10 @@
+metadata:
+  name: my-app-hc
+  namespace: app-ns
+spec:
+  http_health_check:
+    path: /healthz
+  timeout: 3
+  interval: 15
+  unhealthy_threshold: 3
+  healthy_threshold: 2
