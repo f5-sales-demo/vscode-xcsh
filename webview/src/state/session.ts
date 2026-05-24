@@ -66,59 +66,68 @@ export function createSession(): Session {
     },
 
     notify(): void {
+      session.messages = [...session.messages];
       for (const fn of listeners) {
         fn();
       }
     },
 
     addUserMessage(text: string): void {
-      session.messages.push({ type: 'user', text });
+      session.messages = [...session.messages, { type: 'user', text }];
       session.busy = true;
       session.notify();
     },
 
     appendAssistantText(text: string): void {
-      const last = session.messages[session.messages.length - 1];
+      const msgs = [...session.messages];
+      const last = msgs[msgs.length - 1];
       if (last?.type === 'assistant') {
-        const lastBlock = last.blocks[last.blocks.length - 1];
+        const blocks = [...last.blocks];
+        const lastBlock = blocks[blocks.length - 1];
         if (lastBlock?.type === 'text') {
-          lastBlock.text += text;
+          blocks[blocks.length - 1] = { ...lastBlock, text: lastBlock.text + text };
         } else {
-          last.blocks.push({ type: 'text', text });
+          blocks.push({ type: 'text', text });
         }
+        msgs[msgs.length - 1] = { ...last, blocks };
       } else {
-        session.messages.push({
-          type: 'assistant',
-          blocks: [{ type: 'text', text }],
-        });
+        msgs.push({ type: 'assistant', blocks: [{ type: 'text', text }] });
       }
+      session.messages = msgs;
       session.notify();
     },
 
     addToolStart(toolName: string, toolCallId: string): void {
-      const last = session.messages[session.messages.length - 1];
+      const msgs = [...session.messages];
+      const last = msgs[msgs.length - 1];
       if (last?.type === 'assistant') {
-        last.blocks.push({ type: 'tool_use', toolName, toolCallId, running: true });
+        msgs[msgs.length - 1] = {
+          ...last,
+          blocks: [...last.blocks, { type: 'tool_use', toolName, toolCallId, running: true }],
+        };
       } else {
-        session.messages.push({
-          type: 'assistant',
-          blocks: [{ type: 'tool_use', toolName, toolCallId, running: true }],
-        });
+        msgs.push({ type: 'assistant', blocks: [{ type: 'tool_use', toolName, toolCallId, running: true }] });
       }
+      session.messages = msgs;
       session.notify();
     },
 
     endToolUse(toolCallId: string): void {
-      for (const msg of session.messages) {
+      session.messages = session.messages.map((msg) => {
         if (msg.type !== 'assistant') {
-          continue;
+          return msg;
         }
-        for (const block of msg.blocks) {
-          if (block.type === 'tool_use' && block.toolCallId === toolCallId) {
-            block.running = false;
-          }
+        const hasTarget = msg.blocks.some((b) => b.type === 'tool_use' && b.toolCallId === toolCallId);
+        if (!hasTarget) {
+          return msg;
         }
-      }
+        return {
+          ...msg,
+          blocks: msg.blocks.map((block) =>
+            block.type === 'tool_use' && block.toolCallId === toolCallId ? { ...block, running: false } : block,
+          ),
+        };
+      });
       session.notify();
     },
 
