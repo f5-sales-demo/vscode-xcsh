@@ -7,6 +7,7 @@ import { getLogger } from '../utils/logger';
 import { registerChatParticipant } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerLanguageModelProvider } from './languageModelProvider';
+import { registerLanguageModelTools } from './languageModelTools';
 import { XcshPanelProvider } from './panelProvider';
 import { XcshProcessManager } from './processManager';
 import { XcshRpcBridge } from './rpcBridge';
@@ -128,6 +129,9 @@ export async function activateXcsh(
 
   // Register host tools and handler
   registerHostToolsOnBridge(rpcBridge);
+
+  // Register Language Model Tools for agent mode
+  registerLanguageModelTools(extensionContext);
 
   // Conditionally register Chat Participant
   if (config.get<boolean>('xcsh.chatParticipantEnabled', true)) {

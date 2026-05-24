@@ -664,6 +664,106 @@
         "fileMatch": "*.virtual_site.json",
         "url": "f5xc-schema://schemas/virtual_site.json"
       }
+    ],
+    "languageModelTools": [
+      {
+        "name": "f5xc.readFile",
+        "displayName": "Read File",
+        "modelDescription": "Read the contents of a file in the workspace. Use when you need to examine source code, configuration files, or any text file. Returns the full file content as text.",
+        "userDescription": "Read a file from the workspace",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "readFile",
+        "icon": "$(file)",
+        "tags": [
+          "f5xc"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Absolute or workspace-relative file path"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      },
+      {
+        "name": "f5xc.getSelection",
+        "displayName": "Get Editor Selection",
+        "modelDescription": "Get the currently selected text in the active editor. Use when the user references 'this code' or 'selected text'. Returns empty string if no selection.",
+        "userDescription": "Get selected text from the editor",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "getSelection",
+        "icon": "$(selection)",
+        "tags": [
+          "f5xc"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      {
+        "name": "f5xc.getDiagnostics",
+        "displayName": "Get File Diagnostics",
+        "modelDescription": "Get compiler errors, warnings, and linter diagnostics for a specific file. Use when investigating build errors or code quality issues. Returns an array of diagnostics with severity, line number, message, and source.",
+        "userDescription": "Get errors and warnings for a file",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "diagnostics",
+        "icon": "$(warning)",
+        "tags": [
+          "f5xc"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Absolute or workspace-relative file path"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      },
+      {
+        "name": "f5xc.openFile",
+        "displayName": "Open File in Editor",
+        "modelDescription": "Open a file in the VS Code editor, optionally at a specific line number. Use when you want to show the user a specific file or location in the codebase.",
+        "userDescription": "Open a file in the editor",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "openFile",
+        "icon": "$(go-to-file)",
+        "tags": [
+          "f5xc"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "File path to open"
+            },
+            "line": {
+              "type": "number",
+              "description": "Line number to reveal (optional)"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      }
+    ],
+    "languageModelChatProviders": [
+      {
+        "vendor": "f5xc",
+        "displayName": "F5 XC Shell Assistant"
+      }
     ]
   },
   "scripts": {
