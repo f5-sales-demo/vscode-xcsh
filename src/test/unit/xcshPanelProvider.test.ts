@@ -9,6 +9,10 @@ describe('XcshPanelProvider', () => {
     expect(XcshPanelProvider.viewType).toBe('f5xc.xcshPanel');
   });
 
+  it('has correct secondary view type', () => {
+    expect(XcshPanelProvider.viewTypeSecondary).toBe('f5xc.xcshPanelSecondary');
+  });
+
   it('constructs without error', () => {
     const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
     const mockBridge = {

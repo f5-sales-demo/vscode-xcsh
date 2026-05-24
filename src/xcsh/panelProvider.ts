@@ -10,6 +10,7 @@ import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './type
 
 export class XcshPanelProvider implements vscode.WebviewViewProvider {
   static readonly viewType = 'f5xc.xcshPanel';
+  static readonly viewTypeSecondary = 'f5xc.xcshPanelSecondary';
 
   private readonly logger = getLogger();
   private readonly disposables: vscode.Disposable[] = [];

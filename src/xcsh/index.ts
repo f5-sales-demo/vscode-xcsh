@@ -65,6 +65,15 @@ export async function activateXcsh(
 
   logger.info('Activating xcsh integration...');
 
+  // Detect secondary sidebar support (VS Code >= 1.106)
+  const versionParts = vscode.version.split('.').map(Number);
+  const major = versionParts[0] ?? 0;
+  const minor = versionParts[1] ?? 0;
+  const supportsSecondarySidebar = major > 1 || (major === 1 && minor >= 106);
+  if (!supportsSecondarySidebar) {
+    void vscode.commands.executeCommand('setContext', 'f5xc:doesNotSupportSecondarySidebar', true);
+  }
+
   // Create process manager and configure env from active context
   const processManager = new XcshProcessManager();
   extensionContext.subscriptions.push(processManager);
@@ -159,11 +168,16 @@ export async function activateXcsh(
     );
   }
 
-  // Register the Claude Code-style xcsh panel
+  // Register the xcsh panel (activity bar fallback + secondary sidebar)
   const panelProvider = new XcshPanelProvider(extensionContext.extensionUri, rpcBridge);
   extensionContext.subscriptions.push(
     vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewType, panelProvider),
   );
+  extensionContext.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewTypeSecondary, panelProvider),
+  );
+
+  const focusPanelCommand = supportsSecondarySidebar ? 'f5xc.xcshPanelSecondary.focus' : 'f5xc.xcshPanel.focus';
 
   extensionContext.subscriptions.push(
     vscode.commands.registerCommand('f5xc.xcsh.openPanel', () => {
@@ -171,14 +185,14 @@ export async function activateXcsh(
       if (panelMode === 'terminal') {
         void vscode.commands.executeCommand('f5xc.xcsh.openTerminal');
       } else {
-        void vscode.commands.executeCommand('f5xc.xcshPanel.focus');
+        void vscode.commands.executeCommand(focusPanelCommand);
       }
     }),
   );
 
   extensionContext.subscriptions.push(
     vscode.commands.registerCommand('f5xc.xcsh.newSession', () => {
-      void vscode.commands.executeCommand('f5xc.xcshPanel.focus');
+      void vscode.commands.executeCommand(focusPanelCommand);
     }),
   );
 

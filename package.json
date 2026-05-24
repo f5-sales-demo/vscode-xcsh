@@ -166,7 +166,16 @@
         {
           "id": "xcsh-panel",
           "title": "xcsh",
-          "icon": "resources/pi-icon.svg"
+          "icon": "resources/pi-icon.svg",
+          "when": "f5xc:doesNotSupportSecondarySidebar"
+        }
+      ],
+      "secondarySidebar": [
+        {
+          "id": "xcsh-panel-secondary",
+          "title": "xcsh",
+          "icon": "resources/pi-icon.svg",
+          "when": "!f5xc:doesNotSupportSecondarySidebar"
         }
       ]
     },
@@ -175,7 +184,16 @@
         {
           "id": "f5xc.xcshPanel",
           "name": "xcsh",
-          "type": "webview"
+          "type": "webview",
+          "when": "f5xc:doesNotSupportSecondarySidebar"
+        }
+      ],
+      "xcsh-panel-secondary": [
+        {
+          "id": "f5xc.xcshPanelSecondary",
+          "name": "xcsh",
+          "type": "webview",
+          "when": "!f5xc:doesNotSupportSecondarySidebar"
         }
       ],
       "f5xc-explorer": [
