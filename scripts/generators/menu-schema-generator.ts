@@ -31,9 +31,9 @@ interface ScopeOverrides {
 }
 
 /**
- * Namespace scope derived from API path patterns
+ * Namespace scope derived from API path patterns (legacy scope string for menu schema output)
  */
-type NamespaceScope = 'system' | 'shared' | 'any';
+type NamespaceScopeLegacy = 'system' | 'shared' | 'any';
 
 /**
  * API path analysis result
@@ -57,7 +57,7 @@ interface ResourceAnalysis {
   apiBase: 'config' | 'web';
   schemaFile: string;
   paths: PathAnalysis[];
-  derivedScope: NamespaceScope;
+  derivedScope: NamespaceScopeLegacy;
   scopeReason: string;
 }
 
@@ -74,7 +74,7 @@ interface NamespaceMenuSchema {
         key: string;
         displayName: string;
         apiPath: string;
-        scope: NamespaceScope;
+        scope: NamespaceScopeLegacy;
       }[];
     };
   };
@@ -158,26 +158,6 @@ const CATEGORY_MAPPINGS: { pattern: RegExp; category: string; icon: string }[] =
 ];
 
 /**
- * Extract schema ID from spec filename
- */
-function extractSchemaId(filename: string): string | null {
-  const match = filename.match(/public\.(ves\.io\.schema\.[^.]+(?:\.[^.]+)*?)\.ves-swagger\.json$/);
-  if (match?.[1]) {
-    return match[1];
-  }
-  return null;
-}
-
-/**
- * Convert schema ID to resource key
- */
-function schemaIdToResourceKey(schemaId: string): string {
-  const parts = schemaId.split('.');
-  const lastPart = parts[parts.length - 1] || schemaId;
-  return lastPart.replace(/-/g, '_');
-}
-
-/**
  * Analyze a single API path for namespace patterns
  */
 function analyzePath(apiPath: string): PathAnalysis {
@@ -192,9 +172,29 @@ function analyzePath(apiPath: string): PathAnalysis {
 }
 
 /**
+ * Derive namespace scope from x-f5xc-namespace-profile constraint.allowed.
+ * Maps profile allowed values to legacy scope values used by the menu schema.
+ */
+function deriveScopeFromProfile(
+  profile: NonNullable<OpenAPISpec['info']>['x-f5xc-namespace-profile'],
+): { scope: NamespaceScopeLegacy; reason: string } | null {
+  if (!profile?.constraint?.allowed || !Array.isArray(profile.constraint.allowed)) {
+    return null;
+  }
+  const allowed = profile.constraint.allowed;
+  if (allowed.length === 1 && allowed[0] === 'system') {
+    return { scope: 'system', reason: 'Namespace profile constraint: system-only' };
+  }
+  if (allowed.length === 1 && allowed[0] === 'shared') {
+    return { scope: 'shared', reason: 'Namespace profile constraint: shared-only' };
+  }
+  return { scope: 'any', reason: `Namespace profile constraint: ${allowed.join(', ')}` };
+}
+
+/**
  * Derive namespace scope from analyzed paths
  */
-function deriveScope(paths: PathAnalysis[]): { scope: NamespaceScope; reason: string } {
+function deriveScope(paths: PathAnalysis[]): { scope: NamespaceScopeLegacy; reason: string } {
   const hasSystemLiteral = paths.some((p) => p.hasSystemLiteral);
   const hasSharedLiteral = paths.some((p) => p.hasSharedLiteral);
   const hasNamespaceParam = paths.some((p) => p.hasNamespaceParam || p.hasMetadataNamespaceParam);
@@ -255,61 +255,162 @@ function getCategory(resourceKey: string, displayName: string): { category: stri
 }
 
 /**
+ * Path item structure for menu schema parsing
+ */
+interface MenuPathItem {
+  'x-displayname'?: string;
+  get?: { operationId?: string; description?: string };
+  post?: { operationId?: string; description?: string };
+  put?: { operationId?: string; description?: string };
+  delete?: { operationId?: string; description?: string };
+}
+
+/**
  * OpenAPI spec structure (minimal interface for what we need)
  */
 interface OpenAPISpec {
   info?: {
     title?: string;
     description?: string;
+    'x-f5xc-cli-domain'?: string;
+    'x-f5xc-namespace-profile'?: {
+      constraint?: { allowed?: string[] };
+      recommendation?: { primary?: string };
+      classification?: { category?: string; multi_tenant_pattern?: string };
+    };
   };
-  paths?: Record<string, unknown>;
+  paths?: Record<string, MenuPathItem>;
 }
 
 /**
- * Parse an OpenAPI spec file
+ * Derive resource key from API path suffix (plural -> singular).
+ * Example: "http_loadbalancers" -> "http_loadbalancer"
  */
-function parseSpec(filePath: string): ResourceAnalysis | null {
+function deriveResourceKeyFromApiPath(apiPathSuffix: string): string {
+  if (apiPathSuffix.endsWith('ies')) {
+    return `${apiPathSuffix.slice(0, -3)}y`;
+  }
+  if (apiPathSuffix.endsWith('ses')) {
+    return apiPathSuffix.slice(0, -2);
+  }
+  if (apiPathSuffix.endsWith('s')) {
+    return apiPathSuffix.slice(0, -1);
+  }
+  return apiPathSuffix;
+}
+
+/**
+ * Parse a domain-format OpenAPI spec file and extract all resource types.
+ * Domain files contain multiple resources (e.g., virtual.json has http_loadbalancers, origin_pools, etc.)
+ */
+function parseDomainSpec(filePath: string): ResourceAnalysis[] {
+  const results: ResourceAnalysis[] = [];
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
     const spec = JSON.parse(content) as OpenAPISpec;
     const filename = path.basename(filePath);
 
-    const schemaId = extractSchemaId(filename);
-    if (!schemaId) {
-      return null;
+    const domain = spec.info?.['x-f5xc-cli-domain'];
+    if (!domain) {
+      // Skip files without x-f5xc-cli-domain
+      return [];
     }
 
-    const resourceKey = schemaIdToResourceKey(schemaId);
+    const paths = spec.paths;
+    if (!paths) {
+      return [];
+    }
 
-    // Extract display name and description
-    const displayName =
-      spec.info?.title || resourceKey.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-    const descriptionRaw = spec.info?.description || '';
+    // Pattern for list endpoints (plural resource path, no trailing {name})
+    // Matches: /api/config/namespaces/{metadata.namespace}/http_loadbalancers
+    // Also matches extended paths: /api/config/dns/namespaces/{ns}/dns_zones
+    const listEndpointPattern =
+      /^\/api\/([a-z_-]+)(?:\/([a-z_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z_]+)$/;
 
-    // Determine API base from paths
-    const pathKeys = Object.keys(spec.paths || {});
-    const apiBase: 'config' | 'web' = pathKeys.some((p) => p.startsWith('/api/web')) ? 'web' : 'config';
+    const seen = new Set<string>();
+    const namespaceProfile = spec.info?.['x-f5xc-namespace-profile'];
 
-    // Analyze all paths
-    const paths = pathKeys.map(analyzePath);
+    for (const [pathKey, pathItem] of Object.entries(paths)) {
+      const match = pathKey.match(listEndpointPattern);
+      if (!match) {
+        continue;
+      }
 
-    // Derive scope
-    const { scope, reason } = deriveScope(paths);
+      const apiBase = match[1] as 'config' | 'web';
+      const apiPathSuffix = match[3];
 
-    return {
-      resourceKey,
-      displayName,
-      description: normalizeDescription(descriptionRaw.substring(0, 200)),
-      apiBase,
-      schemaFile: filename,
-      paths,
-      derivedScope: scope,
-      scopeReason: reason,
-    };
+      if (!apiBase || !apiPathSuffix) {
+        continue;
+      }
+
+      // Skip item endpoints (they end with /{name} but we already filtered those out via regex)
+      if (pathKey.endsWith('}')) {
+        continue;
+      }
+
+      const resourceKey = deriveResourceKeyFromApiPath(apiPathSuffix);
+
+      // Skip duplicates within the same domain file
+      if (seen.has(resourceKey)) {
+        continue;
+      }
+      seen.add(resourceKey);
+
+      // Get display name from x-displayname extension or generate from resource key
+      const rawDisplayName = pathItem['x-displayname'] || resourceKey;
+      let displayName = rawDisplayName.replace(/\.$/, '');
+      if (!displayName.endsWith('s') && !displayName.endsWith('ing')) {
+        displayName += 's';
+      }
+
+      // Get description from first operation
+      let descriptionRaw = '';
+      for (const method of ['get', 'post'] as const) {
+        const operation = pathItem[method];
+        if (operation?.description) {
+          descriptionRaw = operation.description;
+          break;
+        }
+      }
+
+      // Analyze the path for namespace scope derivation
+      const analyzedPaths = [analyzePath(pathKey)];
+
+      // Also check the item endpoint for additional path analysis
+      const itemPathKey = `${pathKey}/{name}`;
+      if (paths[itemPathKey]) {
+        analyzedPaths.push(analyzePath(itemPathKey));
+      }
+
+      // Derive scope: prefer namespace profile, fall back to path-based derivation
+      let scope: NamespaceScopeLegacy;
+      let reason: string;
+
+      const profileScope = deriveScopeFromProfile(namespaceProfile);
+      if (profileScope) {
+        scope = profileScope.scope;
+        reason = profileScope.reason;
+      } else {
+        const pathScope = deriveScope(analyzedPaths);
+        scope = pathScope.scope;
+        reason = pathScope.reason;
+      }
+
+      results.push({
+        resourceKey,
+        displayName,
+        description: normalizeDescription(descriptionRaw.substring(0, 200)),
+        apiBase,
+        schemaFile: filename,
+        paths: analyzedPaths,
+        derivedScope: scope,
+        scopeReason: reason,
+      });
+    }
   } catch (error) {
     console.error(`Error parsing ${filePath}:`, error);
-    return null;
   }
+  return results;
 }
 
 /**
@@ -454,12 +555,17 @@ function generateMenuSchema(specsDir: string, outputPath: string, overridesPath:
 
   console.log(`Found ${specFiles.length} spec files\n`);
 
-  // Parse all specs
+  // Parse all domain specs (each file may contain multiple resources)
   const resources: ResourceAnalysis[] = [];
+  const seenKeys = new Set<string>();
   for (const file of specFiles) {
-    const analysis = parseSpec(file);
-    if (analysis) {
-      resources.push(analysis);
+    const analyses = parseDomainSpec(file);
+    for (const analysis of analyses) {
+      // Deduplicate across files (prefer first occurrence)
+      if (!seenKeys.has(analysis.resourceKey)) {
+        seenKeys.add(analysis.resourceKey);
+        resources.push(analysis);
+      }
     }
   }
 

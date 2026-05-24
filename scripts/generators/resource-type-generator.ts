@@ -15,7 +15,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
   loadValidationData,
-  type NamespaceScope,
+  type NamespaceProfile,
   type ParsedSpecInfo,
   parseAllDomainFiles,
   parseAllSpecs,
@@ -91,8 +91,32 @@ function loadDisplayNameOverrides(overridesPath: string): DisplayNameOverrides |
   }
 }
 
+/** Helper to build a NamespaceProfile for a given scope string from the overrides file. */
+function profileForScope(scope: 'system' | 'shared' | 'any'): NamespaceProfile {
+  switch (scope) {
+    case 'system':
+      return {
+        constraint: { allowed: ['system'], enforced: true },
+        recommendation: { primary: 'system', rationale: 'System-scoped resource' },
+        classification: { category: 'infrastructure', multiTenantPattern: 'none' },
+      };
+    case 'shared':
+      return {
+        constraint: { allowed: ['shared'], enforced: true },
+        recommendation: { primary: 'shared', rationale: 'Shared-scoped resource' },
+        classification: { category: 'shared', multiTenantPattern: 'shared-ref' },
+      };
+    default:
+      return {
+        constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
+        recommendation: { primary: 'custom', rationale: 'User namespace resource' },
+        classification: { category: 'general', multiTenantPattern: 'per-tenant' },
+      };
+  }
+}
+
 /**
- * Apply namespace scope overrides to parsed specs
+ * Apply namespace scope overrides to parsed specs as NamespaceProfile
  */
 function applyScopeOverrides(specs: ParsedSpecInfo[], overrides: NamespaceScopeOverrides): number {
   let count = 0;
@@ -102,13 +126,13 @@ function applyScopeOverrides(specs: ParsedSpecInfo[], overrides: NamespaceScopeO
 
   for (const spec of specs) {
     if (systemResources.has(spec.resourceKey)) {
-      spec.namespaceScope = 'system';
+      spec.namespaceProfile = profileForScope('system');
       count++;
     } else if (sharedResources.has(spec.resourceKey)) {
-      spec.namespaceScope = 'shared';
+      spec.namespaceProfile = profileForScope('shared');
       count++;
     } else if (anyResources.has(spec.resourceKey)) {
-      spec.namespaceScope = 'any';
+      spec.namespaceProfile = profileForScope('any');
       count++;
     }
   }
@@ -134,7 +158,7 @@ function applyDisplayNameOverrides(specs: ParsedSpecInfo[], overrides: DisplayNa
 }
 
 // Re-export types for use by other modules
-export { NamespaceScope, ParsedSpecInfo } from './spec-parser';
+export { NamespaceProfile, NamespaceType, ParsedSpecInfo } from './spec-parser';
 
 /**
  * Serializable field metadata for generated output.
@@ -192,8 +216,8 @@ export interface GeneratedResourceTypeInfo {
   schemaId: string;
   /** Whether resource is namespace-scoped */
   namespaceScoped: boolean;
-  /** Namespace scope - derived from API path patterns */
-  namespaceScope: NamespaceScope;
+  /** Namespace profile - rich metadata about namespace constraints */
+  namespaceProfile: NamespaceProfile;
   /** Documentation URL */
   documentationUrl?: string;
   /** Domain from x-f5xc-cli-domain extension (e.g., 'waf', 'virtual', 'dns') */
@@ -234,7 +258,7 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
     schemaFile: info.schemaFile,
     schemaId: info.schemaId,
     namespaceScoped: info.namespaceScoped,
-    namespaceScope: info.namespaceScope,
+    namespaceProfile: info.namespaceProfile,
     documentationUrl: info.documentationUrl,
   };
 
@@ -383,12 +407,28 @@ export function generateResourceTypesContent(specs: ParsedSpecInfo[]): string {
  */
 
 /**
- * Namespace scope type - which namespaces can contain this resource
- * - 'any': Available in user namespaces (shared, default, custom) but NOT system
- * - 'system': Only available in system namespace (literal /namespaces/system/ paths)
- * - 'shared': Only available in shared namespace (literal /namespaces/shared/ paths)
+ * Namespace type classification for F5 XC namespaces.
  */
-export type NamespaceScope = 'any' | 'system' | 'shared';
+export type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
+
+/**
+ * Namespace profile - rich metadata about which namespaces a resource type supports.
+ */
+export interface NamespaceProfile {
+  constraint: {
+    allowed: NamespaceType[];
+    enforced: boolean;
+  };
+  recommendation: {
+    primary: NamespaceType;
+    alternatives?: Array<{ namespace_type: NamespaceType; use_case: string }>;
+    rationale: string;
+  };
+  classification: {
+    category: string;
+    multiTenantPattern: 'none' | 'shared-ref' | 'per-tenant' | 'hybrid';
+  };
+}
 
 /**
  * Danger level for operations - indicates risk level and affects UI behavior
@@ -559,8 +599,8 @@ export interface GeneratedResourceTypeInfo {
   schemaId: string;
   /** Whether resource is namespace-scoped */
   namespaceScoped: boolean;
-  /** Namespace scope - derived from API path patterns */
-  namespaceScope: NamespaceScope;
+  /** Namespace profile - rich metadata about namespace constraints */
+  namespaceProfile: NamespaceProfile;
   /** Documentation URL */
   documentationUrl?: string;
   /** Domain from x-f5xc-cli-domain extension (e.g., 'waf', 'virtual', 'dns') */

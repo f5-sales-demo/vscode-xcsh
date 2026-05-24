@@ -41,16 +41,57 @@ import {
 } from '../generated/domainCategories';
 
 /**
- * Namespace scope - which namespaces can access this resource type
- * - 'any': Available in user namespaces (shared, default, custom) but NOT system
- * - 'system': Only available in system namespace (literal /namespaces/system/ paths)
- * - 'shared': Only available in shared namespace (literal /namespaces/shared/ paths)
- *
- * Note: Resources with parameterized {namespace} paths get 'any' scope, meaning they
- * can be created in user namespaces (shared, default, custom). The system namespace
- * is reserved for system-level resources like Sites and IAM objects.
+ * Namespace type classification for F5 XC namespaces.
  */
-export type NamespaceScope = 'any' | 'system' | 'shared';
+export type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
+
+/**
+ * Namespace profile - rich metadata about which namespaces a resource type supports.
+ */
+export interface NamespaceProfile {
+  constraint: {
+    allowed: NamespaceType[];
+    enforced: boolean;
+  };
+  recommendation: {
+    primary: NamespaceType;
+    alternatives?: Array<{ namespace_type: NamespaceType; use_case: string }>;
+    rationale: string;
+  };
+  classification: {
+    category: string;
+    multiTenantPattern: 'none' | 'shared-ref' | 'per-tenant' | 'hybrid';
+  };
+}
+
+/**
+ * Determine the namespace type for a given namespace name.
+ */
+export function namespaceTypeOf(namespaceName: string): NamespaceType {
+  if (namespaceName === 'system') {
+    return 'system';
+  }
+  if (namespaceName === 'shared') {
+    return 'shared';
+  }
+  if (namespaceName === 'default') {
+    return 'default';
+  }
+  if (namespaceName.startsWith('ves-io-')) {
+    return 'system';
+  }
+  return 'custom';
+}
+
+/**
+ * Pre-built namespace profile for system-scoped resources.
+ * Used by manual overrides for Sites, IAM, Cloud Credentials, etc.
+ */
+const SYSTEM_NAMESPACE_PROFILE: NamespaceProfile = {
+  constraint: { allowed: ['system'], enforced: true },
+  recommendation: { primary: 'system', rationale: 'System-scoped resource' },
+  classification: { category: 'infrastructure', multiTenantPattern: 'none' },
+};
 
 /**
  * API base path type - different F5 XC APIs use different base paths.
@@ -142,8 +183,8 @@ export interface ResourceTypeInfo {
   supportsLogs?: boolean;
   /** Whether the resource supports metrics */
   supportsMetrics?: boolean;
-  /** Namespace scope - which namespaces can access this resource (default: 'any') */
-  namespaceScope?: NamespaceScope;
+  /** Namespace profile - which namespaces can access this resource */
+  namespaceProfile?: NamespaceProfile;
   /** API base path - 'config' for /api/config or 'web' for /api/web (default: 'config') */
   apiBase?: ApiBase;
   /** Service segment for extended API paths (e.g., 'dns' for /api/config/dns/namespaces/...) */
@@ -185,8 +226,8 @@ interface ResourceTypeOverride {
   supportsLogs?: boolean;
   /** Whether the resource supports metrics */
   supportsMetrics?: boolean;
-  /** Namespace scope */
-  namespaceScope?: NamespaceScope;
+  /** Namespace profile */
+  namespaceProfile?: NamespaceProfile;
   /** Override API base */
   apiBase?: ApiBase;
   /** Custom list endpoint path */
@@ -373,43 +414,43 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   aws_tgw_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   azure_vnet_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   gcp_vpc_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   voltstack_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'server',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   securemesh_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'server-process',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   securemesh_site_v2: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'server-process',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
 
   // =====================================================
@@ -424,7 +465,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     // DNS API uses /api/config/dns/namespaces/{namespace}/... path
     customListPath: '/api/config/dns/namespaces/{namespace}/dns_zones',
     customGetPath: '/api/config/dns/namespaces/{namespace}/dns_zones/{name}',
-    // Note: namespaceScope='system' comes from generated base via namespace-scope-overrides.json
+    // Note: namespaceProfile for system comes from generated base via namespace-scope-overrides.json
   },
   dns_load_balancer: {
     apiPath: 'dns_load_balancers',
@@ -464,7 +505,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'person',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
     apiBase: 'web',
     customListPath: '/api/web/custom/namespaces/{namespace}/user_roles',
     listMethod: 'GET',
@@ -475,14 +516,14 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'organization',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
     apiBase: 'web',
   },
   api_credential: {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'key',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
     apiBase: 'web',
   },
   service_credential: {
@@ -491,7 +532,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'key',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
     apiBase: 'web',
   },
   certificate: {
@@ -536,7 +577,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.CloudConnect,
     supportsCustomOps: false,
     icon: 'key',
-    namespaceScope: 'system',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   cloud_link: {
     category: ResourceCategory.CloudConnect,
@@ -1014,7 +1055,7 @@ function mergeResourceType(
   const category = override.category ?? domainCategory ?? ResourceCategory.Configuration;
 
   // Start with defaults
-  // For namespaceScope: use override first, then generated, then default to 'any'
+  // For namespaceProfile: use override first, then generated, then undefined (no profile)
   const result: ResourceTypeInfo = {
     apiPath: override.apiPath || generated?.apiPath || `${key}s`,
     displayName: override.displayName || generated?.displayName || key,
@@ -1025,7 +1066,7 @@ function mergeResourceType(
     icon: override.icon,
     supportsLogs: override.supportsLogs,
     supportsMetrics: override.supportsMetrics,
-    namespaceScope: override.namespaceScope ?? generated?.namespaceScope ?? 'any',
+    namespaceProfile: override.namespaceProfile ?? generated?.namespaceProfile,
     apiBase: override.apiBase || generated?.apiBase || 'config',
     // Include service segment for extended API paths (e.g., /api/config/dns/...)
     serviceSegment: (generated as { serviceSegment?: string } | undefined)?.serviceSegment,
@@ -1145,27 +1186,17 @@ export function isBuiltInNamespace(namespace: string): boolean {
 /**
  * Check if a resource type is available for a given namespace.
  *
- * The filtering logic is based on the namespace scope derived from OpenAPI specs:
- * - 'system': Only available in system namespace (e.g., Sites, IAM, DNS resources)
- * - 'shared': Only available in shared namespace (rare)
- * - 'any': Available in user namespaces (shared, default, custom) but NOT system
+ * Uses the NamespaceProfile constraint to determine availability.
+ * Resources without a profile default to being available in all namespaces except system.
  */
 export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeInfo, namespace: string): boolean {
-  const scope = resourceType.namespaceScope || 'any';
-
-  switch (scope) {
-    case 'system':
-      // System-scoped resources only appear in system namespace
-      return namespace === 'system';
-    case 'shared':
-      // Shared-scoped resources only appear in shared namespace
-      return namespace === 'shared';
-    default:
-      // Resources with 'any' scope (parameterized {namespace} paths) are available
-      // in user namespaces (shared, default, custom) but NOT in system namespace.
-      // System namespace is reserved for system-level resources with explicit overrides.
-      return namespace !== 'system';
+  const profile = resourceType.namespaceProfile;
+  if (!profile) {
+    // Default: available in user namespaces (shared, default, custom) but NOT system
+    return namespace !== 'system';
   }
+  const nsType = namespaceTypeOf(namespace);
+  return profile.constraint.allowed.includes(nsType);
 }
 
 /**

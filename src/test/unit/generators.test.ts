@@ -13,7 +13,17 @@
 // Inline implementations of generator utility functions for testing
 // These match the implementations in scripts/generators/spec-parser.ts
 
-type NamespaceScope = 'any' | 'system' | 'shared';
+type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
+
+interface NamespaceProfile {
+  constraint: { allowed: NamespaceType[]; enforced: boolean };
+  recommendation: {
+    primary: NamespaceType;
+    alternatives?: Array<{ namespace_type: NamespaceType; use_case: string }>;
+    rationale: string;
+  };
+  classification: { category: string; multiTenantPattern: 'none' | 'shared-ref' | 'per-tenant' | 'hybrid' };
+}
 
 function extractSchemaId(filename: string): string | null {
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
@@ -43,20 +53,36 @@ function deriveApiPathSuffix(resourceKey: string): string {
   return `${resourceKey}s`;
 }
 
-function deriveNamespaceScope(fullPath: string | null): NamespaceScope {
+function deriveNamespaceProfile(fullPath: string | null): NamespaceProfile {
   if (!fullPath) {
-    return 'any';
+    return {
+      constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
+      recommendation: { primary: 'custom', rationale: 'No namespace path - user namespace resource' },
+      classification: { category: 'general', multiTenantPattern: 'per-tenant' },
+    };
   }
 
   if (fullPath.includes('/namespaces/system/')) {
-    return 'system';
+    return {
+      constraint: { allowed: ['system'], enforced: true },
+      recommendation: { primary: 'system', rationale: 'System-scoped resource' },
+      classification: { category: 'infrastructure', multiTenantPattern: 'none' },
+    };
   }
 
   if (fullPath.includes('/namespaces/shared/')) {
-    return 'shared';
+    return {
+      constraint: { allowed: ['shared'], enforced: true },
+      recommendation: { primary: 'shared', rationale: 'Shared-scoped resource' },
+      classification: { category: 'shared', multiTenantPattern: 'shared-ref' },
+    };
   }
 
-  return 'any';
+  return {
+    constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
+    recommendation: { primary: 'custom', rationale: 'Parameterized namespace - user namespace resource' },
+    classification: { category: 'general', multiTenantPattern: 'per-tenant' },
+  };
 }
 
 function formatDisplayName(title: string | undefined, resourceKey: string): string {
@@ -140,26 +166,38 @@ describe('Generator Utilities', () => {
     });
   });
 
-  describe('deriveNamespaceScope', () => {
-    it('should return system for literal system paths', () => {
-      expect(deriveNamespaceScope('/api/config/namespaces/system/sites')).toBe('system');
+  describe('deriveNamespaceProfile', () => {
+    it('should return system profile for literal system paths', () => {
+      const profile = deriveNamespaceProfile('/api/config/namespaces/system/sites');
+      expect(profile.constraint.allowed).toEqual(['system']);
+      expect(profile.recommendation.primary).toBe('system');
     });
 
-    it('should return shared for literal shared paths', () => {
-      expect(deriveNamespaceScope('/api/config/namespaces/shared/resources')).toBe('shared');
+    it('should return shared profile for literal shared paths', () => {
+      const profile = deriveNamespaceProfile('/api/config/namespaces/shared/resources');
+      expect(profile.constraint.allowed).toEqual(['shared']);
+      expect(profile.recommendation.primary).toBe('shared');
     });
 
-    it('should return any for parameterized namespace paths', () => {
-      expect(deriveNamespaceScope('/api/config/namespaces/{namespace}/http_loadbalancers')).toBe('any');
-      expect(deriveNamespaceScope('/api/config/namespaces/{ns}/resources')).toBe('any');
+    it('should return user namespace profile for parameterized namespace paths', () => {
+      const profile1 = deriveNamespaceProfile('/api/config/namespaces/{namespace}/http_loadbalancers');
+      expect(profile1.constraint.allowed).toContain('custom');
+      expect(profile1.constraint.allowed).not.toContain('system');
+
+      const profile2 = deriveNamespaceProfile('/api/config/namespaces/{ns}/resources');
+      expect(profile2.constraint.allowed).toContain('custom');
     });
 
-    it('should return any for tenant-level paths', () => {
-      expect(deriveNamespaceScope('/api/config/tenant_resources')).toBe('any');
+    it('should return user namespace profile for tenant-level paths', () => {
+      const profile = deriveNamespaceProfile('/api/config/tenant_resources');
+      expect(profile.constraint.allowed).toContain('custom');
+      expect(profile.constraint.allowed).not.toContain('system');
     });
 
-    it('should return any for null path', () => {
-      expect(deriveNamespaceScope(null)).toBe('any');
+    it('should return user namespace profile for null path', () => {
+      const profile = deriveNamespaceProfile(null);
+      expect(profile.constraint.allowed).toContain('custom');
+      expect(profile.constraint.allowed).not.toContain('system');
     });
   });
 
@@ -199,15 +237,15 @@ describe('Generation Determinism', () => {
     expect(results1).toEqual(results2);
   });
 
-  it('should produce consistent namespace scope derivation', () => {
+  it('should produce consistent namespace profile derivation', () => {
     const paths = [
       '/api/config/namespaces/system/sites',
       '/api/config/namespaces/{namespace}/http_loadbalancers',
       '/api/web/namespaces/{ns}/resources',
     ];
 
-    const results1 = paths.map(deriveNamespaceScope);
-    const results2 = paths.map(deriveNamespaceScope);
+    const results1 = paths.map(deriveNamespaceProfile);
+    const results2 = paths.map(deriveNamespaceProfile);
 
     expect(results1).toEqual(results2);
   });
@@ -245,7 +283,7 @@ describe('Generated Files Contract', () => {
     expect(httpLb.displayName).toBeDefined();
     expect(httpLb.apiBase).toBeDefined();
     expect(httpLb.namespaceScoped).toBeDefined();
-    expect(httpLb.namespaceScope).toBeDefined();
+    expect(httpLb.namespaceProfile).toBeDefined();
   });
 
   it('should have no duplicate resource keys', () => {
@@ -255,13 +293,18 @@ describe('Generated Files Contract', () => {
     expect(keys.length).toBe(uniqueKeys.size);
   });
 
-  it('should have valid namespace scopes', () => {
+  it('should have valid namespace profiles', () => {
     const generated = require('../../generated/resourceTypesBase');
-    const validScopes = ['any', 'system', 'shared'];
+    const validNamespaceTypes = ['system', 'shared', 'default', 'custom'];
 
     for (const key of Object.keys(generated.GENERATED_RESOURCE_TYPES)) {
       const resource = generated.GENERATED_RESOURCE_TYPES[key];
-      expect(validScopes).toContain(resource.namespaceScope);
+      expect(resource.namespaceProfile).toBeDefined();
+      expect(resource.namespaceProfile.constraint).toBeDefined();
+      expect(resource.namespaceProfile.constraint.allowed.length).toBeGreaterThan(0);
+      for (const nsType of resource.namespaceProfile.constraint.allowed) {
+        expect(validNamespaceTypes).toContain(nsType);
+      }
     }
   });
 

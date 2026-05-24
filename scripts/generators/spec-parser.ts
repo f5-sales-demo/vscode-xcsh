@@ -12,16 +12,28 @@ import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
 
 /**
- * Namespace scope type - which namespaces can contain this resource
- * - 'any': Available in user namespaces (shared, default, custom) but NOT system
- * - 'system': Only available in system namespace (literal /namespaces/system/ paths)
- * - 'shared': Only available in shared namespace (literal /namespaces/shared/ paths)
- *
- * Note: Resources with parameterized {namespace} paths get 'any' scope because they
- * can be created in user namespaces. The system namespace is reserved for system-level
- * resources like Sites and IAM objects which have literal /namespaces/system/ paths.
+ * Namespace type classification for F5 XC namespaces.
  */
-export type NamespaceScope = 'any' | 'system' | 'shared';
+export type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
+
+/**
+ * Namespace profile - rich metadata about which namespaces a resource type supports.
+ */
+export interface NamespaceProfile {
+  constraint: {
+    allowed: NamespaceType[];
+    enforced: boolean;
+  };
+  recommendation: {
+    primary: NamespaceType;
+    alternatives?: Array<{ namespace_type: NamespaceType; use_case: string }>;
+    rationale: string;
+  };
+  classification: {
+    category: string;
+    multiTenantPattern: 'none' | 'shared-ref' | 'per-tenant' | 'hybrid';
+  };
+}
 
 /**
  * Danger level for operations - indicates risk level and affects UI behavior
@@ -123,8 +135,8 @@ export interface ParsedSpecInfo {
   schemaId: string;
   /** Whether resource is namespace-scoped */
   namespaceScoped: boolean;
-  /** Namespace scope - derived from API path patterns */
-  namespaceScope: NamespaceScope;
+  /** Namespace profile - derived from API path patterns */
+  namespaceProfile: NamespaceProfile;
   /** Documentation URL if available */
   documentationUrl?: string;
   /** Domain from x-f5xc-cli-domain extension (e.g., 'waf', 'virtual', 'dns') */
@@ -302,6 +314,7 @@ interface OpenAPISpec {
       performance_tips?: string[];
     };
     'x-f5xc-guided-workflows'?: unknown[];
+    'x-f5xc-namespace-profile'?: NamespaceProfile;
   };
   paths?: Record<string, PathItem>;
   externalDocs?: {
@@ -408,12 +421,12 @@ export function deriveApiPathSuffix(resourceKey: string): string {
     return `${resourceKey}es`;
   }
   // Handle 'y' ending -> 'ies' (e.g., 'policy' -> 'policies')
-  // But F5 XC uses 'policys' not 'policies'
+  // But F5 XC uses non-standard plural (e.g., 'service_policys')
   return `${resourceKey}s`;
 }
 
 /**
- * Derive namespace scope from API path patterns.
+ * Derive a NamespaceProfile from API path patterns.
  *
  * Key insight: The {namespace} placeholder is a variable that can be substituted
  * with ANY namespace name (system, shared, or custom). It does NOT mean
@@ -421,30 +434,81 @@ export function deriveApiPathSuffix(resourceKey: string): string {
  *
  * - Literal /namespaces/system/ = system-only resources (e.g., Sites, IAM)
  * - Literal /namespaces/shared/ = shared-only resources (rare, ~3 paths)
- * - Parameterized {namespace} or {metadata.namespace} = ALL namespaces
- * - No namespace pattern = tenant-level, available in any namespace
+ * - Parameterized {namespace} or {metadata.namespace} = user namespaces
+ * - No namespace pattern = tenant-level, available in user namespaces
  */
-export function deriveNamespaceScope(fullPath: string | null): NamespaceScope {
+export function deriveNamespaceProfile(fullPath: string | null): NamespaceProfile {
   if (!fullPath) {
-    return 'any';
+    return {
+      constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
+      recommendation: { primary: 'custom', rationale: 'No namespace path - user namespace resource' },
+      classification: { category: 'general', multiTenantPattern: 'per-tenant' },
+    };
   }
 
   // Check for literal /namespaces/system/ - system-only resources
-  // These resources can ONLY exist in the system namespace
   if (fullPath.includes('/namespaces/system/')) {
-    return 'system';
+    return {
+      constraint: { allowed: ['system'], enforced: true },
+      recommendation: { primary: 'system', rationale: 'System-scoped resource' },
+      classification: { category: 'infrastructure', multiTenantPattern: 'none' },
+    };
   }
 
   // Check for literal /namespaces/shared/ - shared-only resources
-  // These resources can ONLY exist in the shared namespace (rare)
   if (fullPath.includes('/namespaces/shared/')) {
-    return 'shared';
+    return {
+      constraint: { allowed: ['shared'], enforced: true },
+      recommendation: { primary: 'shared', rationale: 'Shared-scoped resource' },
+      classification: { category: 'shared', multiTenantPattern: 'shared-ref' },
+    };
   }
 
   // Parameterized namespace placeholders ({namespace}, {metadata.namespace}, {ns})
-  // work with ANY namespace - system, shared, or custom
-  // Tenant-level resources (no namespace in path) are also available everywhere
-  return 'any';
+  // work with user namespaces - shared, default, or custom (but NOT system)
+  return {
+    constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
+    recommendation: { primary: 'custom', rationale: 'Parameterized namespace - user namespace resource' },
+    classification: { category: 'general', multiTenantPattern: 'per-tenant' },
+  };
+}
+
+/**
+ * Extract a NamespaceProfile from spec extension data, falling back to path-based derivation.
+ * Normalizes snake_case keys from enriched JSON to camelCase TypeScript interface.
+ */
+export function extractNamespaceProfile(
+  spec: {
+    info?: {
+      'x-f5xc-namespace-profile'?: NamespaceProfile & {
+        classification?: { multi_tenant_pattern?: string; multiTenantPattern?: string; category?: string };
+      };
+    };
+  },
+  fullPath: string | null,
+): NamespaceProfile {
+  const specProfile = spec?.info?.['x-f5xc-namespace-profile'];
+  if (specProfile) {
+    // Normalize snake_case keys from enriched JSON (Python/YAML) to camelCase (TypeScript)
+    const rawPattern =
+      specProfile.classification?.multi_tenant_pattern ??
+      specProfile.classification?.multiTenantPattern ??
+      'per-tenant';
+    const validPatterns = ['none', 'shared-ref', 'per-tenant', 'hybrid'] as const;
+    const multiTenantPattern = validPatterns.includes(rawPattern as (typeof validPatterns)[number])
+      ? (rawPattern as 'none' | 'shared-ref' | 'per-tenant' | 'hybrid')
+      : 'per-tenant';
+
+    return {
+      constraint: specProfile.constraint ?? { allowed: ['shared', 'default', 'custom'], enforced: false },
+      recommendation: specProfile.recommendation ?? { primary: 'custom', rationale: 'No recommendation available' },
+      classification: {
+        category: specProfile.classification?.category ?? 'application',
+        multiTenantPattern,
+      },
+    };
+  }
+  return deriveNamespaceProfile(fullPath);
 }
 
 /**
@@ -459,7 +523,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
   serviceSegment?: string;
   apiPathSuffix: string | null;
   namespaceScoped: boolean;
-  namespaceScope: NamespaceScope;
+  namespaceProfile: NamespaceProfile;
 } {
   if (!paths) {
     return {
@@ -467,7 +531,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
       apiBase: 'config',
       apiPathSuffix: null,
       namespaceScoped: false,
-      namespaceScope: 'any',
+      namespaceProfile: deriveNamespaceProfile(null),
     };
   }
 
@@ -497,7 +561,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
         serviceSegment: match[2],
         apiPathSuffix: match[3],
         namespaceScoped: true,
-        namespaceScope: deriveNamespaceScope(pathKey),
+        namespaceProfile: deriveNamespaceProfile(pathKey),
       };
     }
   }
@@ -511,7 +575,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
         apiBase: match[1],
         apiPathSuffix: match[2],
         namespaceScoped: true,
-        namespaceScope: deriveNamespaceScope(pathKey),
+        namespaceProfile: deriveNamespaceProfile(pathKey),
       };
     }
   }
@@ -529,7 +593,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
         apiBase: match[1],
         apiPathSuffix: match[2],
         namespaceScoped: false,
-        namespaceScope: 'any',
+        namespaceProfile: deriveNamespaceProfile(null),
       };
     }
   }
@@ -552,7 +616,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
           serviceSegment: extendedMatch?.[2],
           apiPathSuffix: lastPart,
           namespaceScoped: pathKey.includes('/namespaces/'),
-          namespaceScope: deriveNamespaceScope(pathKey),
+          namespaceProfile: deriveNamespaceProfile(pathKey),
         };
       }
     }
@@ -563,7 +627,7 @@ export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
     apiBase: 'config',
     apiPathSuffix: null,
     namespaceScoped: false,
-    namespaceScope: 'any',
+    namespaceProfile: deriveNamespaceProfile(null),
   };
 }
 
@@ -694,7 +758,7 @@ export function parseSpecFile(filePath: string): ParsedSpecInfo | null {
     schemaFile: filename,
     schemaId,
     namespaceScoped: apiInfo.namespaceScoped,
-    namespaceScope: apiInfo.namespaceScope,
+    namespaceProfile: apiInfo.namespaceProfile,
     documentationUrl,
   };
 }
@@ -746,7 +810,7 @@ export function parseAllSpecs(specDir: string): ParsedSpecInfo[] {
 export function deriveResourceKeyFromApiPath(apiPath: string): string {
   // Remove trailing 's' for singular form
   if (apiPath.endsWith('ies')) {
-    // policies -> policy (but F5 XC uses policys, so this may not apply)
+    // policies -> policy (F5 XC uses non-standard plural, so this may not apply)
     return `${apiPath.slice(0, -3)}y`;
   }
   if (apiPath.endsWith('ses')) {
@@ -1418,8 +1482,8 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       }
     }
 
-    // Derive namespace scope from path
-    const namespaceScope = deriveNamespaceScope(pathKey);
+    // Derive namespace profile from spec extension or path
+    const namespaceProfile = extractNamespaceProfile(spec, pathKey);
 
     // Build full API path
     const fullApiPath = pathKey;
@@ -1476,7 +1540,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       schemaFile: filename,
       schemaId,
       namespaceScoped: true,
-      namespaceScope,
+      namespaceProfile,
       domain,
     };
 

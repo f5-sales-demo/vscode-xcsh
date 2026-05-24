@@ -288,139 +288,157 @@ describe('Resource Types Registry', () => {
     });
   });
 
-  describe('Namespace scope filtering', () => {
+  describe('Namespace profile filtering', () => {
     const baseResource = RESOURCE_TYPES.http_loadbalancer;
+
+    const systemProfile = {
+      constraint: { allowed: ['system' as const], enforced: true },
+      recommendation: { primary: 'system' as const, rationale: 'System-scoped resource' },
+      classification: { category: 'infrastructure', multiTenantPattern: 'none' as const },
+    };
+
+    const userProfile = {
+      constraint: { allowed: ['shared' as const, 'default' as const, 'custom' as const], enforced: false },
+      recommendation: { primary: 'custom' as const, rationale: 'User namespace resource' },
+      classification: { category: 'general', multiTenantPattern: 'per-tenant' as const },
+    };
+
+    const sharedProfile = {
+      constraint: { allowed: ['shared' as const], enforced: true },
+      recommendation: { primary: 'shared' as const, rationale: 'Shared-scoped resource' },
+      classification: { category: 'shared', multiTenantPattern: 'shared-ref' as const },
+    };
 
     describe('isResourceTypeAvailableForNamespace', () => {
       beforeAll(() => {
         expect(baseResource).toBeDefined();
       });
 
-      // System scope tests - resources with literal /namespaces/system/ paths
-      it('should return true for system-scoped resource in system namespace', () => {
+      // System profile tests - resources with literal /namespaces/system/ paths
+      it('should return true for system-profiled resource in system namespace', () => {
         if (!baseResource) {
           return;
         }
         const systemResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'system',
+          namespaceProfile: systemProfile,
         };
         expect(isResourceTypeAvailableForNamespace(systemResource, 'system')).toBe(true);
       });
 
-      it('should return false for system-scoped resource in custom namespace', () => {
+      it('should return false for system-profiled resource in custom namespace', () => {
         if (!baseResource) {
           return;
         }
         const systemResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'system',
+          namespaceProfile: systemProfile,
         };
         expect(isResourceTypeAvailableForNamespace(systemResource, 'my-namespace')).toBe(false);
       });
 
-      it('should return false for system-scoped resource in shared namespace', () => {
+      it('should return false for system-profiled resource in shared namespace', () => {
         if (!baseResource) {
           return;
         }
         const systemResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'system',
+          namespaceProfile: systemProfile,
         };
         expect(isResourceTypeAvailableForNamespace(systemResource, 'shared')).toBe(false);
       });
 
-      // Any scope tests - resources with {namespace} placeholder or tenant-level
+      // User profile tests - resources with {namespace} placeholder or tenant-level
       // These should be available in user namespaces (shared, default, custom) but NOT system
-      it('should return false for any-scoped resource in system namespace', () => {
+      it('should return false for user-profiled resource in system namespace', () => {
         if (!baseResource) {
           return;
         }
         const anyResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'any',
+          namespaceProfile: userProfile,
         };
         // System namespace is reserved for system-level resources only
         expect(isResourceTypeAvailableForNamespace(anyResource, 'system')).toBe(false);
       });
 
-      it('should return true for any-scoped resource in shared namespace', () => {
+      it('should return true for user-profiled resource in shared namespace', () => {
         if (!baseResource) {
           return;
         }
         const anyResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'any',
+          namespaceProfile: userProfile,
         };
         expect(isResourceTypeAvailableForNamespace(anyResource, 'shared')).toBe(true);
       });
 
-      it('should return true for any-scoped resource in custom namespace', () => {
+      it('should return true for user-profiled resource in custom namespace', () => {
         if (!baseResource) {
           return;
         }
         const anyResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'any',
+          namespaceProfile: userProfile,
         };
         expect(isResourceTypeAvailableForNamespace(anyResource, 'my-custom-ns')).toBe(true);
       });
 
-      it('should return true for any-scoped resource in default namespace', () => {
+      it('should return true for user-profiled resource in default namespace', () => {
         if (!baseResource) {
           return;
         }
         const anyResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'any',
+          namespaceProfile: userProfile,
         };
         expect(isResourceTypeAvailableForNamespace(anyResource, 'default')).toBe(true);
       });
 
-      it('should default to any scope when namespaceScope is undefined', () => {
+      it('should default to user namespaces when namespaceProfile is undefined', () => {
         if (!baseResource) {
           return;
         }
-        const undefinedScopeResource: ResourceTypeInfo = {
+        const undefinedProfileResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: undefined,
+          namespaceProfile: undefined,
         };
-        // Defaults to 'any' scope - available in user namespaces but NOT system
-        expect(isResourceTypeAvailableForNamespace(undefinedScopeResource, 'system')).toBe(false);
-        expect(isResourceTypeAvailableForNamespace(undefinedScopeResource, 'shared')).toBe(true);
-        expect(isResourceTypeAvailableForNamespace(undefinedScopeResource, 'my-ns')).toBe(true);
+        // Defaults to user namespaces - available in user namespaces but NOT system
+        expect(isResourceTypeAvailableForNamespace(undefinedProfileResource, 'system')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(undefinedProfileResource, 'shared')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(undefinedProfileResource, 'my-ns')).toBe(true);
       });
 
-      // Shared scope tests - resources with literal /namespaces/shared/ paths (rare)
-      it('should return true for shared-scoped resource in shared namespace', () => {
+      // Shared profile tests - resources with literal /namespaces/shared/ paths (rare)
+      it('should return true for shared-profiled resource in shared namespace', () => {
         if (!baseResource) {
           return;
         }
         const sharedResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'shared',
+          namespaceProfile: sharedProfile,
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'shared')).toBe(true);
       });
 
-      it('should return false for shared-scoped resource in system namespace', () => {
+      it('should return false for shared-profiled resource in system namespace', () => {
         if (!baseResource) {
           return;
         }
         const sharedResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'shared',
+          namespaceProfile: sharedProfile,
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'system')).toBe(false);
       });
 
-      it('should return false for shared-scoped resource in custom namespace', () => {
+      it('should return false for shared-profiled resource in custom namespace', () => {
         if (!baseResource) {
           return;
         }
         const sharedResource: ResourceTypeInfo = {
           ...baseResource,
-          namespaceScope: 'shared',
+          namespaceProfile: sharedProfile,
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'my-ns')).toBe(false);
       });
@@ -429,28 +447,31 @@ describe('Resource Types Registry', () => {
     describe('getResourceTypesForNamespace', () => {
       it('should filter out system-only resources for custom namespaces', () => {
         const filtered = getResourceTypesForNamespace('my-custom-namespace');
-        // System-scoped resources should not be in the result
+        // System-profiled resources should not be in the result
         for (const [_key, info] of Object.entries(filtered)) {
-          if (info.namespaceScope === 'system') {
-            fail('System-scoped resource found in custom namespace filter result');
+          if (
+            info.namespaceProfile?.constraint.allowed.length === 1 &&
+            info.namespaceProfile.constraint.allowed[0] === 'system'
+          ) {
+            fail('System-profiled resource found in custom namespace filter result');
           }
         }
       });
 
       it('should include system-only resources for system namespace', () => {
         const filtered = getResourceTypesForNamespace('system');
-        // Find a known system-scoped resource (aws_vpc_site is manually set to system)
+        // Find a known system-profiled resource (aws_vpc_site is manually set to system)
         const awsVpcSite = filtered.aws_vpc_site;
         expect(awsVpcSite).toBeDefined();
       });
 
-      it('should include any-scoped resources in user namespaces but not system', () => {
-        // any-scoped resources should be available in user namespaces (shared, custom) but NOT system
+      it('should include user-profiled resources in user namespaces but not system', () => {
+        // user-profiled resources should be available in user namespaces (shared, custom) but NOT system
         const systemFiltered = getResourceTypesForNamespace('system');
         const sharedFiltered = getResourceTypesForNamespace('shared');
         const customFiltered = getResourceTypesForNamespace('my-custom-namespace');
 
-        // HTTP Load Balancer has any scope and should be in shared and custom, but NOT system
+        // HTTP Load Balancer should be in shared and custom, but NOT system
         expect(systemFiltered.http_loadbalancer).toBeUndefined();
         expect(sharedFiltered.http_loadbalancer).toBeDefined();
         expect(customFiltered.http_loadbalancer).toBeDefined();
@@ -458,10 +479,13 @@ describe('Resource Types Registry', () => {
 
       it('should filter out system-only resources for shared namespace', () => {
         const filtered = getResourceTypesForNamespace('shared');
-        // System-scoped resources should not be in the result
+        // System-profiled resources should not be in the result
         for (const [_key, info] of Object.entries(filtered)) {
-          if (info.namespaceScope === 'system') {
-            fail('System-scoped resource found in shared namespace filter result');
+          if (
+            info.namespaceProfile?.constraint.allowed.length === 1 &&
+            info.namespaceProfile.constraint.allowed[0] === 'system'
+          ) {
+            fail('System-profiled resource found in shared namespace filter result');
           }
         }
       });
@@ -478,8 +502,11 @@ describe('Resource Types Registry', () => {
         const categorized = getCategorizedResourceTypesForNamespace('my-app-namespace');
         for (const [_category, resources] of categorized) {
           for (const [_key, info] of resources) {
-            if (info.namespaceScope === 'system') {
-              fail('System-scoped resource found in custom namespace categorized result');
+            if (
+              info.namespaceProfile?.constraint.allowed.length === 1 &&
+              info.namespaceProfile.constraint.allowed[0] === 'system'
+            ) {
+              fail('System-profiled resource found in custom namespace categorized result');
             }
           }
         }
@@ -487,7 +514,7 @@ describe('Resource Types Registry', () => {
 
       it('should include system-only resources in system namespace categories', () => {
         const categorized = getCategorizedResourceTypesForNamespace('system');
-        // aws_vpc_site has manual override to be system-scoped
+        // aws_vpc_site has manual override to be system-profiled
         let foundSystemResource = false;
         for (const [_category, resources] of categorized) {
           for (const [key, _info] of resources) {
@@ -500,7 +527,7 @@ describe('Resource Types Registry', () => {
         expect(foundSystemResource).toBe(true);
       });
 
-      it('should include any-scoped resources in shared namespace', () => {
+      it('should include user-profiled resources in shared namespace', () => {
         const categorized = getCategorizedResourceTypesForNamespace('shared');
         // Security category should contain app_firewall in shared namespace
         let foundAppFirewall = false;

@@ -66,10 +66,16 @@ describe('Resource Type Registry (comprehensive)', () => {
       }
     });
 
-    it('every type has a valid namespaceScope (any | system | shared) or undefined', () => {
-      const validScopes = ['any', 'system', 'shared', undefined];
+    it('every type has a valid namespaceProfile or undefined', () => {
+      const validNamespaceTypes = ['system', 'shared', 'default', 'custom'];
       for (const [_key, info] of Object.entries(RESOURCE_TYPES)) {
-        expect(validScopes).toContain(info.namespaceScope);
+        if (info.namespaceProfile) {
+          expect(info.namespaceProfile.constraint).toBeDefined();
+          expect(info.namespaceProfile.constraint.allowed.length).toBeGreaterThan(0);
+          for (const nsType of info.namespaceProfile.constraint.allowed) {
+            expect(validNamespaceTypes).toContain(nsType);
+          }
+        }
       }
     });
   });
@@ -131,10 +137,13 @@ describe('Resource Type Registry (comprehensive)', () => {
       expect(isResourceTypeAvailableForNamespace(info, 'default')).toBe(true);
     });
 
-    it('system-scoped types have namespaceScope system or any', () => {
+    it('system namespace types have namespaceProfile allowing system or no profile', () => {
       const systemTypes = getResourceTypesForNamespace('system');
       for (const [, info] of Object.entries(systemTypes)) {
-        expect(['system', 'any']).toContain(info.namespaceScope ?? 'any');
+        if (info.namespaceProfile) {
+          expect(info.namespaceProfile.constraint.allowed).toContain('system');
+        }
+        // Resources without profile default to non-system, so they won't be here
       }
     });
   });

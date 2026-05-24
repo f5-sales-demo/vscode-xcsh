@@ -10,7 +10,7 @@
 import * as path from 'node:path';
 import {
   type DangerLevel,
-  type NamespaceScope,
+  type NamespaceType,
   type ParsedSpecInfo,
   parseAllDomainFiles,
   type ResourceFieldMetadata,
@@ -70,30 +70,40 @@ describe('Spec Parser - parseAllDomainFiles', () => {
     });
   });
 
-  describe('namespace scope', () => {
-    const VALID_SCOPES: NamespaceScope[] = ['any', 'system', 'shared'];
+  describe('namespace profile', () => {
+    const VALID_NAMESPACE_TYPES: NamespaceType[] = ['system', 'shared', 'default', 'custom'];
 
-    it('every resource should have a valid namespaceScope', () => {
+    it('every resource should have a valid namespaceProfile', () => {
       for (const resource of parsedResources) {
-        expect(resource.namespaceScope).toBeDefined();
-        expect(VALID_SCOPES).toContain(resource.namespaceScope);
+        expect(resource.namespaceProfile).toBeDefined();
+        expect(resource.namespaceProfile.constraint).toBeDefined();
+        expect(resource.namespaceProfile.constraint.allowed.length).toBeGreaterThan(0);
+        for (const nsType of resource.namespaceProfile.constraint.allowed) {
+          expect(VALID_NAMESPACE_TYPES).toContain(nsType);
+        }
       }
     });
 
-    it('should have resources with system scope', () => {
-      const systemResources = parsedResources.filter((r) => r.namespaceScope === 'system');
+    it('should have resources with system-only profile', () => {
+      const systemResources = parsedResources.filter(
+        (r) =>
+          r.namespaceProfile.constraint.allowed.length === 1 && r.namespaceProfile.constraint.allowed[0] === 'system',
+      );
       expect(systemResources.length).toBeGreaterThan(0);
     });
 
-    it('should have resources with any scope', () => {
-      const anyResources = parsedResources.filter((r) => r.namespaceScope === 'any');
-      expect(anyResources.length).toBeGreaterThan(0);
+    it('should have resources with user namespace profile', () => {
+      const userResources = parsedResources.filter((r) => r.namespaceProfile.constraint.allowed.includes('custom'));
+      expect(userResources.length).toBeGreaterThan(0);
     });
 
-    // Note: shared scope may have 0 resources currently, so we test.todo() if assertion fails
-    it.skip('should have resources with shared scope', () => {
-      const sharedResources = parsedResources.filter((r) => r.namespaceScope === 'shared');
-      expect(sharedResources.length).toBeGreaterThan(0);
+    it('should have no resources with invalid namespace types', () => {
+      const validTypes = new Set(['system', 'shared', 'default', 'custom']);
+      for (const r of parsedResources) {
+        for (const ns of r.namespaceProfile.constraint.allowed) {
+          expect(validTypes.has(ns)).toBe(true);
+        }
+      }
     });
   });
 
