@@ -3,11 +3,11 @@
 
 const MODES = [
   { id: 'auto', label: 'Auto', description: 'xcsh runs tools automatically' },
-  { id: 'confirm', label: 'Confirm tools', description: 'Ask before tool execution' },
-  { id: 'readonly', label: 'Read-only', description: 'No write operations' },
+  { id: 'confirm', label: 'Confirm tools', description: 'Preference hint: ask before tool execution' },
+  { id: 'readonly', label: 'Read-only', description: 'Preference hint: suggest read-only operations' },
 ] as const;
 
-const THINKING_LEVELS = ['low', 'medium', 'high', 'max'] as const;
+const THINKING_LEVELS = ['low', 'medium', 'high', 'xhigh'] as const;
 
 interface ModesMenuProps {
   currentMode: string;
