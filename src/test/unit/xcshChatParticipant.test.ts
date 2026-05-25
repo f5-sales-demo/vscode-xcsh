@@ -47,7 +47,7 @@ describe('buildPromptWithContext', () => {
 });
 
 describe('formatStatusResponse', () => {
-  it('groups connected services on one line with dot separator', () => {
+  it('shows model provider and each service on its own line', () => {
     const integrations = {
       version: '18.77.2',
       model: { state: 'connected', provider: 'anthropic' },
@@ -58,14 +58,16 @@ describe('formatStatusResponse', () => {
     };
     const result = formatStatusResponse(integrations);
     expect(result).toContain('v18.77.2');
-    expect(result).toContain('✅ F5 XC Context · ✅ GitHub');
-    expect(result).toContain('All integrations connected.');
+    expect(result).toContain('**Model Provider**');
+    expect(result).toContain('✅ anthropic');
+    expect(result).toContain('✅ F5 XC Context');
+    expect(result).toContain('✅ GitHub');
   });
 
-  it('shows issues separately with human-readable labels and hints', () => {
+  it('shows issues with human-readable labels and hints', () => {
     const integrations = {
       version: '1.0.0',
-      model: { state: 'connected' },
+      model: { state: 'connected', provider: 'anthropic' },
       services: [
         { name: 'F5 XC Context', state: 'connected' as const },
         { name: 'GitLab', state: 'unauthenticated' as const, hint: 'Run: glab auth login' },
@@ -74,16 +76,15 @@ describe('formatStatusResponse', () => {
     };
     const result = formatStatusResponse(integrations);
     expect(result).toContain('✅ F5 XC Context');
-    expect(result).toContain('⚠️ **GitLab** — needs authentication');
+    expect(result).toContain('⚠️ GitLab — needs authentication');
     expect(result).toContain('`Run: glab auth login`');
-    expect(result).toContain('⭘ **AWS** — not installed');
-    expect(result).not.toContain('All integrations connected.');
+    expect(result).toContain('⭘ AWS — not installed');
   });
 
   it('uses Unicode icons not codicons', () => {
     const integrations = {
       version: '1.0.0',
-      model: { state: 'connected' },
+      model: { state: 'connected', provider: 'anthropic' },
       services: [
         { name: 'A', state: 'connected' as const },
         { name: 'B', state: 'unauthenticated' as const },
@@ -99,15 +100,15 @@ describe('formatStatusResponse', () => {
     expect(result).not.toContain('$(circle-slash)');
   });
 
-  it('handles all-issues case without connected summary line', () => {
+  it('shows model provider warning when not connected', () => {
     const integrations = {
       version: '1.0.0',
-      model: { state: 'connected' },
+      model: { state: 'error' },
       services: [{ name: 'GitLab', state: 'unauthenticated' as const }],
     };
     const result = formatStatusResponse(integrations);
-    expect(result).not.toContain('All integrations connected.');
-    expect(result).toContain('⚠️ **GitLab**');
+    expect(result).toContain('⚠️ unknown');
+    expect(result).toContain('⚠️ GitLab');
   });
 });
 
