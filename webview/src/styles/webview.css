@@ -251,9 +251,9 @@ html {
 }
 
 .asciiLine { display: block; height: 1em; }
-.asciiRed { color: #dc2626; }
-.asciiWhite { color: #fafafa; font-weight: bold; }
-.asciiShadow { color: #7f1d1d; }
+.asciiRed { color: #e01f27; }
+.asciiWhite { color: #ffffff; font-weight: bold; }
+.asciiShadow { color: #8b0000; }
 
 .emptyStateSection { display: flex; flex-direction: column; gap: 4px; }
 

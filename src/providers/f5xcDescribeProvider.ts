@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '../generated/constants';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
 import { getLogger } from '../utils/logger';
+import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import { renderBestPractices } from './metadataRenderer';
 
 const logger = getLogger();
@@ -1469,17 +1470,9 @@ export class F5XCDescribeProvider {
    */
   private getStyles(): string {
     return `
-    * {
-      box-sizing: border-box;
-    }
+    ${getWebviewBaseStyles()}
 
     body {
-      font-family: var(--vscode-font-family);
-      font-size: var(--vscode-font-size);
-      color: var(--vscode-editor-foreground);
-      background-color: var(--vscode-editor-background);
-      margin: 0;
-      padding: 0;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -1492,7 +1485,7 @@ export class F5XCDescribeProvider {
       justify-content: space-between;
       align-items: center;
       padding: 8px 16px;
-      background: linear-gradient(135deg, #6b2fad 0%, #0076d6 100%);
+      background: var(--f5-toolbar-gradient);
       border-bottom: 1px solid var(--vscode-panel-border);
       gap: 16px;
       flex-shrink: 0;
@@ -1576,7 +1569,7 @@ export class F5XCDescribeProvider {
 
     .edit-btn {
       background: white;
-      color: #6b2fad;
+      color: var(--f5-brand-red);
       border: none;
       padding: 6px 16px;
       border-radius: 4px;
@@ -1634,7 +1627,7 @@ export class F5XCDescribeProvider {
     .nav-item.active {
       background: var(--vscode-list-activeSelectionBackground);
       color: var(--vscode-list-activeSelectionForeground);
-      border-left-color: #6b2fad;
+      border-left-color: var(--f5-brand-red);
     }
 
     /* Main Content */

@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { getLogger } from '../utils/logger';
+import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
 const logger = getLogger();
 
@@ -912,17 +913,9 @@ export class F5XCDiagramProvider {
    */
   private getStyles(): string {
     return `
-    * {
-      box-sizing: border-box;
-    }
+    ${getWebviewBaseStyles()}
 
     body {
-      font-family: var(--vscode-font-family);
-      font-size: var(--vscode-font-size);
-      color: var(--vscode-editor-foreground);
-      background-color: var(--vscode-editor-background);
-      margin: 0;
-      padding: 0;
       height: 100vh;
       display: flex;
       flex-direction: column;
@@ -934,7 +927,7 @@ export class F5XCDiagramProvider {
       justify-content: space-between;
       align-items: center;
       padding: 8px 16px;
-      background: linear-gradient(135deg, #6b2fad 0%, #0076d6 100%);
+      background: var(--f5-toolbar-gradient);
       border-bottom: 1px solid var(--vscode-panel-border);
       flex-shrink: 0;
     }

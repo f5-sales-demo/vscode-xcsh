@@ -22,6 +22,7 @@ import { geocodeLocation } from '../api/geocoder';
 import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/popCoordinates';
 import type { ContextManager } from '../config/contextManager';
 import { getLogger } from '../utils/logger';
+import { getF5LogoHtml, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
 /**
  * WebView provider for Cloud Status Dashboard
@@ -271,7 +272,7 @@ export class CloudStatusDashboardProvider {
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">xcsh</span>
+      ${getF5LogoHtml()}
       <span class="title">Cloud Status Dashboard</span>
     </div>
     <div class="toolbar-right">
@@ -435,7 +436,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">xcsh</span>
+      ${getF5LogoHtml()}
       <span class="title">Cloud Status Dashboard</span>
     </div>
     <div class="toolbar-right">
@@ -463,17 +464,9 @@ export class CloudStatusDashboardProvider {
    */
   private getStyles(): string {
     return `
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    ${getWebviewBaseStyles()}
 
     body {
-      font-family: var(--vscode-font-family, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
-      font-size: var(--vscode-font-size, 13px);
-      color: var(--vscode-editor-foreground, #cccccc);
-      background-color: var(--vscode-editor-background, #1e1e1e);
       line-height: 1.5;
     }
 
@@ -483,7 +476,7 @@ export class CloudStatusDashboardProvider {
       justify-content: space-between;
       align-items: center;
       padding: 12px 24px;
-      background: linear-gradient(135deg, #6b2fad 0%, #0076d6 100%);
+      background: var(--f5-toolbar-gradient);
       border-bottom: 1px solid var(--vscode-panel-border);
     }
 
@@ -493,14 +486,7 @@ export class CloudStatusDashboardProvider {
       gap: 12px;
     }
 
-    .logo {
-      background: white;
-      color: #6b2fad;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-size: 14px;
-    }
+
 
     .title {
       color: white;
@@ -528,7 +514,7 @@ export class CloudStatusDashboardProvider {
 
     .btn-primary {
       background: white;
-      color: #6b2fad;
+      color: var(--f5-brand-red);
     }
 
     .btn-primary:hover {
@@ -952,7 +938,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">F5</span>
+      ${getF5LogoHtml()}
       <span class="title">Scheduled Maintenance</span>
     </div>
     <div class="toolbar-right">
@@ -1042,16 +1028,9 @@ export class CloudStatusDashboardProvider {
    */
   private getMaintenanceStyles(): string {
     return `
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    ${getWebviewBaseStyles()}
+
     body {
-      font-family: var(--vscode-font-family);
-      font-size: var(--vscode-font-size);
-      color: var(--vscode-foreground);
-      background: var(--vscode-editor-background);
       line-height: 1.5;
     }
     .toolbar {
@@ -1059,7 +1038,7 @@ export class CloudStatusDashboardProvider {
       justify-content: space-between;
       align-items: center;
       padding: 12px 20px;
-      background: var(--vscode-titleBar-activeBackground);
+      background: var(--f5-toolbar-gradient);
       border-bottom: 1px solid var(--vscode-titleBar-border);
       position: sticky;
       top: 0;
@@ -1070,18 +1049,10 @@ export class CloudStatusDashboardProvider {
       align-items: center;
       gap: 12px;
     }
-    .logo {
-      background: #e4002b;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-weight: bold;
-      font-size: 14px;
-    }
     .title {
       font-size: 14px;
       font-weight: 500;
-      color: var(--vscode-foreground);
+      color: white;
     }
     .btn {
       display: inline-flex;
@@ -1095,11 +1066,12 @@ export class CloudStatusDashboardProvider {
       font-family: inherit;
     }
     .btn-secondary {
-      background: var(--vscode-button-secondaryBackground);
-      color: var(--vscode-button-secondaryForeground);
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
     }
     .btn-secondary:hover {
-      background: var(--vscode-button-secondaryHoverBackground);
+      background: rgba(255, 255, 255, 0.25);
     }
     .external-icon::before {
       content: "↗";
@@ -1345,7 +1317,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">F5</span>
+      ${getF5LogoHtml()}
       <span class="title">Active Incident</span>
     </div>
     <div class="toolbar-right">
@@ -1618,7 +1590,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">F5</span>
+      ${getF5LogoHtml()}
       <span class="title">Service Status</span>
     </div>
     <div class="toolbar-right">
@@ -2046,7 +2018,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">F5</span>
+      ${getF5LogoHtml()}
       <span class="title">Regional Edge Status</span>
     </div>
     <div class="toolbar-right">

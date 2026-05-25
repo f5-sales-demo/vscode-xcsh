@@ -8,6 +8,7 @@ import type { ContextManager } from '../config/contextManager';
 import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
 import { showError, showInfo } from '../utils/errors';
 import { getLogger } from '../utils/logger';
+import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import type { F5XCDescribeProvider } from './f5xcDescribeProvider';
 
 const logger = getLogger();
@@ -756,17 +757,9 @@ export class HealthcheckFormProvider {
    */
   private getStyles(): string {
     return `
-    * {
-      box-sizing: border-box;
-    }
+    ${getWebviewBaseStyles()}
 
     body {
-      font-family: var(--vscode-font-family);
-      font-size: var(--vscode-font-size);
-      color: var(--vscode-foreground);
-      background-color: var(--vscode-editor-background);
-      margin: 0;
-      padding: 0;
       height: 100vh;
       display: flex;
       flex-direction: column;
