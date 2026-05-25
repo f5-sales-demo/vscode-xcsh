@@ -30,7 +30,7 @@ Version numbers follow the upstream F5 XC API version as prefix.
 
 ### Fixed
 
-- Prevent token/url mismatch when env vars override profile settings
+- Prevent token/URL mismatch when env vars override profile settings
 
 ## [1.0.84] - 2026-01-02
 
@@ -62,7 +62,7 @@ Version numbers follow the upstream F5 XC API version as prefix.
 
 ### Fixed
 
-- Use 3-segment semver for VS Code Marketplace (#78)
+- Use 3-segment SemVer for VS Code Marketplace (#78)
 - Fetch API specs at build time, remove from version control (#76)
 
 ## [1.0.77] - 2025-12-31
