@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { Resource } from '../api/client';
-import { getFieldConstraints } from '../api/resourceTypes';
+import { getFieldConstraints, getMinimumConfigFields } from '../api/resourceTypes';
 import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
 import type { ContextManager } from '../config/contextManager';
 import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
@@ -497,6 +497,11 @@ export class HealthcheckFormProvider {
     const quotaExceeded = quotaInfo ? quotaInfo.usage >= quotaInfo.limit : false;
     const cspSource = this.panel?.webview.cspSource;
 
+    // Build set of minimum-config fields for visual indicators
+    const minConfigFields = new Set(getMinimumConfigFields('healthcheck'));
+    const minBadge = (fieldPath: string) =>
+      minConfigFields.has(fieldPath) ? ' <span class="badge badge-min-config">min config</span>' : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -560,14 +565,14 @@ export class HealthcheckFormProvider {
         <h2 class="section-title">Basic Settings</h2>
 
         <div class="field">
-          <label for="name">Name *</label>
+          <label for="name">Name *${minBadge('metadata.name')}</label>
           <vscode-text-field id="name" placeholder="my-healthcheck" required></vscode-text-field>
           <span class="field-error" id="name-error"></span>
           <span class="field-hint">Lowercase alphanumeric with hyphens</span>
         </div>
 
         <div class="field">
-          <label for="namespace">Namespace *</label>
+          <label for="namespace">Namespace *${minBadge('metadata.namespace')}</label>
           <vscode-dropdown id="namespace">
             ${namespaces.map((ns) => `<vscode-option value="${this.escapeHtml(ns)}"${ns === this.initialNamespace ? ' selected' : ''}>${this.escapeHtml(ns)}</vscode-option>`).join('\n            ')}
           </vscode-dropdown>
@@ -589,13 +594,13 @@ export class HealthcheckFormProvider {
 
         <div class="field-row">
           <div class="field">
-            <label for="interval">Interval (sec)</label>
+            <label for="interval">Interval (sec)${minBadge('spec.interval')}</label>
             <vscode-text-field id="interval" type="number" value="15" min="1" max="600"></vscode-text-field>
             <span class="field-hint">recommended: 15</span>
           </div>
 
           <div class="field">
-            <label for="timeout">Timeout (sec)</label>
+            <label for="timeout">Timeout (sec)${minBadge('spec.timeout')}</label>
             <vscode-text-field id="timeout" type="number" value="3" min="1" max="600"></vscode-text-field>
             <span class="field-hint">recommended: 3</span>
           </div>
@@ -614,13 +619,13 @@ export class HealthcheckFormProvider {
 
         <div class="field-row">
           <div class="field">
-            <label for="healthy-threshold">Healthy Threshold</label>
+            <label for="healthy-threshold">Healthy Threshold${minBadge('spec.healthy_threshold')}</label>
             <vscode-text-field id="healthy-threshold" type="number" value="3" min="1" max="16"></vscode-text-field>
             <span class="field-hint">successes required, recommended: 3</span>
           </div>
 
           <div class="field">
-            <label for="unhealthy-threshold">Unhealthy Threshold</label>
+            <label for="unhealthy-threshold">Unhealthy Threshold${minBadge('spec.unhealthy_threshold')}</label>
             <vscode-text-field id="unhealthy-threshold" type="number" value="1" min="1" max="16"></vscode-text-field>
             <span class="field-hint">failures allowed, recommended: 1</span>
           </div>
@@ -953,6 +958,12 @@ export class HealthcheckFormProvider {
       background: var(--vscode-badge-background);
       color: var(--vscode-badge-foreground);
       border-radius: 4px;
+    }
+
+    .badge-min-config {
+      background: var(--vscode-testing-iconQueued, #cca700);
+      color: #000;
+      font-weight: 600;
     }
 
     /* Type sections visibility */

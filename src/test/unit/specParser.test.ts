@@ -540,12 +540,12 @@ describe('Spec Parser - parseAllDomainFiles', () => {
   });
 
   describe('best-practices scoping', () => {
-    it('resources do not have bestPractices (domain-level, not per-resource)', () => {
-      // bestPractices is domain-level guidance from spec.info, not resource-specific.
-      // Attaching to each resource causes wrong guidance (e.g., healthcheck getting
-      // load-balancer error messages). Correct approach is domain-category-generator.
+    it('resources inherit bestPractices from their domain spec', () => {
+      // bestPractices is domain-level guidance from spec.info's x-f5xc-best-practices.
+      // Each resource in a domain inherits the domain's best practices so they
+      // can be rendered in the describe view.
       const withBP = parsedResources.filter((r) => r.bestPractices !== undefined);
-      expect(withBP.length).toBe(0);
+      expect(withBP.length).toBeGreaterThan(0);
     });
   });
 

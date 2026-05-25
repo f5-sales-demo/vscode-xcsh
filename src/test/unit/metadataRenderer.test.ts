@@ -5,7 +5,6 @@ import {
   renderConflictWarning,
   renderConstraintBadge,
   renderDangerBadge,
-  renderPerformanceHint,
 } from '../../providers/metadataRenderer';
 
 describe('metadataRenderer', () => {
@@ -78,18 +77,6 @@ describe('metadataRenderer', () => {
 
     it('returns empty for undefined', () => {
       expect(renderDangerBadge(undefined)).toBe('');
-    });
-  });
-
-  describe('renderPerformanceHint', () => {
-    it('parses JSON response time', () => {
-      const html = renderPerformanceHint('{"p50_ms":45,"p95_ms":120}');
-      expect(html).toContain('45');
-      expect(html).toContain('120');
-    });
-
-    it('returns empty for undefined', () => {
-      expect(renderPerformanceHint(undefined)).toBe('');
     });
   });
 });

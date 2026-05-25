@@ -5,6 +5,7 @@ import type { Resource } from '../api/client';
 import {
   getDangerLevel,
   getFieldDefaults,
+  getPrerequisites,
   getRecommendedValueFields,
   getRecommendedValues,
   getResourceTypeByApiPath,
@@ -12,6 +13,7 @@ import {
   getSideEffects,
   isBuiltInNamespace,
   RESOURCE_TYPES,
+  requiresConfirmation,
 } from '../api/resourceTypes';
 import type { ContextManager } from '../config/contextManager';
 import type { F5XCDescribeProvider } from '../providers/f5xcDescribeProvider';
@@ -213,6 +215,21 @@ export function registerCrudCommands(
           return;
         }
 
+        // Show prerequisites notice if any exist for create operation
+        const prerequisites = getPrerequisites(resourceTypeKey, 'create');
+        if (prerequisites.length > 0) {
+          const prereqList = prerequisites.join(', ');
+          const proceed = await vscode.window.showInformationMessage(
+            `Prerequisites for creating ${resourceType.displayName}: ${prereqList}`,
+            { modal: false },
+            'Continue',
+            'Cancel',
+          );
+          if (proceed === 'Cancel') {
+            return;
+          }
+        }
+
         // Get namespace
         const namespaceInput = await vscode.window.showInputBox({
           prompt: 'Enter namespace',
@@ -322,13 +339,41 @@ export function registerCrudCommands(
           }
         }
 
-        // Confirm action
+        // Show prerequisites notice for create operations
+        if (!exists) {
+          const createPrereqs = getPrerequisites(resourceTypeKey, 'create');
+          if (createPrereqs.length > 0) {
+            showInfo(`Prerequisites: ${createPrereqs.join(', ')}`);
+          }
+        }
+
+        // Confirm action — use enhanced confirmation for high-danger operations
         const action = exists ? 'Update' : 'Create';
-        const confirm = await vscode.window.showInformationMessage(
-          `${action} ${resourceType.displayName} "${name}" in namespace "${namespace}"?`,
-          { modal: true },
-          action,
-        );
+        const operationForConfirm: 'create' | 'update' = exists ? 'update' : 'create';
+        const opDangerLevel = getDangerLevel(resourceTypeKey, operationForConfirm);
+        const opRequiresConfirm = requiresConfirmation(resourceTypeKey, operationForConfirm);
+
+        let confirmMessage = `${action} ${resourceType.displayName} "${name}" in namespace "${namespace}"?`;
+        if (opDangerLevel === 'high' || opRequiresConfirm) {
+          const sideEffects = getSideEffects(resourceTypeKey, operationForConfirm);
+          if (sideEffects) {
+            const effects: string[] = [];
+            if (sideEffects.creates?.length) {
+              effects.push(`Creates: ${sideEffects.creates.join(', ')}`);
+            }
+            if (sideEffects.updates?.length) {
+              effects.push(`Updates: ${sideEffects.updates.join(', ')}`);
+            }
+            if (sideEffects.invalidates?.length) {
+              effects.push(`Invalidates: ${sideEffects.invalidates.join(', ')}`);
+            }
+            if (effects.length > 0) {
+              confirmMessage += `\n\nThis will also affect:\n• ${effects.join('\n• ')}`;
+            }
+          }
+        }
+
+        const confirm = await vscode.window.showInformationMessage(confirmMessage, { modal: true }, action);
 
         if (confirm !== action) {
           return;
@@ -395,6 +440,7 @@ export function registerCrudCommands(
 
         // Get danger level for the delete operation
         const dangerLevel = getDangerLevel(data.resourceTypeKey, 'delete');
+        const metadataRequiresConfirm = requiresConfirmation(data.resourceTypeKey, 'delete');
 
         // Determine whether to show confirmation based on settings
         const config = vscode.workspace.getConfiguration('f5xc');
@@ -402,6 +448,7 @@ export function registerCrudCommands(
         const confirmationLevel = config.get<'always' | 'high-only' | 'never'>('deleteConfirmationLevel', 'always');
 
         // Determine if we should show confirmation
+        // Operation metadata can force confirmation even when settings say otherwise
         let showConfirmation = confirmDelete; // Legacy setting takes precedence if false
         if (showConfirmation) {
           if (confirmationLevel === 'never') {
@@ -411,9 +458,31 @@ export function registerCrudCommands(
           }
           // 'always' keeps showConfirmation = true
         }
+        // Override: always confirm if operation metadata explicitly requires it
+        if (metadataRequiresConfirm) {
+          showConfirmation = true;
+        }
 
         if (showConfirmation) {
           const sideEffects = getSideEffects(data.resourceTypeKey, 'delete');
+
+          // Build side effects text (shared across danger levels)
+          let sideEffectsText = '';
+          if (sideEffects) {
+            const effects: string[] = [];
+            if (sideEffects.deletes?.length) {
+              effects.push(`Deletes: ${sideEffects.deletes.join(', ')}`);
+            }
+            if (sideEffects.updates?.length) {
+              effects.push(`Updates: ${sideEffects.updates.join(', ')}`);
+            }
+            if (sideEffects.invalidates?.length) {
+              effects.push(`Invalidates: ${sideEffects.invalidates.join(', ')}`);
+            }
+            if (effects.length > 0) {
+              sideEffectsText = `\n\nThis will also affect:\n• ${effects.join('\n• ')}`;
+            }
+          }
 
           // Build confirmation message based on danger level
           let confirmMessage = `Delete ${data.resourceType.displayName} "${data.name}" from namespace "${data.namespace}"?`;
@@ -424,29 +493,19 @@ export function registerCrudCommands(
             confirmMessage =
               `⚠️ HIGH RISK DELETE\n\n` +
               `Delete ${data.resourceType.displayName} "${data.name}" from namespace "${data.namespace}"?\n\n` +
-              `This operation has danger level: HIGH`;
-
-            // Add side effects if available
-            if (sideEffects) {
-              const effects: string[] = [];
-              if (sideEffects.deletes?.length) {
-                effects.push(`Deletes: ${sideEffects.deletes.join(', ')}`);
-              }
-              if (sideEffects.invalidates?.length) {
-                effects.push(`Invalidates: ${sideEffects.invalidates.join(', ')}`);
-              }
-              if (effects.length > 0) {
-                confirmMessage += `\n\nSide effects:\n• ${effects.join('\n• ')}`;
-              }
-            }
-
-            confirmMessage += '\n\nThis action cannot be undone.';
+              `This operation has danger level: HIGH` +
+              sideEffectsText +
+              '\n\nThis action cannot be undone.';
             confirmButton = 'Delete (High Risk)';
           } else if (dangerLevel === 'medium') {
-            // Standard confirmation for medium-danger operations
-            confirmMessage += '\n\nThis action cannot be undone.';
+            // Standard confirmation with side effects for medium-danger operations
+            confirmMessage += `${sideEffectsText}\n\nThis action cannot be undone.`;
+          } else {
+            // Low danger — include side effects if they exist
+            if (sideEffectsText) {
+              confirmMessage += sideEffectsText;
+            }
           }
-          // For low danger, use the simple message
 
           const confirm = await vscode.window.showWarningMessage(
             confirmMessage,

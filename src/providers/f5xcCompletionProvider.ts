@@ -186,7 +186,33 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
         item.sortText = `2-${propName}`;
       }
 
-      item.detail = propSchema['x-f5xc-description-short'] ?? this.getPropertyDetail(propSchema, isRequired);
+      // Build detail string with constraint info
+      let detail = propSchema['x-f5xc-description-short'] ?? this.getPropertyDetail(propSchema, isRequired);
+
+      // Append constraint summary to detail if not already shown via description-short
+      if (!propSchema['x-f5xc-description-short']) {
+        const constraintParts: string[] = [];
+        if (propSchema.pattern) {
+          constraintParts.push(`pattern: ${String(propSchema.pattern)}`);
+        }
+        if (typeof propSchema.maxLength === 'number') {
+          constraintParts.push(`max: ${propSchema.maxLength}`);
+        }
+        if (typeof propSchema.minLength === 'number' && propSchema.minLength > 0) {
+          constraintParts.push(`min: ${propSchema.minLength}`);
+        }
+        if (typeof propSchema.minimum === 'number') {
+          constraintParts.push(`>= ${propSchema.minimum}`);
+        }
+        if (typeof propSchema.maximum === 'number') {
+          constraintParts.push(`<= ${propSchema.maximum}`);
+        }
+        if (constraintParts.length > 0) {
+          detail += ` (${constraintParts.join(', ')})`;
+        }
+      }
+
+      item.detail = detail;
 
       completions.push(item);
     }
