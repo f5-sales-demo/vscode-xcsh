@@ -150,8 +150,99 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       case 'abort':
         this.rpcBridge.abort();
         break;
+      case 'set_mode': {
+        const mode = msg.mode as string | undefined;
+        if (mode) {
+          this.rpcBridge.sendCommand({ type: 'set_permission_mode', mode }).catch(() => {});
+        }
+        break;
+      }
+      case 'set_thinking': {
+        const level = msg.level as string | undefined;
+        if (level) {
+          this.rpcBridge.sendCommand({ type: 'set_thinking_level', level }).catch(() => {});
+        }
+        break;
+      }
+      case 'request_file_picker': {
+        void this.handleFilePicker();
+        break;
+      }
       default:
         break;
+    }
+  }
+
+  private async handleFilePicker(): Promise<void> {
+    const view = this.webviewView;
+    if (!view) {
+      return;
+    }
+
+    const uris = await vscode.window.showOpenDialog({
+      canSelectMany: false,
+      openLabel: 'Attach',
+      filters: {
+        'Text Files': [
+          'ts',
+          'tsx',
+          'js',
+          'jsx',
+          'json',
+          'yaml',
+          'yml',
+          'md',
+          'txt',
+          'csv',
+          'xml',
+          'html',
+          'css',
+          'py',
+          'go',
+          'rs',
+          'sh',
+          'bash',
+          'zsh',
+          'toml',
+          'ini',
+          'cfg',
+          'conf',
+          'env',
+          'log',
+        ],
+        'All Files': ['*'],
+      },
+    });
+
+    if (!uris || uris.length === 0) {
+      return;
+    }
+
+    const uri = uris[0];
+    if (!uri) {
+      return;
+    }
+    try {
+      const stat = await vscode.workspace.fs.stat(uri);
+      const maxSize = 512 * 1024;
+      if (stat.size > maxSize) {
+        void vscode.window.showWarningMessage(
+          `File too large to attach (${Math.round(stat.size / 1024)}KB). Maximum is 512KB.`,
+        );
+        return;
+      }
+      const content = await vscode.workspace.fs.readFile(uri);
+      const name = path.basename(uri.fsPath);
+      void view.webview.postMessage({
+        type: 'from-extension',
+        message: {
+          type: 'file_attached',
+          name,
+          content: new TextDecoder().decode(content),
+        },
+      });
+    } catch {
+      this.logger.error('Failed to read attached file');
     }
   }
 

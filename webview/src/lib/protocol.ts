@@ -85,3 +85,15 @@ export function sendPrompt(text: string): void {
 export function sendAbort(): void {
   send({ type: 'abort' });
 }
+
+export function sendSetMode(mode: string): void {
+  send({ type: 'set_mode', mode });
+}
+
+export function sendSetThinking(level: string): void {
+  send({ type: 'set_thinking', level });
+}
+
+export function sendRequestFilePicker(): void {
+  send({ type: 'request_file_picker' });
+}
