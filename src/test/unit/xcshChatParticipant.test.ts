@@ -47,10 +47,25 @@ describe('buildPromptWithContext', () => {
 });
 
 describe('formatStatusResponse', () => {
-  it('formats integration health as markdown table', () => {
+  it('groups connected services on one line with dot separator', () => {
     const integrations = {
       version: '18.77.2',
       model: { state: 'connected', provider: 'anthropic' },
+      services: [
+        { name: 'F5 XC Context', state: 'connected' as const },
+        { name: 'GitHub', state: 'connected' as const },
+      ],
+    };
+    const result = formatStatusResponse(integrations);
+    expect(result).toContain('v18.77.2');
+    expect(result).toContain('✅ F5 XC Context · ✅ GitHub');
+    expect(result).toContain('All integrations connected.');
+  });
+
+  it('shows issues separately with human-readable labels and hints', () => {
+    const integrations = {
+      version: '1.0.0',
+      model: { state: 'connected' },
       services: [
         { name: 'F5 XC Context', state: 'connected' as const },
         { name: 'GitLab', state: 'unauthenticated' as const, hint: 'Run: glab auth login' },
@@ -58,23 +73,21 @@ describe('formatStatusResponse', () => {
       ],
     };
     const result = formatStatusResponse(integrations);
-    expect(result).toContain('F5 XC Context');
-    expect(result).toContain('connected');
-    expect(result).toContain('GitLab');
-    expect(result).toContain('unauthenticated');
-    expect(result).toContain('glab auth login');
-    expect(result).toContain('AWS');
-    expect(result).toContain('unavailable');
+    expect(result).toContain('✅ F5 XC Context');
+    expect(result).toContain('⚠️ **GitLab** — needs authentication');
+    expect(result).toContain('`Run: glab auth login`');
+    expect(result).toContain('⭘ **AWS** — not installed');
+    expect(result).not.toContain('All integrations connected.');
   });
 
-  it('uses Unicode icons instead of codicons', () => {
+  it('uses Unicode icons not codicons', () => {
     const integrations = {
       version: '1.0.0',
       model: { state: 'connected' },
       services: [
-        { name: 'Connected', state: 'connected' as const },
-        { name: 'Unauth', state: 'unauthenticated' as const },
-        { name: 'Missing', state: 'unavailable' as const },
+        { name: 'A', state: 'connected' as const },
+        { name: 'B', state: 'unauthenticated' as const },
+        { name: 'C', state: 'unavailable' as const },
       ],
     };
     const result = formatStatusResponse(integrations);
@@ -84,6 +97,17 @@ describe('formatStatusResponse', () => {
     expect(result).not.toContain('$(check)');
     expect(result).not.toContain('$(warning)');
     expect(result).not.toContain('$(circle-slash)');
+  });
+
+  it('handles all-issues case without connected summary line', () => {
+    const integrations = {
+      version: '1.0.0',
+      model: { state: 'connected' },
+      services: [{ name: 'GitLab', state: 'unauthenticated' as const }],
+    };
+    const result = formatStatusResponse(integrations);
+    expect(result).not.toContain('All integrations connected.');
+    expect(result).toContain('⚠️ **GitLab**');
   });
 });
 
