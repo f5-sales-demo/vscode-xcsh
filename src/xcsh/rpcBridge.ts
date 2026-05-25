@@ -184,18 +184,39 @@ export class XcshRpcBridge implements vscode.Disposable {
   /**
    * Convenience: listen for assistant text deltas from message_update events.
    *
-   * xcsh message_update events have nested structure:
-   *   { type: "message_update", assistantMessageEvent: { type: "text_delta", delta: "chunk" } }
-   * This method extracts the text delta and dispatches a simplified { text } object.
+   * xcsh message_update events may arrive in several formats:
+   *   1. Nested: { type: "message_update", assistantMessageEvent: { type: "text_delta", delta: "chunk" } }
+   *   2. Direct: { type: "message_update", text: "chunk" }
+   *   3. Delta:  { type: "message_update", delta: "chunk" }
+   *   4. Content: { type: "message_update", content: "chunk" }
+   * This method normalises all variants into a simplified { text } object.
    */
   onMessageStream(handler: (event: MessageUpdate) => void): vscode.Disposable {
     return this.onEvent('message_update', (raw) => {
-      const assistantEvent = (raw as Record<string, unknown>).assistantMessageEvent as
-        | { type: string; delta?: string }
-        | undefined;
+      const obj = raw as Record<string, unknown>;
+
+      const assistantEvent = obj.assistantMessageEvent as { type: string; delta?: string } | undefined;
       if (assistantEvent?.type === 'text_delta' && typeof assistantEvent.delta === 'string') {
         handler({ type: 'message_update', text: assistantEvent.delta });
+        return;
       }
+
+      if (typeof obj.text === 'string') {
+        handler({ type: 'message_update', text: obj.text });
+        return;
+      }
+
+      if (typeof obj.delta === 'string') {
+        handler({ type: 'message_update', text: obj.delta });
+        return;
+      }
+
+      if (typeof obj.content === 'string') {
+        handler({ type: 'message_update', text: obj.content });
+        return;
+      }
+
+      this.logger.debug(`Unrecognised message_update format: ${JSON.stringify(obj).slice(0, 200)}`);
     });
   }
 

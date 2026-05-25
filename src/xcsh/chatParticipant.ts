@@ -200,16 +200,19 @@ export function registerChatParticipant(
     }
 
     const enrichedPrompt = buildPromptWithContext(request.prompt, activeCtx, fileContext);
+    logger.info(`Chat participant: sending prompt (${enrichedPrompt.length} chars)`);
 
-    // Set up event listeners for streaming response
     const disposables: vscode.Disposable[] = [];
     let receivedAnyEvent = false;
+    let textChunkCount = 0;
+    let resolveReason = 'unknown';
     const STREAM_TIMEOUT_MS = 120_000;
 
     const messagePromise = new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
+        resolveReason = 'timeout';
         logger.warn(
-          `Chat participant stream timed out after ${String(STREAM_TIMEOUT_MS)}ms (receivedAnyEvent=${String(receivedAnyEvent)})`,
+          `Chat participant stream timed out after ${String(STREAM_TIMEOUT_MS)}ms (receivedAnyEvent=${String(receivedAnyEvent)}, textChunks=${String(textChunkCount)})`,
         );
         resolve();
       }, STREAM_TIMEOUT_MS);
@@ -219,6 +222,10 @@ export function registerChatParticipant(
       disposables.push(
         rpcBridge.onMessageStream((event) => {
           receivedAnyEvent = true;
+          textChunkCount++;
+          if (textChunkCount <= 3) {
+            logger.info(`Chat participant: text chunk #${String(textChunkCount)} (${event.text.length} chars)`);
+          }
           stream.markdown(event.text);
         }),
       );
@@ -226,19 +233,23 @@ export function registerChatParticipant(
       disposables.push(
         rpcBridge.onEvent<ToolExecutionStart>('tool_execution_start', (event) => {
           receivedAnyEvent = true;
+          logger.info(`Chat participant: tool_execution_start ${event.toolName}`);
           stream.progress(`Running ${event.toolName}...`);
         }),
       );
 
       disposables.push(
-        rpcBridge.onEvent<ToolExecutionEnd>('tool_execution_end', () => {
+        rpcBridge.onEvent<ToolExecutionEnd>('tool_execution_end', (event) => {
           receivedAnyEvent = true;
+          logger.info(`Chat participant: tool_execution_end ${event.toolCallId}`);
         }),
       );
 
       disposables.push(
         rpcBridge.onEvent('turn_end', () => {
           receivedAnyEvent = true;
+          resolveReason = 'turn_end';
+          logger.info(`Chat participant: turn_end (textChunks=${String(textChunkCount)})`);
           clearTimeout(timeout);
           resolve();
         }),
@@ -247,6 +258,8 @@ export function registerChatParticipant(
       disposables.push(
         rpcBridge.onEvent('result', () => {
           receivedAnyEvent = true;
+          resolveReason = 'result';
+          logger.info(`Chat participant: result event (textChunks=${String(textChunkCount)})`);
           clearTimeout(timeout);
           resolve();
         }),
@@ -255,13 +268,16 @@ export function registerChatParticipant(
       disposables.push(
         rpcBridge.onEvent('error', (event) => {
           receivedAnyEvent = true;
+          resolveReason = 'error';
           clearTimeout(timeout);
           const errorMsg = (event as Record<string, unknown>).message;
+          logger.error(`Chat participant: error event: ${String(errorMsg)}`);
           reject(new Error(typeof errorMsg === 'string' ? errorMsg : 'xcsh error'));
         }),
       );
 
       token.onCancellationRequested(() => {
+        resolveReason = 'cancelled';
         rpcBridge.abort();
         clearTimeout(timeout);
         resolve();
@@ -277,6 +293,9 @@ export function registerChatParticipant(
       logger.error(`Chat participant error: ${message}`);
       stream.markdown(`\n\n**Error:** ${message}`);
     } finally {
+      logger.info(
+        `Chat participant: done (reason=${resolveReason}, events=${String(receivedAnyEvent)}, textChunks=${String(textChunkCount)})`,
+      );
       for (const d of disposables) {
         d.dispose();
       }

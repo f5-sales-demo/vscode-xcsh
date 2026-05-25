@@ -4,7 +4,6 @@
 import type { ContentBlock } from '../state/session';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { ThinkingBlock } from './ThinkingBlock';
-import { ToolUseContent } from './ToolUseContent';
 
 interface ContentBlockRendererProps {
   block: ContentBlock;
@@ -21,7 +20,7 @@ export function ContentBlockRenderer({ block, isLast, busy }: ContentBlockRender
         </span>
       );
     case 'tool_use':
-      return <ToolUseContent block={block} />;
+      return null;
     case 'thinking':
       return (
         <ThinkingBlock

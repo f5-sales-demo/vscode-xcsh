@@ -246,7 +246,7 @@ html {
   user-select: none;
   -webkit-font-smoothing: none;
   font-variant-ligatures: none;
-  transform: scale(0.55, 0.7);
+  transform: scale(0.5);
   transform-origin: center center;
 }
 
@@ -301,7 +301,7 @@ html {
 /* Messages */
 .messagesList { display: flex; flex-direction: column; gap: 16px; }
 .turn { display: flex; flex-direction: column; gap: 8px; }
-.userMessage { padding: 8px 12px; background: rgba(127, 127, 127, 0.06); border-radius: var(--corner-radius-large); }
+.userMessage { padding: 8px 12px; background: rgba(127, 127, 127, 0.06); border-radius: var(--corner-radius-large); border-left: 3px solid var(--app-xcsh-red); }
 .userMessageText { color: var(--app-primary-foreground); font-weight: 600; line-height: 1.5; }
 .assistantMessage { color: var(--app-primary-foreground); line-height: 1.6; }
 
