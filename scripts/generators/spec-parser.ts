@@ -486,8 +486,30 @@ export function extractNamespaceProfile(
     };
   },
   fullPath: string | null,
+  resourceKey?: string,
 ): NamespaceProfile {
-  const specProfile = spec?.info?.['x-f5xc-namespace-profile'];
+  // Priority: per-schema profile > domain-level profile > path-based derivation
+  let specProfile = spec?.info?.['x-f5xc-namespace-profile'];
+
+  // Check per-schema profiles for resource-specific overrides
+  if (resourceKey) {
+    const schemas = (spec as Record<string, unknown>)?.components as Record<string, unknown> | undefined;
+    const schemaMap = schemas?.schemas as Record<string, Record<string, unknown>> | undefined;
+    if (schemaMap) {
+      for (const [schemaName, schema] of Object.entries(schemaMap)) {
+        const schemaProfile = schema?.['x-f5xc-namespace-profile'] as typeof specProfile | undefined;
+        if (!schemaProfile) {
+          continue;
+        }
+        const lower = schemaName.toLowerCase();
+        if (lower.startsWith(resourceKey.toLowerCase()) && lower.includes('createspec')) {
+          specProfile = schemaProfile;
+          break;
+        }
+      }
+    }
+  }
+
   if (specProfile) {
     // Normalize snake_case keys from enriched JSON (Python/YAML) to camelCase (TypeScript)
     const rawPattern =
@@ -1483,7 +1505,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     }
 
     // Derive namespace profile from spec extension or path
-    const namespaceProfile = extractNamespaceProfile(spec, pathKey);
+    const namespaceProfile = extractNamespaceProfile(spec, pathKey, resourceKey);
 
     // Build full API path
     const fullApiPath = pathKey;

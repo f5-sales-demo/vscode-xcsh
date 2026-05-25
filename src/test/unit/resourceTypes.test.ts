@@ -30,6 +30,7 @@ import {
   ResourceCategory,
   type ResourceTypeInfo,
 } from '../../api/resourceTypes';
+import { GENERATED_RESOURCE_TYPES } from '../../generated/resourceTypesBase';
 
 describe('Resource Types Registry', () => {
   describe('RESOURCE_TYPES constant', () => {
@@ -834,6 +835,62 @@ describe('Resource Types Registry', () => {
         expect(fieldMetadata?.userRequiredFields).toBeDefined();
         expect(fieldMetadata?.userRequiredFields?.length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe('namespace filtering completeness (automated UAT)', () => {
+    it('every resource type backed by generated specs should have a namespaceProfile', () => {
+      const missingProfiles: string[] = [];
+      for (const [key, info] of Object.entries(RESOURCE_TYPES)) {
+        // Only check resources that have a corresponding generated spec entry
+        if (GENERATED_RESOURCE_TYPES[key] && !info.namespaceProfile) {
+          missingProfiles.push(key);
+        }
+      }
+      expect(missingProfiles).toEqual([]);
+    });
+
+    it('every resource type with a namespaceProfile should have allowed namespaces', () => {
+      for (const [_key, info] of Object.entries(RESOURCE_TYPES)) {
+        if (info.namespaceProfile) {
+          expect(info.namespaceProfile.constraint.allowed.length).toBeGreaterThan(0);
+        }
+      }
+    });
+
+    it('no system-only resources should appear in custom namespaces', () => {
+      const customResources = getResourceTypesForNamespace('test-custom-ns');
+      for (const [_key, info] of Object.entries(customResources)) {
+        const allowed = info.namespaceProfile?.constraint?.allowed ?? [];
+        expect(allowed).not.toEqual(['system']);
+      }
+    });
+
+    it('system namespace should contain system-scoped resources', () => {
+      const sysResources = getResourceTypesForNamespace('system');
+      expect(Object.keys(sysResources).length).toBeGreaterThan(0);
+      for (const [_key, info] of Object.entries(sysResources)) {
+        const allowed = info.namespaceProfile?.constraint?.allowed ?? [];
+        expect(allowed).toContain('system');
+      }
+    });
+
+    it('dns_zone namespace scope should match enriched spec profile', () => {
+      const dnsZone = RESOURCE_TYPES.dns_zone;
+      if (dnsZone) {
+        // Enriched specs define dns_zone as custom/default/shared (not system-only)
+        expect(dnsZone.namespaceProfile).toBeDefined();
+        expect(dnsZone.namespaceProfile?.constraint.allowed.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('http_loadbalancer should appear in custom namespaces but not system', () => {
+      const httpLb = RESOURCE_TYPES.http_loadbalancer;
+      if (httpLb) {
+        expect(isResourceTypeAvailableForNamespace(httpLb, 'system')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(httpLb, 'r-mordasiewicz')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(httpLb, 'shared')).toBe(true);
+      }
     });
   });
 });

@@ -11,24 +11,13 @@
  *
  * The process:
  * 1. Parse all OpenAPI specs and derive namespace scope from API paths
- * 2. Apply manual overrides from namespace-scope-overrides.json
- * 3. Generate menu schema showing resources per namespace type
+ * 2. Generate menu schema showing resources per namespace type
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
 import type { NamespaceType } from './spec-parser';
-
-/**
- * Manual override configuration structure.
- * Per-resource allowedNamespaces arrays.
- */
-interface ScopeOverrides {
-  [resourceKey: string]: {
-    allowedNamespaces: NamespaceType[];
-  };
-}
 
 /**
  * API path analysis result
@@ -443,49 +432,9 @@ function buildNamespaceSchema(
 }
 
 /**
- * Load manual scope overrides (per-resource allowedNamespaces format)
- */
-function loadOverrides(overridesPath: string): ScopeOverrides | null {
-  try {
-    const content = fs.readFileSync(overridesPath, 'utf-8');
-    const raw = JSON.parse(content) as Record<string, unknown>;
-    // Extract the "overrides" object which contains per-resource entries
-    const overrides = raw.overrides as ScopeOverrides | undefined;
-    return overrides ?? null;
-  } catch {
-    console.warn(`Warning: Could not load overrides from ${overridesPath}`);
-    return null;
-  }
-}
-
-/**
- * Apply manual overrides to resources.
- * Each override specifies allowedNamespaces for a specific resource key.
- */
-function applyOverrides(resources: ResourceAnalysis[], overrides: ScopeOverrides): number {
-  let overrideCount = 0;
-
-  for (const resource of resources) {
-    const override = overrides[resource.resourceKey];
-    if (!override) {
-      continue;
-    }
-
-    const currentSorted = [...resource.allowedNamespaces].sort().join(',');
-    const overrideSorted = [...override.allowedNamespaces].sort().join(',');
-    if (currentSorted !== overrideSorted) {
-      resource.allowedNamespaces = override.allowedNamespaces;
-      overrideCount++;
-    }
-  }
-
-  return overrideCount;
-}
-
-/**
  * Main generator function
  */
-function generateMenuSchema(specsDir: string, outputPath: string, overridesPath: string): void {
+function generateMenuSchema(specsDir: string, outputPath: string): void {
   console.log('Generating menu schema from OpenAPI specs...\n');
 
   // Find all spec files (domain JSON files in new structure)
@@ -515,14 +464,7 @@ function generateMenuSchema(specsDir: string, outputPath: string, overridesPath:
 
   console.log(`Successfully parsed ${resources.length} resource types\n`);
 
-  // Load and apply overrides
-  const overrides = loadOverrides(overridesPath);
-  if (overrides) {
-    const overrideCount = applyOverrides(resources, overrides);
-    console.log(`Applied ${overrideCount} manual scope overrides\n`);
-  }
-
-  // Count by namespace type (after overrides)
+  // Count by namespace type
   const scopeCounts = {
     system: resources.filter((r) => r.allowedNamespaces.includes('system')).length,
     shared: resources.filter((r) => r.allowedNamespaces.includes('shared')).length,
@@ -530,7 +472,7 @@ function generateMenuSchema(specsDir: string, outputPath: string, overridesPath:
     custom: resources.filter((r) => r.allowedNamespaces.includes('custom')).length,
   };
 
-  console.log('Namespace distribution (after overrides):');
+  console.log('Namespace distribution:');
   console.log(`  system: ${scopeCounts.system} resources`);
   console.log(`  shared: ${scopeCounts.shared} resources`);
   console.log(`  default: ${scopeCounts.default} resources`);
@@ -573,8 +515,7 @@ function generateMenuSchema(specsDir: string, outputPath: string, overridesPath:
 // Main execution
 const specsDir = path.join(__dirname, '../../docs/specifications/api/domains');
 const outputPath = path.join(__dirname, '../../src/generated/menuSchema.json');
-const overridesPath = path.join(__dirname, 'namespace-scope-overrides.json');
 
-generateMenuSchema(specsDir, outputPath, overridesPath);
+generateMenuSchema(specsDir, outputPath);
 
 console.log('\n=== Generation Complete ===');

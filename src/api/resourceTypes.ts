@@ -84,16 +84,6 @@ export function namespaceTypeOf(namespaceName: string): NamespaceType {
 }
 
 /**
- * Pre-built namespace profile for system-scoped resources.
- * Used by manual overrides for Sites, IAM, Cloud Credentials, etc.
- */
-const SYSTEM_NAMESPACE_PROFILE: NamespaceProfile = {
-  constraint: { allowed: ['system'], enforced: true },
-  recommendation: { primary: 'system', rationale: 'System-scoped resource' },
-  classification: { category: 'infrastructure', multiTenantPattern: 'none' },
-};
-
-/**
  * API base path type - different F5 XC APIs use different base paths.
  * Supports all F5 XC API bases including: config, web, gen-ai, ai_data, data,
  * bigipconnector, discovery, gia, infraprotect, nginx, observability, operate,
@@ -414,43 +404,36 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   aws_tgw_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   azure_vnet_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   gcp_vpc_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'cloud',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   voltstack_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'server',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   securemesh_site: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'server-process',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   securemesh_site_v2: {
     category: ResourceCategory.Sites,
     supportsCustomOps: true,
     icon: 'server-process',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
 
   // =====================================================
@@ -462,7 +445,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.DNS,
     supportsCustomOps: true,
     icon: 'globe',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
+
     // DNS API uses /api/config/dns/namespaces/{namespace}/... path
     customListPath: '/api/config/dns/namespaces/{namespace}/dns_zones',
     customGetPath: '/api/config/dns/namespaces/{namespace}/dns_zones/{name}',
@@ -505,7 +488,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'person',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
+
     apiBase: 'web',
     customListPath: '/api/web/custom/namespaces/{namespace}/user_roles',
     listMethod: 'GET',
@@ -516,14 +499,14 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'organization',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
+
     apiBase: 'web',
   },
   api_credential: {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'key',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
+
     apiBase: 'web',
   },
   service_credential: {
@@ -532,7 +515,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.IAM,
     supportsCustomOps: false,
     icon: 'key',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
+
     apiBase: 'web',
   },
   certificate: {
@@ -577,7 +560,6 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.CloudConnect,
     supportsCustomOps: false,
     icon: 'key',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   cloud_link: {
     category: ResourceCategory.CloudConnect,
@@ -607,19 +589,16 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.Kubernetes,
     supportsCustomOps: false,
     icon: 'layers',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   virtual_site: {
     category: ResourceCategory.Kubernetes,
     supportsCustomOps: false,
     icon: 'organization',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   site_mesh_group: {
     category: ResourceCategory.ServiceMesh,
     supportsCustomOps: false,
     icon: 'git-merge',
-    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
 
   // =====================================================
