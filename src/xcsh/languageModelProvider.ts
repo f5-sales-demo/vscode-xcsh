@@ -6,7 +6,7 @@ import type { XcshRpcBridge } from './rpcBridge';
 import type { RpcToolCall } from './types';
 
 const MODEL_ID = 'f5xc-xcsh';
-const MODEL_NAME = 'F5 XC Shell Assistant';
+const MODEL_NAME = 'xcsh';
 
 interface SimpleChatMessage {
   role: string;

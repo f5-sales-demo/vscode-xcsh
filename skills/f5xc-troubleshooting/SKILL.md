@@ -1,17 +1,17 @@
 ---
 name: f5xc-troubleshooting
 description:
-  Guide for diagnosing F5 Distributed Cloud issues including site health,
-  connectivity problems, WAF blocks, security events, and alert investigation.
-  Use when the user reports errors, wants to investigate infrastructure health,
-  or asks about debugging F5 XC problems.
+  Guide for diagnosing xcsh issues including site health, connectivity problems,
+  WAF blocks, security events, and alert investigation. Use when the user
+  reports errors, wants to investigate infrastructure health, or asks about
+  debugging xcsh problems.
 ---
 
-# F5 XC Troubleshooting
+# xcsh Troubleshooting
 
 ## When to Use
 
-- User reports errors or unexpected behavior with F5 XC resources
+- User reports errors or unexpected behavior with xcsh resources
 - User asks about site health, connectivity, or availability
 - User wants to investigate WAF blocks or security events
 - User asks about alerts or monitoring

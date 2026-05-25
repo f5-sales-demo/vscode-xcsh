@@ -3,7 +3,7 @@
 
 const COMMANDS = [
   { command: '/status', label: 'Status', description: 'Show integration health' },
-  { command: '/context', label: 'Context', description: 'Show active F5 XC context' },
+  { command: '/context', label: 'Context', description: 'Show active xcsh context' },
   { command: '/resources', label: 'Resources', description: 'Browse current namespace' },
 ];
 

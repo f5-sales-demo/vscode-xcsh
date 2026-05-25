@@ -93,7 +93,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     const fullTemplate = this.createFullResourceTemplate(schema, indentString);
     const fullItem = new vscode.CompletionItem('Full resource template', vscode.CompletionItemKind.Snippet);
     fullItem.insertText = new vscode.SnippetString(fullTemplate);
-    fullItem.documentation = new vscode.MarkdownString('Complete F5 XC resource structure with metadata and spec');
+    fullItem.documentation = new vscode.MarkdownString('Complete xcsh resource structure with metadata and spec');
     fullItem.sortText = '0'; // Show first
     fullItem.detail = 'Complete resource template';
     completions.push(fullItem);

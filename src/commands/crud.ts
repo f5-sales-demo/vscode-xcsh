@@ -165,7 +165,7 @@ export function registerCrudCommands(
         await vscode.window.showTextDocument(doc, { preview: false });
 
         logger.info(`Editing resource: ${data.name}`);
-        showInfo(`Editing ${data.name}. Press Cmd+S to save changes to F5 XC.`);
+        showInfo(`Editing ${data.name}. Press Cmd+S to save changes.`);
       }, 'Edit resource');
     }),
   );
@@ -235,7 +235,7 @@ export function registerCrudCommands(
         });
 
         await vscode.window.showTextDocument(doc, { preview: false });
-        showInfo(`Created template for ${resourceType.displayName}. Edit and use "F5 XC: Apply" to create.`);
+        showInfo(`Created template for ${resourceType.displayName}. Edit and use "xcsh: Apply" to create.`);
       }, 'Create resource');
     }),
   );

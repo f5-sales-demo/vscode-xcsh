@@ -43,7 +43,7 @@ export function registerContextCommands(
 
         // Step 2: API URL
         const apiUrl = await vscode.window.showInputBox({
-          prompt: 'Enter F5 XC API URL',
+          prompt: 'Enter API URL',
           placeHolder: 'https://tenant.console.ves.volterra.io',
           value: 'https://',
           ignoreFocusOut: true,

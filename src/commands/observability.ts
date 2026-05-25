@@ -237,7 +237,7 @@ function getMetricsFilter(resourceTypeKey: string, name: string): string {
  */
 function formatAccessLogs(logs: AccessLogEntry[]): string {
   const lines: string[] = [
-    '# F5 XC Access Logs',
+    '# xcsh Access Logs',
     `# Generated: ${new Date().toISOString()}`,
     `# Total entries: ${logs.length}`,
     '',

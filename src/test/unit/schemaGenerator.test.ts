@@ -19,7 +19,7 @@ describe('Schema Generator', () => {
       expect(schema).not.toBeNull();
       expect(schema?.$schema).toBe('http://json-schema.org/draft-07/schema#');
       expect(schema?.$id).toBe('f5xc-schema://schemas/http_loadbalancer.json');
-      expect(schema?.title).toContain('F5 XC');
+      expect(schema?.title).toContain('xcsh');
       expect(schema?.type).toBe('object');
     });
 
@@ -127,7 +127,7 @@ describe('Schema Generator', () => {
 
       expect(schema.$schema).toBe('http://json-schema.org/draft-07/schema#');
       expect(schema.$id).toBe('f5xc-schema://schemas/generic.json');
-      expect(schema.title).toBe('F5 XC Resource');
+      expect(schema.title).toBe('xcsh Resource');
       expect(schema.type).toBe('object');
     });
 
@@ -150,7 +150,7 @@ describe('Schema Generator', () => {
     it('should have description', () => {
       const schema = generateGenericSchema();
 
-      expect(schema.description).toBe('Generic schema for F5 Distributed Cloud resources');
+      expect(schema.description).toBe('Generic schema for xcsh resources');
     });
   });
 

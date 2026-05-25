@@ -267,7 +267,7 @@ class CategoryNode implements F5XCTreeItem {
       for (const domain of domainsInCategory.slice(0, 3)) {
         const meta = getDomainMetadata(domain);
         if (meta) {
-          tooltip.appendMarkdown(`${meta.icon} **${meta.title.replace(/^F5 XC /, '').replace(/ API$/, '')}**\n`);
+          tooltip.appendMarkdown(`${meta.icon} **${meta.title.replace(/^xcsh /, '').replace(/ API$/, '')}**\n`);
           tooltip.appendMarkdown(`${meta.description_short}\n\n`);
         }
       }
@@ -400,7 +400,7 @@ class ResourceTypeNode implements F5XCTreeItem {
       if (domainMeta) {
         tooltip.appendMarkdown(`\n---\n\n`);
         tooltip.appendMarkdown(
-          `${domainMeta.icon} *Domain: ${domainMeta.title.replace(/^F5 XC /, '').replace(/ API$/, '')}*\n`,
+          `${domainMeta.icon} *Domain: ${domainMeta.title.replace(/^xcsh /, '').replace(/ API$/, '')}*\n`,
         );
       }
     }

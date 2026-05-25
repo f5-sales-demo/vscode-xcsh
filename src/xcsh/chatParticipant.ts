@@ -24,7 +24,7 @@ export function buildPromptWithContext(userPrompt: string, ctx: F5XCContext | nu
   const parts: string[] = [];
 
   if (ctx) {
-    parts.push(`[F5 XC Context: ${ctx.name} | Namespace: ${ctx.defaultNamespace}]`);
+    parts.push(`[xcsh Context: ${ctx.name} | Namespace: ${ctx.defaultNamespace}]`);
   }
 
   if (fileContext?.currentFile) {
@@ -64,7 +64,7 @@ export function formatStatusResponse(integrations: IntegrationsResponse): string
 
 export function formatContextResponse(ctx: F5XCContext | null): string {
   if (!ctx) {
-    return 'No active F5 XC context. Use the **F5 XC: Add Context** command to configure one.';
+    return 'No active xcsh context. Use the **xcsh: Add Context** command to configure one.';
   }
   const maskedUrl = ctx.apiUrl.replace(/\/api$/, '');
   return [
@@ -148,7 +148,7 @@ export function registerChatParticipant(
     try {
       const activeCtx = await contextManager.getActiveContext();
       if (!activeCtx) {
-        stream.markdown('No active F5 XC context. Use the **F5 XC: Add Context** command to configure one.');
+        stream.markdown('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
       } else {
         const maskedUrl = activeCtx.apiUrl.replace(/\/api$/, '');
         stream.markdown(
@@ -157,7 +157,7 @@ export function registerChatParticipant(
             `**Console:** ${maskedUrl}`,
             `**Namespace:** ${activeCtx.defaultNamespace}`,
             '',
-            'Browse resources in the **F5 Distributed Cloud** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
+            'Browse resources in the **xcsh** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
           ].join('\n\n'),
         );
       }

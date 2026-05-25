@@ -46,7 +46,7 @@ export class CloudStatusDashboardProvider {
       return;
     }
 
-    this.panel = vscode.window.createWebviewPanel('cloudStatusDashboard', 'F5 Cloud Status', vscode.ViewColumn.One, {
+    this.panel = vscode.window.createWebviewPanel('cloudStatusDashboard', 'xcsh Cloud Status', vscode.ViewColumn.One, {
       enableScripts: true,
       retainContextWhenHidden: true,
       localResourceRoots: [],
@@ -264,14 +264,14 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>F5 Cloud Status</title>
+  <title>xcsh Cloud Status</title>
   <style>${this.getStyles()}</style>
 </head>
 <body>
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">F5</span>
+      <span class="logo">xcsh</span>
       <span class="title">Cloud Status Dashboard</span>
     </div>
     <div class="toolbar-right">
@@ -429,13 +429,13 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>F5 Cloud Status - Error</title>
+  <title>xcsh Cloud Status - Error</title>
   <style>${this.getStyles()}</style>
 </head>
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="logo">F5</span>
+      <span class="logo">xcsh</span>
       <span class="title">Cloud Status Dashboard</span>
     </div>
     <div class="toolbar-right">
@@ -1847,7 +1847,7 @@ export class CloudStatusDashboardProvider {
 
       xcDetailsHtml = `
       <div class="info-card xc-details">
-        <h3>Regional Edge Details <span class="xc-badge">F5 XC</span></h3>
+        <h3>Regional Edge Details <span class="xc-badge">xcsh</span></h3>
         <div class="info-item">
           <span class="label">Site Name:</span>
           <span class="value">${this.escapeHtml(siteName)}</span>
@@ -1900,7 +1900,7 @@ export class CloudStatusDashboardProvider {
         <div class="auth-icon">ℹ️</div>
         <div class="auth-message">
           <strong>Extended Details Available</strong>
-          <p>Sign in to an F5 XC profile to view additional Regional Edge details including region classification and tenant information.</p>
+          <p>Sign in to an xcsh context to view additional Regional Edge details including region classification and tenant information.</p>
         </div>
       </div>
       `;

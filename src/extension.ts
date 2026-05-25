@@ -30,7 +30,7 @@ let logger: Logger;
 
 export function activate(context: vscode.ExtensionContext): void {
   logger = getLogger();
-  logger.info('F5 Distributed Cloud extension is activating...');
+  logger.info('xcsh extension is activating...');
 
   // Run one-time profile-to-context migration
   const migrationResult = migrateProfilesToContexts();
@@ -279,9 +279,9 @@ export function activate(context: vscode.ExtensionContext): void {
   // Register conflict diagnostics provider
   registerConflictDiagnostics(context);
 
-  logger.info('F5 Distributed Cloud extension activated successfully');
+  logger.info('xcsh extension activated successfully');
 }
 
 export function deactivate(): void {
-  logger?.info('F5 Distributed Cloud extension deactivated');
+  logger?.info('xcsh extension deactivated');
 }

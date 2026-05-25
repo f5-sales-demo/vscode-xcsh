@@ -1,27 +1,26 @@
 ---
 name: f5xc-resource-management
 description:
-  Guide for creating, updating, listing, and deleting F5 Distributed Cloud
-  resources including HTTP load balancers, origin pools, health checks, WAF
-  policies, and service policies. Use when the user wants to manage F5 XC
-  infrastructure or asks about creating, configuring, or deploying F5 XC
-  resources.
+  Guide for creating, updating, listing, and deleting xcsh resources including
+  HTTP load balancers, origin pools, health checks, WAF policies, and service
+  policies. Use when the user wants to manage xcsh infrastructure or asks about
+  creating, configuring, or deploying xcsh resources.
 ---
 
-# F5 XC Resource Management
+# xcsh Resource Management
 
 ## When to Use
 
-- User wants to create, update, list, or delete F5 XC resources
+- User wants to create, update, list, or delete xcsh resources
 - User asks about load balancers, origin pools, health checks, WAF policies
 - User references F5 Distributed Cloud infrastructure
 
 ## Core Workflow
 
 1. **Identify the resource type** from the user's request
-2. **Check active context** — ensure an F5 XC context is configured with the
+2. **Check active context** — ensure an xcsh context is configured with the
    correct namespace
-3. **Use xcsh** to perform the operation via the F5 XC API
+3. **Use xcsh** to perform the operation via the F5 Distributed Cloud API
 
 ## Resource Types
 
@@ -68,7 +67,7 @@ specify explicitly.
 
 ## API Spec Extensions
 
-When working with F5 XC configurations, these enrichment extensions provide
+When working with xcsh configurations, these enrichment extensions provide
 guidance:
 
 - `x-f5xc-minimum-configuration` — minimum required fields for resource creation

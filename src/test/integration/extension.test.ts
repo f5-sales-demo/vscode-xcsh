@@ -12,7 +12,7 @@ suite('Extension Test Suite', () => {
   // Allow extension to activate
   suiteSetup(async () => {
     // Wait for the extension to activate
-    const ext = vscode.extensions.getExtension('f5xc-salesdemos.f5xc-tools');
+    const ext = vscode.extensions.getExtension('f5xc-salesdemos.xcsh');
     if (ext && !ext.isActive) {
       await ext.activate();
     }
@@ -21,12 +21,12 @@ suite('Extension Test Suite', () => {
   });
 
   test('Extension should be present', () => {
-    const extension = vscode.extensions.getExtension('f5xc-salesdemos.f5xc-tools');
+    const extension = vscode.extensions.getExtension('f5xc-salesdemos.xcsh');
     assert.ok(extension, 'Extension should be found');
   });
 
   test('Extension should activate', async () => {
-    const extension = vscode.extensions.getExtension('f5xc-salesdemos.f5xc-tools');
+    const extension = vscode.extensions.getExtension('f5xc-salesdemos.xcsh');
     assert.ok(extension, 'Extension should be found');
 
     if (!extension.isActive) {
@@ -36,7 +36,7 @@ suite('Extension Test Suite', () => {
     assert.strictEqual(extension.isActive, true, 'Extension should be active');
   });
 
-  test('F5 XC commands should be registered', async () => {
+  test('xcsh commands should be registered', async () => {
     const commands = await vscode.commands.getCommands(true);
 
     // Check for core commands
@@ -59,11 +59,11 @@ suite('Extension Test Suite', () => {
     }
   });
 
-  test('F5 XC views should be available', () => {
+  test('xcsh views should be available', () => {
     // Views are declared in package.json, so they should exist
     // We can't directly test view visibility without UI interaction
     // but we can verify the extension doesn't throw during activation
-    const extension = vscode.extensions.getExtension('f5xc-salesdemos.f5xc-tools');
+    const extension = vscode.extensions.getExtension('f5xc-salesdemos.xcsh');
     assert.ok(extension?.isActive, 'Extension should be active with views registered');
   });
 
@@ -108,6 +108,6 @@ suite('Tree View Test Suite', () => {
     // Verify the tree view command context
     const commands = await vscode.commands.getCommands(true);
     const explorerCommands = commands.filter((cmd) => cmd.startsWith('f5xc.'));
-    assert.ok(explorerCommands.length > 0, 'F5 XC commands should be registered');
+    assert.ok(explorerCommands.length > 0, 'xcsh commands should be registered');
   });
 });

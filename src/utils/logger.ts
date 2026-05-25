@@ -87,7 +87,7 @@ let defaultLogger: Logger | undefined;
 
 export function getLogger(): Logger {
   if (!defaultLogger) {
-    defaultLogger = new Logger('F5 XC');
+    defaultLogger = new Logger('xcsh');
   }
   return defaultLogger;
 }

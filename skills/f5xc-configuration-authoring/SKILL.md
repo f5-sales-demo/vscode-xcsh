@@ -1,24 +1,24 @@
 ---
 name: f5xc-configuration-authoring
 description:
-  Guide for writing F5 Distributed Cloud configuration files in JSON or YAML,
-  understanding field relationships, resolving oneOf conflicts, and building
-  minimum viable configurations. Use when the user is writing or editing F5 XC
-  config files or asks about field requirements and relationships.
+  Guide for writing xcsh configuration files in JSON or YAML, understanding
+  field relationships, resolving oneOf conflicts, and building minimum viable
+  configurations. Use when the user is writing or editing xcsh config files or
+  asks about field requirements and relationships.
 ---
 
-# F5 XC Configuration Authoring
+# xcsh Configuration Authoring
 
 ## When to Use
 
-- User is writing or editing F5 XC configuration files (JSON or YAML)
+- User is writing or editing xcsh configuration files (JSON or YAML)
 - User asks about required fields or field relationships
-- User encounters validation errors in F5 XC configs
+- User encounters validation errors in xcsh configs
 - User wants to understand oneOf choices or mutual exclusivity
 
 ## Configuration Structure
 
-Every F5 XC resource configuration follows this structure:
+Every xcsh resource configuration follows this structure:
 
 ```yaml
 metadata:

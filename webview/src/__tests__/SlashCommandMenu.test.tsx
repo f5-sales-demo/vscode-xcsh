@@ -22,7 +22,7 @@ describe('SlashCommandMenu', () => {
   it('shows descriptions for each command', () => {
     render(<SlashCommandMenu onSelect={jest.fn()} onClose={jest.fn()} />);
     expect(screen.getByText('Show integration health')).toBeInTheDocument();
-    expect(screen.getByText('Show active F5 XC context')).toBeInTheDocument();
+    expect(screen.getByText('Show active xcsh context')).toBeInTheDocument();
     expect(screen.getByText('Browse current namespace')).toBeInTheDocument();
   });
 });

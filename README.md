@@ -6,11 +6,13 @@
 [![Release](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/release.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/release.yml)
 [![License](https://img.shields.io/github/license/f5xc-salesdemos/vscode-f5xc-tools)](LICENSE)
 
-VS Code extension for managing F5 Distributed Cloud resources with IntelliSense and xcsh chat
+Agentic Platform Shell — manage F5 Distributed Cloud resources from VS Code with
+IntelliSense and xcsh chat
 
 ## Documentation
 
-Full documentation is available at **[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
+Full documentation is available at
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
 
 ## Getting Started
 
@@ -18,13 +20,13 @@ Full documentation is available at **[https://f5xc-salesdemos.github.io/vscode-f
 git clone https://github.com/f5xc-salesdemos/vscode-f5xc-tools.git
 ```
 
-See the [documentation](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) for detailed setup
-and usage guides.
+See the [documentation](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)
+for detailed setup and usage guides.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow rules,
-branch naming, and CI requirements.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow rules, branch naming, and CI
+requirements.
 
 ## License
 

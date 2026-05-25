@@ -51,7 +51,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
 
     if (!profileName || parts.length !== 3) {
       throw vscode.FileSystemError.FileNotFound(
-        `Invalid F5 XC URI format: ${uri.toString()}. Expected: f5xc://profile/namespace/resourceType/resourceName.json`,
+        `Invalid xcsh URI format: ${uri.toString()}. Expected: f5xc://profile/namespace/resourceType/resourceName.json`,
       );
     }
 
@@ -301,7 +301,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: `Saving ${resourceName} to F5 XC...`,
+          title: `Saving ${resourceName}...`,
           cancellable: false,
         },
         async () => {

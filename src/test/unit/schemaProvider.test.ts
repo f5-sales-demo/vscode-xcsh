@@ -36,7 +36,7 @@ jest.mock(
         dispose: jest.fn(),
         clear: jest.fn(),
         replace: jest.fn(),
-        name: 'F5 XC',
+        name: 'xcsh',
       })),
     },
     workspace: {
@@ -111,7 +111,7 @@ describe('F5XCSchemaProvider', () => {
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
 
       const parsed = JSON.parse(content);
-      expect(parsed.title).toBe('F5 XC Resource');
+      expect(parsed.title).toBe('xcsh Resource');
     });
 
     it('should return error schema for invalid URI format', () => {
@@ -150,7 +150,7 @@ describe('F5XCSchemaProvider', () => {
 
       // Should fall back to generic schema
       const parsed = JSON.parse(content);
-      expect(parsed.title).toBe('F5 XC Resource');
+      expect(parsed.title).toBe('xcsh Resource');
     });
   });
 

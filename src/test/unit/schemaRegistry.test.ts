@@ -22,7 +22,7 @@ jest.mock(
         dispose: jest.fn(),
         clear: jest.fn(),
         replace: jest.fn(),
-        name: 'F5 XC',
+        name: 'xcsh',
       })),
     },
     workspace: {
@@ -122,7 +122,7 @@ describe('Schema Registry', () => {
 
       expect(schema).toBeDefined();
       expect(schema.$id).toContain('generic');
-      expect(schema.title).toBe('F5 XC Resource');
+      expect(schema.title).toBe('xcsh Resource');
     });
 
     it('should cache generic schema', () => {
@@ -145,7 +145,7 @@ describe('Schema Registry', () => {
       const content = registry.getSchemaContent('generic');
 
       const parsed = JSON.parse(content);
-      expect(parsed.title).toBe('F5 XC Resource');
+      expect(parsed.title).toBe('xcsh Resource');
     });
 
     it('should return generic schema for unknown resource type', () => {
@@ -153,7 +153,7 @@ describe('Schema Registry', () => {
 
       const parsed = JSON.parse(content);
       // Should fall back to generic schema
-      expect(parsed.title).toBe('F5 XC Resource');
+      expect(parsed.title).toBe('xcsh Resource');
     });
 
     it('should return properly formatted JSON', () => {

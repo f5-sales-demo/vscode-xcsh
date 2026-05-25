@@ -1,7 +1,7 @@
 {
-  "name": "f5xc-tools",
-  "displayName": "F5 XC Platform Tools",
-  "description": "Manage F5 Distributed Cloud resources directly from VS Code",
+  "name": "xcsh",
+  "displayName": "xcsh",
+  "description": "Agentic Platform Shell",
   "version": "2.2605.251528",
   "publisher": "f5xc-salesdemos",
   "license": "Apache-2.0",
@@ -36,7 +36,7 @@
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "F5 Distributed Cloud",
+      "title": "xcsh",
       "properties": {
         "f5xc.logLevel": {
           "type": "string",
@@ -47,7 +47,7 @@
             "error"
           ],
           "default": "info",
-          "description": "Log level for F5 XC extension"
+          "description": "Log level for xcsh extension"
         },
         "f5xc.defaultNamespace": {
           "type": "string",
@@ -155,7 +155,7 @@
       "activitybar": [
         {
           "id": "f5xc-explorer",
-          "title": "F5 Distributed Cloud",
+          "title": "xcsh",
           "icon": "resources/f5-icon.svg"
         },
         {
@@ -195,30 +195,30 @@
         {
           "id": "f5xc.profiles",
           "name": "Contexts",
-          "contextualTitle": "F5 XC Contexts"
+          "contextualTitle": "xcsh Contexts"
         },
         {
           "id": "f5xc.subscription",
           "name": "Subscription",
-          "contextualTitle": "F5 XC Subscription",
+          "contextualTitle": "xcsh Subscription",
           "when": "f5xc.hasActiveContext"
         },
         {
           "id": "f5xc.explorer",
           "name": "Resources",
-          "contextualTitle": "F5 XC Resources"
+          "contextualTitle": "xcsh Resources"
         },
         {
           "id": "f5xc.cloudStatus",
           "name": "Cloud Status",
-          "contextualTitle": "F5 Cloud Status"
+          "contextualTitle": "xcsh Cloud Status"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "f5xc.explorer",
-        "contents": "No F5 XC context configured.\n[Add Context](command:f5xc.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
+        "contents": "No xcsh context configured.\n[Add Context](command:f5xc.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
         "when": "!f5xc.hasActiveContext"
       }
     ],
@@ -226,227 +226,227 @@
       {
         "command": "f5xc.addContext",
         "title": "Add Context",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.editContext",
         "title": "Edit Context",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(edit)"
       },
       {
         "command": "f5xc.deleteContext",
         "title": "Delete Context",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.setActiveContext",
         "title": "Set as Active Context",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(check)"
       },
       {
         "command": "f5xc.clearAuthCache",
         "title": "Clear Authentication Cache",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(clear-all)"
       },
       {
         "command": "f5xc.refresh",
         "title": "Refresh",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
         "command": "f5xc.create",
         "title": "Create Resource",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.get",
         "title": "View Resource",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(eye)"
       },
       {
         "command": "f5xc.describe",
         "title": "Describe Resource",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.edit",
         "title": "Edit Resource",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(edit)"
       },
       {
         "command": "f5xc.delete",
         "title": "Delete Resource",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.deleteNamespace",
         "title": "Delete Namespace",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.describeNamespace",
         "title": "Describe Namespace",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.apply",
         "title": "Apply",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "f5xc.diff",
         "title": "Compare with Remote",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(diff)"
       },
       {
         "command": "f5xc.copyName",
         "title": "Copy Name",
-        "category": "F5 XC"
+        "category": "xcsh"
       },
       {
         "command": "f5xc.copyAsJson",
         "title": "Copy as JSON",
-        "category": "F5 XC"
+        "category": "xcsh"
       },
       {
         "command": "f5xc.viewLogs",
         "title": "View Logs",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(output)"
       },
       {
         "command": "f5xc.viewMetrics",
         "title": "View Metrics",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(graph)"
       },
       {
         "command": "f5xc.diagram",
         "title": "Generate Diagram",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
         "command": "f5xc.createFromTemplate",
         "title": "New from Template",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(file-add)"
       },
       {
         "command": "f5xc.openInBrowser",
         "title": "Open in Browser",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
         "command": "f5xc.toggleViewMode",
         "title": "Toggle View Mode (Console/Full)",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
         "command": "f5xc.cloudStatus.refresh",
         "title": "Refresh Cloud Status",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
         "command": "f5xc.cloudStatus.openDashboard",
         "title": "Open Cloud Status Dashboard",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(dashboard)"
       },
       {
         "command": "f5xc.cloudStatus.openExternal",
         "title": "Open Status Page in Browser",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
         "command": "f5xc.cloudStatus.viewMaintenance",
         "title": "View Maintenance Details",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.cloudStatus.viewIncident",
         "title": "View Incident Details",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(warning)"
       },
       {
         "command": "f5xc.cloudStatus.viewComponent",
         "title": "View Service Details",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(server)"
       },
       {
         "command": "f5xc.cloudStatus.viewPoP",
         "title": "View PoP Details",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(globe)"
       },
       {
         "command": "f5xc.showPlan",
         "title": "Show Subscription Plan",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(file-text)"
       },
       {
         "command": "f5xc.showQuotas",
         "title": "Show Quota Usage",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(graph)"
       },
       {
         "command": "f5xc.activateAddon",
         "title": "Activate Addon Service",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(rocket)"
       },
       {
         "command": "f5xc.createHealthcheckForm",
         "title": "Create Healthcheck (Form)",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.xcsh.openTerminal",
         "title": "Open xcsh Terminal",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(terminal)"
       },
       {
         "command": "f5xc.xcsh.restart",
         "title": "Restart xcsh",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(debug-restart)"
       },
       {
         "command": "f5xc.xcsh.openPanel",
         "title": "Open xcsh Panel",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(comment-discussion)"
       },
       {
         "command": "f5xc.xcsh.newSession",
         "title": "New xcsh Session",
-        "category": "F5 XC",
+        "category": "xcsh",
         "icon": "$(add)"
       }
     ],
@@ -762,24 +762,24 @@
     "languageModelChatProviders": [
       {
         "vendor": "f5xc",
-        "displayName": "F5 XC Shell Assistant"
+        "displayName": "xcsh"
       }
     ],
     "chatParticipants": [
       {
         "id": "f5xc.xcsh",
         "name": "xcsh",
-        "fullName": "F5 XC Shell Assistant",
-        "description": "Ask about F5 Distributed Cloud resources, configuration, and troubleshooting",
+        "fullName": "xcsh",
+        "description": "Ask about F5 Distributed Cloud resources, configuration, and troubleshooting via xcsh",
         "isSticky": true,
         "commands": [
           {
             "name": "status",
-            "description": "Show F5 XC integration health and connection status"
+            "description": "Show xcsh integration health and connection status"
           },
           {
             "name": "context",
-            "description": "Show active F5 XC context details (tenant, namespace, API URL)"
+            "description": "Show active xcsh context details (tenant, namespace, API URL)"
           },
           {
             "name": "resources",
