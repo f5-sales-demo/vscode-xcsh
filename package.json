@@ -887,7 +887,7 @@
   "dependencies": {
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "dompurify": "^3.2.6",
-    "marked": "^15.0.12",
+    "marked": "^18.0.4",
     "node-forge": "^1.4.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
