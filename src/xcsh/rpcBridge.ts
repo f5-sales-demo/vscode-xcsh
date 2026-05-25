@@ -149,6 +149,20 @@ export class XcshRpcBridge implements vscode.Disposable {
     return response.data as IntegrationsResponse;
   }
 
+  async setPermissionMode(mode: string): Promise<void> {
+    const response = await this.sendCommand({ type: 'set_permission_mode', mode });
+    if (!response.success) {
+      throw new Error(response.error ?? 'Failed to set permission mode');
+    }
+  }
+
+  async setThinkingLevel(level: string): Promise<void> {
+    const response = await this.sendCommand({ type: 'set_thinking_level', level });
+    if (!response.success) {
+      throw new Error(response.error ?? 'Failed to set thinking level');
+    }
+  }
+
   // ───────── event handling ─────────
 
   /**

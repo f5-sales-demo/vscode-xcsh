@@ -33,6 +33,11 @@ describe('webview protocol', () => {
       initProtocol: () => void;
       send: (msg: unknown) => void;
       on: (type: string, callback: (msg: Record<string, unknown>) => void) => () => void;
+      sendPrompt: (text: string) => void;
+      sendAbort: () => void;
+      sendSetMode: (mode: string) => void;
+      sendSetThinking: (level: string) => void;
+      sendRequestFilePicker: () => void;
     };
   }
 
@@ -71,5 +76,26 @@ describe('webview protocol', () => {
     } as unknown as MessageEvent);
 
     expect(received).toHaveLength(0);
+  });
+
+  it('sendSetMode posts set_mode message with mode', () => {
+    const { initProtocol, sendSetMode } = loadProtocol();
+    initProtocol();
+    sendSetMode('confirm');
+    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'set_mode', mode: 'confirm' });
+  });
+
+  it('sendSetThinking posts set_thinking message with level', () => {
+    const { initProtocol, sendSetThinking } = loadProtocol();
+    initProtocol();
+    sendSetThinking('high');
+    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'set_thinking', level: 'high' });
+  });
+
+  it('sendRequestFilePicker sends correct message', () => {
+    const { initProtocol, sendRequestFilePicker } = loadProtocol();
+    initProtocol();
+    sendRequestFilePicker();
+    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'request_file_picker' });
   });
 });
