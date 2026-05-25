@@ -83,7 +83,7 @@ export function buildFollowups(command: string | undefined): ChatFollowup[] {
   switch (command) {
     case 'status':
       return [
-        { prompt: 'Show my active context details', label: 'View Context' },
+        { prompt: 'Show active context details', label: 'View Context' },
         { prompt: 'List resources in current namespace', label: 'List Resources' },
       ];
     case 'context':
@@ -117,14 +117,14 @@ export function registerChatParticipant(
 ): vscode.Disposable {
   const logger = getLogger();
 
-  const handler: vscode.ChatRequestHandler = async (
-    request: vscode.ChatRequest,
-    _chatContext: vscode.ChatContext,
-    stream: vscode.ChatResponseStream,
-    token: vscode.CancellationToken,
-  ): Promise<vscode.ChatResult> => {
-    // Handle slash commands before the default path
-    if (request.command === 'status') {
+  const FOLLOWUP_PATTERNS: Array<{ pattern: RegExp; command: string }> = [
+    { pattern: /context\s*details/i, command: 'context' },
+    { pattern: /integration.*(?:health|status)/i, command: 'status' },
+    { pattern: /list\s*resources/i, command: 'resources' },
+  ];
+
+  const runSlashCommand = async (command: string, stream: vscode.ChatResponseStream): Promise<vscode.ChatResult> => {
+    if (command === 'status') {
       try {
         const integrations = await rpcBridge.getIntegrations();
         stream.markdown(formatStatusResponse(integrations));
@@ -134,7 +134,7 @@ export function registerChatParticipant(
       return { metadata: { command: 'status' } };
     }
 
-    if (request.command === 'context') {
+    if (command === 'context') {
       try {
         const activeCtx = await contextManager.getActiveContext();
         stream.markdown(formatContextResponse(activeCtx));
@@ -144,27 +144,46 @@ export function registerChatParticipant(
       return { metadata: { command: 'context' } };
     }
 
-    if (request.command === 'resources') {
-      try {
-        const activeCtx = await contextManager.getActiveContext();
-        if (!activeCtx) {
-          stream.markdown('No active F5 XC context. Use the **F5 XC: Add Context** command to configure one.');
-        } else {
-          const maskedUrl = activeCtx.apiUrl.replace(/\/api$/, '');
-          stream.markdown(
-            [
-              `**Resources for:** ${activeCtx.name}`,
-              `**Console:** ${maskedUrl}`,
-              `**Namespace:** ${activeCtx.defaultNamespace}`,
-              '',
-              'Browse resources in the **F5 Distributed Cloud** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
-            ].join('\n\n'),
-          );
-        }
-      } catch {
-        stream.markdown('Unable to fetch context. Is xcsh running?');
+    // resources
+    try {
+      const activeCtx = await contextManager.getActiveContext();
+      if (!activeCtx) {
+        stream.markdown('No active F5 XC context. Use the **F5 XC: Add Context** command to configure one.');
+      } else {
+        const maskedUrl = activeCtx.apiUrl.replace(/\/api$/, '');
+        stream.markdown(
+          [
+            `**Resources for:** ${activeCtx.name}`,
+            `**Console:** ${maskedUrl}`,
+            `**Namespace:** ${activeCtx.defaultNamespace}`,
+            '',
+            'Browse resources in the **F5 Distributed Cloud** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
+          ].join('\n\n'),
+        );
       }
-      return { metadata: { command: 'resources' } };
+    } catch {
+      stream.markdown('Unable to fetch context. Is xcsh running?');
+    }
+    return { metadata: { command: 'resources' } };
+  };
+
+  const handler: vscode.ChatRequestHandler = async (
+    request: vscode.ChatRequest,
+    _chatContext: vscode.ChatContext,
+    stream: vscode.ChatResponseStream,
+    token: vscode.CancellationToken,
+  ): Promise<vscode.ChatResult> => {
+    if (request.command) {
+      const prompt = request.prompt.trim();
+      logger.info(`Chat handler: command=${request.command}, prompt="${prompt}"`);
+      if (prompt) {
+        const matched = FOLLOWUP_PATTERNS.find((fp) => fp.pattern.test(prompt));
+        logger.info(`Chat handler: matched=${matched ? matched.command : 'none'}`);
+        if (matched) {
+          return runSlashCommand(matched.command, stream);
+        }
+      }
+      return runSlashCommand(request.command, stream);
     }
 
     const activeCtx = await contextManager.getActiveContext();
@@ -184,51 +203,71 @@ export function registerChatParticipant(
 
     // Set up event listeners for streaming response
     const disposables: vscode.Disposable[] = [];
+    let receivedAnyEvent = false;
+    const STREAM_TIMEOUT_MS = 120_000;
 
     const messagePromise = new Promise<void>((resolve, reject) => {
-      // Stream message updates as markdown
+      const timeout = setTimeout(() => {
+        logger.warn(
+          `Chat participant stream timed out after ${String(STREAM_TIMEOUT_MS)}ms (receivedAnyEvent=${String(receivedAnyEvent)})`,
+        );
+        resolve();
+      }, STREAM_TIMEOUT_MS);
+
+      disposables.push(new vscode.Disposable(() => clearTimeout(timeout)));
+
       disposables.push(
         rpcBridge.onMessageStream((event) => {
+          receivedAnyEvent = true;
           stream.markdown(event.text);
         }),
       );
 
-      // Show tool execution as progress
       disposables.push(
         rpcBridge.onEvent<ToolExecutionStart>('tool_execution_start', (event) => {
+          receivedAnyEvent = true;
           stream.progress(`Running ${event.toolName}...`);
         }),
       );
 
-      // Tool execution end (no-op for now, keeps listener reference)
       disposables.push(
         rpcBridge.onEvent<ToolExecutionEnd>('tool_execution_end', () => {
-          // Tool completed — progress auto-clears
+          receivedAnyEvent = true;
         }),
       );
 
       disposables.push(
         rpcBridge.onEvent('turn_end', () => {
+          receivedAnyEvent = true;
+          clearTimeout(timeout);
           resolve();
         }),
       );
 
-      // Listen for errors
+      disposables.push(
+        rpcBridge.onEvent('result', () => {
+          receivedAnyEvent = true;
+          clearTimeout(timeout);
+          resolve();
+        }),
+      );
+
       disposables.push(
         rpcBridge.onEvent('error', (event) => {
+          receivedAnyEvent = true;
+          clearTimeout(timeout);
           const errorMsg = (event as Record<string, unknown>).message;
           reject(new Error(typeof errorMsg === 'string' ? errorMsg : 'xcsh error'));
         }),
       );
 
-      // Handle cancellation
       token.onCancellationRequested(() => {
         rpcBridge.abort();
+        clearTimeout(timeout);
         resolve();
       });
     });
 
-    // Send the prompt
     rpcBridge.prompt(enrichedPrompt);
 
     try {

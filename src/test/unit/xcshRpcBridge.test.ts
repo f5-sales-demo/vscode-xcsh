@@ -245,4 +245,86 @@ describe('XcshRpcBridge', () => {
 
     await expect(promise).rejects.toThrow('Not supported');
   });
+
+  it('setPermissionMode sends set_permission_mode command', async () => {
+    const promise = bridge.setPermissionMode('confirm');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+    expect(sent.type).toBe('set_permission_mode');
+    expect(sent.mode).toBe('confirm');
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_permission_mode',
+      success: true,
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await promise;
+  });
+
+  it('setPermissionMode throws on failure response', async () => {
+    const promise = bridge.setPermissionMode('readonly');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_permission_mode',
+      success: false,
+      error: 'Invalid mode',
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await expect(promise).rejects.toThrow('Invalid mode');
+  });
+
+  it('setThinkingLevel sends set_thinking_level command', async () => {
+    const promise = bridge.setThinkingLevel('high');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+    expect(sent.type).toBe('set_thinking_level');
+    expect(sent.level).toBe('high');
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_thinking_level',
+      success: true,
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await promise;
+  });
+
+  it('setThinkingLevel throws on failure response', async () => {
+    const promise = bridge.setThinkingLevel('ultra');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_thinking_level',
+      success: false,
+      error: 'Unknown level',
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await expect(promise).rejects.toThrow('Unknown level');
+  });
 });

@@ -3,7 +3,9 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PlusIcon, SendIcon, StopIcon } from '../assets/icons';
+import { on, sendRequestFilePicker, sendSetMode, sendSetThinking } from '../lib/protocol';
 import { ModesMenu } from './ModesMenu';
+import { SlashCommandMenu } from './SlashCommandMenu';
 
 interface InputBarProps {
   onSubmit: (text: string) => void;
@@ -15,20 +17,27 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
   const inputRef = useRef<HTMLDivElement>(null);
   const [text, setText] = useState('');
   const [showModesMenu, setShowModesMenu] = useState(false);
+  const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [permissionMode, setPermissionMode] = useState('auto');
   const [thinkingLevel, setThinkingLevel] = useState('medium');
+  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
 
   const handleSubmit = useCallback(() => {
     const currentText = inputRef.current?.textContent ?? text;
-    if (!currentText.trim()) {
+    if (!currentText.trim() && !attachedFile) {
       return;
     }
-    onSubmit(currentText.trim());
+    let finalText = currentText.trim();
+    if (attachedFile) {
+      finalText = `[Attached: ${attachedFile.name}]\n\n${attachedFile.content}\n\n${finalText}`;
+      setAttachedFile(null);
+    }
+    onSubmit(finalText);
     if (inputRef.current) {
       inputRef.current.textContent = '';
     }
     setText('');
-  }, [text, onSubmit]);
+  }, [text, onSubmit, attachedFile]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -36,12 +45,17 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
         e.preventDefault();
         handleSubmit();
       }
-      if (e.key === 'Escape' && busy) {
+      if (e.key === 'Escape') {
         e.preventDefault();
-        onInterrupt();
+        if (showSlashMenu || showModesMenu) {
+          setShowSlashMenu(false);
+          setShowModesMenu(false);
+        } else if (busy) {
+          onInterrupt();
+        }
       }
     },
-    [handleSubmit, busy, onInterrupt],
+    [handleSubmit, busy, onInterrupt, showSlashMenu, showModesMenu],
   );
 
   const handleInput = useCallback(() => {
@@ -55,9 +69,48 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
   }, [busy]);
 
   useEffect(() => {
-    const handler = () => setShowModesMenu(false);
+    const handler = () => {
+      setShowModesMenu(false);
+      setShowSlashMenu(false);
+    };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
+  }, []);
+
+  const handleAttachClick = useCallback(() => {
+    sendRequestFilePicker();
+  }, []);
+
+  useEffect(() => {
+    const unsub = on('file_attached', (msg) => {
+      if (typeof msg.name === 'string' && typeof msg.content === 'string') {
+        setAttachedFile({ name: msg.name, content: msg.content });
+      }
+    });
+    return unsub;
+  }, []);
+
+  const handleSlashSelect = useCallback(
+    (command: string) => {
+      setAttachedFile(null);
+      if (inputRef.current) {
+        inputRef.current.textContent = '';
+      }
+      setText('');
+      onSubmit(command);
+      setShowSlashMenu(false);
+    },
+    [onSubmit],
+  );
+
+  const handleModeChange = useCallback((mode: string) => {
+    setPermissionMode(mode);
+    sendSetMode(mode);
+  }, []);
+
+  const handleThinkingChange = useCallback((level: string) => {
+    setThinkingLevel(level);
+    sendSetThinking(level);
   }, []);
 
   const placeholder = busy ? 'xcsh is responding...' : 'Ask xcsh...';
@@ -81,20 +134,46 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
           suppressContentEditableWarning
         />
       </div>
+      {attachedFile && (
+        <div className="attachedFileChip">
+          <span className="attachedFileName">{attachedFile.name}</span>
+          <button type="button" className="attachedFileRemove" title="Remove" onClick={() => setAttachedFile(null)}>
+            ×
+          </button>
+        </div>
+      )}
       <div className="inputFooter">
-        <button type="button" className="footerBtn addBtn" title="Add">
+        <button type="button" className="footerBtn addBtn" title="Add file" onClick={handleAttachClick}>
           <PlusIcon />
         </button>
+        <div className="slashBtnContainer" style={{ position: 'relative' }}>
+          {showSlashMenu && (
+            <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 10 }}>
+              <SlashCommandMenu onSelect={handleSlashSelect} onClose={() => setShowSlashMenu(false)} />
+            </div>
+          )}
+          <button
+            type="button"
+            className="footerBtn slashBtn"
+            title="Slash commands"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowSlashMenu(!showSlashMenu);
+            }}
+          >
+            <span>/</span>
+          </button>
+        </div>
         <div className="footerSpacer" />
         <div className="modesBtnContainer" style={{ position: 'relative' }}>
           {showModesMenu && (
             <div style={{ position: 'absolute', bottom: '100%', right: 0, marginBottom: 4, zIndex: 10 }}>
               <ModesMenu
                 currentMode={permissionMode}
-                onSelect={setPermissionMode}
+                onSelect={handleModeChange}
                 onClose={() => setShowModesMenu(false)}
                 thinkingLevel={thinkingLevel}
-                onThinkingChange={setThinkingLevel}
+                onThinkingChange={handleThinkingChange}
               />
             </div>
           )}
@@ -120,7 +199,7 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
             className="footerBtn sendBtn"
             title="Send (Enter)"
             onClick={handleSubmit}
-            disabled={!text.trim()}
+            disabled={!text.trim() && !attachedFile}
           >
             <SendIcon />
           </button>

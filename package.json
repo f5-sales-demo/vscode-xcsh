@@ -629,6 +629,11 @@
         "key": "ctrl+shift+r",
         "mac": "cmd+shift+r",
         "when": "view == f5xc.explorer"
+      },
+      {
+        "command": "f5xc.xcshPanel.focus",
+        "key": "ctrl+escape",
+        "mac": "cmd+escape"
       }
     ],
     "jsonValidation": [

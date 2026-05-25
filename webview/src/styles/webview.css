@@ -383,3 +383,43 @@ html {
 .thinkingLevelBtn { background: none; border: 1px solid var(--app-primary-border-color); color: var(--app-secondary-foreground); font-size: 11px; padding: 2px 8px; border-radius: var(--corner-radius-small); cursor: pointer; }
 .thinkingLevelBtn:hover { background: var(--app-list-hover-background); }
 .thinkingLevelBtn.active { background: var(--app-xcsh-red); color: white; border-color: var(--app-xcsh-red); }
+
+/* Slash command menu */
+.slashMenu { background: var(--app-menu-background); border: 1px solid var(--app-primary-border-color); border-radius: var(--corner-radius-large); padding: 4px 0; min-width: 220px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+.slashMenuItem { display: flex; flex-direction: column; gap: 2px; width: 100%; background: none; border: none; padding: 6px 12px; cursor: pointer; text-align: left; color: var(--app-primary-foreground); }
+.slashMenuItem:hover { background: var(--app-list-hover-background); }
+.slashMenuCommand { font-size: 13px; font-weight: 500; font-family: var(--app-monospace-font-family); }
+.slashMenuDescription { font-size: 11px; color: var(--app-secondary-foreground); }
+.slashBtn { font-weight: 700; font-size: 14px; }
+
+/* Attached file chip */
+.attachedFileChip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 4px 12px;
+  padding: 2px 8px;
+  background: var(--app-tool-background);
+  border: 1px solid var(--app-primary-border-color);
+  border-radius: var(--corner-radius-small);
+  font-size: 11px;
+  color: var(--app-secondary-foreground);
+  position: relative;
+  z-index: 1;
+}
+.attachedFileName {
+  font-family: var(--app-monospace-font-family);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attachedFileRemove {
+  background: none;
+  border: none;
+  color: var(--app-secondary-foreground);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+  line-height: 1;
+}
+.attachedFileRemove:hover { color: var(--app-primary-foreground); }

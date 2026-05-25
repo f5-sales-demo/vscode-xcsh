@@ -140,9 +140,11 @@ describe('buildFollowups', () => {
     expect(followups.some((f) => f.prompt.includes('details'))).toBe(true);
   });
 
-  it('returns status followups for status commands', () => {
+  it('returns status followups with cross-command prompts', () => {
     const followups = buildFollowups('status');
-    expect(followups.length).toBeGreaterThan(0);
+    expect(followups.length).toBe(2);
+    expect(followups[0]?.label).toBe('View Context');
+    expect(followups[1]?.label).toBe('List Resources');
   });
 
   it('returns general followups for unknown commands', () => {
