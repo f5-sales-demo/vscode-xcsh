@@ -462,10 +462,10 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.DNS,
     supportsCustomOps: true,
     icon: 'globe',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
     // DNS API uses /api/config/dns/namespaces/{namespace}/... path
     customListPath: '/api/config/dns/namespaces/{namespace}/dns_zones',
     customGetPath: '/api/config/dns/namespaces/{namespace}/dns_zones/{name}',
-    // Note: namespaceProfile for system comes from generated base via namespace-scope-overrides.json
   },
   dns_load_balancer: {
     apiPath: 'dns_load_balancers',
@@ -607,16 +607,19 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.Kubernetes,
     supportsCustomOps: false,
     icon: 'layers',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   virtual_site: {
     category: ResourceCategory.Kubernetes,
     supportsCustomOps: false,
     icon: 'organization',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
   site_mesh_group: {
     category: ResourceCategory.ServiceMesh,
     supportsCustomOps: false,
     icon: 'git-merge',
+    namespaceProfile: SYSTEM_NAMESPACE_PROFILE,
   },
 
   // =====================================================
@@ -1054,8 +1057,9 @@ function mergeResourceType(
   const domainCategory = getCategoryFromDomain(generated?.domain);
   const category = override.category ?? domainCategory ?? ResourceCategory.Configuration;
 
+  const namespaceProfile = override.namespaceProfile ?? generated?.namespaceProfile;
+
   // Start with defaults
-  // For namespaceProfile: use override first, then generated, then undefined (no profile)
   const result: ResourceTypeInfo = {
     apiPath: override.apiPath || generated?.apiPath || `${key}s`,
     displayName: override.displayName || generated?.displayName || key,
@@ -1066,7 +1070,7 @@ function mergeResourceType(
     icon: override.icon,
     supportsLogs: override.supportsLogs,
     supportsMetrics: override.supportsMetrics,
-    namespaceProfile: override.namespaceProfile ?? generated?.namespaceProfile,
+    namespaceProfile,
     apiBase: override.apiBase || generated?.apiBase || 'config',
     // Include service segment for extended API paths (e.g., /api/config/dns/...)
     serviceSegment: (generated as { serviceSegment?: string } | undefined)?.serviceSegment,
