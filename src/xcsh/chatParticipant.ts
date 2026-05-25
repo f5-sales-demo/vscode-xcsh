@@ -41,12 +41,25 @@ export function buildPromptWithContext(userPrompt: string, ctx: F5XCContext | nu
 }
 
 export function formatStatusResponse(integrations: IntegrationsResponse): string {
-  const lines: string[] = [`**xcsh** v${integrations.version}\n`, '| Integration | Status | Action |', '|---|---|---|'];
-  for (const svc of integrations.services) {
-    const icon = svc.state === 'connected' ? '✅' : svc.state === 'unauthenticated' ? '⚠️' : '⭘';
-    const action = svc.hint ?? '';
-    lines.push(`| ${icon} ${svc.name} | ${svc.state} | ${action} |`);
+  const connected = integrations.services.filter((s) => s.state === 'connected');
+  const issues = integrations.services.filter((s) => s.state !== 'connected');
+
+  const lines: string[] = [`**xcsh** v${integrations.version}\n`];
+
+  if (connected.length > 0) {
+    lines.push(connected.map((s) => `✅ ${s.name}`).join(' · '));
   }
+
+  for (const svc of issues) {
+    const icon = svc.state === 'unauthenticated' ? '⚠️' : '⭘';
+    const label = svc.state === 'unauthenticated' ? 'needs authentication' : 'not installed';
+    lines.push(`\n${icon} **${svc.name}** — ${label}${svc.hint ? `\n\n\`${svc.hint}\`` : ''}`);
+  }
+
+  if (issues.length === 0) {
+    lines.push('\nAll integrations connected.');
+  }
+
   return lines.join('\n');
 }
 
