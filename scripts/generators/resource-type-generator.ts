@@ -16,6 +16,7 @@ import * as path from 'node:path';
 import {
   loadValidationData,
   type NamespaceProfile,
+  type NamespaceType,
   type ParsedSpecInfo,
   parseAllDomainFiles,
   parseAllSpecs,
@@ -37,13 +38,14 @@ export type {
 } from './spec-parser';
 
 /**
- * Structure of the namespace scope overrides file
+ * Structure of the namespace scope overrides file.
+ * Per-resource allowedNamespaces arrays.
  */
 interface NamespaceScopeOverrides {
   overrides: {
-    system: { resources: string[] };
-    shared: { resources: string[] };
-    any: { resources: string[] };
+    [resourceKey: string]: {
+      allowedNamespaces: NamespaceType[];
+    };
   };
 }
 
@@ -91,50 +93,51 @@ function loadDisplayNameOverrides(overridesPath: string): DisplayNameOverrides |
   }
 }
 
-/** Helper to build a NamespaceProfile for a given scope string from the overrides file. */
-function profileForScope(scope: 'system' | 'shared' | 'any'): NamespaceProfile {
-  switch (scope) {
-    case 'system':
-      return {
-        constraint: { allowed: ['system'], enforced: true },
-        recommendation: { primary: 'system', rationale: 'System-scoped resource' },
-        classification: { category: 'infrastructure', multiTenantPattern: 'none' },
-      };
-    case 'shared':
-      return {
-        constraint: { allowed: ['shared'], enforced: true },
-        recommendation: { primary: 'shared', rationale: 'Shared-scoped resource' },
-        classification: { category: 'shared', multiTenantPattern: 'shared-ref' },
-      };
-    default:
-      return {
-        constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
-        recommendation: { primary: 'custom', rationale: 'User namespace resource' },
-        classification: { category: 'general', multiTenantPattern: 'per-tenant' },
-      };
-  }
+/** Helper to build a NamespaceProfile for a given allowedNamespaces array. */
+function profileForAllowedNamespaces(allowed: NamespaceType[]): NamespaceProfile {
+  // Determine primary recommendation based on allowed namespaces
+  const primary: NamespaceType = allowed.includes('system')
+    ? 'system'
+    : allowed.includes('shared') && allowed.length === 1
+      ? 'shared'
+      : 'custom';
+
+  // Determine category and pattern based on allowed namespaces
+  const isSystemOnly = allowed.length === 1 && allowed.includes('system');
+  const isSharedOnly = allowed.length === 1 && allowed.includes('shared');
+
+  return {
+    constraint: { allowed, enforced: isSystemOnly || isSharedOnly },
+    recommendation: {
+      primary,
+      rationale: isSystemOnly
+        ? 'System-scoped resource'
+        : isSharedOnly
+          ? 'Shared-scoped resource'
+          : 'User namespace resource',
+    },
+    classification: {
+      category: isSystemOnly ? 'infrastructure' : isSharedOnly ? 'shared' : 'general',
+      multiTenantPattern: isSystemOnly ? 'none' : isSharedOnly ? 'shared-ref' : 'per-tenant',
+    },
+  };
 }
 
 /**
- * Apply namespace scope overrides to parsed specs as NamespaceProfile
+ * Apply namespace scope overrides to parsed specs as NamespaceProfile.
+ * Each override specifies allowedNamespaces for a specific resource key.
  */
 function applyScopeOverrides(specs: ParsedSpecInfo[], overrides: NamespaceScopeOverrides): number {
   let count = 0;
-  const systemResources = new Set(overrides.overrides.system.resources);
-  const sharedResources = new Set(overrides.overrides.shared.resources);
-  const anyResources = new Set(overrides.overrides.any.resources);
 
   for (const spec of specs) {
-    if (systemResources.has(spec.resourceKey)) {
-      spec.namespaceProfile = profileForScope('system');
-      count++;
-    } else if (sharedResources.has(spec.resourceKey)) {
-      spec.namespaceProfile = profileForScope('shared');
-      count++;
-    } else if (anyResources.has(spec.resourceKey)) {
-      spec.namespaceProfile = profileForScope('any');
-      count++;
+    const override = overrides.overrides[spec.resourceKey];
+    if (!override) {
+      continue;
     }
+
+    spec.namespaceProfile = profileForAllowedNamespaces(override.allowedNamespaces);
+    count++;
   }
 
   return count;
