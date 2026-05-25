@@ -1,46 +1,29 @@
 {
-  "$schema": "./namespace-scope-overrides.schema.json",
-  "description": "Manual namespace scope overrides for resources where the OpenAPI-derived scope doesn't match actual F5 XC behavior",
-  "generatedNote": "These overrides are applied on top of the OpenAPI-derived scopes",
+  "description": "Manual namespace scope overrides for resources where the OpenAPI-derived scope doesn't match actual F5 XC behavior. Each key is a resource key mapping to its allowed NamespaceType[] array.",
+  "generatedNote": "These overrides are applied on top of the OpenAPI-derived namespace arrays",
   "overrides": {
-    "system": {
-      "description": "Resources that should ONLY appear in the system namespace, regardless of their API path patterns",
-      "reason": "These resources are tenant-level system objects that can only be managed in the system namespace",
-      "resources": [
-        "aws_vpc_site",
-        "aws_tgw_site",
-        "azure_vnet_site",
-        "gcp_vpc_site",
-        "voltstack_site",
-        "securemesh_site",
-        "securemesh_site_v2",
-        "site",
-        "virtual_site",
-        "site_mesh_group",
-        "fleet",
-        "token",
-        "user",
-        "role",
-        "user_role",
-        "api_credential",
-        "service_credential",
-        "namespace_role",
-        "known_label",
-        "known_label_key",
-        "tenant",
-        "tenant_management",
-        "dns_zone"
-      ]
-    },
-    "shared": {
-      "description": "Resources that should ONLY appear in the shared namespace",
-      "reason": "These resources are specifically designed to be shared across namespaces",
-      "resources": []
-    },
-    "any": {
-      "description": "Resources explicitly available in all user namespaces (shared, default, custom) but NOT system",
-      "reason": "Override for resources incorrectly marked as system-only by API path analysis",
-      "resources": []
-    }
+    "aws_vpc_site": { "allowedNamespaces": ["system"] },
+    "aws_tgw_site": { "allowedNamespaces": ["system"] },
+    "azure_vnet_site": { "allowedNamespaces": ["system"] },
+    "gcp_vpc_site": { "allowedNamespaces": ["system"] },
+    "voltstack_site": { "allowedNamespaces": ["system"] },
+    "securemesh_site": { "allowedNamespaces": ["system"] },
+    "securemesh_site_v2": { "allowedNamespaces": ["system"] },
+    "site": { "allowedNamespaces": ["system"] },
+    "virtual_site": { "allowedNamespaces": ["system"] },
+    "site_mesh_group": { "allowedNamespaces": ["system"] },
+    "fleet": { "allowedNamespaces": ["system"] },
+    "token": { "allowedNamespaces": ["system"] },
+    "user": { "allowedNamespaces": ["system"] },
+    "role": { "allowedNamespaces": ["system"] },
+    "user_role": { "allowedNamespaces": ["system"] },
+    "api_credential": { "allowedNamespaces": ["system"] },
+    "service_credential": { "allowedNamespaces": ["system"] },
+    "namespace_role": { "allowedNamespaces": ["system"] },
+    "known_label": { "allowedNamespaces": ["system"] },
+    "known_label_key": { "allowedNamespaces": ["system"] },
+    "tenant": { "allowedNamespaces": ["system"] },
+    "tenant_management": { "allowedNamespaces": ["system"] },
+    "dns_zone": { "allowedNamespaces": ["system"] }
   }
 }

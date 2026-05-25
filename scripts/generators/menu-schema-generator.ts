@@ -18,22 +18,17 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
+import type { NamespaceType } from './spec-parser';
 
 /**
- * Manual override configuration structure
+ * Manual override configuration structure.
+ * Per-resource allowedNamespaces arrays.
  */
 interface ScopeOverrides {
-  overrides: {
-    system: { resources: string[] };
-    shared: { resources: string[] };
-    any: { resources: string[] };
+  [resourceKey: string]: {
+    allowedNamespaces: NamespaceType[];
   };
 }
-
-/**
- * Namespace scope derived from API path patterns (legacy scope string for menu schema output)
- */
-type NamespaceScopeLegacy = 'system' | 'shared' | 'any';
 
 /**
  * API path analysis result
@@ -57,8 +52,7 @@ interface ResourceAnalysis {
   apiBase: 'config' | 'web';
   schemaFile: string;
   paths: PathAnalysis[];
-  derivedScope: NamespaceScopeLegacy;
-  scopeReason: string;
+  allowedNamespaces: NamespaceType[];
 }
 
 /**
@@ -74,7 +68,7 @@ interface NamespaceMenuSchema {
         key: string;
         displayName: string;
         apiPath: string;
-        scope: NamespaceScopeLegacy;
+        allowedNamespaces: NamespaceType[];
       }[];
     };
   };
@@ -90,7 +84,8 @@ interface MenuSchemaOutput {
   scopeSummary: {
     system: number;
     shared: number;
-    any: number;
+    default: number;
+    custom: number;
   };
   namespaceSchemas: {
     system: NamespaceMenuSchema;
@@ -172,29 +167,27 @@ function analyzePath(apiPath: string): PathAnalysis {
 }
 
 /**
- * Derive namespace scope from x-f5xc-namespace-profile constraint.allowed.
- * Maps profile allowed values to legacy scope values used by the menu schema.
+ * Derive allowed namespaces from x-f5xc-namespace-profile constraint.allowed.
+ * Returns the constraint.allowed array directly as NamespaceType[].
  */
-function deriveScopeFromProfile(
+function deriveNamespacesFromProfile(
   profile: NonNullable<OpenAPISpec['info']>['x-f5xc-namespace-profile'],
-): { scope: NamespaceScopeLegacy; reason: string } | null {
+): NamespaceType[] | null {
   if (!profile?.constraint?.allowed || !Array.isArray(profile.constraint.allowed)) {
     return null;
   }
-  const allowed = profile.constraint.allowed;
-  if (allowed.length === 1 && allowed[0] === 'system') {
-    return { scope: 'system', reason: 'Namespace profile constraint: system-only' };
-  }
-  if (allowed.length === 1 && allowed[0] === 'shared') {
-    return { scope: 'shared', reason: 'Namespace profile constraint: shared-only' };
-  }
-  return { scope: 'any', reason: `Namespace profile constraint: ${allowed.join(', ')}` };
+  const valid: NamespaceType[] = ['system', 'shared', 'default', 'custom'];
+  const allowed = profile.constraint.allowed.filter((v: string): v is NamespaceType =>
+    valid.includes(v as NamespaceType),
+  );
+  return allowed.length > 0 ? allowed : null;
 }
 
 /**
- * Derive namespace scope from analyzed paths
+ * Derive allowed namespaces from analyzed API paths.
+ * Returns a NamespaceType[] array.
  */
-function deriveScope(paths: PathAnalysis[]): { scope: NamespaceScopeLegacy; reason: string } {
+function deriveNamespacesFromPaths(paths: PathAnalysis[]): NamespaceType[] {
   const hasSystemLiteral = paths.some((p) => p.hasSystemLiteral);
   const hasSharedLiteral = paths.some((p) => p.hasSharedLiteral);
   const hasNamespaceParam = paths.some((p) => p.hasNamespaceParam || p.hasMetadataNamespaceParam);
@@ -202,41 +195,26 @@ function deriveScope(paths: PathAnalysis[]): { scope: NamespaceScopeLegacy; reas
 
   // If has parameterized namespace path, it's available in user namespaces
   if (hasNamespaceParam) {
-    return {
-      scope: 'any',
-      reason: 'Has parameterized {namespace} path - available in user namespaces (shared, default, custom)',
-    };
+    return ['custom', 'default', 'shared'];
   }
 
   // If only has literal /namespaces/system/ path
   if (hasSystemLiteral && !hasSharedLiteral && !hasNamespaceParam) {
-    return {
-      scope: 'system',
-      reason: 'Only has literal /namespaces/system/ path - system namespace only',
-    };
+    return ['system'];
   }
 
   // If only has literal /namespaces/shared/ path
   if (hasSharedLiteral && !hasSystemLiteral && !hasNamespaceParam) {
-    return {
-      scope: 'shared',
-      reason: 'Only has literal /namespaces/shared/ path - shared namespace only',
-    };
+    return ['shared'];
   }
 
   // If not namespace scoped at all (tenant-level)
   if (!isNamespaceScoped) {
-    return {
-      scope: 'system',
-      reason: 'No namespace in path - tenant-level resource, shown in system namespace',
-    };
+    return ['system'];
   }
 
-  // Default to 'any' for other cases
-  return {
-    scope: 'any',
-    reason: 'Default scope - available in user namespaces',
-  };
+  // Default: available in user namespaces
+  return ['custom', 'default', 'shared'];
 }
 
 /**
@@ -382,19 +360,9 @@ function parseDomainSpec(filePath: string): ResourceAnalysis[] {
         analyzedPaths.push(analyzePath(itemPathKey));
       }
 
-      // Derive scope: prefer namespace profile, fall back to path-based derivation
-      let scope: NamespaceScopeLegacy;
-      let reason: string;
-
-      const profileScope = deriveScopeFromProfile(namespaceProfile);
-      if (profileScope) {
-        scope = profileScope.scope;
-        reason = profileScope.reason;
-      } else {
-        const pathScope = deriveScope(analyzedPaths);
-        scope = pathScope.scope;
-        reason = pathScope.reason;
-      }
+      // Derive allowed namespaces: prefer namespace profile, fall back to path-based derivation
+      const profileNamespaces = deriveNamespacesFromProfile(namespaceProfile);
+      const allowedNamespaces = profileNamespaces ?? deriveNamespacesFromPaths(analyzedPaths);
 
       results.push({
         resourceKey,
@@ -403,8 +371,7 @@ function parseDomainSpec(filePath: string): ResourceAnalysis[] {
         apiBase,
         schemaFile: filename,
         paths: analyzedPaths,
-        derivedScope: scope,
-        scopeReason: reason,
+        allowedNamespaces,
       });
     }
   } catch (error) {
@@ -416,21 +383,8 @@ function parseDomainSpec(filePath: string): ResourceAnalysis[] {
 /**
  * Check if a resource should appear in a given namespace type
  */
-function isResourceAvailableForNamespace(
-  resource: ResourceAnalysis,
-  namespaceType: 'system' | 'shared' | 'default' | 'custom',
-): boolean {
-  switch (resource.derivedScope) {
-    case 'system':
-      // System-scoped resources only appear in system namespace
-      return namespaceType === 'system';
-    case 'shared':
-      // Shared-scoped resources only appear in shared namespace
-      return namespaceType === 'shared';
-    default:
-      // 'any' scope means user namespaces (shared, default, custom) but NOT system
-      return namespaceType !== 'system';
-  }
+function isResourceAvailableForNamespace(resource: ResourceAnalysis, namespaceType: NamespaceType): boolean {
+  return resource.allowedNamespaces.includes(namespaceType);
 }
 
 /**
@@ -469,7 +423,7 @@ function buildNamespaceSchema(
       key: resource.resourceKey,
       displayName: resource.displayName,
       apiPath: `${resource.resourceKey}s`, // Simplified - actual apiPath would need more logic
-      scope: resource.derivedScope,
+      allowedNamespaces: resource.allowedNamespaces,
     });
 
     resourceCount++;
@@ -489,12 +443,15 @@ function buildNamespaceSchema(
 }
 
 /**
- * Load manual scope overrides
+ * Load manual scope overrides (per-resource allowedNamespaces format)
  */
 function loadOverrides(overridesPath: string): ScopeOverrides | null {
   try {
     const content = fs.readFileSync(overridesPath, 'utf-8');
-    return JSON.parse(content) as ScopeOverrides;
+    const raw = JSON.parse(content) as Record<string, unknown>;
+    // Extract the "overrides" object which contains per-resource entries
+    const overrides = raw.overrides as ScopeOverrides | undefined;
+    return overrides ?? null;
   } catch {
     console.warn(`Warning: Could not load overrides from ${overridesPath}`);
     return null;
@@ -502,39 +459,23 @@ function loadOverrides(overridesPath: string): ScopeOverrides | null {
 }
 
 /**
- * Apply manual overrides to resources
+ * Apply manual overrides to resources.
+ * Each override specifies allowedNamespaces for a specific resource key.
  */
 function applyOverrides(resources: ResourceAnalysis[], overrides: ScopeOverrides): number {
   let overrideCount = 0;
 
   for (const resource of resources) {
-    // Check system overrides
-    if (overrides.overrides.system.resources.includes(resource.resourceKey)) {
-      if (resource.derivedScope !== 'system') {
-        resource.derivedScope = 'system';
-        resource.scopeReason = 'Manual override: system-only resource per business rules';
-        overrideCount++;
-      }
+    const override = overrides[resource.resourceKey];
+    if (!override) {
       continue;
     }
 
-    // Check shared overrides
-    if (overrides.overrides.shared.resources.includes(resource.resourceKey)) {
-      if (resource.derivedScope !== 'shared') {
-        resource.derivedScope = 'shared';
-        resource.scopeReason = 'Manual override: shared-only resource per business rules';
-        overrideCount++;
-      }
-      continue;
-    }
-
-    // Check any overrides
-    if (overrides.overrides.any.resources.includes(resource.resourceKey)) {
-      if (resource.derivedScope !== 'any') {
-        resource.derivedScope = 'any';
-        resource.scopeReason = 'Manual override: user namespace resource per business rules';
-        overrideCount++;
-      }
+    const currentSorted = [...resource.allowedNamespaces].sort().join(',');
+    const overrideSorted = [...override.allowedNamespaces].sort().join(',');
+    if (currentSorted !== overrideSorted) {
+      resource.allowedNamespaces = override.allowedNamespaces;
+      overrideCount++;
     }
   }
 
@@ -581,17 +522,19 @@ function generateMenuSchema(specsDir: string, outputPath: string, overridesPath:
     console.log(`Applied ${overrideCount} manual scope overrides\n`);
   }
 
-  // Count by scope (after overrides)
+  // Count by namespace type (after overrides)
   const scopeCounts = {
-    system: resources.filter((r) => r.derivedScope === 'system').length,
-    shared: resources.filter((r) => r.derivedScope === 'shared').length,
-    any: resources.filter((r) => r.derivedScope === 'any').length,
+    system: resources.filter((r) => r.allowedNamespaces.includes('system')).length,
+    shared: resources.filter((r) => r.allowedNamespaces.includes('shared')).length,
+    default: resources.filter((r) => r.allowedNamespaces.includes('default')).length,
+    custom: resources.filter((r) => r.allowedNamespaces.includes('custom')).length,
   };
 
-  console.log('Scope distribution (after overrides):');
+  console.log('Namespace distribution (after overrides):');
   console.log(`  system: ${scopeCounts.system} resources`);
   console.log(`  shared: ${scopeCounts.shared} resources`);
-  console.log(`  any (user namespaces): ${scopeCounts.any} resources\n`);
+  console.log(`  default: ${scopeCounts.default} resources`);
+  console.log(`  custom: ${scopeCounts.custom} resources\n`);
 
   // Build namespace schemas (no timestamp for deterministic output)
   const output: MenuSchemaOutput = {
