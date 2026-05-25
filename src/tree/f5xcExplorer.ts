@@ -8,6 +8,7 @@ import {
   getCategoryIcon,
   getCommonErrors,
   getDangerLevel,
+  getOperationMetadata,
   getOperationPurpose,
   getPrerequisites,
   getResourceDomain,
@@ -392,6 +393,29 @@ class ResourceTypeNode implements F5XCTreeItem {
     const createPrereqs = getPrerequisites(this.data.resourceTypeKey, 'create');
     if (createPrereqs.length > 0) {
       tooltip.appendMarkdown(`\n**Prerequisites**: ${createPrereqs.join(', ')}\n`);
+    }
+
+    // Add performance hint from discovered response time
+    const listMeta = getOperationMetadata(this.data.resourceTypeKey, 'list');
+    const responseTime = listMeta?.discoveredResponseTime;
+    if (responseTime) {
+      try {
+        const parsed = JSON.parse(responseTime) as Record<string, unknown>;
+        const p50 = parsed.p50_ms;
+        const p95 = parsed.p95_ms;
+        if (typeof p50 === 'number' || typeof p95 === 'number') {
+          const parts: string[] = [];
+          if (typeof p50 === 'number') {
+            parts.push(`p50: ${p50}ms`);
+          }
+          if (typeof p95 === 'number') {
+            parts.push(`p95: ${p95}ms`);
+          }
+          tooltip.appendMarkdown(`\n**Response Time**: ${parts.join(', ')}\n`);
+        }
+      } catch {
+        /* not parseable JSON */
+      }
     }
 
     // Add domain context if available

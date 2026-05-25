@@ -1582,6 +1582,29 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       result.guidedWorkflows = rawGW;
     }
 
+    // Extract domain-level best practices from spec info
+    const rawBP = spec.info?.['x-f5xc-best-practices'];
+    if (rawBP && typeof rawBP === 'object') {
+      const bp: BestPracticesInfo = {};
+      if (Array.isArray(rawBP.common_errors) && rawBP.common_errors.length > 0) {
+        bp.commonErrors = rawBP.common_errors.map((e) => ({
+          code: e.code,
+          message: e.message,
+          resolution: e.resolution,
+          prevention: e.prevention,
+        }));
+      }
+      if (Array.isArray(rawBP.security_notes) && rawBP.security_notes.length > 0) {
+        bp.securityNotes = rawBP.security_notes;
+      }
+      if (Array.isArray(rawBP.performance_tips) && rawBP.performance_tips.length > 0) {
+        bp.performanceTips = rawBP.performance_tips;
+      }
+      if (Object.keys(bp).length > 0) {
+        result.bestPractices = bp;
+      }
+    }
+
     results.push(result);
   }
 

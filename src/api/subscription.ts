@@ -104,9 +104,7 @@ interface UsagePlanItem {
 
 interface UsagePlanResponse {
   locale?: string;
-  plans?: UsagePlanItem[];
-  // Legacy structure fallback
-  plan?: UsagePlanItem;
+  plans: UsagePlanItem[];
 }
 
 interface QuotaUsageItem {
@@ -121,23 +119,16 @@ interface QuotaUsageItem {
 }
 
 interface QuotaUsageResponse {
-  quota_usage?: Record<string, QuotaUsageItem>;
-  // Legacy structure fallback
-  objects?: Record<string, QuotaUsageItem>;
-  resources?: Record<string, QuotaUsageItem>;
-  apis?: Record<string, QuotaUsageItem>;
+  quota_usage: Record<string, QuotaUsageItem>;
 }
 
 /**
- * Parse addon service to extract tier and category
- * Handles both string format (legacy) and object format (current API)
- * String format: f5xc_{category}_{tier} or f5xc_{category}_{subcategory}_{tier}
- * Object format: { name: string, display_name: string, ... }
+ * Parse addon service to extract tier and category.
+ * Expects object format: { name: string, display_name: string, ... }
  */
-function parseAddonService(service: ApiAddonService | string): AddonService {
-  // Handle both string and object inputs
-  const name = typeof service === 'string' ? service : service.name || '';
-  const displayNameFromApi = typeof service === 'object' ? service.display_name : undefined;
+function parseAddonService(service: ApiAddonService): AddonService {
+  const name = service.name || '';
+  const displayNameFromApi = service.display_name;
 
   const lowerName = name.toLowerCase();
 
@@ -226,20 +217,12 @@ export async function getCurrentPlan(client: F5XCClient): Promise<PlanInfo> {
 
   const response = await client.customRequest<UsagePlanResponse>('/api/web/namespaces/system/usage_plans/current');
 
-  // Find the current plan from the plans array (new format) or use plan object (legacy format)
-  let plan: UsagePlanItem | undefined;
-
-  if (response.plans && response.plans.length > 0) {
-    // New format: array of plans, find the one with current: true
-    plan = response.plans.find((p) => p.current === true) || response.plans[0];
-  } else if (response.plan) {
-    // Legacy format: single plan object
-    plan = response.plan;
+  // Find the current plan from the plans array
+  if (!response.plans || response.plans.length === 0) {
+    throw new Error('Unexpected API response: usage_plans/current returned no plans array');
   }
 
-  if (!plan) {
-    plan = {};
-  }
+  const plan = response.plans.find((p) => p.current === true) || response.plans[0]!;
 
   // Determine tier from tenant_type or plan name
   let tier: SubscriptionTier = 'standard';
@@ -273,37 +256,31 @@ export async function getQuotaUsage(client: F5XCClient, namespace: string = 'sys
 
   const response = await client.customRequest<QuotaUsageResponse>(`/api/web/namespaces/${namespace}/quota/usage`);
 
-  // New API format: all quotas are in quota_usage object
-  if (response.quota_usage) {
-    const allItems = parseQuotaItems(response.quota_usage);
-    // Split into categories based on item names (heuristic)
-    const objects = allItems.filter(
-      (item) =>
-        !item.key.toLowerCase().includes('api') ||
-        item.key.toLowerCase().includes('api credential') ||
-        item.key.toLowerCase().includes('api definition') ||
-        item.key.toLowerCase().includes('api group'),
-    );
-    const apis = allItems.filter(
-      (item) =>
-        item.key.toLowerCase().includes('api') &&
-        !item.key.toLowerCase().includes('api credential') &&
-        !item.key.toLowerCase().includes('api definition') &&
-        !item.key.toLowerCase().includes('api group'),
-    );
-
-    return {
-      objects,
-      resources: [], // No separate resources category in new API
-      apis,
-    };
+  if (!response.quota_usage) {
+    throw new Error('Unexpected API response: quota/usage missing quota_usage object');
   }
 
-  // Legacy format fallback
+  const allItems = parseQuotaItems(response.quota_usage);
+  // Split into categories based on item names (heuristic)
+  const objects = allItems.filter(
+    (item) =>
+      !item.key.toLowerCase().includes('api') ||
+      item.key.toLowerCase().includes('api credential') ||
+      item.key.toLowerCase().includes('api definition') ||
+      item.key.toLowerCase().includes('api group'),
+  );
+  const apis = allItems.filter(
+    (item) =>
+      item.key.toLowerCase().includes('api') &&
+      !item.key.toLowerCase().includes('api credential') &&
+      !item.key.toLowerCase().includes('api definition') &&
+      !item.key.toLowerCase().includes('api group'),
+  );
+
   return {
-    objects: parseQuotaItems(response.objects || {}),
-    resources: parseQuotaItems(response.resources || {}),
-    apis: parseQuotaItems(response.apis || {}),
+    objects,
+    resources: [],
+    apis,
   };
 }
 

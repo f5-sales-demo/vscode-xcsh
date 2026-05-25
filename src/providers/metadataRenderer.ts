@@ -85,27 +85,3 @@ export function renderDangerBadge(level: string | undefined): string {
   const color = colors[level] || '#6c757d';
   return `<span class="badge" style="background:${color};color:#fff">${esc(level)} risk</span>`;
 }
-
-export function renderPerformanceHint(responseTime: string | undefined): string {
-  if (!responseTime) {
-    return '';
-  }
-  try {
-    const parsed = JSON.parse(responseTime) as Record<string, unknown>;
-    const p50 = parsed.p50_ms;
-    const p95 = parsed.p95_ms;
-    if (typeof p50 === 'number' || typeof p95 === 'number') {
-      const parts: string[] = [];
-      if (typeof p50 === 'number') {
-        parts.push(`p50: ${p50}ms`);
-      }
-      if (typeof p95 === 'number') {
-        parts.push(`p95: ${p95}ms`);
-      }
-      return `<span class="badge badge-info" title="Response time">${parts.join(', ')}</span>`;
-    }
-  } catch {
-    /* not JSON */
-  }
-  return `<span class="badge badge-info">${esc(responseTime)}</span>`;
-}

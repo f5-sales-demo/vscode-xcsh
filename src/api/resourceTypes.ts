@@ -1651,6 +1651,17 @@ export function hasRecommendedValue(resourceKey: string, fieldPath: string): boo
 }
 
 /**
+ * Get the list of field paths marked as minimum configuration.
+ *
+ * @param resourceKey - The resource type key
+ * @returns Array of field paths required for minimum configuration
+ */
+export function getMinimumConfigFields(resourceKey: string): string[] {
+  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
+  return generated?.fieldMetadata?.minimumConfigFields ?? [];
+}
+
+/**
  * Get field constraints for a resource type.
  * Returns a map of field paths to their ConstraintInfo.
  */
