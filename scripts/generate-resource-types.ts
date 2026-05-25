@@ -24,7 +24,6 @@ const CONSTANTS_OUTPUT = path.join(GENERATED_DIR, 'constants.ts');
 const DOMAIN_CATEGORIES_OUTPUT = path.join(GENERATED_DIR, 'domainCategories.ts');
 const INDEX_OUTPUT = path.join(GENERATED_DIR, 'index.ts');
 const INDEX_JSON_PATH = path.join(SPECS_DIR, 'index.json');
-const SCOPE_OVERRIDES_PATH = path.join(__dirname, 'generators', 'namespace-scope-overrides.json');
 const DISPLAY_NAME_OVERRIDES_PATH = path.join(__dirname, 'generators', 'display-name-overrides.json');
 
 /**
@@ -120,14 +119,9 @@ function main(): void {
     process.exit(1);
   }
 
-  // Generate resource types from domain files (with namespace scope and display name overrides)
+  // Generate resource types from domain files (enriched specs are single source of truth)
   console.log('Phase 1: Generating resource types from domain files...');
-  const specs = generateResourceTypesFromDomainFiles(
-    DOMAIN_DIR,
-    RESOURCE_TYPES_OUTPUT,
-    SCOPE_OVERRIDES_PATH,
-    DISPLAY_NAME_OVERRIDES_PATH,
-  );
+  const specs = generateResourceTypesFromDomainFiles(DOMAIN_DIR, RESOURCE_TYPES_OUTPUT, DISPLAY_NAME_OVERRIDES_PATH);
 
   if (specs.length === 0) {
     console.error('Error: No resource types were generated');
