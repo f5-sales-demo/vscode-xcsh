@@ -667,7 +667,7 @@
     ],
     "languageModelTools": [
       {
-        "name": "f5xc.readFile",
+        "name": "f5xc-readFile",
         "displayName": "Read File",
         "modelDescription": "Read the contents of a file in the workspace. Use when you need to examine source code, configuration files, or any text file. Returns the full file content as text.",
         "userDescription": "Read a file from the workspace",
@@ -691,7 +691,7 @@
         }
       },
       {
-        "name": "f5xc.getSelection",
+        "name": "f5xc-getSelection",
         "displayName": "Get Editor Selection",
         "modelDescription": "Get the currently selected text in the active editor. Use when the user references 'this code' or 'selected text'. Returns empty string if no selection.",
         "userDescription": "Get selected text from the editor",
@@ -707,7 +707,7 @@
         }
       },
       {
-        "name": "f5xc.getDiagnostics",
+        "name": "f5xc-getDiagnostics",
         "displayName": "Get File Diagnostics",
         "modelDescription": "Get compiler errors, warnings, and linter diagnostics for a specific file. Use when investigating build errors or code quality issues. Returns an array of diagnostics with severity, line number, message, and source.",
         "userDescription": "Get errors and warnings for a file",
@@ -731,7 +731,7 @@
         }
       },
       {
-        "name": "f5xc.openFile",
+        "name": "f5xc-openFile",
         "displayName": "Open File in Editor",
         "modelDescription": "Open a file in the VS Code editor, optionally at a specific line number. Use when you want to show the user a specific file or location in the codebase.",
         "userDescription": "Open a file in the editor",
