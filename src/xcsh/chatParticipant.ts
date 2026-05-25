@@ -41,23 +41,22 @@ export function buildPromptWithContext(userPrompt: string, ctx: F5XCContext | nu
 }
 
 export function formatStatusResponse(integrations: IntegrationsResponse): string {
-  const connected = integrations.services.filter((s) => s.state === 'connected');
-  const issues = integrations.services.filter((s) => s.state !== 'connected');
-
   const lines: string[] = [`**xcsh** v${integrations.version}\n`];
 
-  if (connected.length > 0) {
-    lines.push(connected.map((s) => `✅ ${s.name}`).join(' · '));
-  }
+  const modelIcon = integrations.model.state === 'connected' ? '✅' : '⚠️';
+  lines.push(`**Model Provider**`);
+  lines.push(`${modelIcon} ${integrations.model.provider ?? 'unknown'}\n`);
 
-  for (const svc of issues) {
-    const icon = svc.state === 'unauthenticated' ? '⚠️' : '⭘';
-    const label = svc.state === 'unauthenticated' ? 'needs authentication' : 'not installed';
-    lines.push(`\n${icon} **${svc.name}** — ${label}${svc.hint ? `\n\n\`${svc.hint}\`` : ''}`);
-  }
+  lines.push(`---\n`);
 
-  if (issues.length === 0) {
-    lines.push('\nAll integrations connected.');
+  for (const svc of integrations.services) {
+    if (svc.state === 'connected') {
+      lines.push(`✅ ${svc.name}`);
+    } else if (svc.state === 'unauthenticated') {
+      lines.push(`⚠️ ${svc.name} — needs authentication${svc.hint ? ` · \`${svc.hint}\`` : ''}`);
+    } else {
+      lines.push(`⭘ ${svc.name} — not installed`);
+    }
   }
 
   return lines.join('\n');
