@@ -11,6 +11,7 @@ import { registerLanguageModelTools } from './languageModelTools';
 import { XcshPanelProvider } from './panelProvider';
 import { XcshProcessManager } from './processManager';
 import { XcshRpcBridge } from './rpcBridge';
+import { createXcshStatusBar } from './statusBar';
 import { registerTerminalIntegration } from './terminalIntegration';
 import type { RpcCommand, RpcHostToolCall } from './types';
 
@@ -205,6 +206,7 @@ export async function activateXcsh(
 
   // Register terminal integration
   registerTerminalIntegration(extensionContext, contextManager);
+  createXcshStatusBar(extensionContext.subscriptions);
 
   // Register restart command
   extensionContext.subscriptions.push(

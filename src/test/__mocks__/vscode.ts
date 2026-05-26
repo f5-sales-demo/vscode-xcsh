@@ -174,6 +174,8 @@ export const window = {
     dispose: jest.fn(),
   })),
   showTextDocument: jest.fn(),
+  createStatusBarItem: jest.fn((_alignment?: StatusBarAlignment, _priority?: number) => new MockStatusBarItem()),
+  onDidChangeTextEditorSelection: jest.fn(() => ({ dispose: jest.fn() })),
 };
 
 // Mock workspace
@@ -195,6 +197,7 @@ export const workspace = {
     readDirectory: jest.fn(),
     stat: jest.fn(),
   },
+  applyEdit: jest.fn().mockResolvedValue(true),
 };
 
 // Mock commands
@@ -358,6 +361,7 @@ export const languages = {
     clear: jest.fn(),
     dispose: jest.fn(),
   })),
+  onDidChangeDiagnostics: jest.fn(() => ({ dispose: jest.fn() })),
 };
 
 // Mock lm namespace
@@ -383,6 +387,84 @@ export enum DiagnosticSeverity {
   Warning = 1,
   Information = 2,
   Hint = 3,
+}
+
+// Mock SymbolKind
+export enum SymbolKind {
+  File = 0,
+  Module = 1,
+  Namespace = 2,
+  Package = 3,
+  Class = 4,
+  Method = 5,
+  Property = 6,
+  Field = 7,
+  Constructor = 8,
+  Enum = 9,
+  Interface = 10,
+  Function = 11,
+  Variable = 12,
+  Constant = 13,
+  String = 14,
+  Number = 15,
+  Boolean = 16,
+  Array = 17,
+  Object = 18,
+  Key = 19,
+  Null = 20,
+  EnumMember = 21,
+  Struct = 22,
+  Event = 23,
+  Operator = 24,
+  TypeParameter = 25,
+}
+
+// Mock Location
+export class Location {
+  constructor(
+    public readonly uri: ReturnType<typeof Uri.file>,
+    public readonly range: Range,
+  ) {}
+}
+
+// Mock StatusBarAlignment
+export enum StatusBarAlignment {
+  Left = 1,
+  Right = 2,
+}
+
+// Mock MockStatusBarItem
+export class MockStatusBarItem {
+  text = '';
+  tooltip: string | undefined = undefined;
+  alignment = StatusBarAlignment.Left;
+  priority: number | undefined = undefined;
+  visible = false;
+  show = jest.fn(() => {
+    this.visible = true;
+  });
+  hide = jest.fn(() => {
+    this.visible = false;
+  });
+  dispose = jest.fn();
+}
+
+// Mock WorkspaceEdit
+export class WorkspaceEdit {
+  private edits: Array<{ uri: ReturnType<typeof Uri.file>; range: Range; newText: string }> = [];
+  replace(uri: ReturnType<typeof Uri.file>, range: Range, newText: string): void {
+    this.edits.push({ uri, range, newText });
+  }
+  entries(): Array<[ReturnType<typeof Uri.file>, Array<{ range: Range; newText: string }>]> {
+    const grouped = new Map<string, Array<{ range: Range; newText: string }>>();
+    for (const edit of this.edits) {
+      const key = edit.uri.fsPath;
+      const group = grouped.get(key) ?? [];
+      group.push({ range: edit.range, newText: edit.newText });
+      grouped.set(key, group);
+    }
+    return Array.from(grouped.entries()).map(([path, edits]) => [Uri.file(path), edits]);
+  }
 }
 
 // Mock MarkdownString
@@ -431,4 +513,9 @@ export default {
   chat,
   DiagnosticSeverity,
   MarkdownString,
+  SymbolKind,
+  Location,
+  StatusBarAlignment,
+  MockStatusBarItem,
+  WorkspaceEdit,
 };
