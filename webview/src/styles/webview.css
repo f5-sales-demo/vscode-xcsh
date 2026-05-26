@@ -348,7 +348,7 @@ html {
 @keyframes dotPulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
 
 /* Input bar */
-.inputBar { border: 1px solid var(--app-input-border); border-radius: var(--corner-radius-large); padding: 0; margin: 0; position: relative; background: var(--app-input-background); }
+.inputBar { border: 1px solid var(--app-xcsh-red); border-radius: var(--corner-radius-large); padding: 0; margin: 0; position: relative; background: var(--app-input-background); }
 .inputBarBackground { position: absolute; inset: 0; border-radius: var(--corner-radius-large); background: var(--app-input-background); z-index: 0; }
 .inputEditorContainer { position: relative; z-index: 1; padding: 10px 12px; }
 .inputEditor { outline: none; color: var(--app-input-foreground); font-size: 13px; line-height: 1.5; min-height: 20px; max-height: 200px; overflow-y: auto; word-break: break-word; }
