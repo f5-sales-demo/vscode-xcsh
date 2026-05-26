@@ -67,6 +67,7 @@ export function registerTerminalIntegration(
         name: 'xcsh',
         shellPath: binary,
         env,
+        cwd: vscode.workspace.workspaceFolders?.[0]?.uri,
         iconPath: new vscode.ThemeIcon('terminal'),
       });
     },
@@ -103,6 +104,7 @@ export function registerTerminalIntegration(
         name: 'xcsh',
         shellPath: binary,
         env,
+        cwd: vscode.workspace.workspaceFolders?.[0]?.uri,
         iconPath: new vscode.ThemeIcon('terminal'),
       });
 

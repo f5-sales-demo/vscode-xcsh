@@ -78,6 +78,7 @@ export class XcshProcessManager implements vscode.Disposable {
   private process: ChildProcess | null = null;
   private status: ProcessStatus = 'stopped';
   private envVars: Record<string, string> = {};
+  private cwd: string | undefined;
   private retryCount = 0;
   private healthTimer: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
@@ -95,6 +96,10 @@ export class XcshProcessManager implements vscode.Disposable {
 
   setEnvVars(env: Record<string, string>): void {
     this.envVars = { ...env };
+  }
+
+  setCwd(cwd: string | undefined): void {
+    this.cwd = cwd;
   }
 
   /**
@@ -121,6 +126,7 @@ export class XcshProcessManager implements vscode.Disposable {
       const child = spawn(binary, ['--mode', 'rpc'], {
         stdio: ['pipe', 'pipe', 'pipe'],
         env: { ...process.env, ...this.envVars },
+        cwd: this.cwd,
       });
 
       child.on('error', (err) => {
