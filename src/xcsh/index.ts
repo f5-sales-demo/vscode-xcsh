@@ -1,7 +1,5 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManagerInterface } from '../config/contextTypes';
 import { deriveTenantFromUrl } from '../config/contextTypes';
@@ -80,27 +78,6 @@ export async function activateXcsh(
         .update('supportAgentsWindow', updated, vscode.ConfigurationTarget.Global);
       logger.info('Auto-enabled xcsh in Agents Window');
     }
-  }
-
-  // Install xcsh custom agent to user profile for global availability
-  const agentSource = path.join(extensionContext.extensionPath, 'agents', 'xcsh.agent.md');
-  const copilotAgentsDir = path.join(process.env.HOME ?? '', '.copilot', 'agents');
-  const agentDest = path.join(copilotAgentsDir, 'xcsh.agent.md');
-  try {
-    if (fs.existsSync(agentSource)) {
-      const sourceContent = fs.readFileSync(agentSource, 'utf8');
-      const destExists = fs.existsSync(agentDest);
-      const needsUpdate = !destExists || fs.readFileSync(agentDest, 'utf8') !== sourceContent;
-      if (needsUpdate) {
-        fs.mkdirSync(copilotAgentsDir, { recursive: true });
-        fs.writeFileSync(agentDest, sourceContent, 'utf8');
-        logger.info(
-          destExists ? 'Updated xcsh agent in ~/.copilot/agents/' : 'Installed xcsh agent to ~/.copilot/agents/',
-        );
-      }
-    }
-  } catch (err) {
-    logger.debug('Could not install xcsh agent to user profile', err instanceof Error ? err : new Error(String(err)));
   }
 
   // Detect secondary sidebar support (VS Code >= 1.106)

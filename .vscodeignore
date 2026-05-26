@@ -13,7 +13,6 @@ webpack.config.js
 !dist/**
 docs/specifications/**
 .github/**
-!.github/agents/**
 *.md
 !README.md
 # Additional excludes
