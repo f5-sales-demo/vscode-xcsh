@@ -9,6 +9,7 @@ jest.mock('node:fs');
 
 const mockedExecFileSync = childProcess.execFileSync as jest.MockedFunction<typeof childProcess.execFileSync>;
 const mockedExistsSync = fs.existsSync as jest.MockedFunction<typeof fs.existsSync>;
+const mockedSpawn = childProcess.spawn as jest.MockedFunction<typeof childProcess.spawn>;
 
 // Must import after mocks are set up
 import { findXcshBinary } from '../../xcsh/processManager';
@@ -93,5 +94,108 @@ describe('findXcshBinary', () => {
 
     const result = findXcshBinary();
     expect(result).toBeNull();
+  });
+});
+
+import * as vscode from 'vscode';
+import { XcshProcessManager } from '../../xcsh/processManager';
+
+describe('XcshProcessManager', () => {
+  let manager: XcshProcessManager;
+
+  beforeEach(() => {
+    jest.resetAllMocks();
+    mockedExistsSync.mockReturnValue(false);
+    (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({ get: jest.fn() });
+    manager = new XcshProcessManager();
+  });
+
+  afterEach(() => {
+    manager.dispose();
+  });
+
+  it('passes cwd to spawn when setCwd is called before start', () => {
+    const mockProcess = {
+      on: jest.fn(),
+      stdin: { write: jest.fn() },
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() },
+      kill: jest.fn(),
+      exitCode: null,
+    };
+    mockedSpawn.mockReturnValue(mockProcess as unknown as childProcess.ChildProcess);
+    mockedExecFileSync.mockImplementation((cmd: string) => {
+      if (cmd === 'which') {
+        return '/usr/local/bin/xcsh\n';
+      }
+      throw new Error('not found');
+    });
+    mockedExistsSync.mockImplementation((p) => p === '/usr/local/bin/xcsh');
+
+    manager.setCwd('/Users/robin/project');
+    manager.start();
+
+    expect(mockedSpawn).toHaveBeenCalledWith(
+      '/usr/local/bin/xcsh',
+      ['--mode', 'rpc'],
+      expect.objectContaining({ cwd: '/Users/robin/project' }),
+    );
+  });
+
+  it('passes undefined cwd to spawn when setCwd is not called', () => {
+    const mockProcess = {
+      on: jest.fn(),
+      stdin: { write: jest.fn() },
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() },
+      kill: jest.fn(),
+      exitCode: null,
+    };
+    mockedSpawn.mockReturnValue(mockProcess as unknown as childProcess.ChildProcess);
+    mockedExecFileSync.mockImplementation((cmd: string) => {
+      if (cmd === 'which') {
+        return '/usr/local/bin/xcsh\n';
+      }
+      throw new Error('not found');
+    });
+    mockedExistsSync.mockImplementation((p) => p === '/usr/local/bin/xcsh');
+
+    manager.start();
+
+    expect(mockedSpawn).toHaveBeenCalledWith(
+      '/usr/local/bin/xcsh',
+      ['--mode', 'rpc'],
+      expect.objectContaining({ cwd: undefined }),
+    );
+  });
+
+  it('updates cwd when setCwd is called again', () => {
+    manager.setCwd('/first/path');
+    manager.setCwd('/second/path');
+
+    const mockProcess = {
+      on: jest.fn(),
+      stdin: { write: jest.fn() },
+      stdout: { on: jest.fn() },
+      stderr: { on: jest.fn() },
+      kill: jest.fn(),
+      exitCode: null,
+    };
+    mockedSpawn.mockReturnValue(mockProcess as unknown as childProcess.ChildProcess);
+    mockedExecFileSync.mockImplementation((cmd: string) => {
+      if (cmd === 'which') {
+        return '/usr/local/bin/xcsh\n';
+      }
+      throw new Error('not found');
+    });
+    mockedExistsSync.mockImplementation((p) => p === '/usr/local/bin/xcsh');
+
+    manager.start();
+
+    expect(mockedSpawn).toHaveBeenCalledWith(
+      '/usr/local/bin/xcsh',
+      ['--mode', 'rpc'],
+      expect.objectContaining({ cwd: '/second/path' }),
+    );
   });
 });

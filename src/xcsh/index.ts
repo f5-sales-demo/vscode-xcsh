@@ -89,6 +89,8 @@ export async function activateXcsh(
     void vscode.commands.executeCommand('setContext', 'f5xc:doesNotSupportSecondarySidebar', true);
   }
 
+  const getWorkspaceCwd = (): string | undefined => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
   // Create process manager and configure env from active context
   const processManager = new XcshProcessManager();
   extensionContext.subscriptions.push(processManager);
@@ -111,6 +113,7 @@ export async function activateXcsh(
   };
 
   await setEnvFromContext();
+  processManager.setCwd(getWorkspaceCwd());
 
   // Start the process
   processManager.start();
@@ -132,6 +135,21 @@ export async function activateXcsh(
     contextManager.onDidChangeContext(async () => {
       logger.info('Context changed, restarting xcsh...');
       await setEnvFromContext();
+      processManager.setCwd(getWorkspaceCwd());
+      processManager.restart();
+
+      const newProcess = processManager.getProcess();
+      if (newProcess?.stdin && newProcess?.stdout) {
+        rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
+        registerHostToolsOnBridge(rpcBridge);
+      }
+    }),
+  );
+
+  extensionContext.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      logger.info('Workspace folders changed, restarting xcsh...');
+      processManager.setCwd(getWorkspaceCwd());
       processManager.restart();
 
       const newProcess = processManager.getProcess();
@@ -207,6 +225,7 @@ export async function activateXcsh(
   extensionContext.subscriptions.push(
     vscode.commands.registerCommand('f5xc.xcsh.restart', async () => {
       await setEnvFromContext();
+      processManager.setCwd(getWorkspaceCwd());
       processManager.restart();
 
       const newProcess = processManager.getProcess();
