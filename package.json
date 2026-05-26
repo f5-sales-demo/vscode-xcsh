@@ -156,12 +156,12 @@
         {
           "id": "f5xc-explorer",
           "title": "xcsh",
-          "icon": "resources/f5-icon.svg"
+          "icon": "resources/f5-activitybar.svg"
         },
         {
           "id": "xcsh-panel",
           "title": "xcsh",
-          "icon": "resources/pi-icon.svg",
+          "icon": "resources/f5-activitybar.svg",
           "when": "f5xc:doesNotSupportSecondarySidebar"
         }
       ],
@@ -169,7 +169,7 @@
         {
           "id": "xcsh-panel-secondary",
           "title": "xcsh",
-          "icon": "resources/pi-icon.svg",
+          "icon": "resources/f5-activitybar.svg",
           "when": "!f5xc:doesNotSupportSecondarySidebar"
         }
       ]
