@@ -86,7 +86,6 @@ export function registerLanguageModelProvider(
       progress: vscode.Progress<vscode.LanguageModelResponsePart>,
       token: vscode.CancellationToken,
     ): Promise<void> {
-      // Convert LanguageModelChatRequestMessages to simple format
       const simpleMessages: SimpleChatMessage[] = messages.map((msg) => ({
         role: msg.role === vscode.LanguageModelChatMessageRole.User ? 'user' : 'assistant',
         content: extractTextFromMessageContent(msg.content),
@@ -97,50 +96,105 @@ export function registerLanguageModelProvider(
         return;
       }
 
-      await new Promise<void>((resolve, reject) => {
-        const disposables: vscode.Disposable[] = [];
+      const disposables: vscode.Disposable[] = [];
+      let receivedAnyEvent = false;
+      let textChunkCount = 0;
+      let resolveReason = 'unknown';
+      const STREAM_TIMEOUT_MS = 120_000;
 
-        const cleanup = (): void => {
-          for (const d of disposables) {
-            d.dispose();
-          }
-        };
+      const messagePromise = new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          resolveReason = 'timeout';
+          logger.warn(
+            `LM provider stream timed out after ${String(STREAM_TIMEOUT_MS)}ms (receivedAnyEvent=${String(receivedAnyEvent)}, textChunks=${String(textChunkCount)})`,
+          );
+          resolve();
+        }, STREAM_TIMEOUT_MS);
+
+        disposables.push(new vscode.Disposable(() => clearTimeout(timeout)));
 
         disposables.push(
           rpcBridge.onMessageStream((event) => {
+            receivedAnyEvent = true;
+            textChunkCount++;
             progress.report(new vscode.LanguageModelTextPart(event.text));
           }),
         );
 
         disposables.push(
           rpcBridge.onEvent<RpcToolCall>('tool_call', (event) => {
+            receivedAnyEvent = true;
             progress.report(new vscode.LanguageModelToolCallPart(event.toolCallId, event.toolName, event.arguments));
           }),
         );
 
         disposables.push(
+          rpcBridge.onEvent('tool_execution_start', (event) => {
+            receivedAnyEvent = true;
+            const toolName = (event as Record<string, unknown>).toolName;
+            logger.info(`LM provider: tool_execution_start ${String(toolName)}`);
+          }),
+        );
+
+        disposables.push(
+          rpcBridge.onEvent('tool_execution_end', (event) => {
+            receivedAnyEvent = true;
+            const toolCallId = (event as Record<string, unknown>).toolCallId;
+            logger.info(`LM provider: tool_execution_end ${String(toolCallId)}`);
+          }),
+        );
+
+        disposables.push(
           rpcBridge.onEvent('turn_end', () => {
-            cleanup();
+            receivedAnyEvent = true;
+            resolveReason = 'turn_end';
+            logger.info(`LM provider: turn_end (textChunks=${String(textChunkCount)})`);
+            clearTimeout(timeout);
+            resolve();
+          }),
+        );
+
+        disposables.push(
+          rpcBridge.onEvent('result', () => {
+            receivedAnyEvent = true;
+            resolveReason = 'result';
+            logger.info(`LM provider: result event (textChunks=${String(textChunkCount)})`);
+            clearTimeout(timeout);
             resolve();
           }),
         );
 
         disposables.push(
           rpcBridge.onEvent('error', (event) => {
-            cleanup();
+            receivedAnyEvent = true;
+            resolveReason = 'error';
+            clearTimeout(timeout);
             const msg = (event as Record<string, unknown>).message;
+            logger.error(`LM provider: error event: ${String(msg)}`);
             reject(new Error(typeof msg === 'string' ? msg : 'xcsh streaming error'));
           }),
         );
 
         token.onCancellationRequested(() => {
+          resolveReason = 'cancelled';
           rpcBridge.abort();
-          cleanup();
+          clearTimeout(timeout);
           resolve();
         });
-
-        rpcBridge.prompt(promptText);
       });
+
+      rpcBridge.prompt(promptText);
+
+      try {
+        await messagePromise;
+      } finally {
+        logger.info(
+          `LM provider: done (reason=${resolveReason}, events=${String(receivedAnyEvent)}, textChunks=${String(textChunkCount)})`,
+        );
+        for (const d of disposables) {
+          d.dispose();
+        }
+      }
     },
 
     provideTokenCount(
