@@ -65,21 +65,6 @@ export async function activateXcsh(
 
   logger.info('Activating xcsh integration...');
 
-  // Auto-configure Agents Window support
-  if (config.get<boolean>('xcsh.agentsWindowPrompt', true)) {
-    const inspected = vscode.workspace
-      .getConfiguration('extensions')
-      .inspect<Record<string, boolean>>('supportAgentsWindow');
-    const current = inspected?.globalValue ?? {};
-    if (!current['f5xc-salesdemos.xcsh']) {
-      const updated = { ...current, 'f5xc-salesdemos.xcsh': true };
-      void vscode.workspace
-        .getConfiguration('extensions')
-        .update('supportAgentsWindow', updated, vscode.ConfigurationTarget.Global);
-      logger.info('Auto-enabled xcsh in Agents Window');
-    }
-  }
-
   // Detect secondary sidebar support (VS Code >= 1.106)
   const versionParts = vscode.version.split('.').map(Number);
   const major = versionParts[0] ?? 0;

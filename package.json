@@ -148,11 +148,6 @@
             "Classic CLI terminal experience"
           ],
           "description": "xcsh panel experience: rich webview or classic CLI terminal"
-        },
-        "f5xc.xcsh.agentsWindowPrompt": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Automatically enable xcsh in the [Agents Window](https://code.visualstudio.com/docs/copilot/agents/agents-window) by configuring `extensions.supportAgentsWindow`. Set to false to disable auto-configuration."
         }
       }
     },
@@ -767,8 +762,7 @@
     "languageModelChatProviders": [
       {
         "vendor": "f5xc",
-        "displayName": "xcsh",
-        "managementCommand": "f5xc.xcsh.openPanel"
+        "displayName": "xcsh"
       }
     ],
     "chatParticipants": [
@@ -832,11 +826,6 @@
       },
       {
         "path": "./skills/f5xc-configuration-authoring/SKILL.md"
-      }
-    ],
-    "chatAgents": [
-      {
-        "path": "./agents/xcsh.agent.md"
       }
     ]
   },
