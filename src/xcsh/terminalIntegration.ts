@@ -6,6 +6,23 @@ import { deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { findXcshBinary } from './processManager';
 
+const BREW_INSTALL_CMD = 'brew install f5xc-salesdemos/tap/xcsh';
+
+async function showXcshNotFoundPrompt(): Promise<void> {
+  const action = await vscode.window.showErrorMessage(
+    `xcsh binary not found. Install via Homebrew: \`${BREW_INSTALL_CMD}\``,
+    'Copy Install Command',
+    'Open Settings',
+  );
+
+  if (action === 'Copy Install Command') {
+    await vscode.env.clipboard.writeText(BREW_INSTALL_CMD);
+    void vscode.window.showInformationMessage('Install command copied to clipboard. Paste it in your terminal.');
+  } else if (action === 'Open Settings') {
+    void vscode.commands.executeCommand('workbench.action.openSettings', 'f5xc.xcsh.path');
+  }
+}
+
 /**
  * Build environment variables from an F5 XC context for use in
  * terminal sessions. Derives tenant from the API URL hostname.
@@ -47,7 +64,7 @@ export function registerTerminalIntegration(
       const binary = findXcshBinary(userPath);
 
       if (!binary) {
-        void vscode.window.showErrorMessage('xcsh binary not found. Install xcsh or configure the path in settings.');
+        void showXcshNotFoundPrompt();
         return undefined;
       }
 
@@ -84,7 +101,7 @@ export function registerTerminalIntegration(
       const binary = findXcshBinary(userPath);
 
       if (!binary) {
-        void vscode.window.showErrorMessage('xcsh binary not found. Install xcsh or configure the path in settings.');
+        void showXcshNotFoundPrompt();
         return;
       }
 

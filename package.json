@@ -827,7 +827,16 @@
       {
         "path": "./skills/f5xc-configuration-authoring/SKILL.md"
       }
-    ]
+    ],
+    "terminal": {
+      "profiles": [
+        {
+          "id": "f5xc.xcsh.terminal",
+          "title": "xcsh",
+          "icon": "terminal"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
