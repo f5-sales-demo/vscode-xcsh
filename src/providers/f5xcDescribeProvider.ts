@@ -1489,8 +1489,8 @@ export class F5XCDescribeProvider {
 
     .tab-btn {
       background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: rgba(255, 255, 255, 0.8);
+      border: 1px solid var(--vscode-button-border, var(--vscode-panel-border));
+      color: var(--vscode-descriptionForeground);
       padding: 6px 16px;
       border-radius: 4px;
       cursor: pointer;
@@ -1500,39 +1500,39 @@ export class F5XCDescribeProvider {
     }
 
     .tab-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
+      background: var(--vscode-list-hoverBackground);
+      color: var(--vscode-foreground);
     }
 
     .tab-btn.active {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border-color: white;
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border-color: transparent;
     }
 
     .search-input {
       width: 160px;
       padding: 6px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
+      background: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
       font-size: 12px;
     }
 
     .search-input::placeholder {
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--vscode-input-placeholderForeground);
     }
 
     .search-input:focus {
       outline: none;
-      border-color: white;
-      background: rgba(255, 255, 255, 0.15);
+      border-color: var(--vscode-focusBorder);
+      background: var(--vscode-input-background);
     }
 
     .edit-btn {
-      background: white;
-      color: var(--f5-brand-red);
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
       border: none;
       padding: 6px 16px;
       border-radius: 4px;
@@ -1544,7 +1544,7 @@ export class F5XCDescribeProvider {
     }
 
     .edit-btn:hover {
-      background: #f0f0f0;
+      background: var(--vscode-button-hoverBackground);
     }
 
     /* Container */

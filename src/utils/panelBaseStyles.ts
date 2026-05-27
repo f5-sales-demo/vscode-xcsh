@@ -46,11 +46,18 @@ export function getWebviewBaseStyles(): string {
     :root {
       --f5-brand-red: #e01f27;
       --f5-brand-red-dark: #8b0000;
-      --f5-toolbar-gradient: linear-gradient(90deg, var(--f5-brand-red-dark) 0%, var(--f5-brand-red) 100%);
+    }
+    body.vscode-light {
       --color-brand: #e4002b;
       --color-N600: #0f1e57;
       --color-N200: #e6e9f3;
       --color-blue-light: #e5eaff;
+    }
+    body.vscode-dark, body.vscode-high-contrast {
+      --color-brand: #ff4d6a;
+      --color-N600: #b8c2e0;
+      --color-N200: #2d3459;
+      --color-blue-light: #2d3868;
     }
 
     body::after {
@@ -78,7 +85,7 @@ export function getWebviewBaseStyles(): string {
       align-items: center;
       justify-content: space-between;
       padding: 8px 16px;
-      background: var(--f5-toolbar-gradient);
+      background: var(--vscode-sideBar-background, var(--vscode-editor-background));
       border-bottom: 1px solid var(--vscode-panel-border);
       gap: 16px;
     }
@@ -100,7 +107,7 @@ export function getWebviewBaseStyles(): string {
       flex-shrink: 0;
     }
     .toolbar .title {
-      color: white;
+      color: var(--vscode-sideBarTitle-foreground, var(--vscode-foreground));
       font-weight: 600;
       font-size: 14px;
       white-space: nowrap;
@@ -108,12 +115,12 @@ export function getWebviewBaseStyles(): string {
       text-overflow: ellipsis;
     }
     .toolbar .resource-type {
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--vscode-descriptionForeground);
       font-size: 12px;
       white-space: nowrap;
     }
     .toolbar .resource-name {
-      color: white;
+      color: var(--vscode-sideBarTitle-foreground, var(--vscode-foreground));
       font-weight: 600;
       font-size: 14px;
       white-space: nowrap;
@@ -123,9 +130,9 @@ export function getWebviewBaseStyles(): string {
     .toolbar .btn,
     .toolbar .btn-secondary,
     .toolbar .refresh-btn {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: 1px solid var(--vscode-button-border, transparent);
       border-radius: 4px;
       padding: 4px 12px;
       cursor: pointer;
@@ -136,7 +143,7 @@ export function getWebviewBaseStyles(): string {
     .toolbar .btn:hover,
     .toolbar .btn-secondary:hover,
     .toolbar .refresh-btn:hover {
-      background: rgba(255, 255, 255, 0.25);
+      background: var(--vscode-button-secondaryHoverBackground);
     }
 
     .toolbar-icon {
@@ -146,7 +153,7 @@ export function getWebviewBaseStyles(): string {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.15);
+      background: var(--vscode-badge-background, rgba(128, 128, 128, 0.15));
       border-radius: 6px;
       padding: 4px;
     }
