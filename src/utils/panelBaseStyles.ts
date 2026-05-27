@@ -1,3 +1,16 @@
+import { randomBytes } from 'node:crypto';
+
+export function getNonce(): string {
+  return randomBytes(16).toString('hex');
+}
+
+export function escapeHtml(text: string): string {
+  return text.replace(
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c,
+  );
+}
+
 const F5_LOGO_LINES = [
   '                   ________',
   '              (▒▒▒▒▓▓▓▓▓▓▓▓▒▒▒▒)',

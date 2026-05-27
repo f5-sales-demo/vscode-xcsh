@@ -23,7 +23,7 @@ import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/p
 import type { ContextManager } from '../config/contextManager';
 import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
-import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
 /**
  * WebView provider for Cloud Status Dashboard
@@ -91,32 +91,6 @@ export class CloudStatusDashboardProvider {
   }
 
   /**
-   * Generate a CSP nonce
-   */
-  private getNonce(): string {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  }
-
-  /**
-   * Escape HTML special characters
-   */
-  private escapeHtml(text: string): string {
-    const htmlEscapes: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
-  }
-
-  /**
    * Get status color class
    */
   private getStatusColor(status: ComponentStatus): string {
@@ -180,7 +154,7 @@ export class CloudStatusDashboardProvider {
    * Get webview content for successful load
    */
   private getWebviewContent(summary: SummaryResponse): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = this.panel?.webview.cspSource;
 
     // Group components by their group_id
@@ -291,7 +265,7 @@ export class CloudStatusDashboardProvider {
   <!-- Status Banner -->
   <div class="status-banner ${statusBannerClass}">
     <span class="status-indicator"></span>
-    <span class="status-text">${this.escapeHtml(overallStatus.description)}</span>
+    <span class="status-text">${escapeHtml(overallStatus.description)}</span>
     <span class="updated-at">Updated: ${new Date(summary.page.updated_at).toLocaleString()}</span>
   </div>
 
@@ -339,7 +313,7 @@ export class CloudStatusDashboardProvider {
       <div class="component-group" data-expanded="true">
         <div class="group-header ${statusClass}">
           <span class="expand-icon"></span>
-          <span class="group-name">${this.escapeHtml(group.name)}</span>
+          <span class="group-name">${escapeHtml(group.name)}</span>
           <span class="group-status">${getStatusDisplayText(worstStatus)}</span>
           <span class="component-count">${children.length} components</span>
         </div>
@@ -358,7 +332,7 @@ export class CloudStatusDashboardProvider {
     return `
       <div class="component ${statusClass}">
         <span class="component-indicator"></span>
-        <span class="component-name">${this.escapeHtml(component.name)}</span>
+        <span class="component-name">${escapeHtml(component.name)}</span>
         <span class="component-status">${getStatusDisplayText(component.status)}</span>
       </div>
     `;
@@ -377,7 +351,7 @@ export class CloudStatusDashboardProvider {
       <div class="incident ${impactClass}">
         <div class="incident-header">
           <span class="incident-indicator"></span>
-          <span class="incident-name">${this.escapeHtml(incident.name)}</span>
+          <span class="incident-name">${escapeHtml(incident.name)}</span>
           <span class="incident-status">${getIncidentStatusText(incident.status)}</span>
         </div>
         <div class="incident-details">
@@ -385,8 +359,8 @@ export class CloudStatusDashboardProvider {
             <span class="meta-item"><strong>Impact:</strong> ${incident.impact}</span>
             <span class="meta-item"><strong>Started:</strong> ${startedAt}</span>
           </div>
-          ${affectedComponents ? `<div class="affected"><strong>Affected:</strong> ${this.escapeHtml(affectedComponents)}</div>` : ''}
-          ${latestUpdate ? `<div class="latest-update"><strong>Latest Update:</strong> ${this.escapeHtml(latestUpdate.body)}</div>` : ''}
+          ${affectedComponents ? `<div class="affected"><strong>Affected:</strong> ${escapeHtml(affectedComponents)}</div>` : ''}
+          ${latestUpdate ? `<div class="latest-update"><strong>Latest Update:</strong> ${escapeHtml(latestUpdate.body)}</div>` : ''}
         </div>
         <a href="${incident.shortlink}" class="incident-link" target="_blank">View Details</a>
       </div>
@@ -405,14 +379,14 @@ export class CloudStatusDashboardProvider {
       <div class="maintenance">
         <div class="maintenance-header">
           <span class="maintenance-indicator"></span>
-          <span class="maintenance-name">${this.escapeHtml(maintenance.name)}</span>
+          <span class="maintenance-name">${escapeHtml(maintenance.name)}</span>
           <span class="maintenance-status">${getIncidentStatusText(maintenance.status)}</span>
         </div>
         <div class="maintenance-details">
           <div class="maintenance-meta">
             <span class="meta-item"><strong>Scheduled:</strong> ${scheduledFor} - ${scheduledUntil}</span>
           </div>
-          ${affectedComponents ? `<div class="affected"><strong>Affected:</strong> ${this.escapeHtml(affectedComponents)}</div>` : ''}
+          ${affectedComponents ? `<div class="affected"><strong>Affected:</strong> ${escapeHtml(affectedComponents)}</div>` : ''}
         </div>
         <a href="${maintenance.shortlink}" class="maintenance-link" target="_blank">View Details</a>
       </div>
@@ -423,7 +397,7 @@ export class CloudStatusDashboardProvider {
    * Get error content HTML
    */
   private getErrorContent(message: string): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = this.panel?.webview.cspSource;
     return `<!DOCTYPE html>
 <html lang="en">
@@ -451,7 +425,7 @@ export class CloudStatusDashboardProvider {
     <div class="error-state">
       <span class="error-icon"></span>
       <h2>Failed to Load Status</h2>
-      <p>${this.escapeHtml(message)}</p>
+      <p>${escapeHtml(message)}</p>
       <button class="btn btn-primary" id="retryBtn">Try Again</button>
     </div>
   </div>
@@ -865,7 +839,7 @@ export class CloudStatusDashboardProvider {
    * Generate HTML content for maintenance details
    */
   private getMaintenanceDetailsContent(maintenance: ScheduledMaintenance, webview: vscode.Webview): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = webview.cspSource;
     const scheduledFor = new Date(maintenance.scheduled_for).toLocaleString();
     const scheduledUntil = new Date(maintenance.scheduled_until).toLocaleString();
@@ -880,10 +854,10 @@ export class CloudStatusDashboardProvider {
         return `
           <div class="update">
             <div class="update-header">
-              <span class="update-status status-${update.status}">${this.escapeHtml(update.status)}</span>
+              <span class="update-status status-${update.status}">${escapeHtml(update.status)}</span>
               <span class="update-time">${updateTime}</span>
             </div>
-            <div class="update-body">${this.escapeHtml(update.body)}</div>
+            <div class="update-body">${escapeHtml(update.body)}</div>
           </div>
         `;
       })
@@ -914,7 +888,7 @@ export class CloudStatusDashboardProvider {
   <div class="container">
     <div class="maintenance-header">
       <div class="maintenance-icon"></div>
-      <h1 class="maintenance-title">${this.escapeHtml(maintenance.name)}</h1>
+      <h1 class="maintenance-title">${escapeHtml(maintenance.name)}</h1>
       <span class="status-badge status-${maintenance.status}">${getIncidentStatusText(maintenance.status)}</span>
     </div>
 
@@ -954,7 +928,7 @@ export class CloudStatusDashboardProvider {
     <div class="section">
       <h2>Affected Components</h2>
       <div class="components-list">
-        ${affectedComponents.map((c) => `<span class="component-badge">${this.escapeHtml(c)}</span>`).join('\n')}
+        ${affectedComponents.map((c) => `<span class="component-badge">${escapeHtml(c)}</span>`).join('\n')}
       </div>
     </div>
     `
@@ -1184,7 +1158,7 @@ export class CloudStatusDashboardProvider {
    * Generate HTML content for incident details
    */
   private getIncidentDetailsContent(incident: Incident, webview: vscode.Webview): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = webview.cspSource;
     const startedAt = new Date(incident.started_at).toLocaleString();
     const resolvedAt = incident.resolved_at ? new Date(incident.resolved_at).toLocaleString() : 'Ongoing';
@@ -1199,10 +1173,10 @@ export class CloudStatusDashboardProvider {
         return `
           <div class="update">
             <div class="update-header">
-              <span class="update-status status-${update.status}">${this.escapeHtml(update.status)}</span>
+              <span class="update-status status-${update.status}">${escapeHtml(update.status)}</span>
               <span class="update-time">${updateTime}</span>
             </div>
-            <div class="update-body">${this.escapeHtml(update.body)}</div>
+            <div class="update-body">${escapeHtml(update.body)}</div>
           </div>
         `;
       })
@@ -1258,7 +1232,7 @@ export class CloudStatusDashboardProvider {
   <div class="container">
     <div class="maintenance-header">
       <div class="incident-icon"></div>
-      <h1 class="maintenance-title">${this.escapeHtml(incident.name)}</h1>
+      <h1 class="maintenance-title">${escapeHtml(incident.name)}</h1>
       <span class="status-badge status-${incident.status}">${getIncidentStatusText(incident.status)}</span>
     </div>
 
@@ -1298,7 +1272,7 @@ export class CloudStatusDashboardProvider {
     <div class="section">
       <h2>Affected Components</h2>
       <div class="components-list">
-        ${affectedComponents.map((c) => `<span class="component-badge">${this.escapeHtml(c)}</span>`).join('\n')}
+        ${affectedComponents.map((c) => `<span class="component-badge">${escapeHtml(c)}</span>`).join('\n')}
       </div>
     </div>
     `
@@ -1363,7 +1337,7 @@ export class CloudStatusDashboardProvider {
    * Generate HTML content for component details
    */
   private getComponentDetailsContent(component: Component, incidents: Incident[], webview: vscode.Webview): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = webview.cspSource;
     const createdAt = new Date(component.created_at).toLocaleString();
     const updatedAt = new Date(component.updated_at).toLocaleString();
@@ -1383,14 +1357,14 @@ export class CloudStatusDashboardProvider {
               return `
               <div class="incident-card active">
                 <div class="incident-header">
-                  <span class="incident-name">${this.escapeHtml(incident.name)}</span>
+                  <span class="incident-name">${escapeHtml(incident.name)}</span>
                   <span class="status-badge status-${incident.status}">${getIncidentStatusText(incident.status)}</span>
                 </div>
                 <div class="incident-meta">
                   <span class="impact impact-${incident.impact}">Impact: ${incident.impact}</span>
                   <span class="incident-time">Started: ${startedAt}</span>
                 </div>
-                ${latestUpdate ? `<div class="incident-update"><strong>Latest:</strong> ${this.escapeHtml(latestUpdate.body)}</div>` : ''}
+                ${latestUpdate ? `<div class="incident-update"><strong>Latest:</strong> ${escapeHtml(latestUpdate.body)}</div>` : ''}
               </div>
             `;
             })
@@ -1407,7 +1381,7 @@ export class CloudStatusDashboardProvider {
               return `
               <div class="incident-card resolved">
                 <div class="incident-header">
-                  <span class="incident-name">${this.escapeHtml(incident.name)}</span>
+                  <span class="incident-name">${escapeHtml(incident.name)}</span>
                   <span class="status-badge status-resolved">Resolved</span>
                 </div>
                 <div class="incident-meta">
@@ -1531,7 +1505,7 @@ export class CloudStatusDashboardProvider {
   <div class="container">
     <div class="maintenance-header">
       <div class="component-icon"></div>
-      <h1 class="maintenance-title">${this.escapeHtml(component.name)}</h1>
+      <h1 class="maintenance-title">${escapeHtml(component.name)}</h1>
       <span class="status-badge status-${component.status}">${getStatusDisplayText(component.status)}</span>
     </div>
 
@@ -1563,7 +1537,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Description:</span>
-          <span class="value">${this.escapeHtml(component.description)}</span>
+          <span class="value">${escapeHtml(component.description)}</span>
         </div>
         `
             : ''
@@ -1664,7 +1638,7 @@ export class CloudStatusDashboardProvider {
     coordinates: Coordinates | null,
     webview: vscode.Webview,
   ): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = webview.cspSource;
     const updatedAt = new Date(component.updated_at).toLocaleString();
 
@@ -1689,14 +1663,14 @@ export class CloudStatusDashboardProvider {
               return `
               <div class="incident-card active">
                 <div class="incident-header">
-                  <span class="incident-name">${this.escapeHtml(incident.name)}</span>
+                  <span class="incident-name">${escapeHtml(incident.name)}</span>
                   <span class="status-badge status-${incident.status}">${getIncidentStatusText(incident.status)}</span>
                 </div>
                 <div class="incident-meta">
                   <span class="impact impact-${incident.impact}">Impact: ${incident.impact}</span>
                   <span class="incident-time">Started: ${startedAt}</span>
                 </div>
-                ${latestUpdate ? `<div class="incident-update"><strong>Latest:</strong> ${this.escapeHtml(latestUpdate.body)}</div>` : ''}
+                ${latestUpdate ? `<div class="incident-update"><strong>Latest:</strong> ${escapeHtml(latestUpdate.body)}</div>` : ''}
               </div>
             `;
             })
@@ -1713,7 +1687,7 @@ export class CloudStatusDashboardProvider {
               return `
               <div class="incident-card resolved">
                 <div class="incident-header">
-                  <span class="incident-name">${this.escapeHtml(incident.name)}</span>
+                  <span class="incident-name">${escapeHtml(incident.name)}</span>
                   <span class="status-badge status-resolved">Resolved</span>
                 </div>
                 <div class="incident-meta">
@@ -1750,14 +1724,14 @@ export class CloudStatusDashboardProvider {
         <h3>Regional Edge Details <span class="xc-badge">xcsh</span></h3>
         <div class="info-item">
           <span class="label">Site Name:</span>
-          <span class="value">${this.escapeHtml(siteName)}</span>
+          <span class="value">${escapeHtml(siteName)}</span>
         </div>
         ${
           region
             ? `
         <div class="info-item">
           <span class="label">Region:</span>
-          <span class="value">${this.escapeHtml(formatLabel(region))}</span>
+          <span class="value">${escapeHtml(formatLabel(region))}</span>
         </div>
         `
             : ''
@@ -1767,7 +1741,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Country:</span>
-          <span class="value">${this.escapeHtml(formatLabel(country))}</span>
+          <span class="value">${escapeHtml(formatLabel(country))}</span>
         </div>
         `
             : ''
@@ -1777,7 +1751,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Site Type:</span>
-          <span class="value">${this.escapeHtml(siteType === 'ves-io-re' ? 'Regional Edge' : formatLabel(siteType))}</span>
+          <span class="value">${escapeHtml(siteType === 'ves-io-re' ? 'Regional Edge' : formatLabel(siteType))}</span>
         </div>
         `
             : ''
@@ -1787,7 +1761,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Tenant:</span>
-          <span class="value">${this.escapeHtml(tenant)}</span>
+          <span class="value">${escapeHtml(tenant)}</span>
         </div>
         `
             : ''
@@ -1959,7 +1933,7 @@ export class CloudStatusDashboardProvider {
   <div class="container">
     <div class="maintenance-header">
       <div class="pop-icon"></div>
-      <h1 class="maintenance-title">${this.escapeHtml(component.name)}</h1>
+      <h1 class="maintenance-title">${escapeHtml(component.name)}</h1>
       <span class="status-badge status-${component.status}">${getStatusDisplayText(component.status)}</span>
     </div>
 
@@ -1979,7 +1953,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Site Code:</span>
-          <span class="value"><span class="site-code">${this.escapeHtml(siteCode)}</span></span>
+          <span class="value"><span class="site-code">${escapeHtml(siteCode)}</span></span>
         </div>
         `
             : ''
@@ -1990,14 +1964,14 @@ export class CloudStatusDashboardProvider {
         <h3>Location</h3>
         <div class="info-item">
           <span class="label">City:</span>
-          <span class="value">${this.escapeHtml(city)}</span>
+          <span class="value">${escapeHtml(city)}</span>
         </div>
         ${
           stateOrRegion && stateOrRegion !== country
             ? `
         <div class="info-item">
           <span class="label">State/Region:</span>
-          <span class="value">${this.escapeHtml(stateOrRegion)}</span>
+          <span class="value">${escapeHtml(stateOrRegion)}</span>
         </div>
         `
             : ''
@@ -2007,7 +1981,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Country:</span>
-          <span class="value">${this.escapeHtml(country)}</span>
+          <span class="value">${escapeHtml(country)}</span>
         </div>
         `
             : ''
@@ -2021,7 +1995,7 @@ export class CloudStatusDashboardProvider {
             ? `
         <div class="info-item">
           <span class="label">Description:</span>
-          <span class="value">${this.escapeHtml(component.description)}</span>
+          <span class="value">${escapeHtml(component.description)}</span>
         </div>
         `
             : ''
