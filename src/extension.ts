@@ -17,6 +17,7 @@ import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionPr
 import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
 import { F5XCViewProvider } from './providers/f5xcViewProvider';
 import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
+import { OnboardingProvider } from './providers/onboardingProvider';
 import { SubscriptionDashboardProvider } from './providers/subscriptionDashboardProvider';
 import { getSchemaRegistry } from './schema/schemaRegistry';
 import { CloudStatusProvider } from './tree/cloudStatusProvider';
@@ -236,6 +237,28 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       await healthcheckFormProvider.show(namespace);
     }),
+  );
+
+  // Register onboarding / platform readiness panel
+  const onboardingProvider = new OnboardingProvider(contextManager);
+  context.subscriptions.push(
+    vscode.commands.registerCommand('f5xc.showOnboarding', async () => {
+      await onboardingProvider.showPanel();
+      void context.globalState.update('onboarding.shown', true);
+    }),
+  );
+
+  // Auto-open onboarding panel when integrations need attention
+  onboardingProvider.shouldAutoOpen(context.globalState).then(
+    (shouldOpen) => {
+      if (shouldOpen) {
+        void onboardingProvider.showPanel();
+        void context.globalState.update('onboarding.shown', true);
+      }
+    },
+    (error) => {
+      logger.warn('Onboarding auto-open check failed', error as Error);
+    },
   );
 
   // Configure JSON schema associations for f5xc:// documents

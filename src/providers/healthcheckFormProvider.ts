@@ -9,7 +9,7 @@ import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
 import { showError, showInfo } from '../utils/errors';
 import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
-import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import type { F5XCDescribeProvider } from './f5xcDescribeProvider';
 
 const logger = getLogger();
@@ -423,32 +423,6 @@ export class HealthcheckFormProvider {
   }
 
   /**
-   * Generate a nonce for CSP
-   */
-  private getNonce(): string {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  }
-
-  /**
-   * Escape HTML special characters
-   */
-  private escapeHtml(text: string): string {
-    const htmlEscapes: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
-  }
-
-  /**
    * Render quota usage banner
    */
   private renderQuotaBanner(quotaInfo: QuotaItem | undefined): string {
@@ -495,7 +469,7 @@ export class HealthcheckFormProvider {
    * Generate HTML content for the webview
    */
   private getWebviewContent(namespaces: string[], quotaInfo?: QuotaItem): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const quotaExceeded = quotaInfo ? quotaInfo.usage >= quotaInfo.limit : false;
     const cspSource = this.panel?.webview.cspSource;
 
@@ -579,7 +553,7 @@ export class HealthcheckFormProvider {
         <div class="field">
           <label for="namespace">Namespace *${minBadge('metadata.namespace')}</label>
           <vscode-dropdown id="namespace">
-            ${namespaces.map((ns) => `<vscode-option value="${this.escapeHtml(ns)}"${ns === this.initialNamespace ? ' selected' : ''}>${this.escapeHtml(ns)}</vscode-option>`).join('\n            ')}
+            ${namespaces.map((ns) => `<vscode-option value="${escapeHtml(ns)}"${ns === this.initialNamespace ? ' selected' : ''}>${escapeHtml(ns)}</vscode-option>`).join('\n            ')}
           </vscode-dropdown>
         </div>
 

@@ -9,7 +9,7 @@ import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/document
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
 import { getIconForCategory, getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
-import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import { renderBestPractices } from './metadataRenderer';
 
 const logger = getLogger();
@@ -51,18 +51,6 @@ export class F5XCDescribeProvider {
   private panel: vscode.WebviewPanel | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
-
-  /**
-   * Generate a nonce for CSP
-   */
-  private getNonce(): string {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  }
 
   /**
    * Check if a value is empty (null, undefined, {}, [], "")
@@ -332,7 +320,7 @@ export class F5XCDescribeProvider {
     profileName: string,
     quotaInfo?: QuotaItem,
   ): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = this.panel?.webview.cspSource;
     const metadata = resource.metadata as Record<string, unknown> | undefined;
     const systemMetadata = resource.system_metadata as Record<string, unknown> | undefined;
@@ -357,13 +345,13 @@ export class F5XCDescribeProvider {
     ${this.getStyles()}
   </style>
 </head>
-<body data-profile="${this.escapeHtml(profileName)}" data-namespace="${this.escapeHtml(namespace)}" data-resource-type="${this.escapeHtml(apiPath)}" data-resource-name="${this.escapeHtml(resourceName)}">
+<body data-profile="${escapeHtml(profileName)}" data-namespace="${escapeHtml(namespace)}" data-resource-type="${escapeHtml(apiPath)}" data-resource-name="${escapeHtml(resourceName)}">
   <!-- Top Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg(categoryIconName)}
-      <span class="resource-type">${this.escapeHtml(resourceType)}</span>
-      <span class="resource-name">${this.escapeHtml(resourceName)}</span>
+      <span class="resource-type">${escapeHtml(resourceType)}</span>
+      <span class="resource-name">${escapeHtml(resourceName)}</span>
     </div>
     <div class="toolbar-center">
       <button class="tab-btn active" data-tab="form">Form</button>
@@ -381,7 +369,7 @@ export class F5XCDescribeProvider {
     <!-- Left Sidebar Navigation -->
     <nav class="sidebar">
       <ul class="nav-list">
-        ${sections.map((s) => `<li class="nav-item" data-section="${s.id}">${this.escapeHtml(s.title)}</li>`).join('\n        ')}
+        ${sections.map((s) => `<li class="nav-item" data-section="${s.id}">${escapeHtml(s.title)}</li>`).join('\n        ')}
       </ul>
     </nav>
 
@@ -396,7 +384,7 @@ export class F5XCDescribeProvider {
 
       <!-- JSON View -->
       <div class="tab-content" id="json-view">
-        <pre class="json-content"><code>${this.escapeHtml(jsonContent)}</code></pre>
+        <pre class="json-content"><code>${escapeHtml(jsonContent)}</code></pre>
       </div>
     </main>
   </div>
@@ -1264,7 +1252,7 @@ export class F5XCDescribeProvider {
     if (!hasContent) {
       return `
       <section class="section" id="section-${section.id}">
-        <h3 class="section-header">${this.escapeHtml(section.title)}</h3>
+        <h3 class="section-header">${escapeHtml(section.title)}</h3>
         <div class="section-body">
           <div class="not-configured">Not Configured</div>
         </div>
@@ -1287,7 +1275,7 @@ export class F5XCDescribeProvider {
 
     // Build sub-category label if present
     const subCategoryHtml = section.subCategoryLabel
-      ? `<div class="sub-category-label">${this.escapeHtml(section.subCategoryLabel)}</div>`
+      ? `<div class="sub-category-label">${escapeHtml(section.subCategoryLabel)}</div>`
       : '';
 
     // Build sub-groups HTML
@@ -1299,7 +1287,7 @@ export class F5XCDescribeProvider {
 
     return `
       <section class="section" id="section-${section.id}">
-        <h3 class="section-header">${this.escapeHtml(section.title)}</h3>
+        <h3 class="section-header">${escapeHtml(section.title)}</h3>
         <div class="section-body">
           ${subCategoryHtml}
           ${subGroupsHtml}
@@ -1336,7 +1324,7 @@ export class F5XCDescribeProvider {
         <div class="quota-content">
           <div class="quota-info">
             <span class="quota-label">Resource Type:</span>
-            <span class="quota-value">${this.escapeHtml(quotaInfo.displayName)}</span>
+            <span class="quota-value">${escapeHtml(quotaInfo.displayName)}</span>
           </div>
           <div class="quota-info">
             <span class="quota-label">Used:</span>
@@ -1370,7 +1358,7 @@ export class F5XCDescribeProvider {
         <div class="quota-content">
           <div class="quota-info">
             <span class="quota-label">Resource Type:</span>
-            <span class="quota-value">${this.escapeHtml(resourceType)}</span>
+            <span class="quota-value">${escapeHtml(resourceType)}</span>
           </div>
           <div class="quota-info">
             <span class="quota-value" style="color: var(--vscode-descriptionForeground); font-style: italic;">
@@ -1400,9 +1388,9 @@ export class F5XCDescribeProvider {
 
     return `
       <section class="section section-compact" id="section-${section.id}">
-        <div class="field-row compact-row" data-key="${this.escapeHtml(keyLower)}" data-value="${this.escapeHtml(valueLower)}">
-          <span class="field-key">${this.escapeHtml(field.key)}:</span>
-          <span class="field-value${statusClass}">${statusIcon}${this.escapeHtml(field.value)}</span>
+        <div class="field-row compact-row" data-key="${escapeHtml(keyLower)}" data-value="${escapeHtml(valueLower)}">
+          <span class="field-key">${escapeHtml(field.key)}:</span>
+          <span class="field-value${statusClass}">${statusIcon}${escapeHtml(field.value)}</span>
         </div>
       </section>
     `;
@@ -1414,7 +1402,7 @@ export class F5XCDescribeProvider {
   private renderSubGroup(subGroup: SubGroupDefinition): string {
     return `
       <div class="sub-group" id="subgroup-${subGroup.id}">
-        <div class="sub-group-header">${this.escapeHtml(subGroup.title)}</div>
+        <div class="sub-group-header">${escapeHtml(subGroup.title)}</div>
         ${this.renderFields(subGroup.fields)}
       </div>
     `;
@@ -1429,10 +1417,10 @@ export class F5XCDescribeProvider {
         const statusClass = field.status ? ` status-${field.status}` : '';
         const statusIcon = this.getStatusIcon(field.status);
         return `
-        <div class="field-row" data-key="${this.escapeHtml(field.key.toLowerCase())}" data-value="${this.escapeHtml(field.value.toLowerCase())}">
+        <div class="field-row" data-key="${escapeHtml(field.key.toLowerCase())}" data-value="${escapeHtml(field.value.toLowerCase())}">
           <span class="field-icon"></span>
-          <span class="field-key">${this.escapeHtml(field.key)}</span>
-          <span class="field-value${statusClass}">${statusIcon}${this.escapeHtml(field.value)}</span>
+          <span class="field-key">${escapeHtml(field.key)}</span>
+          <span class="field-value${statusClass}">${statusIcon}${escapeHtml(field.value)}</span>
         </div>`;
       })
       .join('\n');
@@ -1454,20 +1442,6 @@ export class F5XCDescribeProvider {
       default:
         return '';
     }
-  }
-
-  /**
-   * Escape HTML special characters
-   */
-  private escapeHtml(text: string): string {
-    const htmlEscapes: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
   }
 
   /**

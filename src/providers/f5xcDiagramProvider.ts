@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
-import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
 const logger = getLogger();
 
@@ -183,18 +183,6 @@ export class F5XCDiagramProvider {
   private panel: vscode.WebviewPanel | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
-
-  /**
-   * Generate a nonce for CSP
-   */
-  private getNonce(): string {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  }
 
   /**
    * Show the diagram panel for an HTTP Load Balancer
@@ -743,7 +731,7 @@ export class F5XCDiagramProvider {
    * Generate HTML content for the webview
    */
   private getWebviewContent(mermaidCode: string, resourceName: string): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = this.panel?.webview.cspSource;
 
     return `<!DOCTYPE html>
@@ -752,7 +740,7 @@ export class F5XCDiagramProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource} https://cdn.jsdelivr.net; img-src data:;">
-  <title>Diagram: ${this.escapeHtml(resourceName)}</title>
+  <title>Diagram: ${escapeHtml(resourceName)}</title>
   <style>
     ${this.getStyles()}
   </style>
@@ -762,7 +750,7 @@ export class F5XCDiagramProvider {
     <div class="toolbar-left">
       ${getToolbarIconSvg('distributed-apps')}
       <span class="resource-type">HTTP Load Balancer Diagram</span>
-      <span class="resource-name">${this.escapeHtml(resourceName)}</span>
+      <span class="resource-name">${escapeHtml(resourceName)}</span>
     </div>
     <div class="toolbar-right">
       <button id="copyBtn" class="btn">Copy Mermaid</button>
@@ -965,20 +953,6 @@ export class F5XCDiagramProvider {
       stroke-width: 1px;
     }
     `;
-  }
-
-  /**
-   * Escape HTML special characters
-   */
-  private escapeHtml(text: string): string {
-    const htmlEscapes: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
   }
 
   /**

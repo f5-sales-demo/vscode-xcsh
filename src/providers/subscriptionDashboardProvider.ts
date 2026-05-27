@@ -19,7 +19,7 @@ import {
 import type { ContextManager } from '../config/contextManager';
 import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
-import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
 const logger = getLogger();
 
@@ -31,32 +31,6 @@ export class SubscriptionDashboardProvider {
   private quotasPanel: vscode.WebviewPanel | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
-
-  /**
-   * Generate a nonce for CSP
-   */
-  private getNonce(): string {
-    let text = '';
-    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < 32; i++) {
-      text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
-  }
-
-  /**
-   * Escape HTML special characters
-   */
-  private escapeHtml(text: string): string {
-    const htmlEscapes: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return text.replace(/[&<>"']/g, (char) => htmlEscapes[char] || char);
-  }
 
   /**
    * Show the Plan dashboard
@@ -243,7 +217,7 @@ export class SubscriptionDashboardProvider {
    * Generate Plan dashboard HTML
    */
   private getPlanWebviewContent(planInfo: PlanInfo, accessStatuses: Map<string, AccessStatus>): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = this.planPanel?.webview.cspSource;
 
     const tierBadge =
@@ -292,9 +266,9 @@ export class SubscriptionDashboardProvider {
           ${tierBadge}
         </div>
         <div class="card-body">
-          <div class="plan-title">${this.escapeHtml(planInfo.title)}</div>
-          ${planInfo.subtitle ? `<div class="plan-subtitle">${this.escapeHtml(planInfo.subtitle)}</div>` : ''}
-          ${planInfo.description ? `<div class="plan-description">${this.escapeHtml(planInfo.description)}</div>` : ''}
+          <div class="plan-title">${escapeHtml(planInfo.title)}</div>
+          ${planInfo.subtitle ? `<div class="plan-subtitle">${escapeHtml(planInfo.subtitle)}</div>` : ''}
+          ${planInfo.description ? `<div class="plan-description">${escapeHtml(planInfo.description)}</div>` : ''}
         </div>
       </div>
 
@@ -410,7 +384,7 @@ export class SubscriptionDashboardProvider {
     const tierLabel = addon.tier === 'advanced' ? 'Advanced' : 'Standard';
 
     // Show addon name only when there are multiple addons in the same category
-    const nameHtml = showName ? `<span class="addon-name">${this.escapeHtml(addon.displayName)}</span>` : '';
+    const nameHtml = showName ? `<span class="addon-name">${escapeHtml(addon.displayName)}</span>` : '';
 
     // Generate activate button for available (not active) addons
     let actionHtml = '';
@@ -431,8 +405,8 @@ export class SubscriptionDashboardProvider {
    * Render activate button based on access status
    */
   private renderActivateButton(addon: AddonService, accessStatus?: AccessStatus): string {
-    const escapedName = this.escapeHtml(addon.name);
-    const escapedDisplayName = this.escapeHtml(addon.displayName);
+    const escapedName = escapeHtml(addon.name);
+    const escapedDisplayName = escapeHtml(addon.displayName);
 
     // Determine button state based on access status
     switch (accessStatus) {
@@ -470,7 +444,7 @@ export class SubscriptionDashboardProvider {
    * Generate Quotas dashboard HTML
    */
   private getQuotasWebviewContent(quotaUsage: QuotaUsage): string {
-    const nonce = this.getNonce();
+    const nonce = getNonce();
     const cspSource = this.quotasPanel?.webview.cspSource;
 
     // Calculate summary stats
@@ -591,7 +565,7 @@ export class SubscriptionDashboardProvider {
     return `
       <div class="quota-row">
         <div class="quota-info">
-          <span class="quota-name">${this.escapeHtml(item.displayName)}</span>
+          <span class="quota-name">${escapeHtml(item.displayName)}</span>
           <span class="quota-values">${item.usage} / ${item.limit}</span>
         </div>
         <div class="quota-progress">
