@@ -21,8 +21,9 @@ import {
 import { geocodeLocation } from '../api/geocoder';
 import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/popCoordinates';
 import type { ContextManager } from '../config/contextManager';
+import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
-import { getF5LogoHtml, getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
 /**
  * WebView provider for Cloud Status Dashboard
@@ -272,7 +273,7 @@ export class CloudStatusDashboardProvider {
   <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
-      ${getF5LogoHtml()}
+      ${getToolbarIconSvg('observability')}
       <span class="title">Cloud Status Dashboard</span>
     </div>
     <div class="toolbar-right">
@@ -436,7 +437,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      ${getF5LogoHtml()}
+      ${getToolbarIconSvg('observability')}
       <span class="title">Cloud Status Dashboard</span>
     </div>
     <div class="toolbar-right">
@@ -470,65 +471,27 @@ export class CloudStatusDashboardProvider {
       line-height: 1.5;
     }
 
-    /* Toolbar */
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 24px;
-      background: var(--f5-toolbar-gradient);
-      border-bottom: 1px solid var(--vscode-panel-border);
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-
-
-    .title {
-      color: white;
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .toolbar-right {
-      display: flex;
-      gap: 8px;
-    }
-
+    /* Toolbar overrides */
     .btn {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 16px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 13px;
       font-weight: 500;
-      transition: all 0.15s;
     }
 
     .btn-primary {
       background: white;
       color: var(--f5-brand-red);
+      border: none;
+      border-radius: 4px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.2s;
     }
 
     .btn-primary:hover {
       background: #f0f0f0;
-    }
-
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.25);
     }
 
     /* Icons */
@@ -938,7 +901,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      ${getF5LogoHtml()}
+      ${getToolbarIconSvg('shared-configuration')}
       <span class="title">Scheduled Maintenance</span>
     </div>
     <div class="toolbar-right">
@@ -1034,44 +997,9 @@ export class CloudStatusDashboardProvider {
       line-height: 1.5;
     }
     .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 20px;
-      background: var(--f5-toolbar-gradient);
-      border-bottom: 1px solid var(--vscode-titleBar-border);
       position: sticky;
       top: 0;
       z-index: 100;
-    }
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .title {
-      font-size: 14px;
-      font-weight: 500;
-      color: white;
-    }
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      font-family: inherit;
-    }
-    .btn-secondary {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-    .btn-secondary:hover {
-      background: rgba(255, 255, 255, 0.25);
     }
     .external-icon::before {
       content: "↗";
@@ -1317,7 +1245,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      ${getF5LogoHtml()}
+      ${getToolbarIconSvg('audit-logs-and-alerts')}
       <span class="title">Active Incident</span>
     </div>
     <div class="toolbar-right">
@@ -1590,7 +1518,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      ${getF5LogoHtml()}
+      ${getToolbarIconSvg('platform')}
       <span class="title">Service Status</span>
     </div>
     <div class="toolbar-right">
@@ -2018,7 +1946,7 @@ export class CloudStatusDashboardProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      ${getF5LogoHtml()}
+      ${getToolbarIconSvg('multi-cloud-network-connect')}
       <span class="title">Regional Edge Status</span>
     </div>
     <div class="toolbar-right">

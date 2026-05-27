@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
+import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
@@ -759,7 +760,8 @@ export class F5XCDiagramProvider {
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
-      <span class="title">HTTP Load Balancer Diagram</span>
+      ${getToolbarIconSvg('distributed-apps')}
+      <span class="resource-type">HTTP Load Balancer Diagram</span>
       <span class="resource-name">${this.escapeHtml(resourceName)}</span>
     </div>
     <div class="toolbar-right">
@@ -922,52 +924,8 @@ export class F5XCDiagramProvider {
       overflow: hidden;
     }
 
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 16px;
-      background: var(--f5-toolbar-gradient);
-      border-bottom: 1px solid var(--vscode-panel-border);
-      flex-shrink: 0;
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .title {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-    }
-
-    .resource-name {
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .toolbar-right {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-      transition: all 0.15s;
-    }
-
-    .btn:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
+    /* Toolbar override */
+    .toolbar { flex-shrink: 0; }
 
     .diagram-container {
       flex: 1;

@@ -7,6 +7,7 @@ import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
 import type { ContextManager } from '../config/contextManager';
 import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
 import { showError, showInfo } from '../utils/errors';
+import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import type { F5XCDescribeProvider } from './f5xcDescribeProvider';
@@ -538,14 +539,17 @@ export class HealthcheckFormProvider {
   <title>Create Healthcheck</title>
 </head>
 <body>
+  <div class="toolbar">
+    <div class="toolbar-left">
+      ${getToolbarIconSvg('observability')}
+      <span class="title">Create Healthcheck</span>
+    </div>
+    <div class="toolbar-right">
+      <vscode-button appearance="secondary" id="toggle-json-btn">Show JSON</vscode-button>
+      <vscode-button appearance="primary" id="create-btn" disabled>Create</vscode-button>
+    </div>
+  </div>
   <div class="container">
-    <header class="header">
-      <h1>Create Healthcheck</h1>
-      <div class="header-actions">
-        <vscode-button appearance="secondary" id="toggle-json-btn">Show JSON</vscode-button>
-        <vscode-button appearance="primary" id="create-btn" disabled>Create</vscode-button>
-      </div>
-    </header>
 
     <div class="main-content">
       <div class="form-panel">
@@ -772,26 +776,7 @@ export class HealthcheckFormProvider {
       padding: 0 24px;
     }
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--vscode-panel-border);
-      flex-shrink: 0;
-    }
-
-    .header h1 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
+    .toolbar { flex-shrink: 0; }
 
     .main-content {
       display: flex;

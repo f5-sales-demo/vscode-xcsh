@@ -17,6 +17,7 @@ import {
   type QuotaUsage,
 } from '../api/subscription';
 import type { ContextManager } from '../config/contextManager';
+import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
@@ -272,6 +273,7 @@ export class SubscriptionDashboardProvider {
   <!-- Top Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
+      ${getToolbarIconSvg('billing')}
       <span class="resource-type">Subscription</span>
       <span class="resource-name">Plan</span>
     </div>
@@ -491,6 +493,7 @@ export class SubscriptionDashboardProvider {
   <!-- Top Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
+      ${getToolbarIconSvg('billing')}
       <span class="resource-type">Subscription</span>
       <span class="resource-name">Quotas</span>
     </div>
@@ -615,53 +618,8 @@ export class SubscriptionDashboardProvider {
       overflow: hidden;
     }
 
-    /* Toolbar */
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 16px;
-      background: var(--f5-toolbar-gradient);
-      border-bottom: 1px solid var(--vscode-panel-border);
-      flex-shrink: 0;
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .resource-type {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-    }
-
-    .resource-name {
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .refresh-btn {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    .refresh-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
+    /* Toolbar override */
+    .toolbar { flex-shrink: 0; }
 
     /* Container */
     .container {
