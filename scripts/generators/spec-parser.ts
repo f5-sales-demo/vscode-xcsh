@@ -302,6 +302,7 @@ interface OpenAPISpec {
   info?: {
     title?: string;
     description?: string;
+    'x-f5xc-api-reference-url'?: string;
     'x-f5xc-cli-domain'?: string;
     'x-f5xc-best-practices'?: {
       common_errors?: Array<{
@@ -688,14 +689,18 @@ export function formatDisplayName(title: string | undefined, resourceKey: string
 
 /**
  * Extract documentation URL from spec.
+ *
+ * Priority:
+ * 1. info['x-f5xc-api-reference-url'] — explicit enriched field (single source of truth)
+ * 2. First operation's externalDocs.url — fallback for specs without the extension field
  */
 export function extractDocUrl(spec: OpenAPISpec): string | undefined {
-  // Check top-level externalDocs
-  if (spec.externalDocs?.url) {
-    return spec.externalDocs.url;
+  // Priority 1: Explicit API reference URL from enrichment
+  if (spec.info?.['x-f5xc-api-reference-url']) {
+    return spec.info['x-f5xc-api-reference-url'] as string;
   }
 
-  // Check first path operation for externalDocs
+  // Priority 2: First operation's externalDocs URL (already rewritten by enricher)
   if (spec.paths) {
     for (const pathObj of Object.values(spec.paths)) {
       for (const method of ['get', 'post', 'put', 'delete'] as const) {
@@ -708,22 +713,6 @@ export function extractDocUrl(spec: OpenAPISpec): string | undefined {
   }
 
   return undefined;
-}
-
-/**
- * Transform an operation-specific URL to a general documentation URL.
- */
-export function transformToGeneralDocUrl(operationUrl: string, schemaId: string): string {
-  const parts = schemaId.split('.');
-  const schemaIndex = parts.indexOf('schema');
-  if (schemaIndex === -1) {
-    return operationUrl;
-  }
-
-  const afterSchema = parts.slice(schemaIndex + 1);
-  const docPath = afterSchema.join('-').replace(/_/g, '-');
-
-  return `https://docs.cloud.f5.com/docs-v2/api/${docPath}`;
 }
 
 /**
@@ -755,9 +744,8 @@ export function parseSpecFile(filePath: string): ParsedSpecInfo | null {
   const apiPath = apiInfo.apiPathSuffix || deriveApiPathSuffix(resourceKey);
   const displayName = formatDisplayName(spec.info?.title, resourceKey);
 
-  // Get documentation URL
-  const operationUrl = extractDocUrl(spec);
-  const documentationUrl = operationUrl ? transformToGeneralDocUrl(operationUrl, schemaId) : undefined;
+  // Get documentation URL directly from enriched spec
+  const documentationUrl = extractDocUrl(spec);
 
   // Build the fullApiPath with service segment if present
   let fullApiPath: string;
