@@ -697,7 +697,7 @@ export function formatDisplayName(title: string | undefined, resourceKey: string
 export function extractDocUrl(spec: OpenAPISpec): string | undefined {
   // Priority 1: Explicit API reference URL from enrichment
   if (spec.info?.['x-f5xc-api-reference-url']) {
-    return spec.info['x-f5xc-api-reference-url'] as string;
+    return spec.info['x-f5xc-api-reference-url'];
   }
 
   // Priority 2: First operation's externalDocs URL (already rewritten by enricher)
