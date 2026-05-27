@@ -7,6 +7,7 @@ import type { ContextManager } from '../config/contextManager';
 import { API_ENDPOINTS } from '../generated/constants';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
+import { getIconForCategory, getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import { renderBestPractices } from './metadataRenderer';
@@ -343,6 +344,9 @@ export class F5XCDescribeProvider {
     // Generate JSON content for JSON tab
     const jsonContent = JSON.stringify(resource, null, 2);
 
+    const resourceInfo = this.findResourceTypeInfo(apiPath);
+    const categoryIconName = getIconForCategory(resourceInfo?.category ?? '');
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -357,6 +361,7 @@ export class F5XCDescribeProvider {
   <!-- Top Toolbar -->
   <div class="toolbar">
     <div class="toolbar-left">
+      ${getToolbarIconSvg(categoryIconName)}
       <span class="resource-type">${this.escapeHtml(resourceType)}</span>
       <span class="resource-name">${this.escapeHtml(resourceName)}</span>
     </div>
@@ -1479,44 +1484,8 @@ export class F5XCDescribeProvider {
       overflow: hidden;
     }
 
-    /* Toolbar */
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 16px;
-      background: var(--f5-toolbar-gradient);
-      border-bottom: 1px solid var(--vscode-panel-border);
-      gap: 16px;
-      flex-shrink: 0;
-    }
-
-    .toolbar-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-    }
-
-    .resource-type {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
-    .resource-name {
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .toolbar-center {
-      display: flex;
-      gap: 4px;
-    }
+    /* Toolbar override */
+    .toolbar { flex-shrink: 0; }
 
     .tab-btn {
       background: transparent;
@@ -1539,12 +1508,6 @@ export class F5XCDescribeProvider {
       background: rgba(255, 255, 255, 0.2);
       color: white;
       border-color: white;
-    }
-
-    .toolbar-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
 
     .search-input {

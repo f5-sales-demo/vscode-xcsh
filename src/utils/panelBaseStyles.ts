@@ -47,6 +47,10 @@ export function getWebviewBaseStyles(): string {
       --f5-brand-red: #e01f27;
       --f5-brand-red-dark: #8b0000;
       --f5-toolbar-gradient: linear-gradient(90deg, var(--f5-brand-red-dark) 0%, var(--f5-brand-red) 100%);
+      --color-brand: #e4002b;
+      --color-N600: #0f1e57;
+      --color-N200: #e6e9f3;
+      --color-blue-light: #e5eaff;
     }
 
     body::after {
@@ -67,6 +71,88 @@ export function getWebviewBaseStyles(): string {
       background-color: var(--vscode-editor-background);
       margin: 0;
       padding: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 16px;
+      background: var(--f5-toolbar-gradient);
+      border-bottom: 1px solid var(--vscode-panel-border);
+      gap: 16px;
+    }
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .toolbar-center {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .toolbar .title {
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toolbar .resource-type {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .toolbar .resource-name {
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .toolbar .btn,
+    .toolbar .btn-secondary,
+    .toolbar .refresh-btn {
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .toolbar .btn:hover,
+    .toolbar .btn-secondary:hover,
+    .toolbar .refresh-btn:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .toolbar-icon {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 4px;
+    }
+    .toolbar-icon svg {
+      width: 24px;
+      height: 24px;
     }
 
     .toolbar-logo-wrap {
