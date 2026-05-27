@@ -22,6 +22,13 @@ interface SpecInfo {
  * OpenAPI spec structure (minimal interface for what we need)
  */
 interface OpenAPISpec {
+  info?: {
+    'x-f5xc-api-reference-url'?: string;
+    'x-f5xc-cli-domain'?: string;
+    externalDocs?: {
+      url?: string;
+    };
+  };
   externalDocs?: {
     url?: string;
   };
@@ -30,15 +37,34 @@ interface OpenAPISpec {
 
 const SPEC_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api');
 const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'generated', 'documentationUrls.ts');
+const API_REFERENCE_BASE_URL = 'https://f5xc-salesdemos.github.io/api-specs-enriched/api-reference';
 
 /**
  * Extract schema identifier from spec filename.
- * Example: "docs-cloud-f5-com.0073.public.ves.io.schema.views.http_loadbalancer.ves-swagger.json"
- * Returns: "ves.io.schema.views.http_loadbalancer"
+ *
+ * Handles two formats:
+ * - Individual schema: "docs-cloud-f5-com.0073.public.ves.io.schema.views.http_loadbalancer.ves-swagger.json"
+ *   Returns: "ves.io.schema.views.http_loadbalancer"
+ * - Domain-level: "blindfold.json"
+ *   Returns: null (handled separately via domain key)
  */
 function extractSchemaId(filename: string): string | null {
-  // Pattern: docs-cloud-f5-com.NNNN.public.<schema-id>.ves-swagger.json
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
+  return match?.[1] ? match[1] : null;
+}
+
+/**
+ * Extract domain key from a domain-level spec filename.
+ * Example: "blindfold.json" -> "blindfold"
+ */
+function extractDomainKey(filename: string): string | null {
+  if (filename.startsWith('docs-cloud-f5-com.')) {
+    return null;
+  }
+  if (filename === 'openapi.json' || filename === 'index.json') {
+    return null;
+  }
+  const match = filename.match(/^([a-z][a-z0-9_]+)\.json$/);
   return match?.[1] ? match[1] : null;
 }
 
@@ -71,19 +97,23 @@ function deriveResourceType(schemaId: string): string | null {
 }
 
 /**
- * Extract the first externalDocs URL from a spec file.
+ * Extract the API reference URL from a spec file.
+ *
+ * Priority:
+ * 1. info['x-f5xc-api-reference-url'] — explicit enriched field (single source of truth)
+ * 2. First operation's externalDocs.url — fallback for specs without the extension field
  */
 function extractDocUrl(specPath: string): string | null {
   try {
     const content = fs.readFileSync(specPath, 'utf-8');
     const spec = JSON.parse(content) as OpenAPISpec;
 
-    // Check for top-level externalDocs first
-    if (spec.externalDocs?.url) {
-      return spec.externalDocs.url;
+    // Priority 1: Explicit API reference URL from enrichment
+    if (spec.info?.['x-f5xc-api-reference-url']) {
+      return spec.info['x-f5xc-api-reference-url'];
     }
 
-    // Otherwise, find the first externalDocs URL in paths
+    // Priority 2: First operation's externalDocs URL (already rewritten by enricher)
     if (spec.paths) {
       for (const pathObj of Object.values(spec.paths)) {
         for (const method of Object.values(pathObj)) {
@@ -99,28 +129,6 @@ function extractDocUrl(specPath: string): string | null {
     console.error(`Error reading spec file ${specPath}:`, e);
     return null;
   }
-}
-
-/**
- * Transform an operation-specific URL to a general documentation URL.
- * Example: "https://docs.cloud.f5.com/docs-v2/platform/reference/api-ref/ves-io-schema-views-http_loadbalancer-api-create"
- * Returns: "https://docs.cloud.f5.com/docs-v2/api/views-http-loadbalancer"
- */
-function transformToGeneralDocUrl(operationUrl: string, schemaId: string): string {
-  // Extract the schema path from schema ID
-  // ves.io.schema.views.http_loadbalancer -> views.http_loadbalancer
-  // ves.io.schema.app_firewall -> app_firewall
-  const parts = schemaId.split('.');
-  const schemaIndex = parts.indexOf('schema');
-  if (schemaIndex === -1) {
-    return operationUrl;
-  }
-
-  const afterSchema = parts.slice(schemaIndex + 1);
-  // Convert dots to hyphens and underscores to hyphens
-  const docPath = afterSchema.join('-').replace(/_/g, '-');
-
-  return `https://docs.cloud.f5.com/docs-v2/api/${docPath}`;
 }
 
 /**
@@ -145,28 +153,40 @@ function main(): void {
   const processed: SpecInfo[] = [];
 
   for (const filename of specFiles) {
-    const schemaId = extractSchemaId(filename);
-    if (!schemaId) {
-      continue;
-    }
-
-    const resourceType = deriveResourceType(schemaId);
-    if (!resourceType) {
-      continue;
-    }
-
     const specPath = path.join(SPEC_DIR, filename);
-    const operationUrl = extractDocUrl(specPath);
-    if (!operationUrl) {
+
+    // Try individual schema file first
+    const schemaId = extractSchemaId(filename);
+    if (schemaId) {
+      const resourceType = deriveResourceType(schemaId);
+      if (!resourceType) {
+        continue;
+      }
+
+      const docUrl = extractDocUrl(specPath);
+      if (!docUrl) {
+        continue;
+      }
+
+      if (!urlMap[resourceType]) {
+        urlMap[resourceType] = docUrl;
+        processed.push({ schemaId, resourceType, docUrl });
+      }
       continue;
     }
 
-    const docUrl = transformToGeneralDocUrl(operationUrl, schemaId);
-
-    // Only add if we don't already have this resource type
-    if (!urlMap[resourceType]) {
-      urlMap[resourceType] = docUrl;
-      processed.push({ schemaId, resourceType, docUrl });
+    // Try domain-level spec file
+    const domainKey = extractDomainKey(filename);
+    if (domainKey) {
+      const docUrl = extractDocUrl(specPath);
+      if (!docUrl && !urlMap[domainKey]) {
+        const fallbackUrl = `${API_REFERENCE_BASE_URL}/${domainKey}/`;
+        urlMap[domainKey] = fallbackUrl;
+        processed.push({ schemaId: domainKey, resourceType: domainKey, docUrl: fallbackUrl });
+      } else if (docUrl && !urlMap[domainKey]) {
+        urlMap[domainKey] = docUrl;
+        processed.push({ schemaId: domainKey, resourceType: domainKey, docUrl });
+      }
     }
   }
 
@@ -198,14 +218,13 @@ export const DOCUMENTATION_URLS: Record<string, string> = ${JSON.stringify(sorte
 
 /**
  * Get the documentation URL for a resource type.
- * Falls back to the base API docs URL if the resource type is not found.
+ * Falls back to the base API reference URL if the resource type is not found.
  *
  * @param resourceType - The resource type key (e.g., 'http_loadbalancers')
  * @returns The documentation URL
  */
 export function getDocumentationUrl(resourceType: string): string {
-  const baseUrl = 'https://docs.cloud.f5.com/docs-v2/api';
-  return DOCUMENTATION_URLS[resourceType] || baseUrl;
+  return DOCUMENTATION_URLS[resourceType] || '${API_REFERENCE_BASE_URL}';
 }
 `;
 
