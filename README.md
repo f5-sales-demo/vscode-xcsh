@@ -42,15 +42,6 @@ Run **xcsh: Platform Readiness** in VS Code to see which integrations are instal
 
 Full documentation is available at **[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
 
-## Getting Started
-
-```bash
-git clone https://github.com/f5xc-salesdemos/vscode-f5xc-tools.git
-```
-
-See the [documentation](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) for detailed setup
-and usage guides.
-
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for workflow rules,
