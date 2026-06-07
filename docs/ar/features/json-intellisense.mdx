@@ -1,0 +1,27 @@
+---
+title: JSON IntelliSense
+description: التحقق من صحة المخطط والإكمال التلقائي لتكوينات موارد F5 XC.
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## التحقق من صحة المخطط
+
+يوفر الامتداد مخططات JSON لأنواع الموارد الشائعة. عند تحرير ملفات JSON الخاصة بالموارد، يقوم VS Code بالتحقق من صحة التكوين الخاص بك في الوقت الفعلي ويبرز الأخطاء.
+
+## المخططات المدعومة
+
+- HTTP Load Balancer (`.http_loadbalancer.json`)
+- Origin Pool (`.origin_pool.json`)
+- App Firewall / WAF (`.app_firewall.json`)
+- Health Check (`.healthcheck.json`)
+- TCP Load Balancer (`.tcp_loadbalancer.json`)
+- DNS Load Balancer (`.dns_load_balancer.json`)
+- Virtual Site (`.virtual_site.json`)
+
+## الإكمال التلقائي
+
+يوفر IntelliSense إكمالاً تلقائياً لأسماء الحقول وقيم التعداد وهياكل الكائنات المتداخلة استناداً إلى مواصفات F5 XC OpenAPI.

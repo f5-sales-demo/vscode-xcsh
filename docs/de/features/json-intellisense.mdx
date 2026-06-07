@@ -1,0 +1,29 @@
+---
+title: JSON IntelliSense
+description: >-
+  Schema-Validierung und automatische Vervollständigung für F5
+  XC-Ressourcenkonfigurationen.
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## Schema-Validierung
+
+Die Erweiterung stellt JSON-Schemas für gängige Ressourcentypen bereit. Beim Bearbeiten von JSON-Ressourcendateien validiert VS Code Ihre Konfiguration in Echtzeit und hebt Fehler hervor.
+
+## Unterstützte Schemas
+
+- HTTP Load Balancer (`.http_loadbalancer.json`)
+- Origin Pool (`.origin_pool.json`)
+- App Firewall / WAF (`.app_firewall.json`)
+- Health Check (`.healthcheck.json`)
+- TCP Load Balancer (`.tcp_loadbalancer.json`)
+- DNS Load Balancer (`.dns_load_balancer.json`)
+- Virtual Site (`.virtual_site.json`)
+
+## Automatische Vervollständigung
+
+IntelliSense bietet automatische Vervollständigung für Feldnamen, Enum-Werte und verschachtelte Objektstrukturen basierend auf der F5 XC OpenAPI-Spezifikation.

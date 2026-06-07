@@ -1,0 +1,27 @@
+---
+title: JSON IntelliSense
+description: F5 XC 리소스 구성에 대한 스키마 검증 및 자동 완성.
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## 스키마 검증
+
+이 확장은 일반적인 리소스 유형에 대한 JSON 스키마를 제공합니다. 리소스 JSON 파일을 편집할 때, VS Code는 실시간으로 구성을 검증하고 오류를 강조 표시합니다.
+
+## 지원되는 스키마
+
+- HTTP 로드 밸런서 (`.http_loadbalancer.json`)
+- 오리진 풀 (`.origin_pool.json`)
+- 앱 방화벽 / WAF (`.app_firewall.json`)
+- 헬스 체크 (`.healthcheck.json`)
+- TCP 로드 밸런서 (`.tcp_loadbalancer.json`)
+- DNS 로드 밸런서 (`.dns_load_balancer.json`)
+- 가상 사이트 (`.virtual_site.json`)
+
+## 자동 완성
+
+IntelliSense는 F5 XC OpenAPI 사양을 기반으로 필드 이름, 열거형 값 및 중첩된 객체 구조에 대한 자동 완성을 제공합니다.

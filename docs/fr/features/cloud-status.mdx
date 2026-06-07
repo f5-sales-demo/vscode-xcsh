@@ -1,0 +1,19 @@
+---
+title: Cloud Status
+description: Surveillez l'état des services F5 Distributed Cloud depuis VS Code.
+sidebar:
+  order: 3
+i18n:
+  sourceHash: 7264a9e65d6f
+  translator: machine
+---
+
+## Surveillance de l'état
+
+La vue arborescente **Cloud Status** affiche l'état de santé actuel des services F5 Distributed Cloud. L'état est récupéré depuis la page de statut officielle de F5 et affiche :
+
+- L'état global de la plateforme
+- L'état de santé par composant (API, Console, Data Plane, etc.)
+- Les incidents actifs et les fenêtres de maintenance
+
+La vue se met à jour automatiquement en fonction de l'intervalle de rafraîchissement configuré (`f5xc.autoRefreshInterval`).

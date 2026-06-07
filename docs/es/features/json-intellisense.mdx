@@ -1,0 +1,29 @@
+---
+title: JSON IntelliSense
+description: >-
+  Validación de esquemas y autocompletado para configuraciones de recursos de F5
+  XC.
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## Validación de esquemas
+
+La extensión proporciona esquemas JSON para los tipos de recursos más comunes. Al editar archivos JSON de recursos, VS Code valida su configuración en tiempo real y resalta los errores.
+
+## Esquemas compatibles
+
+- HTTP Load Balancer (`.http_loadbalancer.json`)
+- Origin Pool (`.origin_pool.json`)
+- App Firewall / WAF (`.app_firewall.json`)
+- Health Check (`.healthcheck.json`)
+- TCP Load Balancer (`.tcp_loadbalancer.json`)
+- DNS Load Balancer (`.dns_load_balancer.json`)
+- Virtual Site (`.virtual_site.json`)
+
+## Autocompletado
+
+IntelliSense proporciona autocompletado para nombres de campos, valores de enumeraciones y estructuras de objetos anidados basándose en la especificación OpenAPI de F5 XC.

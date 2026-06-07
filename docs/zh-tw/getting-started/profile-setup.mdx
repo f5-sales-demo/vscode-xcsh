@@ -1,0 +1,27 @@
+---
+title: 設定檔配置
+description: 設定用於連線至 F5 Distributed Cloud 的 API 憑證。
+sidebar:
+  order: 2
+i18n:
+  sourceHash: '671290967694'
+  translator: machine
+---
+
+## 新增設定檔
+
+1. 在 F5 XC 側邊欄中開啟 **Profiles** 檢視。
+2. 點擊 **+** 圖示以新增設定檔。
+3. 輸入您的租戶 URL（例如 `https://your-tenant.console.ves.volterra.io`）。
+4. 選擇驗證方式：
+   - **API Token**：從 F5 XC 主控台貼上您的 API 權杖。
+   - **P12 Certificate**：選擇您的 `.p12` 憑證檔案並輸入密碼。
+5. 設定預設的命名空間。
+
+## 管理設定檔
+
+- **切換設定檔**：在 Profiles 檢視中點擊某個設定檔以將其設為使用中。
+- **編輯**：右鍵點擊設定檔並選擇 **Edit Profile**。
+- **刪除**：右鍵點擊設定檔並選擇 **Delete Profile**。
+
+設定檔使用 VS Code 內建的秘密儲存機制安全地儲存（在 Linux 上符合 XDG 規範）。

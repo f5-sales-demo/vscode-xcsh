@@ -1,0 +1,19 @@
+---
+title: Cloud Status
+description: VS Code から F5 Distributed Cloud サービスのヘルスを監視します。
+sidebar:
+  order: 3
+i18n:
+  sourceHash: 7264a9e65d6f
+  translator: machine
+---
+
+## ステータス監視
+
+**Cloud Status** ツリービューは、F5 Distributed Cloud サービスの現在のヘルス状態を表示します。ステータスは公式の F5 ステータスページから取得され、以下の情報が表示されます：
+
+- プラットフォーム全体のステータス
+- コンポーネントごとのヘルス状態（API、Console、Data Plane など）
+- アクティブなインシデントおよびメンテナンスウィンドウ
+
+このビューは、設定された更新間隔（`f5xc.autoRefreshInterval`）に基づいて自動的に更新されます。
