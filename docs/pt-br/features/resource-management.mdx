@@ -1,0 +1,31 @@
+---
+title: Gerenciamento de Recursos
+description: 'Navegue, crie, edite e exclua recursos do F5 XC a partir do VS Code.'
+sidebar:
+  order: 1
+i18n:
+  sourceHash: 86725444f102
+  translator: machine
+---
+
+## Navegando pelos Recursos
+
+A visualização em árvore **Resources** exibe os recursos organizados por domínio e categoria. Expanda uma categoria para ver os tipos de recursos e, em seguida, expanda um tipo para listar os recursos individuais no seu namespace.
+
+## Criando Recursos
+
+1. Clique com o botão direito em um tipo de recurso na árvore e selecione **Create**.
+2. Um editor JSON será aberto com um template validado por schema.
+3. Preencha os campos obrigatórios (o IntelliSense fornece autocompletar).
+4. Salve o arquivo para enviar o recurso para a API do F5 XC.
+
+## Editando Recursos
+
+1. Clique em um recurso na árvore para abri-lo no editor.
+2. Modifique os campos com suporte completo do IntelliSense.
+3. Salve para enviar as alterações para a API.
+
+## Excluindo Recursos
+
+1. Clique com o botão direito em um recurso e selecione **Delete**.
+2. Confirme a exclusão (configurável via `f5xc.confirmDelete` e `f5xc.deleteConfirmationLevel`).

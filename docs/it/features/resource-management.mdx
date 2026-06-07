@@ -1,0 +1,31 @@
+---
+title: Gestione delle risorse
+description: 'Esplora, crea, modifica ed elimina le risorse F5 XC da VS Code.'
+sidebar:
+  order: 1
+i18n:
+  sourceHash: 86725444f102
+  translator: machine
+---
+
+## Esplorazione delle risorse
+
+La vista ad albero **Resources** mostra le risorse organizzate per dominio e categoria. Espandi una categoria per visualizzare i tipi di risorse, quindi espandi un tipo per elencare le singole risorse nel tuo namespace.
+
+## Creazione delle risorse
+
+1. Fai clic con il pulsante destro su un tipo di risorsa nell'albero e seleziona **Create**.
+2. Si apre un editor JSON con un template validato tramite schema.
+3. Compila i campi obbligatori (IntelliSense fornisce il completamento automatico).
+4. Salva il file per inviare la risorsa all'API F5 XC.
+
+## Modifica delle risorse
+
+1. Fai clic su una risorsa nell'albero per aprirla nell'editor.
+2. Modifica i campi con il supporto completo di IntelliSense.
+3. Salva per inviare le modifiche all'API.
+
+## Eliminazione delle risorse
+
+1. Fai clic con il pulsante destro su una risorsa e seleziona **Delete**.
+2. Conferma l'eliminazione (configurabile tramite `f5xc.confirmDelete` e `f5xc.deleteConfirmationLevel`).

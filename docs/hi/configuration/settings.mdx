@@ -1,0 +1,21 @@
+---
+title: सेटिंग्स
+description: F5 Distributed Cloud Tools के लिए एक्सटेंशन कॉन्फ़िगरेशन विकल्प।
+sidebar:
+  order: 1
+i18n:
+  sourceHash: a8c2a6af36b2
+  translator: machine
+---
+
+## उपलब्ध सेटिंग्स
+
+| सेटिंग | प्रकार | डिफ़ॉल्ट | विवरण |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | लॉग वर्बोसिटी: `debug`, `info`, `warn`, `error` |
+| `f5xc.defaultNamespace` | string | `default` | संसाधन संचालन के लिए डिफ़ॉल्ट नेमस्पेस |
+| `f5xc.confirmDelete` | boolean | `true` | संसाधन हटाने से पहले पुष्टिकरण डायलॉग दिखाएं |
+| `f5xc.deleteConfirmationLevel` | string | `always` | कब पुष्टि करें: `always`, `high-only`, `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | सेकंड में ऑटो-रिफ़्रेश अंतराल (0 = अक्षम) |
+| `f5xc.viewMode` | string | `console` | व्यू मोड: `console` या `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | बीटा/प्रीव्यू API संसाधन प्रकार दिखाएं |

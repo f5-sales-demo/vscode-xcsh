@@ -1,0 +1,21 @@
+---
+title: الإعدادات
+description: خيارات تكوين الإضافة لأدوات F5 Distributed Cloud.
+sidebar:
+  order: 1
+i18n:
+  sourceHash: a8c2a6af36b2
+  translator: machine
+---
+
+## الإعدادات المتاحة
+
+| الإعداد | النوع | القيمة الافتراضية | الوصف |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | مستوى تفصيل السجلات: `debug`، `info`، `warn`، `error` |
+| `f5xc.defaultNamespace` | string | `default` | مساحة الأسماء الافتراضية لعمليات الموارد |
+| `f5xc.confirmDelete` | boolean | `true` | عرض مربع حوار التأكيد قبل حذف الموارد |
+| `f5xc.deleteConfirmationLevel` | string | `always` | وقت التأكيد: `always`، `high-only`، `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | فترة التحديث التلقائي بالثواني (0 = معطّل) |
+| `f5xc.viewMode` | string | `console` | وضع العرض: `console` أو `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | عرض أنواع موارد واجهات API التجريبية/المعاينة |

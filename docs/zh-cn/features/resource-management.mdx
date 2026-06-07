@@ -1,0 +1,31 @@
+---
+title: 资源管理
+description: 在 VS Code 中浏览、创建、编辑和删除 F5 XC 资源。
+sidebar:
+  order: 1
+i18n:
+  sourceHash: 86725444f102
+  translator: machine
+---
+
+## 浏览资源
+
+**Resources** 树视图按域和类别组织显示资源。展开一个类别可查看资源类型，然后展开某个类型可列出命名空间中的各个资源。
+
+## 创建资源
+
+1. 在树中右键点击某个资源类型，然后选择 **Create**。
+2. 将打开一个带有模式验证模板的 JSON 编辑器。
+3. 填写必填字段（IntelliSense 提供自动补全功能）。
+4. 保存文件以将资源提交到 F5 XC API。
+
+## 编辑资源
+
+1. 在树中点击某个资源，在编辑器中打开它。
+2. 借助完整的 IntelliSense 支持修改字段。
+3. 保存以将更改推送到 API。
+
+## 删除资源
+
+1. 右键点击某个资源，然后选择 **Delete**。
+2. 确认删除操作（可通过 `f5xc.confirmDelete` 和 `f5xc.deleteConfirmationLevel` 进行配置）。

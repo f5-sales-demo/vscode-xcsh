@@ -1,0 +1,21 @@
+---
+title: Paramètres
+description: Options de configuration de l'extension pour F5 Distributed Cloud Tools.
+sidebar:
+  order: 1
+i18n:
+  sourceHash: a8c2a6af36b2
+  translator: machine
+---
+
+## Paramètres disponibles
+
+| Paramètre | Type | Valeur par défaut | Description |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | Niveau de verbosité des logs : `debug`, `info`, `warn`, `error` |
+| `f5xc.defaultNamespace` | string | `default` | Espace de noms par défaut pour les opérations sur les ressources |
+| `f5xc.confirmDelete` | boolean | `true` | Afficher une boîte de dialogue de confirmation avant de supprimer des ressources |
+| `f5xc.deleteConfirmationLevel` | string | `always` | Quand confirmer : `always`, `high-only`, `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | Intervalle de rafraîchissement automatique en secondes (0 = désactivé) |
+| `f5xc.viewMode` | string | `console` | Mode d'affichage : `console` ou `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | Afficher les types de ressources d'API bêta/préversion |

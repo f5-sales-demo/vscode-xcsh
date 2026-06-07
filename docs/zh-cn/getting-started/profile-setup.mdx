@@ -1,0 +1,27 @@
+---
+title: 配置文件设置
+description: 配置用于连接 F5 Distributed Cloud 的 API 凭据。
+sidebar:
+  order: 2
+i18n:
+  sourceHash: '671290967694'
+  translator: machine
+---
+
+## 添加配置文件
+
+1. 在 F5 XC 侧边栏中打开 **Profiles** 视图。
+2. 点击 **+** 图标以添加新的配置文件。
+3. 输入您的租户 URL（例如 `https://your-tenant.console.ves.volterra.io`）。
+4. 选择身份验证方式：
+   - **API Token**：粘贴从 F5 XC 控制台获取的 API 令牌。
+   - **P12 Certificate**：选择您的 `.p12` 证书文件并输入密码。
+5. 设置默认命名空间。
+
+## 管理配置文件
+
+- **切换配置文件**：在 Profiles 视图中点击某个配置文件将其设为活动状态。
+- **编辑**：右键点击配置文件并选择 **Edit Profile**。
+- **删除**：右键点击配置文件并选择 **Delete Profile**。
+
+配置文件使用 VS Code 内置的密钥存储（在 Linux 上符合 XDG 规范）进行安全存储。
