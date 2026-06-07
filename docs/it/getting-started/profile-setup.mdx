@@ -1,0 +1,27 @@
+---
+title: Configurazione del Profilo
+description: Configurare le credenziali API per la connessione a F5 Distributed Cloud.
+sidebar:
+  order: 2
+i18n:
+  sourceHash: '671290967694'
+  translator: machine
+---
+
+## Aggiunta di un Profilo
+
+1. Aprire la vista **Profiles** nella barra laterale di F5 XC.
+2. Fare clic sull'icona **+** per aggiungere un nuovo profilo.
+3. Inserire l'URL del tenant (ad es., `https://your-tenant.console.ves.volterra.io`).
+4. Scegliere un metodo di autenticazione:
+   - **API Token**: Incollare il proprio token API dalla console F5 XC.
+   - **P12 Certificate**: Selezionare il file del certificato `.p12` e inserire la password.
+5. Impostare un namespace predefinito.
+
+## Gestione dei Profili
+
+- **Cambiare profilo**: Fare clic su un profilo nella vista Profiles per renderlo attivo.
+- **Modificare**: Fare clic con il tasto destro su un profilo e selezionare **Edit Profile**.
+- **Eliminare**: Fare clic con il tasto destro su un profilo e selezionare **Delete Profile**.
+
+I profili vengono archiviati in modo sicuro utilizzando il sistema di archiviazione segreti integrato di VS Code (conforme a XDG su Linux).

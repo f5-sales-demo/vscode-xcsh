@@ -1,0 +1,27 @@
+---
+title: JSON 智能感知
+description: F5 XC 资源配置的架构验证和自动补全。
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## 架构验证
+
+该扩展为常见资源类型提供 JSON 架构。编辑资源 JSON 文件时，VS Code 会实时验证您的配置并高亮显示错误。
+
+## 支持的架构
+
+- HTTP 负载均衡器 (`.http_loadbalancer.json`)
+- 源站池 (`.origin_pool.json`)
+- 应用防火墙 / WAF (`.app_firewall.json`)
+- 健康检查 (`.healthcheck.json`)
+- TCP 负载均衡器 (`.tcp_loadbalancer.json`)
+- DNS 负载均衡器 (`.dns_load_balancer.json`)
+- 虚拟站点 (`.virtual_site.json`)
+
+## 自动补全
+
+智能感知基于 F5 XC OpenAPI 规范，为字段名称、枚举值和嵌套对象结构提供自动补全功能。

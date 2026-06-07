@@ -1,0 +1,21 @@
+---
+title: การตั้งค่า
+description: ตัวเลือกการกำหนดค่าส่วนขยายสำหรับ F5 Distributed Cloud Tools
+sidebar:
+  order: 1
+i18n:
+  sourceHash: a8c2a6af36b2
+  translator: machine
+---
+
+## การตั้งค่าที่ใช้งานได้
+
+| การตั้งค่า | ชนิด | ค่าเริ่มต้น | คำอธิบาย |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | ระดับความละเอียดของบันทึก: `debug`, `info`, `warn`, `error` |
+| `f5xc.defaultNamespace` | string | `default` | เนมสเปซเริ่มต้นสำหรับการดำเนินการกับทรัพยากร |
+| `f5xc.confirmDelete` | boolean | `true` | แสดงกล่องโต้ตอบยืนยันก่อนลบทรัพยากร |
+| `f5xc.deleteConfirmationLevel` | string | `always` | เงื่อนไขการยืนยัน: `always`, `high-only`, `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | ช่วงเวลาการรีเฟรชอัตโนมัติเป็นวินาที (0 = ปิดใช้งาน) |
+| `f5xc.viewMode` | string | `console` | โหมดการแสดงผล: `console` หรือ `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | แสดงประเภททรัพยากร API เบต้า/พรีวิว |

@@ -1,0 +1,27 @@
+---
+title: JSON IntelliSense
+description: F5 XC 資源配置的結構描述驗證與自動完成。
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## 結構描述驗證
+
+此擴充功能為常見資源類型提供 JSON 結構描述。在編輯資源 JSON 檔案時，VS Code 會即時驗證您的配置並標示錯誤。
+
+## 支援的結構描述
+
+- HTTP 負載平衡器 (`.http_loadbalancer.json`)
+- 來源池 (`.origin_pool.json`)
+- 應用程式防火牆 / WAF (`.app_firewall.json`)
+- 健康檢查 (`.healthcheck.json`)
+- TCP 負載平衡器 (`.tcp_loadbalancer.json`)
+- DNS 負載平衡器 (`.dns_load_balancer.json`)
+- 虛擬站點 (`.virtual_site.json`)
+
+## 自動完成
+
+IntelliSense 根據 F5 XC OpenAPI 規格，為欄位名稱、列舉值及巢狀物件結構提供自動完成功能。

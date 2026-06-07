@@ -1,0 +1,21 @@
+---
+title: 設定
+description: F5 Distributed Cloud Tools の拡張機能設定オプション。
+sidebar:
+  order: 1
+i18n:
+  sourceHash: a8c2a6af36b2
+  translator: machine
+---
+
+## 利用可能な設定
+
+| 設定 | タイプ | デフォルト | 説明 |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | ログの詳細度: `debug`, `info`, `warn`, `error` |
+| `f5xc.defaultNamespace` | string | `default` | リソース操作のデフォルトネームスペース |
+| `f5xc.confirmDelete` | boolean | `true` | リソース削除前に確認ダイアログを表示する |
+| `f5xc.deleteConfirmationLevel` | string | `always` | 確認するタイミング: `always`, `high-only`, `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | 自動更新間隔（秒単位、0 = 無効） |
+| `f5xc.viewMode` | string | `console` | 表示モード: `console` または `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | ベータ/プレビュー API リソースタイプを表示する |

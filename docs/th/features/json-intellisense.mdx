@@ -1,0 +1,27 @@
+---
+title: JSON IntelliSense
+description: การตรวจสอบสคีมาและการเติมข้อความอัตโนมัติสำหรับการกำหนดค่าทรัพยากร F5 XC
+sidebar:
+  order: 4
+i18n:
+  sourceHash: 47ed285c6872
+  translator: machine
+---
+
+## การตรวจสอบสคีมา
+
+ส่วนขยายนี้มี JSON schemas สำหรับประเภททรัพยากรทั่วไป เมื่อแก้ไขไฟล์ JSON ของทรัพยากร VS Code จะตรวจสอบการกำหนดค่าของคุณแบบเรียลไทม์และไฮไลต์ข้อผิดพลาด
+
+## สคีมาที่รองรับ
+
+- HTTP Load Balancer (`.http_loadbalancer.json`)
+- Origin Pool (`.origin_pool.json`)
+- App Firewall / WAF (`.app_firewall.json`)
+- Health Check (`.healthcheck.json`)
+- TCP Load Balancer (`.tcp_loadbalancer.json`)
+- DNS Load Balancer (`.dns_load_balancer.json`)
+- Virtual Site (`.virtual_site.json`)
+
+## การเติมข้อความอัตโนมัติ
+
+IntelliSense ให้การเติมข้อความอัตโนมัติสำหรับชื่อฟิลด์ ค่า enum และโครงสร้างอ็อบเจกต์ที่ซ้อนกัน โดยอิงจาก F5 XC OpenAPI spec

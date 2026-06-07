@@ -1,0 +1,21 @@
+---
+title: Configuración
+description: Opciones de configuración de la extensión para F5 Distributed Cloud Tools.
+sidebar:
+  order: 1
+i18n:
+  sourceHash: a8c2a6af36b2
+  translator: machine
+---
+
+## Configuraciones disponibles
+
+| Configuración | Tipo | Predeterminado | Descripción |
+|---------|------|---------|-------------|
+| `f5xc.logLevel` | string | `info` | Nivel de detalle del registro: `debug`, `info`, `warn`, `error` |
+| `f5xc.defaultNamespace` | string | `default` | Espacio de nombres predeterminado para operaciones de recursos |
+| `f5xc.confirmDelete` | boolean | `true` | Mostrar diálogo de confirmación antes de eliminar recursos |
+| `f5xc.deleteConfirmationLevel` | string | `always` | Cuándo confirmar: `always`, `high-only`, `never` |
+| `f5xc.autoRefreshInterval` | number | `0` | Intervalo de actualización automática en segundos (0 = deshabilitado) |
+| `f5xc.viewMode` | string | `console` | Modo de vista: `console` o `full` |
+| `f5xc.showPreviewApis` | boolean | `true` | Mostrar tipos de recursos de API en beta/vista previa |
