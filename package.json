@@ -928,7 +928,7 @@
     "@types/vscode": "^1.120.0",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
-    "@vitejs/plugin-react": "^4.5.2",
+    "@vitejs/plugin-react": "^6.0.2",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/l10n-dev": "^0.0.35",
     "@vscode/test-electron": "^2.3.8",
