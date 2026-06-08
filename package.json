@@ -33,10 +33,11 @@
   "activationEvents": [
     "onStartupFinished"
   ],
+  "l10n": "./l10n",
   "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
-      "title": "xcsh",
+      "title": "%config.title%",
       "properties": {
         "f5xc.logLevel": {
           "type": "string",
@@ -47,17 +48,17 @@
             "error"
           ],
           "default": "info",
-          "description": "Log level for xcsh extension"
+          "description": "%config.logLevel.description%"
         },
         "f5xc.defaultNamespace": {
           "type": "string",
           "default": "default",
-          "description": "Default namespace for new resources"
+          "description": "%config.defaultNamespace.description%"
         },
         "f5xc.confirmDelete": {
           "type": "boolean",
           "default": true,
-          "description": "Show confirmation dialog before deleting resources"
+          "description": "%config.confirmDelete.description%"
         },
         "f5xc.deleteConfirmationLevel": {
           "type": "string",
@@ -68,16 +69,16 @@
           ],
           "default": "always",
           "enumDescriptions": [
-            "Always show confirmation dialog for all deletes",
-            "Only show confirmation for high-danger delete operations",
-            "Never show confirmation dialog (use with caution)"
+            "%config.deleteConfirmationLevel.always%",
+            "%config.deleteConfirmationLevel.highOnly%",
+            "%config.deleteConfirmationLevel.never%"
           ],
-          "description": "When to show delete confirmation based on operation danger level"
+          "description": "%config.deleteConfirmationLevel.description%"
         },
         "f5xc.autoRefreshInterval": {
           "type": "number",
           "default": 0,
-          "description": "Auto-refresh interval in seconds (0 to disable)"
+          "description": "%config.autoRefreshInterval.description%"
         },
         "f5xc.viewMode": {
           "type": "string",
@@ -86,42 +87,42 @@
             "full"
           ],
           "default": "console",
-          "description": "Resource display mode: 'console' shows clean output like F5 Console, 'full' shows complete API response"
+          "description": "%config.viewMode.description%"
         },
         "f5xc.showPreviewApis": {
           "type": "boolean",
           "default": true,
-          "description": "Show preview/beta APIs in the explorer. Preview APIs are marked with 🧪 badge."
+          "description": "%config.showPreviewApis.description%"
         },
         "f5xc.xcsh.enabled": {
           "type": "boolean",
           "default": true,
-          "description": "Enable xcsh shell assistant integration"
+          "description": "%config.xcsh.enabled.description%"
         },
         "f5xc.xcsh.path": {
           "type": "string",
           "default": "",
-          "description": "Custom path to the xcsh binary. Leave empty for auto-detection."
+          "description": "%config.xcsh.path.description%"
         },
         "f5xc.xcsh.chatParticipantEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Register @xcsh as a Copilot Chat participant"
+          "description": "%config.xcsh.chatParticipant.description%"
         },
         "f5xc.xcsh.languageModelEnabled": {
           "type": "boolean",
           "default": true,
-          "description": "Register xcsh as a VS Code language model provider"
+          "description": "%config.xcsh.languageModel.description%"
         },
         "f5xc.xcsh.autoStart": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically start the xcsh process on extension activation"
+          "description": "%config.xcsh.autoStart.description%"
         },
         "f5xc.xcsh.defaultModel": {
           "type": "string",
           "default": "",
-          "description": "Default AI model for xcsh sessions"
+          "description": "%config.xcsh.defaultModel.description%"
         },
         "f5xc.xcsh.thinkingLevel": {
           "type": "string",
@@ -134,7 +135,7 @@
             "xhigh"
           ],
           "default": "medium",
-          "description": "Thinking level for xcsh AI responses"
+          "description": "%config.xcsh.thinkingLevel.description%"
         },
         "f5xc.xcsh.panelMode": {
           "type": "string",
@@ -144,10 +145,10 @@
           ],
           "default": "webview",
           "enumDescriptions": [
-            "Rich integrated chat panel (recommended)",
-            "Classic CLI terminal experience"
+            "%config.xcsh.panelMode.webview%",
+            "%config.xcsh.panelMode.terminal%"
           ],
-          "description": "xcsh panel experience: rich webview or classic CLI terminal"
+          "description": "%config.xcsh.panelMode.description%"
         }
       }
     },
@@ -194,264 +195,264 @@
       "f5xc-explorer": [
         {
           "id": "f5xc.profiles",
-          "name": "Contexts",
-          "contextualTitle": "xcsh Contexts"
+          "name": "%view.profiles.name%",
+          "contextualTitle": "%view.profiles.contextualTitle%"
         },
         {
           "id": "f5xc.subscription",
-          "name": "Subscription",
-          "contextualTitle": "xcsh Subscription",
+          "name": "%view.subscription.name%",
+          "contextualTitle": "%view.subscription.contextualTitle%",
           "when": "f5xc.hasActiveContext"
         },
         {
           "id": "f5xc.explorer",
-          "name": "Resources",
-          "contextualTitle": "xcsh Resources"
+          "name": "%view.explorer.name%",
+          "contextualTitle": "%view.explorer.contextualTitle%"
         },
         {
           "id": "f5xc.cloudStatus",
-          "name": "Cloud Status",
-          "contextualTitle": "xcsh Cloud Status"
+          "name": "%view.cloudStatus.name%",
+          "contextualTitle": "%view.cloudStatus.contextualTitle%"
         }
       ]
     },
     "viewsWelcome": [
       {
         "view": "f5xc.explorer",
-        "contents": "No xcsh context configured.\n[Add Context](command:f5xc.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
+        "contents": "%viewsWelcome.explorer%",
         "when": "!f5xc.hasActiveContext"
       }
     ],
     "commands": [
       {
         "command": "f5xc.addContext",
-        "title": "Add Context",
+        "title": "%command.addContext.title%",
         "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.editContext",
-        "title": "Edit Context",
+        "title": "%command.editContext.title%",
         "category": "xcsh",
         "icon": "$(edit)"
       },
       {
         "command": "f5xc.deleteContext",
-        "title": "Delete Context",
+        "title": "%command.deleteContext.title%",
         "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.setActiveContext",
-        "title": "Set as Active Context",
+        "title": "%command.setActiveContext.title%",
         "category": "xcsh",
         "icon": "$(check)"
       },
       {
         "command": "f5xc.clearAuthCache",
-        "title": "Clear Authentication Cache",
+        "title": "%command.clearAuthCache.title%",
         "category": "xcsh",
         "icon": "$(clear-all)"
       },
       {
         "command": "f5xc.refresh",
-        "title": "Refresh",
+        "title": "%command.refresh.title%",
         "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
         "command": "f5xc.create",
-        "title": "Create Resource",
+        "title": "%command.create.title%",
         "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.get",
-        "title": "View Resource",
+        "title": "%command.get.title%",
         "category": "xcsh",
         "icon": "$(eye)"
       },
       {
         "command": "f5xc.describe",
-        "title": "Describe Resource",
+        "title": "%command.describe.title%",
         "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.edit",
-        "title": "Edit Resource",
+        "title": "%command.edit.title%",
         "category": "xcsh",
         "icon": "$(edit)"
       },
       {
         "command": "f5xc.delete",
-        "title": "Delete Resource",
+        "title": "%command.delete.title%",
         "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.deleteNamespace",
-        "title": "Delete Namespace",
+        "title": "%command.deleteNamespace.title%",
         "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.describeNamespace",
-        "title": "Describe Namespace",
+        "title": "%command.describeNamespace.title%",
         "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.apply",
-        "title": "Apply",
+        "title": "%command.apply.title%",
         "category": "xcsh",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "f5xc.diff",
-        "title": "Compare with Remote",
+        "title": "%command.diff.title%",
         "category": "xcsh",
         "icon": "$(diff)"
       },
       {
         "command": "f5xc.copyName",
-        "title": "Copy Name",
+        "title": "%command.copyName.title%",
         "category": "xcsh"
       },
       {
         "command": "f5xc.copyAsJson",
-        "title": "Copy as JSON",
+        "title": "%command.copyAsJson.title%",
         "category": "xcsh"
       },
       {
         "command": "f5xc.viewLogs",
-        "title": "View Logs",
+        "title": "%command.viewLogs.title%",
         "category": "xcsh",
         "icon": "$(output)"
       },
       {
         "command": "f5xc.viewMetrics",
-        "title": "View Metrics",
+        "title": "%command.viewMetrics.title%",
         "category": "xcsh",
         "icon": "$(graph)"
       },
       {
         "command": "f5xc.diagram",
-        "title": "Generate Diagram",
+        "title": "%command.diagram.title%",
         "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
         "command": "f5xc.createFromTemplate",
-        "title": "New from Template",
+        "title": "%command.createFromTemplate.title%",
         "category": "xcsh",
         "icon": "$(file-add)"
       },
       {
         "command": "f5xc.openInBrowser",
-        "title": "Open in Browser",
+        "title": "%command.openInBrowser.title%",
         "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
         "command": "f5xc.toggleViewMode",
-        "title": "Toggle View Mode (Console/Full)",
+        "title": "%command.toggleViewMode.title%",
         "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
         "command": "f5xc.cloudStatus.refresh",
-        "title": "Refresh Cloud Status",
+        "title": "%command.cloudStatus.refresh.title%",
         "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
         "command": "f5xc.cloudStatus.openDashboard",
-        "title": "Open Cloud Status Dashboard",
+        "title": "%command.cloudStatus.openDashboard.title%",
         "category": "xcsh",
         "icon": "$(dashboard)"
       },
       {
         "command": "f5xc.showOnboarding",
-        "title": "Platform Readiness",
+        "title": "%command.showOnboarding.title%",
         "category": "xcsh",
         "icon": "$(checklist)"
       },
       {
         "command": "f5xc.cloudStatus.openExternal",
-        "title": "Open Status Page in Browser",
+        "title": "%command.cloudStatus.openExternal.title%",
         "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
         "command": "f5xc.cloudStatus.viewMaintenance",
-        "title": "View Maintenance Details",
+        "title": "%command.cloudStatus.viewMaintenance.title%",
         "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.cloudStatus.viewIncident",
-        "title": "View Incident Details",
+        "title": "%command.cloudStatus.viewIncident.title%",
         "category": "xcsh",
         "icon": "$(warning)"
       },
       {
         "command": "f5xc.cloudStatus.viewComponent",
-        "title": "View Service Details",
+        "title": "%command.cloudStatus.viewComponent.title%",
         "category": "xcsh",
         "icon": "$(server)"
       },
       {
         "command": "f5xc.cloudStatus.viewPoP",
-        "title": "View PoP Details",
+        "title": "%command.cloudStatus.viewPoP.title%",
         "category": "xcsh",
         "icon": "$(globe)"
       },
       {
         "command": "f5xc.showPlan",
-        "title": "Show Subscription Plan",
+        "title": "%command.showPlan.title%",
         "category": "xcsh",
         "icon": "$(file-text)"
       },
       {
         "command": "f5xc.showQuotas",
-        "title": "Show Quota Usage",
+        "title": "%command.showQuotas.title%",
         "category": "xcsh",
         "icon": "$(graph)"
       },
       {
         "command": "f5xc.activateAddon",
-        "title": "Activate Addon Service",
+        "title": "%command.activateAddon.title%",
         "category": "xcsh",
         "icon": "$(rocket)"
       },
       {
         "command": "f5xc.createHealthcheckForm",
-        "title": "Create Healthcheck (Form)",
+        "title": "%command.createHealthcheckForm.title%",
         "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.xcsh.openTerminal",
-        "title": "Open xcsh Terminal",
+        "title": "%command.xcsh.openTerminal.title%",
         "category": "xcsh",
         "icon": "$(terminal)"
       },
       {
         "command": "f5xc.xcsh.restart",
-        "title": "Restart xcsh",
+        "title": "%command.xcsh.restart.title%",
         "category": "xcsh",
         "icon": "$(debug-restart)"
       },
       {
         "command": "f5xc.xcsh.openPanel",
-        "title": "Open xcsh Panel",
+        "title": "%command.xcsh.openPanel.title%",
         "category": "xcsh",
         "icon": "$(comment-discussion)"
       },
       {
         "command": "f5xc.xcsh.newSession",
-        "title": "New xcsh Session",
+        "title": "%command.xcsh.newSession.title%",
         "category": "xcsh",
         "icon": "$(add)"
       }
@@ -674,9 +675,9 @@
     "languageModelTools": [
       {
         "name": "f5xc-readFile",
-        "displayName": "Read File",
+        "displayName": "%tool.readFile.displayName%",
         "modelDescription": "Read the contents of a file in the workspace. Use when you need to examine source code, configuration files, or any text file. Returns the full file content as text.",
-        "userDescription": "Read a file from the workspace",
+        "userDescription": "%tool.readFile.userDescription%",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "readFile",
         "icon": "$(file)",
@@ -698,9 +699,9 @@
       },
       {
         "name": "f5xc-getSelection",
-        "displayName": "Get Editor Selection",
+        "displayName": "%tool.getSelection.displayName%",
         "modelDescription": "Get the currently selected text in the active editor. Use when the user references 'this code' or 'selected text'. Returns empty string if no selection.",
-        "userDescription": "Get selected text from the editor",
+        "userDescription": "%tool.getSelection.userDescription%",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "getSelection",
         "icon": "$(selection)",
@@ -714,9 +715,9 @@
       },
       {
         "name": "f5xc-getDiagnostics",
-        "displayName": "Get File Diagnostics",
+        "displayName": "%tool.getDiagnostics.displayName%",
         "modelDescription": "Get compiler errors, warnings, and linter diagnostics for a specific file. Use when investigating build errors or code quality issues. Returns an array of diagnostics with severity, line number, message, and source.",
-        "userDescription": "Get errors and warnings for a file",
+        "userDescription": "%tool.getDiagnostics.userDescription%",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "diagnostics",
         "icon": "$(warning)",
@@ -738,9 +739,9 @@
       },
       {
         "name": "f5xc-openFile",
-        "displayName": "Open File in Editor",
+        "displayName": "%tool.openFile.displayName%",
         "modelDescription": "Open a file in the VS Code editor, optionally at a specific line number. Use when you want to show the user a specific file or location in the codebase.",
-        "userDescription": "Open a file in the editor",
+        "userDescription": "%tool.openFile.userDescription%",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "openFile",
         "icon": "$(go-to-file)",
@@ -776,26 +777,26 @@
         "id": "f5xc.xcsh",
         "name": "xcsh",
         "fullName": "xcsh",
-        "description": "Ask about F5 Distributed Cloud resources, configuration, and troubleshooting via xcsh",
+        "description": "%chat.xcsh.description%",
         "isSticky": true,
         "commands": [
           {
             "name": "status",
-            "description": "Show xcsh integration health and connection status"
+            "description": "%chat.xcsh.command.status%"
           },
           {
             "name": "context",
-            "description": "Show active xcsh context details (tenant, namespace, API URL)"
+            "description": "%chat.xcsh.command.context%"
           },
           {
             "name": "resources",
-            "description": "List resources in the current namespace"
+            "description": "%chat.xcsh.command.resources%"
           }
         ],
         "disambiguation": [
           {
             "category": "f5xc_networking",
-            "description": "Questions about F5 Distributed Cloud networking, load balancers, origin pools, routes, DNS, CDN, virtual hosts, and HTTP load balancer configuration",
+            "description": "%chat.xcsh.disambiguation.networking%",
             "examples": [
               "Create an HTTP load balancer",
               "What origin pools are configured?",
@@ -804,7 +805,7 @@
           },
           {
             "category": "f5xc_security",
-            "description": "Questions about F5 Distributed Cloud security, WAF policies, service policies, DDoS protection, bot defense, API security, and application firewall configuration",
+            "description": "%chat.xcsh.disambiguation.security%",
             "examples": [
               "Configure a WAF policy for my app",
               "Show blocked requests in the last hour",
@@ -813,7 +814,7 @@
           },
           {
             "category": "f5xc_infrastructure",
-            "description": "Questions about F5 Distributed Cloud sites, site health, cloud connectors, network connectors, fleet management, and infrastructure status",
+            "description": "%chat.xcsh.disambiguation.infrastructure%",
             "examples": [
               "Check site health for my AWS site",
               "List all registered sites",
@@ -852,6 +853,7 @@
     "generate": "npm run generate:types && npm run generate:docs && npm run generate:menu-schema",
     "validate:generation": "npx ts-node scripts/validate-generation.ts",
     "validate:forms": "npx ts-node scripts/validate-form-defaults.ts",
+    "validate:i18n": "npx @vscode/l10n-dev export -o ./l10n ./src",
     "compile": "npm run generate && webpack",
     "watch": "npm run generate && webpack --watch",
     "package": "npm run generate && npm run build:webview && webpack --mode production --devtool hidden-source-map",
@@ -900,6 +902,7 @@
     ]
   },
   "dependencies": {
+    "@vscode/l10n": "^0.0.18",
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "dompurify": "^3.4.8",
     "marked": "^18.0.5",
@@ -927,6 +930,7 @@
     "@typescript-eslint/parser": "^8.60.1",
     "@vitejs/plugin-react": "^4.5.2",
     "@vscode/test-cli": "^0.0.12",
+    "@vscode/l10n-dev": "^0.0.35",
     "@vscode/test-electron": "^2.3.8",
     "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.0.1",

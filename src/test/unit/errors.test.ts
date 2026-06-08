@@ -31,6 +31,15 @@ jest.mock('vscode', () => ({
   commands: {
     executeCommand: jest.fn().mockResolvedValue(undefined),
   },
+  l10n: {
+    t: jest.fn((message: string, ...args: unknown[]) => {
+      let result = message;
+      for (let i = 0; i < args.length; i++) {
+        result = result.replace(`{${i}}`, String(args[i]));
+      }
+      return result;
+    }),
+  },
 }));
 
 describe('F5XCApiError', () => {

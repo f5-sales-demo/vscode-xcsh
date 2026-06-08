@@ -1,10 +1,12 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 // webview/src/components/SlashCommandMenu.tsx
 
+import { t } from '../lib/i18n';
+
 const COMMANDS = [
-  { command: '/status', label: 'Status', description: 'Show integration health' },
-  { command: '/context', label: 'Context', description: 'Show active xcsh context' },
-  { command: '/resources', label: 'Resources', description: 'Browse current namespace' },
+  { command: '/status', label: () => t('Status'), description: () => t('Show integration health') },
+  { command: '/context', label: () => t('Context'), description: () => t('Show active xcsh context') },
+  { command: '/resources', label: () => t('Resources'), description: () => t('Browse current namespace') },
 ];
 
 interface SlashCommandMenuProps {
@@ -26,7 +28,7 @@ export function SlashCommandMenu({ onSelect, onClose }: SlashCommandMenuProps) {
           }}
         >
           <span className="slashMenuCommand">{item.command}</span>
-          <span className="slashMenuDescription">{item.description}</span>
+          <span className="slashMenuDescription">{item.description()}</span>
         </button>
       ))}
     </div>

@@ -44,8 +44,8 @@ export function formatStatusResponse(integrations: IntegrationsResponse): string
   const lines: string[] = [`**xcsh** v${integrations.version}\n`];
 
   const modelIcon = integrations.model.state === 'connected' ? '✅' : '⚠️';
-  lines.push(`**Model Provider**`);
-  lines.push(`${modelIcon} ${integrations.model.provider ?? 'unknown'}\n`);
+  lines.push(`**${vscode.l10n.t('Model Provider')}**`);
+  lines.push(`${modelIcon} ${integrations.model.provider ?? vscode.l10n.t('unknown')}\n`);
 
   lines.push(`---\n`);
 
@@ -53,9 +53,9 @@ export function formatStatusResponse(integrations: IntegrationsResponse): string
     if (svc.state === 'connected') {
       lines.push(`✅ ${svc.name}`);
     } else if (svc.state === 'unauthenticated') {
-      lines.push(`⚠️ ${svc.name} — needs authentication${svc.hint ? ` · \`${svc.hint}\`` : ''}`);
+      lines.push(`⚠️ ${svc.name} — ${vscode.l10n.t('needs authentication')}${svc.hint ? ` · \`${svc.hint}\`` : ''}`);
     } else {
-      lines.push(`⭘ ${svc.name} — not installed`);
+      lines.push(`⭘ ${svc.name} — ${vscode.l10n.t('not installed')}`);
     }
   }
 
@@ -64,13 +64,13 @@ export function formatStatusResponse(integrations: IntegrationsResponse): string
 
 export function formatContextResponse(ctx: F5XCContext | null): string {
   if (!ctx) {
-    return 'No active xcsh context. Use the **xcsh: Add Context** command to configure one.';
+    return vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
   }
   const maskedUrl = ctx.apiUrl.replace(/\/api$/, '');
   return [
-    `**Active Context:** ${ctx.name}`,
-    `**Console:** ${maskedUrl}`,
-    `**Namespace:** ${ctx.defaultNamespace}`,
+    `**${vscode.l10n.t('Active Context')}:** ${ctx.name}`,
+    `**${vscode.l10n.t('Console')}:** ${maskedUrl}`,
+    `**${vscode.l10n.t('Namespace')}:** ${ctx.defaultNamespace}`,
   ].join('\n\n');
 }
 
@@ -83,23 +83,23 @@ export function buildFollowups(command: string | undefined): ChatFollowup[] {
   switch (command) {
     case 'status':
       return [
-        { prompt: 'Show active context details', label: 'View Context' },
-        { prompt: 'List resources in current namespace', label: 'List Resources' },
+        { prompt: vscode.l10n.t('Show active context details'), label: vscode.l10n.t('View Context') },
+        { prompt: vscode.l10n.t('List resources in current namespace'), label: vscode.l10n.t('List Resources') },
       ];
     case 'context':
       return [
-        { prompt: 'List resources in current namespace', label: 'List Resources' },
-        { prompt: 'Show integration health status', label: 'Check Status' },
+        { prompt: vscode.l10n.t('List resources in current namespace'), label: vscode.l10n.t('List Resources') },
+        { prompt: vscode.l10n.t('Show integration health status'), label: vscode.l10n.t('Check Status') },
       ];
     case 'resources':
       return [
-        { prompt: 'Show details for a specific resource', label: 'Resource Details' },
-        { prompt: 'Check the health of my sites', label: 'Check Site Health' },
+        { prompt: vscode.l10n.t('Show details for a specific resource'), label: vscode.l10n.t('Resource Details') },
+        { prompt: vscode.l10n.t('Check the health of my sites'), label: vscode.l10n.t('Check Site Health') },
       ];
     default:
       return [
-        { prompt: 'Show integration health status', label: 'Check Status' },
-        { prompt: 'List resources in current namespace', label: 'List Resources' },
+        { prompt: vscode.l10n.t('Show integration health status'), label: vscode.l10n.t('Check Status') },
+        { prompt: vscode.l10n.t('List resources in current namespace'), label: vscode.l10n.t('List Resources') },
       ];
   }
 }
@@ -129,7 +129,7 @@ export function registerChatParticipant(
         const integrations = await rpcBridge.getIntegrations();
         stream.markdown(formatStatusResponse(integrations));
       } catch {
-        stream.markdown('Unable to fetch integration status. Is xcsh running?');
+        stream.markdown(vscode.l10n.t('Unable to fetch integration status. Is xcsh running?'));
       }
       return { metadata: { command: 'status' } };
     }
@@ -139,7 +139,7 @@ export function registerChatParticipant(
         const activeCtx = await contextManager.getActiveContext();
         stream.markdown(formatContextResponse(activeCtx));
       } catch {
-        stream.markdown('Unable to fetch context. Is xcsh running?');
+        stream.markdown(vscode.l10n.t('Unable to fetch context. Is xcsh running?'));
       }
       return { metadata: { command: 'context' } };
     }
@@ -148,16 +148,20 @@ export function registerChatParticipant(
     try {
       const activeCtx = await contextManager.getActiveContext();
       if (!activeCtx) {
-        stream.markdown('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
+        stream.markdown(
+          vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.'),
+        );
       } else {
         const maskedUrl = activeCtx.apiUrl.replace(/\/api$/, '');
         stream.markdown(
           [
-            `**Resources for:** ${activeCtx.name}`,
-            `**Console:** ${maskedUrl}`,
-            `**Namespace:** ${activeCtx.defaultNamespace}`,
+            `**${vscode.l10n.t('Resources for')}:** ${activeCtx.name}`,
+            `**${vscode.l10n.t('Console')}:** ${maskedUrl}`,
+            `**${vscode.l10n.t('Namespace')}:** ${activeCtx.defaultNamespace}`,
             '',
-            'Browse resources in the **xcsh** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
+            vscode.l10n.t(
+              'Browse resources in the **xcsh** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
+            ),
           ].join('\n\n'),
         );
       }

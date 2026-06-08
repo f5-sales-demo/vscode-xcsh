@@ -23,15 +23,17 @@ export function registerContextCommands(
       await withErrorHandling(async () => {
         // Step 1: Context name
         const name = await vscode.window.showInputBox({
-          prompt: 'Enter a name for this context',
+          prompt: vscode.l10n.t('Enter a name for this context'),
           placeHolder: 'production',
           ignoreFocusOut: true,
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-              return 'Context name is required';
+              return vscode.l10n.t('Context name is required');
             }
             if (!isValidContextName(value)) {
-              return 'Context name can only contain letters, numbers, underscores, and hyphens (1-64 chars, no reserved words)';
+              return vscode.l10n.t(
+                'Context name can only contain letters, numbers, underscores, and hyphens (1-64 chars, no reserved words)',
+              );
             }
             return null;
           },
@@ -43,19 +45,19 @@ export function registerContextCommands(
 
         // Step 2: API URL
         const apiUrl = await vscode.window.showInputBox({
-          prompt: 'Enter API URL',
+          prompt: vscode.l10n.t('Enter API URL'),
           placeHolder: 'https://tenant.console.ves.volterra.io',
           value: 'https://',
           ignoreFocusOut: true,
           validateInput: (value) => {
             if (!value?.startsWith('https://')) {
-              return 'API URL must start with https://';
+              return vscode.l10n.t('API URL must start with https://');
             }
             try {
               new URL(value);
               return null;
             } catch {
-              return 'Invalid URL format';
+              return vscode.l10n.t('Invalid URL format');
             }
           },
         });
@@ -66,13 +68,13 @@ export function registerContextCommands(
 
         // Step 3: API Token
         const apiToken = await vscode.window.showInputBox({
-          prompt: 'Enter your API token',
+          prompt: vscode.l10n.t('Enter your API token'),
           password: true,
-          placeHolder: 'Your API token',
+          placeHolder: vscode.l10n.t('Your API token'),
           ignoreFocusOut: true,
           validateInput: (value) => {
             if (!value || value.trim().length === 0) {
-              return 'API token is required';
+              return vscode.l10n.t('API token is required');
             }
             return null;
           },
@@ -84,7 +86,7 @@ export function registerContextCommands(
 
         // Step 4: Default namespace
         const defaultNamespace = await vscode.window.showInputBox({
-          prompt: 'Enter default namespace',
+          prompt: vscode.l10n.t('Enter default namespace'),
           placeHolder: 'system',
           value: 'system',
           ignoreFocusOut: true,
@@ -109,7 +111,7 @@ export function registerContextCommands(
         const validating = await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: 'Validating credentials...',
+            title: vscode.l10n.t('Validating credentials...'),
             cancellable: false,
           },
           async () => {
@@ -118,9 +120,11 @@ export function registerContextCommands(
         );
 
         if (validating) {
-          showInfo(`Context "${name}" added and validated successfully`);
+          showInfo(vscode.l10n.t('Context "{0}" added and validated successfully', name));
         } else {
-          showWarning(`Context "${name}" added but credentials could not be validated. Check your settings.`);
+          showWarning(
+            vscode.l10n.t('Context "{0}" added but credentials could not be validated. Check your settings.', name),
+          );
         }
 
         contextProvider.refresh();
@@ -141,7 +145,7 @@ export function registerContextCommands(
           // Prompt user to select context
           const contexts = await contextManager.getContexts();
           if (contexts.length === 0) {
-            showWarning('No contexts configured');
+            showWarning(vscode.l10n.t('No contexts configured'));
             return;
           }
 
@@ -150,7 +154,7 @@ export function registerContextCommands(
               label: c.name,
               description: c.apiUrl,
             })),
-            { placeHolder: 'Select context to edit', ignoreFocusOut: true },
+            { placeHolder: vscode.l10n.t('Select context to edit'), ignoreFocusOut: true },
           );
 
           if (!selected) {
@@ -162,22 +166,22 @@ export function registerContextCommands(
 
         const ctx = await contextManager.getContext(contextName);
         if (!ctx) {
-          showWarning(`Context "${contextName}" not found`);
+          showWarning(vscode.l10n.t('Context "{0}" not found', contextName));
           return;
         }
 
         // Build edit options
         const editOptions: { label: string; description: string }[] = [
-          { label: 'API URL', description: `Current: ${ctx.apiUrl}` },
-          { label: 'API Token', description: 'Update API token' },
+          { label: vscode.l10n.t('API URL'), description: vscode.l10n.t('Current: {0}', ctx.apiUrl) },
+          { label: vscode.l10n.t('API Token'), description: vscode.l10n.t('Update API token') },
           {
-            label: 'Default Namespace',
-            description: `Current: ${ctx.defaultNamespace || 'Not set'}`,
+            label: vscode.l10n.t('Default Namespace'),
+            description: vscode.l10n.t('Current: {0}', ctx.defaultNamespace || vscode.l10n.t('Not set')),
           },
         ];
 
         const editOption = await vscode.window.showQuickPick(editOptions, {
-          placeHolder: 'What would you like to edit?',
+          placeHolder: vscode.l10n.t('What would you like to edit?'),
           ignoreFocusOut: true,
         });
 
@@ -188,14 +192,14 @@ export function registerContextCommands(
         const updates: Partial<F5XCContext> = {};
 
         switch (editOption.label) {
-          case 'API URL': {
+          case vscode.l10n.t('API URL'): {
             const newUrl = await vscode.window.showInputBox({
-              prompt: 'Enter new API URL',
+              prompt: vscode.l10n.t('Enter new API URL'),
               value: ctx.apiUrl,
               ignoreFocusOut: true,
               validateInput: (value) => {
                 if (!value?.startsWith('https://')) {
-                  return 'API URL must start with https://';
+                  return vscode.l10n.t('API URL must start with https://');
                 }
                 return null;
               },
@@ -209,11 +213,11 @@ export function registerContextCommands(
             break;
           }
 
-          case 'API Token': {
+          case vscode.l10n.t('API Token'): {
             const newToken = await vscode.window.showInputBox({
-              prompt: 'Enter new API token',
+              prompt: vscode.l10n.t('Enter new API token'),
               password: true,
-              placeHolder: 'New API token',
+              placeHolder: vscode.l10n.t('New API token'),
               ignoreFocusOut: true,
             });
 
@@ -225,9 +229,9 @@ export function registerContextCommands(
             break;
           }
 
-          case 'Default Namespace': {
+          case vscode.l10n.t('Default Namespace'): {
             const newNamespace = await vscode.window.showInputBox({
-              prompt: 'Enter new default namespace (leave empty to clear)',
+              prompt: vscode.l10n.t('Enter new default namespace (leave empty to clear)'),
               value: ctx.defaultNamespace || '',
               ignoreFocusOut: true,
             });
@@ -244,7 +248,7 @@ export function registerContextCommands(
         // Apply updates
         await contextManager.updateContext(contextName, updates);
 
-        showInfo(`Context "${contextName}" updated`);
+        showInfo(vscode.l10n.t('Context "{0}" updated', contextName));
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Edit context');
@@ -263,7 +267,7 @@ export function registerContextCommands(
           // Prompt user to select context
           const contexts = await contextManager.getContexts();
           if (contexts.length === 0) {
-            showWarning('No contexts configured');
+            showWarning(vscode.l10n.t('No contexts configured'));
             return;
           }
 
@@ -272,7 +276,7 @@ export function registerContextCommands(
               label: c.name,
               description: c.apiUrl,
             })),
-            { placeHolder: 'Select context to delete', ignoreFocusOut: true },
+            { placeHolder: vscode.l10n.t('Select context to delete'), ignoreFocusOut: true },
           );
 
           if (!selected) {
@@ -284,17 +288,17 @@ export function registerContextCommands(
 
         // Confirm deletion
         const confirm = await vscode.window.showWarningMessage(
-          `Delete context "${contextName}"? This cannot be undone.`,
+          vscode.l10n.t('Delete context "{0}"? This cannot be undone.', contextName),
           { modal: true },
-          'Delete',
+          vscode.l10n.t('Delete'),
         );
 
-        if (confirm !== 'Delete') {
+        if (confirm !== vscode.l10n.t('Delete')) {
           return;
         }
 
         await contextManager.deleteContext(contextName);
-        showInfo(`Context "${contextName}" deleted`);
+        showInfo(vscode.l10n.t('Context "{0}" deleted', contextName));
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Delete context');
@@ -315,17 +319,17 @@ export function registerContextCommands(
           const activeName = await contextManager.getActiveContextName();
 
           if (contexts.length === 0) {
-            showWarning('No contexts configured');
+            showWarning(vscode.l10n.t('No contexts configured'));
             return;
           }
 
           const selected = await vscode.window.showQuickPick(
             contexts.map((c) => ({
               label: c.name,
-              description: c.name === activeName ? '(active)' : '',
+              description: c.name === activeName ? vscode.l10n.t('(active)') : '',
               detail: c.apiUrl,
             })),
-            { placeHolder: 'Select context to activate', ignoreFocusOut: true },
+            { placeHolder: vscode.l10n.t('Select context to activate'), ignoreFocusOut: true },
           );
 
           if (!selected) {
@@ -336,7 +340,7 @@ export function registerContextCommands(
         }
 
         await contextManager.setActiveContext(contextName);
-        showInfo(`Active context set to "${contextName}"`);
+        showInfo(vscode.l10n.t('Active context set to "{0}"', contextName));
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Set active context');
@@ -348,7 +352,7 @@ export function registerContextCommands(
     vscode.commands.registerCommand('f5xc.clearAuthCache', async () => {
       await withErrorHandling(() => {
         contextManager.clearAllCachesPublic();
-        showInfo('Authentication cache cleared. Re-authentication will occur on next request.');
+        showInfo(vscode.l10n.t('Authentication cache cleared. Re-authentication will occur on next request.'));
         explorerProvider.refresh();
         return Promise.resolve();
       }, 'Clear auth cache');
