@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import { useState } from 'react';
+import { t } from '../lib/i18n';
 import type { ToolUseBlock } from '../state/session';
 
 interface ToolUseContentProps {
@@ -32,7 +33,7 @@ export function ToolUseContent({ block }: ToolUseContentProps) {
               <pre>{block.input}</pre>
             </div>
             <button className="toolCopyBtn" type="button" onClick={() => handleCopy(block.input ?? '')}>
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('Copied') : t('Copy')}
             </button>
           </div>
         )}

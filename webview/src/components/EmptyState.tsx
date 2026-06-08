@@ -4,6 +4,7 @@
 import { useSyncExternalStore } from 'react';
 import { CheckIcon, DashIcon, WarningIcon } from '../assets/icons';
 import { F5AsciiLogo } from '../assets/pi-logo';
+import { t } from '../lib/i18n';
 import { getWelcomeState, subscribeWelcome } from '../main';
 
 function stateIcon(state: 'connected' | 'unauthenticated' | 'unavailable') {
@@ -31,7 +32,7 @@ export function EmptyState() {
         <div className="welcomeRight">
           {welcome.modelProvider && (
             <div className="emptyStateSection">
-              <div className="emptyStateSectionTitle">Model Provider</div>
+              <div className="emptyStateSectionTitle">{t('Model Provider')}</div>
               <div className="emptyStateCheck">
                 <span className="checkIcon connected">
                   <CheckIcon />

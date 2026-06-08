@@ -371,6 +371,26 @@ export const lm = {
   tools: [],
 };
 
+// Mock l10n namespace — passthrough returns the English string with positional args interpolated
+export const l10n = {
+  t: jest.fn((message: string, ...args: unknown[]) => {
+    if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
+      const params = args[0] as Record<string, unknown>;
+      return message.replace(/\{(\w+)\}/g, (match, key: string) => {
+        const val = params[key];
+        return val !== undefined ? String(val) : match;
+      });
+    }
+    let result = message;
+    for (let i = 0; i < args.length; i++) {
+      result = result.replace(`{${i}}`, String(args[i]));
+    }
+    return result;
+  }),
+  bundle: undefined,
+  uri: undefined,
+};
+
 // Mock chat namespace
 export const chat = {
   createChatParticipant: jest.fn(() => ({
@@ -508,6 +528,7 @@ export default {
   LanguageModelToolResultPart,
   LanguageModelToolResult,
   LanguageModelChatMessageRole,
+  l10n,
   languages,
   lm,
   chat,

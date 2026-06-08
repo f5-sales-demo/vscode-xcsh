@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PlusIcon, SendIcon, StopIcon } from '../assets/icons';
+import { t } from '../lib/i18n';
 import { on, sendRequestFilePicker, sendSetMode, sendSetThinking } from '../lib/protocol';
 import { ModesMenu } from './ModesMenu';
 import { SlashCommandMenu } from './SlashCommandMenu';
@@ -113,7 +114,7 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
     sendSetThinking(level);
   }, []);
 
-  const placeholder = busy ? 'xcsh is responding...' : 'Ask xcsh...';
+  const placeholder = busy ? t('xcsh is responding...') : t('Ask xcsh...');
 
   return (
     <fieldset className="inputBar">
@@ -190,14 +191,14 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
           </button>
         </div>
         {busy ? (
-          <button type="button" className="footerBtn sendBtn stopBtn" title="Stop (Esc)" onClick={onInterrupt}>
+          <button type="button" className="footerBtn sendBtn stopBtn" title={t('Stop (Esc)')} onClick={onInterrupt}>
             <StopIcon />
           </button>
         ) : (
           <button
             type="submit"
             className="footerBtn sendBtn"
-            title="Send (Enter)"
+            title={t('Send (Enter)')}
             onClick={handleSubmit}
             disabled={!text.trim() && !attachedFile}
           >
