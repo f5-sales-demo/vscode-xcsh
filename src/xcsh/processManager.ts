@@ -125,7 +125,7 @@ export class XcshProcessManager implements vscode.Disposable {
     try {
       const child = spawn(binary, ['--mode', 'rpc'], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, ...this.envVars },
+        env: { ...process.env, ...this.envVars, XCSH_LOCALE: vscode.env.language },
         cwd: this.cwd,
       });
 

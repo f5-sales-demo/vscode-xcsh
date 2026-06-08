@@ -79,6 +79,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     );
 
     this.sendWelcomeState();
+    this.sendL10nBundle();
 
     webviewView.onDidDispose(() => {
       this.webviewView = null;
@@ -136,6 +137,26 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
             });
           });
       });
+  }
+
+  private sendL10nBundle(): void {
+    const view = this.webviewView;
+    if (!view) {
+      return;
+    }
+    const bundlePath = path.join(this.extensionUri.fsPath, 'l10n', `bundle.l10n.${vscode.env.language}.json`);
+    let strings: Record<string, string> = {};
+    try {
+      if (fs.existsSync(bundlePath)) {
+        strings = JSON.parse(fs.readFileSync(bundlePath, 'utf-8')) as Record<string, string>;
+      }
+    } catch {
+      this.logger.warn('Failed to load l10n bundle for webview');
+    }
+    void view.webview.postMessage({
+      type: 'from-extension',
+      message: { type: 'l10n_bundle', strings },
+    });
   }
 
   private handleWebviewMessage(msg: { type: string; [key: string]: unknown }): void {

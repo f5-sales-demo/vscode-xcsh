@@ -50,22 +50,22 @@ export class F5XCApiError extends Error {
 
   get userFriendlyMessage(): string {
     if (this.isUnauthorized) {
-      return 'Authentication failed. Please check your credentials or re-authenticate.';
+      return vscode.l10n.t('Authentication failed. Please check your credentials or re-authenticate.');
     }
     if (this.isForbidden) {
-      return 'Permission denied. You do not have access to perform this operation.';
+      return vscode.l10n.t('Permission denied. You do not have access to perform this operation.');
     }
     if (this.isNotFound) {
-      return 'Resource not found.';
+      return vscode.l10n.t('Resource not found.');
     }
     if (this.isRateLimited) {
-      return 'Rate limit exceeded. Please wait and try again.';
+      return vscode.l10n.t('Rate limit exceeded. Please wait and try again.');
     }
     if (this.isConflict) {
-      return 'Resource conflict. The resource may have been modified.';
+      return vscode.l10n.t('Resource conflict. The resource may have been modified.');
     }
     if (this.isServerError) {
-      return 'Server error. Please try again later.';
+      return vscode.l10n.t('Server error. Please try again later.');
     }
 
     // Try to parse error body for more details
@@ -144,13 +144,13 @@ export async function withErrorHandling<T>(
         // 401 - Authentication failed, offer to configure profile or clear cache
         const message = smartMessage || error.userFriendlyMessage;
         const action = await vscode.window.showErrorMessage(
-          `${message}\n\nIf you recently updated credentials, try clearing the auth cache.`,
-          'Configure Context',
-          'Clear Auth Cache',
+          vscode.l10n.t('{0}\n\nIf you recently updated credentials, try clearing the auth cache.', message),
+          vscode.l10n.t('Configure Context'),
+          vscode.l10n.t('Clear Auth Cache'),
         );
-        if (action === 'Configure Context') {
+        if (action === vscode.l10n.t('Configure Context')) {
           await vscode.commands.executeCommand('f5xc.editContext');
-        } else if (action === 'Clear Auth Cache') {
+        } else if (action === vscode.l10n.t('Clear Auth Cache')) {
           await vscode.commands.executeCommand('f5xc.clearAuthCache');
         }
       } else if (error.isForbidden) {
@@ -170,19 +170,19 @@ export async function withErrorHandling<T>(
         void vscode.window.showErrorMessage(`${context}: ${message}`);
       }
     } else if (error instanceof ConfigurationError) {
-      const action = await vscode.window.showErrorMessage(error.message, 'Open Settings');
-      if (action === 'Open Settings') {
+      const action = await vscode.window.showErrorMessage(error.message, vscode.l10n.t('Open Settings'));
+      if (action === vscode.l10n.t('Open Settings')) {
         await vscode.commands.executeCommand('workbench.action.openSettings', 'f5xc');
       }
     } else if (error instanceof AuthenticationError) {
-      const action = await vscode.window.showErrorMessage(error.message, 'Configure Context');
-      if (action === 'Configure Context') {
+      const action = await vscode.window.showErrorMessage(error.message, vscode.l10n.t('Configure Context'));
+      if (action === vscode.l10n.t('Configure Context')) {
         await vscode.commands.executeCommand('f5xc.addContext');
       }
     } else if (error instanceof Error) {
       void vscode.window.showErrorMessage(`${context}: ${error.message}`);
     } else {
-      void vscode.window.showErrorMessage(`${context}: An unexpected error occurred`);
+      void vscode.window.showErrorMessage(vscode.l10n.t('{0}: An unexpected error occurred', context));
     }
 
     return undefined;

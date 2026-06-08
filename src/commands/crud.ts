@@ -73,7 +73,7 @@ export function registerCrudCommands(
         const profile = await contextManager.getContext(data.profileName);
 
         if (!profile) {
-          showWarning(`Context "${data.profileName}" not found`);
+          showWarning(vscode.l10n.t('Context "{0}" not found', data.profileName));
           return;
         }
 
@@ -126,7 +126,7 @@ export function registerCrudCommands(
           // Called from webview with plain object
           const resourceType = getResourceTypeByApiPath(arg.resourceType);
           if (!resourceType) {
-            showWarning(`Unknown resource type: ${arg.resourceType}`);
+            showWarning(vscode.l10n.t('Unknown resource type: {0}', arg.resourceType));
             return;
           }
 
@@ -136,7 +136,7 @@ export function registerCrudCommands(
           )?.[0];
 
           if (!resourceTypeKey) {
-            showWarning(`Could not find resource type key for: ${arg.resourceType}`);
+            showWarning(vscode.l10n.t('Could not find resource type key for: {0}', arg.resourceType));
             return;
           }
 
@@ -152,7 +152,7 @@ export function registerCrudCommands(
         const profile = await contextManager.getContext(data.profileName);
 
         if (!profile) {
-          showWarning(`Context "${data.profileName}" not found`);
+          showWarning(vscode.l10n.t('Context "{0}" not found', data.profileName));
           return;
         }
 
@@ -167,7 +167,7 @@ export function registerCrudCommands(
         await vscode.window.showTextDocument(doc, { preview: false });
 
         logger.info(`Editing resource: ${data.name}`);
-        showInfo(`Editing ${data.name}. Press Cmd+S to save changes.`);
+        showInfo(vscode.l10n.t('Editing {0}. Press Cmd+S to save changes.', data.name));
       }, 'Edit resource');
     }),
   );
@@ -197,7 +197,7 @@ export function registerCrudCommands(
           }));
 
           const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: 'Select resource type to create',
+            placeHolder: vscode.l10n.t('Select resource type to create'),
             matchOnDescription: true,
             matchOnDetail: true,
           });
@@ -211,7 +211,7 @@ export function registerCrudCommands(
 
         const resourceType = RESOURCE_TYPES[resourceTypeKey];
         if (!resourceType) {
-          showWarning(`Unknown resource type: ${resourceTypeKey}`);
+          showWarning(vscode.l10n.t('Unknown resource type: {0}', resourceTypeKey));
           return;
         }
 
@@ -220,19 +220,19 @@ export function registerCrudCommands(
         if (prerequisites.length > 0) {
           const prereqList = prerequisites.join(', ');
           const proceed = await vscode.window.showInformationMessage(
-            `Prerequisites for creating ${resourceType.displayName}: ${prereqList}`,
+            vscode.l10n.t('Prerequisites for creating {0}: {1}', resourceType.displayName, prereqList),
             { modal: false },
-            'Continue',
-            'Cancel',
+            vscode.l10n.t('Continue'),
+            vscode.l10n.t('Cancel'),
           );
-          if (proceed === 'Cancel') {
+          if (proceed === vscode.l10n.t('Cancel')) {
             return;
           }
         }
 
         // Get namespace
         const namespaceInput = await vscode.window.showInputBox({
-          prompt: 'Enter namespace',
+          prompt: vscode.l10n.t('Enter namespace'),
           value: namespace,
           placeHolder: 'default',
         });
@@ -252,7 +252,9 @@ export function registerCrudCommands(
         });
 
         await vscode.window.showTextDocument(doc, { preview: false });
-        showInfo(`Created template for ${resourceType.displayName}. Edit and use "xcsh: Apply" to create.`);
+        showInfo(
+          vscode.l10n.t('Created template for {0}. Edit and use "xcsh: Apply" to create.', resourceType.displayName),
+        );
       }, 'Create resource');
     }),
   );
@@ -263,7 +265,7 @@ export function registerCrudCommands(
       await withErrorHandling(async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-          showWarning('No active editor');
+          showWarning(vscode.l10n.t('No active editor'));
           return;
         }
 
@@ -274,7 +276,7 @@ export function registerCrudCommands(
         try {
           resource = JSON.parse(content) as typeof resource;
         } catch {
-          showWarning('Invalid JSON in editor');
+          showWarning(vscode.l10n.t('Invalid JSON in editor'));
           return;
         }
 
@@ -282,27 +284,27 @@ export function registerCrudCommands(
         const name = resource.metadata?.name;
 
         if (!namespace || !name) {
-          showWarning('Resource must have metadata.namespace and metadata.name');
+          showWarning(vscode.l10n.t('Resource must have metadata.namespace and metadata.name'));
           return;
         }
 
         // Detect resource type from file name or content
         const resourceTypeKey = detectResourceType(document.fileName, resource);
         if (!resourceTypeKey) {
-          showWarning('Could not determine resource type. Use naming convention: *.{type}.f5xc.json');
+          showWarning(vscode.l10n.t('Could not determine resource type. Use naming convention: *.{type}.f5xc.json'));
           return;
         }
 
         const resourceType = RESOURCE_TYPES[resourceTypeKey];
         if (!resourceType) {
-          showWarning(`Unknown resource type: ${resourceTypeKey}`);
+          showWarning(vscode.l10n.t('Unknown resource type: {0}', resourceTypeKey));
           return;
         }
 
         // Get active profile
         const activeContext = await contextManager.getActiveContext();
         if (!activeContext) {
-          showWarning('No active context. Configure a context first.');
+          showWarning(vscode.l10n.t('No active context. Configure a context first.'));
           return;
         }
 
@@ -325,16 +327,19 @@ export function registerCrudCommands(
 
         // If validation fails, show warning with option to continue
         if (!validationResult.valid) {
-          const warningMessage = `${validationResult.warnings.join('\n\n')}\n\nDo you want to continue anyway?`;
+          const warningMessage = vscode.l10n.t(
+            '{0}\n\nDo you want to continue anyway?',
+            validationResult.warnings.join('\n\n'),
+          );
 
           const continueAnyway = await vscode.window.showWarningMessage(
             warningMessage,
             { modal: true },
-            'Continue',
-            'Cancel',
+            vscode.l10n.t('Continue'),
+            vscode.l10n.t('Cancel'),
           );
 
-          if (continueAnyway !== 'Continue') {
+          if (continueAnyway !== vscode.l10n.t('Continue')) {
             return;
           }
         }
@@ -353,7 +358,13 @@ export function registerCrudCommands(
         const opDangerLevel = getDangerLevel(resourceTypeKey, operationForConfirm);
         const opRequiresConfirm = requiresConfirmation(resourceTypeKey, operationForConfirm);
 
-        let confirmMessage = `${action} ${resourceType.displayName} "${name}" in namespace "${namespace}"?`;
+        let confirmMessage = vscode.l10n.t(
+          '{0} {1} "{2}" in namespace "{3}"?',
+          action,
+          resourceType.displayName,
+          name,
+          namespace,
+        );
         if (opDangerLevel === 'high' || opRequiresConfirm) {
           const sideEffects = getSideEffects(resourceTypeKey, operationForConfirm);
           if (sideEffects) {
@@ -383,7 +394,8 @@ export function registerCrudCommands(
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `${action === 'Update' ? 'Updating' : 'Creating'} ${name}...`,
+            title:
+              action === 'Update' ? vscode.l10n.t('Updating {0}...', name) : vscode.l10n.t('Creating {0}...', name),
             cancellable: false,
           },
           async () => {
@@ -396,7 +408,7 @@ export function registerCrudCommands(
           },
         );
 
-        showInfo(`${action}d ${resourceType.displayName}: ${name}`);
+        showInfo(vscode.l10n.t('{0}d {1}: {2}', action, resourceType.displayName, name));
         explorer.refresh();
       }, 'Apply resource');
     }),
@@ -423,7 +435,7 @@ export function registerCrudCommands(
         const hasPermission = await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: 'Checking permissions...',
+            title: vscode.l10n.t('Checking permissions...'),
             cancellable: false,
           },
           async () => {
@@ -433,7 +445,11 @@ export function registerCrudCommands(
 
         if (!hasPermission) {
           showWarning(
-            `Permission denied: You do not have access to delete ${data.resourceType.displayName} "${data.name}".`,
+            vscode.l10n.t(
+              'Permission denied: You do not have access to delete {0} "{1}".',
+              data.resourceType.displayName,
+              data.name,
+            ),
           );
           return;
         }
@@ -485,21 +501,34 @@ export function registerCrudCommands(
           }
 
           // Build confirmation message based on danger level
-          let confirmMessage = `Delete ${data.resourceType.displayName} "${data.name}" from namespace "${data.namespace}"?`;
-          let confirmButton = 'Delete';
+          let confirmMessage = vscode.l10n.t(
+            'Delete {0} "{1}" from namespace "{2}"?',
+            data.resourceType.displayName,
+            data.name,
+            data.namespace,
+          );
+          let confirmButton = vscode.l10n.t('Delete');
 
           if (dangerLevel === 'high') {
             // Enhanced warning for high-danger operations
             confirmMessage =
-              `⚠️ HIGH RISK DELETE\n\n` +
-              `Delete ${data.resourceType.displayName} "${data.name}" from namespace "${data.namespace}"?\n\n` +
-              `This operation has danger level: HIGH` +
+              vscode.l10n.t('HIGH RISK DELETE') +
+              '\n\n' +
+              vscode.l10n.t(
+                'Delete {0} "{1}" from namespace "{2}"?',
+                data.resourceType.displayName,
+                data.name,
+                data.namespace,
+              ) +
+              '\n\n' +
+              vscode.l10n.t('This operation has danger level: HIGH') +
               sideEffectsText +
-              '\n\nThis action cannot be undone.';
-            confirmButton = 'Delete (High Risk)';
+              '\n\n' +
+              vscode.l10n.t('This action cannot be undone.');
+            confirmButton = vscode.l10n.t('Delete (High Risk)');
           } else if (dangerLevel === 'medium') {
             // Standard confirmation with side effects for medium-danger operations
-            confirmMessage += `${sideEffectsText}\n\nThis action cannot be undone.`;
+            confirmMessage += `${sideEffectsText}\n\n${vscode.l10n.t('This action cannot be undone.')}`;
           } else {
             // Low danger — include side effects if they exist
             if (sideEffectsText) {
@@ -511,7 +540,7 @@ export function registerCrudCommands(
             confirmMessage,
             { modal: true },
             confirmButton,
-            'Cancel',
+            vscode.l10n.t('Cancel'),
           );
 
           if (confirm !== confirmButton) {
@@ -522,7 +551,7 @@ export function registerCrudCommands(
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `Deleting ${data.name}...`,
+            title: vscode.l10n.t('Deleting {0}...', data.name),
             cancellable: false,
           },
           async () => {
@@ -530,7 +559,7 @@ export function registerCrudCommands(
           },
         );
 
-        showInfo(`Deleted ${data.resourceType.displayName}: ${data.name}`);
+        showInfo(vscode.l10n.t('Deleted {0}: {1}', data.resourceType.displayName, data.name));
         explorer.refresh();
       }, 'Delete resource');
     }),
@@ -544,7 +573,7 @@ export function registerCrudCommands(
 
         // Defense in depth: verify this is not a built-in namespace
         if (isBuiltInNamespace(data.name)) {
-          showWarning(`Cannot delete built-in namespace "${data.name}".`);
+          showWarning(vscode.l10n.t('Cannot delete built-in namespace "{0}".', data.name));
           return;
         }
 
@@ -558,7 +587,7 @@ export function registerCrudCommands(
         const hasPermission = await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: 'Checking permissions...',
+            title: vscode.l10n.t('Checking permissions...'),
             cancellable: false,
           },
           async () => {
@@ -567,27 +596,29 @@ export function registerCrudCommands(
         );
 
         if (!hasPermission) {
-          showWarning(`Permission denied: You do not have access to delete namespace "${data.name}".`);
+          showWarning(vscode.l10n.t('Permission denied: You do not have access to delete namespace "{0}".', data.name));
           return;
         }
 
         // Confirm deletion with strong warning
         const confirm = await vscode.window.showWarningMessage(
-          `Are you sure you want to delete namespace "${data.name}"?\n\n` +
-            `⚠️ WARNING: This will permanently delete ALL resources within this namespace. ` +
-            `This action cannot be undone.`,
+          vscode.l10n.t('Are you sure you want to delete namespace "{0}"?', data.name) +
+            '\n\n' +
+            vscode.l10n.t(
+              'WARNING: This will permanently delete ALL resources within this namespace. This action cannot be undone.',
+            ),
           { modal: true },
-          'Delete Namespace',
+          vscode.l10n.t('Delete Namespace'),
         );
 
-        if (confirm !== 'Delete Namespace') {
+        if (confirm !== vscode.l10n.t('Delete Namespace')) {
           return;
         }
 
         await vscode.window.withProgress(
           {
             location: vscode.ProgressLocation.Notification,
-            title: `Deleting namespace ${data.name} and all resources...`,
+            title: vscode.l10n.t('Deleting namespace {0} and all resources...', data.name),
             cancellable: false,
           },
           async () => {
@@ -595,7 +626,7 @@ export function registerCrudCommands(
           },
         );
 
-        showInfo(`Deleted namespace: ${data.name}`);
+        showInfo(vscode.l10n.t('Deleted namespace: {0}', data.name));
         explorer.refresh();
       }, 'Delete namespace');
     }),
@@ -644,14 +675,14 @@ export function registerCrudCommands(
           if (editor) {
             localUri = editor.document.uri;
           } else {
-            showWarning('Open the resource in editor first to compare');
+            showWarning(vscode.l10n.t('Open the resource in editor first to compare'));
             return;
           }
         } else {
           // Called from editor
           const editor = vscode.window.activeTextEditor;
           if (!editor) {
-            showWarning('No active editor');
+            showWarning(vscode.l10n.t('No active editor'));
             return;
           }
 
@@ -662,7 +693,7 @@ export function registerCrudCommands(
           try {
             resource = JSON.parse(content) as typeof resource;
           } catch {
-            showWarning('Invalid JSON in editor');
+            showWarning(vscode.l10n.t('Invalid JSON in editor'));
             return;
           }
 
@@ -670,25 +701,25 @@ export function registerCrudCommands(
           name = resource.metadata?.name || 'unknown';
 
           if (!namespace || !name) {
-            showWarning('Resource must have metadata.namespace and metadata.name');
+            showWarning(vscode.l10n.t('Resource must have metadata.namespace and metadata.name'));
             return;
           }
 
           const resourceTypeKey = detectResourceType(editor.document.fileName, resource);
           if (!resourceTypeKey) {
-            showWarning('Could not determine resource type');
+            showWarning(vscode.l10n.t('Could not determine resource type'));
             return;
           }
 
           const resourceType = RESOURCE_TYPES[resourceTypeKey];
           if (!resourceType) {
-            showWarning(`Unknown resource type: ${resourceTypeKey}`);
+            showWarning(vscode.l10n.t('Unknown resource type: {0}', resourceTypeKey));
             return;
           }
 
           const activeContext = await contextManager.getActiveContext();
           if (!activeContext) {
-            showWarning('No active context');
+            showWarning(vscode.l10n.t('No active context'));
             return;
           }
 
@@ -729,7 +760,7 @@ export function registerCrudCommands(
     vscode.commands.registerCommand('f5xc.copyName', async (node: ResourceNode) => {
       const data = node.getData();
       await vscode.env.clipboard.writeText(data.name);
-      showInfo(`Copied: ${data.name}`);
+      showInfo(vscode.l10n.t('Copied: {0}', data.name));
     }),
   );
 
@@ -749,7 +780,7 @@ export function registerCrudCommands(
 
         const json = JSON.stringify(filteredResource, null, 2);
         await vscode.env.clipboard.writeText(json);
-        showInfo(`Copied ${data.name} JSON to clipboard (${viewMode} view)`);
+        showInfo(vscode.l10n.t('Copied {0} JSON to clipboard ({1} view)', data.name, viewMode));
       }, 'Copy as JSON');
     }),
   );
@@ -761,7 +792,7 @@ export function registerCrudCommands(
       const profile = await contextManager.getContext(data.profileName);
 
       if (!profile) {
-        showWarning(`Context "${data.profileName}" not found`);
+        showWarning(vscode.l10n.t('Context "{0}" not found', data.profileName));
         return;
       }
 
@@ -783,8 +814,10 @@ export function registerCrudCommands(
       await config.update('viewMode', newMode, vscode.ConfigurationTarget.Global);
 
       const modeDescription =
-        newMode === 'console' ? 'Console View (clean, filtered output)' : 'Full API View (complete response)';
-      showInfo(`Switched to ${modeDescription}`);
+        newMode === 'console'
+          ? vscode.l10n.t('Console View (clean, filtered output)')
+          : vscode.l10n.t('Full API View (complete response)');
+      showInfo(vscode.l10n.t('Switched to {0}', modeDescription));
       logger.info(`View mode changed to: ${newMode}`);
     }),
   );

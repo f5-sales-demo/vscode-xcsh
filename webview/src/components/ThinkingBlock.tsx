@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import { useState } from 'react';
+import { t } from '../lib/i18n';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ThinkingBlockProps {
@@ -15,10 +16,10 @@ export function ThinkingBlock({ thinking, isCurrentlyThinking, durationMs }: Thi
   const hasContent = thinking.length > 0;
 
   const durationText = durationMs
-    ? `Thought for ${(durationMs / 1000).toFixed(0)}s`
+    ? t('Thought for {0}s', (durationMs / 1000).toFixed(0))
     : isCurrentlyThinking
-      ? 'Thinking...'
-      : 'Thinking';
+      ? t('Thinking...')
+      : t('Thinking');
 
   return (
     <details className="thinkingBlock" open={isOpen} onToggle={(e) => setIsOpen((e.target as HTMLDetailsElement).open)}>

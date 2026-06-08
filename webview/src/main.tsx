@@ -3,6 +3,7 @@
 
 import ReactDOM from 'react-dom/client';
 import { SessionView } from './components/SessionView';
+import { setL10nBundle } from './lib/i18n';
 import type { ExtensionMessage } from './lib/protocol';
 import { initProtocol, on } from './lib/protocol';
 import { createNewSession, getActiveSession } from './state/sessions';
@@ -68,11 +69,18 @@ function handleWelcomeState(msg: ExtensionMessage): void {
   }
 }
 
+function handleL10nBundle(msg: ExtensionMessage): void {
+  if (msg.strings && typeof msg.strings === 'object') {
+    setL10nBundle(msg.strings as Record<string, string>);
+  }
+}
+
 on('message_update', handleMessageUpdate);
 on('tool_execution_start', handleToolStart);
 on('tool_execution_end', handleToolEnd);
 on('turn_end', handleTurnEnd);
 on('welcome_state', handleWelcomeState);
+on('l10n_bundle', handleL10nBundle);
 
 const rootEl = document.getElementById('root');
 if (rootEl) {

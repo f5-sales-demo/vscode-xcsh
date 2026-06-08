@@ -10,15 +10,17 @@ const BREW_INSTALL_CMD = 'brew install f5xc-salesdemos/tap/xcsh';
 
 async function showXcshNotFoundPrompt(): Promise<void> {
   const action = await vscode.window.showErrorMessage(
-    `xcsh binary not found. Install via Homebrew: \`${BREW_INSTALL_CMD}\``,
-    'Copy Install Command',
-    'Open Settings',
+    vscode.l10n.t('xcsh binary not found. Install via Homebrew: `{0}`', BREW_INSTALL_CMD),
+    vscode.l10n.t('Copy Install Command'),
+    vscode.l10n.t('Open Settings'),
   );
 
-  if (action === 'Copy Install Command') {
+  if (action === vscode.l10n.t('Copy Install Command')) {
     await vscode.env.clipboard.writeText(BREW_INSTALL_CMD);
-    void vscode.window.showInformationMessage('Install command copied to clipboard. Paste it in your terminal.');
-  } else if (action === 'Open Settings') {
+    void vscode.window.showInformationMessage(
+      vscode.l10n.t('Install command copied to clipboard. Paste it in your terminal.'),
+    );
+  } else if (action === vscode.l10n.t('Open Settings')) {
     void vscode.commands.executeCommand('workbench.action.openSettings', 'f5xc.xcsh.path');
   }
 }
