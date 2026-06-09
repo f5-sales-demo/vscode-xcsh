@@ -253,13 +253,13 @@ class CategoryNode implements F5XCTreeItem {
   ) {}
 
   getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem(this.data.category, vscode.TreeItemCollapsibleState.Collapsed);
+    const item = new vscode.TreeItem(vscode.l10n.t(this.data.category), vscode.TreeItemCollapsibleState.Collapsed);
     item.contextValue = TreeItemContext.CATEGORY;
     item.iconPath = new vscode.ThemeIcon(getCategoryIcon(this.data.category));
 
     // Build enhanced tooltip with domain descriptions
     const tooltip = new vscode.MarkdownString();
-    tooltip.appendMarkdown(`**${this.data.category}**\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t(this.data.category)}**\n\n`);
 
     // Get domains in this category and show their descriptions
     const domainsInCategory = getDomainsForCategory(this.data.category as UiCategory);
