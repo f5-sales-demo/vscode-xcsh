@@ -360,7 +360,7 @@ export class F5XCDescribeProvider {
     </div>
     <div class="toolbar-right">
       <input type="text" class="search-input" placeholder="Search..." />
-      <button class="edit-btn">Edit Configuration</button>
+      <button class="edit-btn">${vscode.l10n.t('Edit Configuration')}</button>
     </div>
   </div>
 
@@ -432,7 +432,7 @@ export class F5XCDescribeProvider {
     if (metadata?.name) {
       metadataFields.push({ key: 'Name', value: String(metadata.name) });
     }
-    sections.push({ id: 'metadata', title: 'Metadata', fields: metadataFields });
+    sections.push({ id: 'metadata', title: vscode.l10n.t('Metadata'), fields: metadataFields });
 
     // 2. Domains and LB Type
     const domainsFields: FieldDefinition[] = [];
@@ -582,7 +582,7 @@ export class F5XCDescribeProvider {
       }
     }
 
-    sections.push({ id: 'domains', title: 'Domains and LB Type', fields: domainsFields });
+    sections.push({ id: 'domains', title: vscode.l10n.t('Domains and LB Type'), fields: domainsFields });
 
     // 3. Web Application Firewall
     const wafFields: FieldDefinition[] = [];
@@ -597,7 +597,7 @@ export class F5XCDescribeProvider {
     if (spec?.waf_exclusion_rules && !this.isEmpty(spec.waf_exclusion_rules)) {
       wafFields.push({ key: 'WAF Exclusion', value: 'Inline Rules' });
     }
-    sections.push({ id: 'waf', title: 'Web Application Firewall', fields: wafFields });
+    sections.push({ id: 'waf', title: vscode.l10n.t('Web Application Firewall'), fields: wafFields });
 
     // 4. Bot Protection
     const botFields: FieldDefinition[] = [];
@@ -609,7 +609,7 @@ export class F5XCDescribeProvider {
         status: botStatus.enabled ? 'enabled' : 'disabled',
       });
     }
-    sections.push({ id: 'bot-protection', title: 'Bot Protection', fields: botFields });
+    sections.push({ id: 'bot-protection', title: vscode.l10n.t('Bot Protection'), fields: botFields });
 
     // 5. API Protection
     const apiFields: FieldDefinition[] = [];
@@ -644,7 +644,7 @@ export class F5XCDescribeProvider {
     } else {
       apiFields.push({ key: 'API Testing', value: 'Disable', status: 'disabled' });
     }
-    sections.push({ id: 'api-protection', title: 'API Protection', fields: apiFields });
+    sections.push({ id: 'api-protection', title: vscode.l10n.t('API Protection'), fields: apiFields });
 
     // 6. Malware Protection
     const malwareFields: FieldDefinition[] = [];
@@ -660,7 +660,7 @@ export class F5XCDescribeProvider {
         status: malwareStatus.enabled ? 'enabled' : 'disabled',
       });
     }
-    sections.push({ id: 'malware-protection', title: 'Malware Protection', fields: malwareFields });
+    sections.push({ id: 'malware-protection', title: vscode.l10n.t('Malware Protection'), fields: malwareFields });
 
     // 7. DoS Settings (with sub-groups)
     const mitigationFields: FieldDefinition[] = [];
@@ -704,21 +704,21 @@ export class F5XCDescribeProvider {
     if (mitigationFields.length > 0) {
       dosSubGroups.push({
         id: 'mitigation',
-        title: 'Mitigation Settings',
+        title: vscode.l10n.t('Mitigation Settings'),
         fields: mitigationFields,
       });
     }
     if (protectionFields.length > 0) {
       dosSubGroups.push({
         id: 'protection',
-        title: 'Protection Settings',
+        title: vscode.l10n.t('Protection Settings'),
         fields: protectionFields,
       });
     }
 
     sections.push({
       id: 'dos-settings',
-      title: 'DoS Settings',
+      title: vscode.l10n.t('DoS Settings'),
       subCategoryLabel: dosSubGroups.length > 0 ? 'L7 DDoS Protection Settings' : undefined,
       subGroups: dosSubGroups.length > 0 ? dosSubGroups : undefined,
       fields: ungroupedDosFields,
@@ -734,7 +734,7 @@ export class F5XCDescribeProvider {
         status: csdStatus.enabled ? 'enabled' : 'disabled',
       });
     }
-    sections.push({ id: 'client-side-defense', title: 'Client-Side Defense', fields: csdFields });
+    sections.push({ id: 'client-side-defense', title: vscode.l10n.t('Client-Side Defense'), fields: csdFields });
 
     // 9. Common Security Controls
     const securityFields: FieldDefinition[] = [];
@@ -811,7 +811,7 @@ export class F5XCDescribeProvider {
     }
     sections.push({
       id: 'security-controls',
-      title: 'Common Security Controls',
+      title: vscode.l10n.t('Common Security Controls'),
       fields: securityFields,
     });
 
@@ -856,7 +856,7 @@ export class F5XCDescribeProvider {
     if (spec?.add_location !== undefined) {
       otherFields.push({ key: 'Add Location', value: spec.add_location ? 'True' : 'False' });
     }
-    sections.push({ id: 'other-settings', title: 'Other Settings', fields: otherFields });
+    sections.push({ id: 'other-settings', title: vscode.l10n.t('Other Settings'), fields: otherFields });
 
     // 10. Virtual Host State
     const vhStateFields: FieldDefinition[] = [];
@@ -870,7 +870,7 @@ export class F5XCDescribeProvider {
         status: isReady ? 'good' : 'warning',
       });
     }
-    sections.push({ id: 'vh-state', title: 'Virtual Host State', fields: vhStateFields });
+    sections.push({ id: 'vh-state', title: vscode.l10n.t('Virtual Host State'), fields: vhStateFields });
 
     // Certificate sections - only show for HTTPS types (not HTTP)
     // HTTP type has cert_state = "AutoCertNotApplicable" which is not relevant to display
@@ -890,7 +890,7 @@ export class F5XCDescribeProvider {
       }
       sections.push({
         id: 'auto-cert-state',
-        title: 'Auto Cert State',
+        title: vscode.l10n.t('Auto Cert State'),
         fields: autoCertStateFields,
       });
 
@@ -905,7 +905,7 @@ export class F5XCDescribeProvider {
       }
       sections.push({
         id: 'auto-cert-expiry',
-        title: 'Auto Cert Expiry Timestamp',
+        title: vscode.l10n.t('Auto Cert Expiry Timestamp'),
         fields: autoCertExpiryFields,
       });
 
@@ -919,7 +919,7 @@ export class F5XCDescribeProvider {
       }
       sections.push({
         id: 'auto-cert-subject',
-        title: 'Auto Cert Subject',
+        title: vscode.l10n.t('Auto Cert Subject'),
         fields: autoCertSubjectFields,
       });
 
@@ -933,7 +933,7 @@ export class F5XCDescribeProvider {
       }
       sections.push({
         id: 'auto-cert-issuer',
-        title: 'Auto Cert Issuer',
+        title: vscode.l10n.t('Auto Cert Issuer'),
         fields: autoCertIssuerFields,
       });
 
@@ -948,7 +948,7 @@ export class F5XCDescribeProvider {
           status: isValid ? 'good' : 'bad',
         });
       }
-      sections.push({ id: 'cert-state', title: 'Cert State', fields: certStateFields });
+      sections.push({ id: 'cert-state', title: vscode.l10n.t('Cert State'), fields: certStateFields });
     }
 
     // Return all sections (empty ones will show "Not Configured")
@@ -988,7 +988,7 @@ export class F5XCDescribeProvider {
     if (metadata?.name) {
       metadataFields.push({ key: 'Name', value: String(metadata.name) });
     }
-    sections.push({ id: 'metadata', title: 'Metadata', fields: metadataFields });
+    sections.push({ id: 'metadata', title: vscode.l10n.t('Metadata'), fields: metadataFields });
 
     // 2. Origin Servers section with sub-group for servers table
     const serversSubGroupFields: FieldDefinition[] = [];
@@ -1023,7 +1023,7 @@ export class F5XCDescribeProvider {
     if (serversSubGroupFields.length > 0) {
       originServersSubGroups.push({
         id: 'servers-list',
-        title: 'Origin Servers',
+        title: vscode.l10n.t('Origin Servers'),
         fields: serversSubGroupFields,
       });
     }
@@ -1085,7 +1085,7 @@ export class F5XCDescribeProvider {
 
     sections.push({
       id: 'origin-servers',
-      title: 'Origin Servers',
+      title: vscode.l10n.t('Origin Servers'),
       subGroups: originServersSubGroups.length > 0 ? originServersSubGroups : undefined,
       fields: originServersFields,
     });
@@ -1114,7 +1114,7 @@ export class F5XCDescribeProvider {
         }
       }
     }
-    sections.push({ id: 'tls', title: 'TLS', fields: tlsFields });
+    sections.push({ id: 'tls', title: vscode.l10n.t('TLS'), fields: tlsFields });
 
     return sections;
   }
@@ -1128,52 +1128,52 @@ export class F5XCDescribeProvider {
   } {
     if (server.public_ip) {
       const ip = server.public_ip as Record<string, unknown>;
-      return { type: 'Public IP', value: String(ip.ip || 'Unknown') };
+      return { type: vscode.l10n.t('Public IP'), value: String(ip.ip || vscode.l10n.t('Unknown')) };
     }
     if (server.private_ip) {
       const ip = server.private_ip as Record<string, unknown>;
-      const ipValue = String(ip.ip || 'Unknown');
+      const ipValue = String(ip.ip || vscode.l10n.t('Unknown'));
       const site = ip.site_locator as Record<string, unknown> | undefined;
       const siteRef = site?.site as Record<string, unknown> | undefined;
       const siteName = siteRef?.name ? ` (${String(siteRef.name)})` : '';
-      return { type: 'Private IP', value: `${ipValue}${siteName}` };
+      return { type: vscode.l10n.t('Private IP'), value: `${ipValue}${siteName}` };
     }
     if (server.public_name) {
       const dns = server.public_name as Record<string, unknown>;
-      return { type: 'Public DNS', value: String(dns.dns_name || 'Unknown') };
+      return { type: vscode.l10n.t('Public DNS'), value: String(dns.dns_name || vscode.l10n.t('Unknown')) };
     }
     if (server.private_name) {
       const dns = server.private_name as Record<string, unknown>;
-      const dnsName = String(dns.dns_name || 'Unknown');
+      const dnsName = String(dns.dns_name || vscode.l10n.t('Unknown'));
       const site = dns.site_locator as Record<string, unknown> | undefined;
       const siteRef = site?.site as Record<string, unknown> | undefined;
       const siteName = siteRef?.name ? ` (${String(siteRef.name)})` : '';
-      return { type: 'Private DNS', value: `${dnsName}${siteName}` };
+      return { type: vscode.l10n.t('Private DNS'), value: `${dnsName}${siteName}` };
     }
     if (server.k8s_service) {
       const k8s = server.k8s_service as Record<string, unknown>;
-      const name = String(k8s.service_name || 'Unknown');
+      const name = String(k8s.service_name || vscode.l10n.t('Unknown'));
       const ns = k8s.service_namespace ? `${String(k8s.service_namespace)}/` : '';
-      return { type: 'K8s Service', value: `${ns}${name}` };
+      return { type: vscode.l10n.t('K8s Service'), value: `${ns}${name}` };
     }
     if (server.consul_service) {
       const consul = server.consul_service as Record<string, unknown>;
-      return { type: 'Consul Service', value: String(consul.service_name || 'Unknown') };
+      return { type: vscode.l10n.t('Consul Service'), value: String(consul.service_name || vscode.l10n.t('Unknown')) };
     }
     if (server.custom_endpoint_object) {
       const custom = server.custom_endpoint_object as Record<string, unknown>;
       const endpoint = custom.endpoint as Record<string, unknown> | undefined;
-      return { type: 'Custom Endpoint', value: String(endpoint?.name || 'Unknown') };
+      return { type: vscode.l10n.t('Custom Endpoint'), value: String(endpoint?.name || vscode.l10n.t('Unknown')) };
     }
     if (server.vn_private_ip) {
       const vn = server.vn_private_ip as Record<string, unknown>;
-      return { type: 'VN Private IP', value: String(vn.ip || 'Unknown') };
+      return { type: vscode.l10n.t('VN Private IP'), value: String(vn.ip || vscode.l10n.t('Unknown')) };
     }
     if (server.vn_private_name) {
       const vn = server.vn_private_name as Record<string, unknown>;
-      return { type: 'VN Private DNS', value: String(vn.dns_name || 'Unknown') };
+      return { type: vscode.l10n.t('VN Private DNS'), value: String(vn.dns_name || vscode.l10n.t('Unknown')) };
     }
-    return { type: 'Unknown', value: 'Unknown' };
+    return { type: vscode.l10n.t('Unknown'), value: vscode.l10n.t('Unknown') };
   }
 
   /**
@@ -1221,7 +1221,7 @@ export class F5XCDescribeProvider {
         .join(', ');
       metadataFields.push({ key: 'Labels', value: labelStr });
     }
-    sections.push({ id: 'metadata', title: 'Metadata', fields: metadataFields });
+    sections.push({ id: 'metadata', title: vscode.l10n.t('Metadata'), fields: metadataFields });
 
     // Spec section - show all non-empty scalar fields
     if (spec) {
@@ -1236,7 +1236,7 @@ export class F5XCDescribeProvider {
         specFields.push({ key: this.formatKey(key), value: String(value) });
       }
       if (specFields.length > 0) {
-        sections.push({ id: 'spec', title: 'Configuration', fields: specFields });
+        sections.push({ id: 'spec', title: vscode.l10n.t('Configuration'), fields: specFields });
       }
     }
 
@@ -1254,7 +1254,7 @@ export class F5XCDescribeProvider {
       <section class="section" id="section-${section.id}">
         <h3 class="section-header">${escapeHtml(section.title)}</h3>
         <div class="section-body">
-          <div class="not-configured">Not Configured</div>
+          <div class="not-configured">${vscode.l10n.t('Not Configured')}</div>
         </div>
       </section>
       `;
@@ -1318,7 +1318,7 @@ export class F5XCDescribeProvider {
     return `
       <div class="quota-widget">
         <div class="quota-header">
-          <span class="quota-title">Resource Quota</span>
+          <span class="quota-title">${vscode.l10n.t('Resource Quota')}</span>
           <span class="quota-status" style="color: ${progressColor}">${statusText}</span>
         </div>
         <div class="quota-content">
@@ -1352,8 +1352,8 @@ export class F5XCDescribeProvider {
     return `
       <div class="quota-widget quota-unavailable">
         <div class="quota-header">
-          <span class="quota-title">Resource Quota</span>
-          <span class="quota-status" style="color: var(--vscode-descriptionForeground)">Unavailable</span>
+          <span class="quota-title">${vscode.l10n.t('Resource Quota')}</span>
+          <span class="quota-status" style="color: var(--vscode-descriptionForeground)">${vscode.l10n.t('Unavailable')}</span>
         </div>
         <div class="quota-content">
           <div class="quota-info">
@@ -1362,7 +1362,7 @@ export class F5XCDescribeProvider {
           </div>
           <div class="quota-info">
             <span class="quota-value" style="color: var(--vscode-descriptionForeground); font-style: italic;">
-              Quota information is not available for this resource type.
+              ${vscode.l10n.t('Quota information is not available for this resource type.')}
             </span>
           </div>
         </div>
@@ -2010,7 +2010,7 @@ export class F5XCDescribeProvider {
       return '';
     }
 
-    return `<details class="best-practices-panel" style="margin-top:16px;padding:12px;border:1px solid var(--vscode-panel-border);border-radius:4px;"><summary style="cursor:pointer;font-weight:bold;">Best Practices</summary>${html}</details>`;
+    return `<details class="best-practices-panel" style="margin-top:16px;padding:12px;border:1px solid var(--vscode-panel-border);border-radius:4px;"><summary style="cursor:pointer;font-weight:bold;">${vscode.l10n.t('Best Practices')}</summary>${html}</details>`;
   }
 
   /**

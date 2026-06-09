@@ -26,11 +26,16 @@ export class OnboardingProvider {
       return;
     }
 
-    this.panel = vscode.window.createWebviewPanel('f5xcOnboarding', 'xcsh Platform Readiness', vscode.ViewColumn.One, {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [],
-    });
+    this.panel = vscode.window.createWebviewPanel(
+      'f5xcOnboarding',
+      vscode.l10n.t('xcsh Platform Readiness'),
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [],
+      },
+    );
 
     this.panel.onDidDispose(() => {
       this.panel = undefined;
@@ -44,7 +49,7 @@ export class OnboardingProvider {
         case 'copy':
           if (message.text) {
             await vscode.env.clipboard.writeText(message.text);
-            void vscode.window.showInformationMessage('Copied to clipboard');
+            void vscode.window.showInformationMessage(vscode.l10n.t('Copied to clipboard'));
           }
           break;
         case 'run':
@@ -120,22 +125,22 @@ export class OnboardingProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>Platform Readiness</title>
+  <title>${vscode.l10n.t('Platform Readiness')}</title>
   <style>${this.getStyles()}</style>
 </head>
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
       ${getF5LogoHtml()}
-      <span class="title">Platform Readiness</span>
+      <span class="title">${vscode.l10n.t('Platform Readiness')}</span>
     </div>
     <div class="toolbar-right">
-      <button class="btn" id="refresh">Refresh</button>
+      <button class="btn" id="refresh">${vscode.l10n.t('Refresh')}</button>
     </div>
   </div>
 
   <div class="hero">
-    <div class="hero-stat">${connected} of ${total} integrations ready</div>
+    <div class="hero-stat">${vscode.l10n.t('{0} of {1} integrations ready', connected, total)}</div>
     <div class="progress-bar"><div class="progress-fill" style="width: ${pct}%"></div></div>
   </div>
 
@@ -180,13 +185,13 @@ export class OnboardingProvider {
   private stateDisplay(state: string): { icon: string; label: string; cssClass: string } {
     switch (state) {
       case 'connected':
-        return { icon: '&#x2705;', label: 'Connected', cssClass: 'state-connected' };
+        return { icon: '&#x2705;', label: vscode.l10n.t('Connected'), cssClass: 'state-connected' };
       case 'unauthenticated':
-        return { icon: '&#x26A0;&#xFE0F;', label: 'Needs Authentication', cssClass: 'state-auth' };
+        return { icon: '&#x26A0;&#xFE0F;', label: vscode.l10n.t('Needs Authentication'), cssClass: 'state-auth' };
       case 'unavailable':
-        return { icon: '&#x2B24;', label: 'Not Installed', cssClass: 'state-missing' };
+        return { icon: '&#x2B24;', label: vscode.l10n.t('Not Installed'), cssClass: 'state-missing' };
       default:
-        return { icon: '&#x2014;', label: 'Unknown', cssClass: 'state-unknown' };
+        return { icon: '&#x2014;', label: vscode.l10n.t('Unknown'), cssClass: 'state-unknown' };
     }
   }
 
@@ -197,8 +202,8 @@ export class OnboardingProvider {
 
     if (def.id === 'f5xc' && status.state === 'unauthenticated') {
       return `<div class="card-action">
-        <code>Add F5 XC Context</code>
-        <button class="btn-run" data-action="addContext">Configure</button>
+        <code>${vscode.l10n.t('Add F5 XC Context')}</code>
+        <button class="btn-run" data-action="addContext">${vscode.l10n.t('Configure')}</button>
       </div>`;
     }
 
@@ -209,8 +214,8 @@ export class OnboardingProvider {
     return `<div class="card-action">
       <code>${escapeHtml(status.command)}</code>
       <div class="action-buttons">
-        <button class="btn-copy" data-action="copy" data-text="${escapeHtml(status.command)}">Copy</button>
-        <button class="btn-run" data-action="run" data-text="${escapeHtml(status.command)}">Run</button>
+        <button class="btn-copy" data-action="copy" data-text="${escapeHtml(status.command)}">${vscode.l10n.t('Copy')}</button>
+        <button class="btn-run" data-action="run" data-text="${escapeHtml(status.command)}">${vscode.l10n.t('Run')}</button>
       </div>
     </div>`;
   }

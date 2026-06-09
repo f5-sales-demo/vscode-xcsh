@@ -139,7 +139,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (name) {
         void subscriptionDashboardProvider.showPlan(name);
       } else {
-        void vscode.window.showWarningMessage('No active context selected');
+        void vscode.window.showWarningMessage(vscode.l10n.t('No active context selected'));
       }
     }),
   );
@@ -151,7 +151,7 @@ export function activate(context: vscode.ExtensionContext): void {
       if (name) {
         void subscriptionDashboardProvider.showQuotas(name);
       } else {
-        void vscode.window.showWarningMessage('No active context selected');
+        void vscode.window.showWarningMessage(vscode.l10n.t('No active context selected'));
       }
     }),
   );
@@ -162,17 +162,17 @@ export function activate(context: vscode.ExtensionContext): void {
       const activeContext = await contextManager.getActiveContext();
       const name = contextName || activeContext?.name;
       if (!name) {
-        void vscode.window.showWarningMessage('No active context selected');
+        void vscode.window.showWarningMessage(vscode.l10n.t('No active context selected'));
         return;
       }
       if (!addonName) {
-        void vscode.window.showWarningMessage('Addon name is required');
+        void vscode.window.showWarningMessage(vscode.l10n.t('Addon name is required'));
         return;
       }
       // Show the plan dashboard which handles activation
       await subscriptionDashboardProvider.showPlan(name);
       void vscode.window.showInformationMessage(
-        `To activate "${addonName}", click the Activate button in the Plan dashboard.`,
+        vscode.l10n.t('To activate "{0}", click the Activate button in the Plan dashboard.', addonName),
       );
     }),
   );

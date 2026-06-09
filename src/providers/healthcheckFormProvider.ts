@@ -87,11 +87,16 @@ export class HealthcheckFormProvider {
       return;
     }
 
-    this.panel = vscode.window.createWebviewPanel('f5xcHealthcheckForm', 'Create Healthcheck', vscode.ViewColumn.One, {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [], // Toolkit loaded from CDN, no local resources needed
-    });
+    this.panel = vscode.window.createWebviewPanel(
+      'f5xcHealthcheckForm',
+      vscode.l10n.t('Create Healthcheck'),
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [], // Toolkit loaded from CDN, no local resources needed
+      },
+    );
 
     this.panel.onDidDispose(() => {
       this.panel = undefined;
@@ -181,30 +186,32 @@ export class HealthcheckFormProvider {
       case 'name':
         if (typeof value === 'string') {
           if (!value.match(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/) && value.length > 1) {
-            errors.push('Name must be lowercase alphanumeric with hyphens, cannot start/end with hyphen');
+            errors.push(
+              vscode.l10n.t('Name must be lowercase alphanumeric with hyphens, cannot start/end with hyphen'),
+            );
           }
         }
         break;
       case 'interval':
       case 'timeout':
         if (typeof value === 'number' && (value < 1 || value > 600)) {
-          errors.push(`${field} must be between 1 and 600 seconds`);
+          errors.push(vscode.l10n.t('{0} must be between 1 and 600 seconds', field));
         }
         break;
       case 'jitter':
         if (typeof value === 'number' && value !== 0 && (value < 10 || value > 50)) {
-          errors.push('Jitter must be 0 or between 10 and 50');
+          errors.push(vscode.l10n.t('Jitter must be 0 or between 10 and 50'));
         }
         break;
       case 'healthyThreshold':
       case 'unhealthyThreshold':
         if (typeof value === 'number' && (value < 1 || value > 16)) {
-          errors.push(`${field} must be between 1 and 16`);
+          errors.push(vscode.l10n.t('{0} must be between 1 and 16', field));
         }
         break;
       case 'path':
         if (typeof value === 'string' && value && !value.startsWith('/')) {
-          errors.push('Path must start with /');
+          errors.push(vscode.l10n.t('Path must start with /'));
         }
         break;
     }
@@ -336,7 +343,7 @@ export class HealthcheckFormProvider {
     try {
       const activeContext = await this.contextManager.getActiveContext();
       if (!activeContext) {
-        showError('No active context. Configure a context first.');
+        showError(vscode.l10n.t('No active context. Configure a context first.'));
         return;
       }
 
@@ -361,7 +368,7 @@ export class HealthcheckFormProvider {
       await vscode.window.withProgress(
         {
           location: vscode.ProgressLocation.Notification,
-          title: `Creating healthcheck ${data.name}...`,
+          title: vscode.l10n.t('Creating healthcheck {0}...', data.name),
           cancellable: false,
         },
         async () => {
@@ -370,7 +377,7 @@ export class HealthcheckFormProvider {
         },
       );
 
-      showInfo(`Created healthcheck: ${data.name}`);
+      showInfo(vscode.l10n.t('Created healthcheck: {0}', data.name));
       this.explorer.refresh();
       this.panel?.dispose();
 
@@ -443,18 +450,18 @@ export class HealthcheckFormProvider {
     if (isExceeded) {
       bannerClass = 'quota-banner-error';
       statusIcon = '⛔';
-      statusText = `Quota exceeded: ${usage}/${limit} - Cannot create new healthchecks`;
+      statusText = vscode.l10n.t('Quota exceeded: {0}/{1} - Cannot create new healthchecks', usage, limit);
     } else if (isWarning) {
       bannerClass = 'quota-banner-warning';
       statusIcon = '⚠️';
-      statusText = `Nearing limit: ${usage} of ${limit} used (${available} remaining)`;
+      statusText = vscode.l10n.t('Nearing limit: {0} of {1} used ({2} remaining)', usage, limit, available);
     }
 
     return `
       <div class="quota-banner ${bannerClass}">
         <div class="quota-banner-content">
           <span class="quota-icon">${statusIcon}</span>
-          <span class="quota-text">Healthcheck Quota: ${statusText}</span>
+          <span class="quota-text">${vscode.l10n.t('Healthcheck Quota:')} ${statusText}</span>
         </div>
         <div class="quota-progress">
           <div class="quota-progress-bar">
@@ -510,17 +517,17 @@ export class HealthcheckFormProvider {
   <style>
     ${this.getStyles()}
   </style>
-  <title>Create Healthcheck</title>
+  <title>${vscode.l10n.t('Create Healthcheck')}</title>
 </head>
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('observability')}
-      <span class="title">Create Healthcheck</span>
+      <span class="title">${vscode.l10n.t('Create Healthcheck')}</span>
     </div>
     <div class="toolbar-right">
-      <vscode-button appearance="secondary" id="toggle-json-btn">Show JSON</vscode-button>
-      <vscode-button appearance="primary" id="create-btn" disabled>Create</vscode-button>
+      <vscode-button appearance="secondary" id="toggle-json-btn">${vscode.l10n.t('Show JSON')}</vscode-button>
+      <vscode-button appearance="primary" id="create-btn" disabled>${vscode.l10n.t('Create')}</vscode-button>
     </div>
   </div>
   <div class="container">
@@ -541,72 +548,72 @@ export class HealthcheckFormProvider {
 
       <!-- Basic Settings -->
       <section class="section">
-        <h2 class="section-title">Basic Settings</h2>
+        <h2 class="section-title">${vscode.l10n.t('Basic Settings')}</h2>
 
         <div class="field">
-          <label for="name">Name *${minBadge('metadata.name')}</label>
+          <label for="name">${vscode.l10n.t('Name *')}${minBadge('metadata.name')}</label>
           <vscode-text-field id="name" placeholder="my-healthcheck" required></vscode-text-field>
           <span class="field-error" id="name-error"></span>
-          <span class="field-hint">Lowercase alphanumeric with hyphens</span>
+          <span class="field-hint">${vscode.l10n.t('Lowercase alphanumeric with hyphens')}</span>
         </div>
 
         <div class="field">
-          <label for="namespace">Namespace *${minBadge('metadata.namespace')}</label>
+          <label for="namespace">${vscode.l10n.t('Namespace *')}${minBadge('metadata.namespace')}</label>
           <vscode-dropdown id="namespace">
             ${namespaces.map((ns) => `<vscode-option value="${escapeHtml(ns)}"${ns === this.initialNamespace ? ' selected' : ''}>${escapeHtml(ns)}</vscode-option>`).join('\n            ')}
           </vscode-dropdown>
         </div>
 
         <div class="field">
-          <label>Type</label>
+          <label>${vscode.l10n.t('Type')}</label>
           <vscode-radio-group id="type" orientation="horizontal" value="http">
-            <vscode-radio value="http" checked>HTTP</vscode-radio>
-            <vscode-radio value="tcp">TCP</vscode-radio>
-            <vscode-radio value="udp_icmp">UDP-ICMP</vscode-radio>
+            <vscode-radio value="http" checked>${vscode.l10n.t('HTTP')}</vscode-radio>
+            <vscode-radio value="tcp">${vscode.l10n.t('TCP')}</vscode-radio>
+            <vscode-radio value="udp_icmp">${vscode.l10n.t('UDP-ICMP')}</vscode-radio>
           </vscode-radio-group>
         </div>
       </section>
 
       <!-- Timing Configuration -->
       <section class="section">
-        <h2 class="section-title">Timing Configuration</h2>
+        <h2 class="section-title">${vscode.l10n.t('Timing Configuration')}</h2>
 
         <div class="field-row">
           <div class="field">
-            <label for="interval">Interval (sec)${minBadge('spec.interval')}</label>
+            <label for="interval">${vscode.l10n.t('Interval (sec)')}${minBadge('spec.interval')}</label>
             <vscode-text-field id="interval" type="number" value="15" min="1" max="600"></vscode-text-field>
-            <span class="field-hint">recommended: 15</span>
+            <span class="field-hint">${vscode.l10n.t('recommended: 15')}</span>
           </div>
 
           <div class="field">
-            <label for="timeout">Timeout (sec)${minBadge('spec.timeout')}</label>
+            <label for="timeout">${vscode.l10n.t('Timeout (sec)')}${minBadge('spec.timeout')}</label>
             <vscode-text-field id="timeout" type="number" value="3" min="1" max="600"></vscode-text-field>
-            <span class="field-hint">recommended: 3</span>
+            <span class="field-hint">${vscode.l10n.t('recommended: 3')}</span>
           </div>
 
           <div class="field">
-            <label for="jitter">Jitter (%)</label>
+            <label for="jitter">${vscode.l10n.t('Jitter (%)')}</label>
             <vscode-text-field id="jitter" type="number" value="30" min="0" max="50"></vscode-text-field>
-            <span class="field-hint">0 or 10-50, recommended: 30</span>
+            <span class="field-hint">${vscode.l10n.t('0 or 10-50, recommended: 30')}</span>
           </div>
         </div>
       </section>
 
       <!-- Threshold Configuration -->
       <section class="section">
-        <h2 class="section-title">Threshold Configuration</h2>
+        <h2 class="section-title">${vscode.l10n.t('Threshold Configuration')}</h2>
 
         <div class="field-row">
           <div class="field">
-            <label for="healthy-threshold">Healthy Threshold${minBadge('spec.healthy_threshold')}</label>
+            <label for="healthy-threshold">${vscode.l10n.t('Healthy Threshold')}${minBadge('spec.healthy_threshold')}</label>
             <vscode-text-field id="healthy-threshold" type="number" value="3" min="1" max="16"></vscode-text-field>
-            <span class="field-hint">successes required, recommended: 3</span>
+            <span class="field-hint">${vscode.l10n.t('successes required, recommended: 3')}</span>
           </div>
 
           <div class="field">
-            <label for="unhealthy-threshold">Unhealthy Threshold${minBadge('spec.unhealthy_threshold')}</label>
+            <label for="unhealthy-threshold">${vscode.l10n.t('Unhealthy Threshold')}${minBadge('spec.unhealthy_threshold')}</label>
             <vscode-text-field id="unhealthy-threshold" type="number" value="1" min="1" max="16"></vscode-text-field>
-            <span class="field-hint">failures allowed, recommended: 1</span>
+            <span class="field-hint">${vscode.l10n.t('failures allowed, recommended: 1')}</span>
           </div>
         </div>
       </section>
@@ -626,29 +633,29 @@ export class HealthcheckFormProvider {
 
       <!-- HTTP Settings (shown only when Type = HTTP) -->
       <section class="section type-section" id="http-section">
-        <h2 class="section-title">HTTP Settings</h2>
+        <h2 class="section-title">${vscode.l10n.t('HTTP Settings')}</h2>
 
         <div class="field">
-          <label for="path">Path <span class="badge">recommended: /</span></label>
+          <label for="path">${vscode.l10n.t('Path')} <span class="badge">${vscode.l10n.t('recommended: /')}</span></label>
           <!-- Path default per API spec x-f5xc-recommended-value: "/" -->
           <vscode-text-field id="path" value="/" placeholder="/" required></vscode-text-field>
         </div>
 
         <div class="field">
-          <label>Host Header Mode</label>
+          <label>${vscode.l10n.t('Host Header Mode')}</label>
           <vscode-radio-group id="host-header-mode" orientation="vertical" value="origin">
-            <vscode-radio value="origin" checked>Use Origin Server Name <span class="badge">recommended</span></vscode-radio>
-            <vscode-radio value="custom">Custom Host Header</vscode-radio>
+            <vscode-radio value="origin" checked>${vscode.l10n.t('Use Origin Server Name')} <span class="badge">${vscode.l10n.t('recommended')}</span></vscode-radio>
+            <vscode-radio value="custom">${vscode.l10n.t('Custom Host Header')}</vscode-radio>
           </vscode-radio-group>
-          <vscode-text-field id="custom-host-header" placeholder="example.com" class="nested-field" disabled></vscode-text-field>
+          <vscode-text-field id="custom-host-header" placeholder="${vscode.l10n.t('example.com')}" class="nested-field" disabled></vscode-text-field>
         </div>
 
         <div class="field">
-          <vscode-checkbox id="use-http2">Use HTTP/2</vscode-checkbox>
+          <vscode-checkbox id="use-http2">${vscode.l10n.t('Use HTTP/2')}</vscode-checkbox>
         </div>
 
         <div class="field">
-          <label>Expected Status Codes <span class="badge">recommended: 200</span></label>
+          <label>${vscode.l10n.t('Expected Status Codes')} <span class="badge">${vscode.l10n.t('recommended: 200')}</span></label>
           <!-- Status codes default per API spec x-f5xc-recommended-value: ["200"] -->
           <div class="repeatable-list" id="status-codes-list">
             <div class="repeatable-item">
@@ -656,63 +663,63 @@ export class HealthcheckFormProvider {
               <vscode-button appearance="icon" class="remove-btn" title="Remove">×</vscode-button>
             </div>
           </div>
-          <vscode-button appearance="secondary" id="add-status-code">+ Add Status Code</vscode-button>
+          <vscode-button appearance="secondary" id="add-status-code">${vscode.l10n.t('+ Add Status Code')}</vscode-button>
         </div>
 
         <div class="field">
-          <label>Custom Headers</label>
+          <label>${vscode.l10n.t('Custom Headers')}</label>
           <div class="repeatable-list" id="custom-headers-list"></div>
-          <vscode-button appearance="secondary" id="add-custom-header">+ Add Header</vscode-button>
+          <vscode-button appearance="secondary" id="add-custom-header">${vscode.l10n.t('+ Add Header')}</vscode-button>
         </div>
 
         <div class="field">
-          <label>Headers to Remove</label>
+          <label>${vscode.l10n.t('Headers to Remove')}</label>
           <div class="repeatable-list" id="headers-remove-list"></div>
-          <vscode-button appearance="secondary" id="add-header-remove">+ Add Header</vscode-button>
+          <vscode-button appearance="secondary" id="add-header-remove">${vscode.l10n.t('+ Add Header')}</vscode-button>
         </div>
       </section>
 
       <!-- TCP Settings (shown only when Type = TCP) -->
       <section class="section type-section hidden" id="tcp-section">
-        <h2 class="section-title">TCP Settings</h2>
+        <h2 class="section-title">${vscode.l10n.t('TCP Settings')}</h2>
 
         <div class="field">
-          <label for="send-payload">Send Payload</label>
+          <label for="send-payload">${vscode.l10n.t('Send Payload')}</label>
           <div class="field-with-checkbox">
-            <vscode-text-field id="send-payload" placeholder="Optional payload to send"></vscode-text-field>
-            <vscode-checkbox id="send-payload-hex">Hex format</vscode-checkbox>
+            <vscode-text-field id="send-payload" placeholder="${vscode.l10n.t('Optional payload to send')}"></vscode-text-field>
+            <vscode-checkbox id="send-payload-hex">${vscode.l10n.t('Hex format')}</vscode-checkbox>
           </div>
         </div>
 
         <div class="field">
-          <label for="expected-response">Expected Response</label>
+          <label for="expected-response">${vscode.l10n.t('Expected Response')}</label>
           <div class="field-with-checkbox">
-            <vscode-text-field id="expected-response" placeholder="Optional expected response"></vscode-text-field>
-            <vscode-checkbox id="expected-response-hex">Hex format</vscode-checkbox>
+            <vscode-text-field id="expected-response" placeholder="${vscode.l10n.t('Optional expected response')}"></vscode-text-field>
+            <vscode-checkbox id="expected-response-hex">${vscode.l10n.t('Hex format')}</vscode-checkbox>
           </div>
         </div>
       </section>
 
       <!-- UDP-ICMP Settings (shown only when Type = UDP-ICMP) -->
       <section class="section type-section hidden" id="udp-icmp-section">
-        <h2 class="section-title">UDP-ICMP Settings</h2>
+        <h2 class="section-title">${vscode.l10n.t('UDP-ICMP Settings')}</h2>
         <div class="info-box">
           <span class="codicon codicon-info"></span>
-          ICMP echo request/reply - no additional configuration needed
+          ${vscode.l10n.t('ICMP echo request/reply - no additional configuration needed')}
         </div>
       </section>
         </div>
 
         <footer class="footer">
-          <vscode-button appearance="secondary" id="cancel-btn">Cancel</vscode-button>
-          <vscode-button appearance="primary" id="create-btn-footer" disabled>Create</vscode-button>
+          <vscode-button appearance="secondary" id="cancel-btn">${vscode.l10n.t('Cancel')}</vscode-button>
+          <vscode-button appearance="primary" id="create-btn-footer" disabled>${vscode.l10n.t('Create')}</vscode-button>
         </footer>
       </div>
 
       <!-- JSON Preview Panel (right side) -->
       <div class="json-panel hidden" id="json-panel">
         <div class="json-panel-header">
-          <h2>JSON Preview</h2>
+          <h2>${vscode.l10n.t('JSON Preview')}</h2>
           <vscode-button appearance="icon" id="close-json-btn" title="Close">×</vscode-button>
         </div>
         <div class="json-panel-content">
@@ -1199,7 +1206,7 @@ export class HealthcheckFormProvider {
         const item = document.createElement('div');
         item.className = 'repeatable-item';
         item.innerHTML = \`
-          <vscode-text-field class="status-code-input" placeholder="200 or 200-299"></vscode-text-field>
+          <vscode-text-field class="status-code-input" placeholder="${vscode.l10n.t('200 or 200-299')}"></vscode-text-field>
           <vscode-button appearance="icon" class="remove-btn" title="Remove">×</vscode-button>
         \`;
         item.querySelector('.remove-btn').addEventListener('click', () => {
@@ -1215,8 +1222,8 @@ export class HealthcheckFormProvider {
         const item = document.createElement('div');
         item.className = 'repeatable-item';
         item.innerHTML = \`
-          <vscode-text-field class="header-key" placeholder="Header name"></vscode-text-field>
-          <vscode-text-field class="header-value" placeholder="Header value"></vscode-text-field>
+          <vscode-text-field class="header-key" placeholder="${vscode.l10n.t('Header name')}"></vscode-text-field>
+          <vscode-text-field class="header-value" placeholder="${vscode.l10n.t('Header value')}"></vscode-text-field>
           <vscode-button appearance="icon" class="remove-btn" title="Remove">×</vscode-button>
         \`;
         item.querySelector('.remove-btn').addEventListener('click', () => {
@@ -1234,7 +1241,7 @@ export class HealthcheckFormProvider {
         const item = document.createElement('div');
         item.className = 'repeatable-item';
         item.innerHTML = \`
-          <vscode-text-field class="header-remove-input" placeholder="Header name to remove"></vscode-text-field>
+          <vscode-text-field class="header-remove-input" placeholder="${vscode.l10n.t('Header name to remove')}"></vscode-text-field>
           <vscode-button appearance="icon" class="remove-btn" title="Remove">×</vscode-button>
         \`;
         item.querySelector('.remove-btn').addEventListener('click', () => {
@@ -1262,7 +1269,7 @@ export class HealthcheckFormProvider {
         isJsonPanelOpen = show !== undefined ? show : !isJsonPanelOpen;
         jsonPanel.classList.toggle('hidden', !isJsonPanelOpen);
         mainContent.classList.toggle('json-visible', isJsonPanelOpen);
-        toggleJsonBtn.textContent = isJsonPanelOpen ? 'Hide JSON' : 'Show JSON';
+        toggleJsonBtn.textContent = isJsonPanelOpen ? '${vscode.l10n.t('Hide JSON')}' : '${vscode.l10n.t('Show JSON')}';
         if (isJsonPanelOpen) {
           updatePreview();
         }

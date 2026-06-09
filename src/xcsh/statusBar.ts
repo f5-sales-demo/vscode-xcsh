@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 function updateStatusBar(item: vscode.StatusBarItem): void {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
-    item.text = 'xcsh';
+    item.text = vscode.l10n.t('xcsh');
     return;
   }
 
@@ -25,12 +25,12 @@ function updateStatusBar(item: vscode.StatusBarItem): void {
     }
   }
 
-  item.text = `${fileName}:${line}:${col} | ${lang} | E:${errors} W:${warnings}`;
+  item.text = vscode.l10n.t('{0}:{1}:{2} | {3} | E:{4} W:{5}', fileName, line, col, lang, errors, warnings);
 }
 
 export function createXcshStatusBar(subscriptions: vscode.Disposable[]): vscode.StatusBarItem {
   const item = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 0);
-  item.tooltip = 'xcsh editor context';
+  item.tooltip = vscode.l10n.t('xcsh editor context');
   updateStatusBar(item);
   item.show();
 
