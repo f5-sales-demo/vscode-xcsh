@@ -4,65 +4,39 @@
 [Deutsch](README.de.md) | [Italiano](README.it.md) | [العربية](README.ar.md) |
 [हिन्दी](README.hi.md) | [ไทย](README.th.md)
 
-# Extension VS Code
+# xcsh pour VS Code
 
-[![GitHub Pages Deploy](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/github-pages-deploy.yml)
-[![Repository Settings](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/enforce-repo-settings.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/enforce-repo-settings.yml)
-[![CI](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/ci.yml)
-[![Release](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/release.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/release.yml)
-[![License](https://img.shields.io/github/license/f5xc-salesdemos/vscode-f5xc-tools)](LICENSE)
+> Gerez les ressources F5 Distributed Cloud directement depuis VS Code
 
-Extension VS Code pour la gestion des ressources F5 Distributed Cloud avec
-IntelliSense et le chat xcsh
-
-## Fonctionnalites
-
-- **Gestion des ressources** — Parcourir, creer, modifier et supprimer les
-  ressources F5 Distributed Cloud directement depuis VS Code
-- **Etat du cloud** — Tableau de bord en temps reel de la sante de
-  l'infrastructure mondiale
-- **Assistant IA par chat** — Participant de chat `@xcsh` pour les operations de
-  plateforme en langage naturel
-- **IntelliSense** — Completions de schemas JSON pour tous les types de
-  ressources F5 XC
-- **Integrations multi-cloud** — Compatible avec AWS, Azure, GCP, GitHub,
-  GitLab, Terraform et Salesforce
+![xcsh](resources/screenshot-welcome.png)
 
 ## Pour commencer
 
-1. Installez l'extension depuis le
-   [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
-2. Installez xcsh : `brew install f5xc-salesdemos/tap/xcsh`
-3. Ouvrez la palette de commandes (`Cmd+Shift+P`) et executez **xcsh: Platform
-   Readiness** pour verifier votre configuration
-4. Ajoutez un contexte F5 XC via **xcsh: Add Context**
+1. **Installer l'extension** — recherchez « xcsh » dans le panneau Extensions de
+   VS Code
+2. **Installer xcsh** — `brew install f5xc-salesdemos/tap/xcsh`
+3. **Ajouter un contexte** — ouvrez la palette de commandes (`Cmd+Shift+P`) et
+   executez **xcsh: Add Context**
 
-## Integrations prises en charge
+## Ce que vous pouvez faire
 
-| Integration    | Installation                            | Authentification           |
-| -------------- | --------------------------------------- | -------------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | Inclus avec l'installation |
-| AWS CLI        | `brew install awscli`                   | `aws sso login`            |
-| Azure CLI      | `brew install azure-cli`                | `az login`                 |
-| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login`        |
-| GitHub CLI     | `brew install gh`                       | `gh auth login`            |
-| GitLab CLI     | `brew install glab`                     | `glab auth login`          |
-| Terraform      | `brew install terraform`                | N/A                        |
-| Salesforce CLI | `brew install sf`                       | `sf org login web`         |
-
-Executez **xcsh: Platform Readiness** dans VS Code pour voir quelles
-integrations sont installees et authentifiees.
+- **Parcourir et gerer les ressources** — creez, modifiez et supprimez des
+  equilibreurs de charge, des politiques WAF, des pools d'origine et bien plus
+  depuis la barre laterale
+- **Assistant IA par chat** — posez vos questions a `@xcsh` en langage naturel
+  pour gerer votre plateforme
+- **Tableau de bord de l'etat du cloud** — visualisez en temps reel la sante de
+  votre infrastructure mondiale
+- **IntelliSense** — completion de schemas JSON pour tous les types de
+  ressources F5 XC
+- **Multi-cloud** — s'integre avec AWS, Azure, GCP, GitHub, GitLab, Terraform et
+  Salesforce
 
 ## Documentation
 
-La documentation complete est disponible sur
-**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
-
-## Contribution
-
-Consultez [CONTRIBUTING.md](CONTRIBUTING.md) pour les regles de workflow, les
-conventions de nommage des branches et les exigences CI.
+Guides complets et reference sur
+[f5xc-salesdemos.github.io/vscode-f5xc-tools](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/)
 
 ## Licence
 
-Consultez [LICENSE](LICENSE).
+[Apache-2.0](LICENSE)
