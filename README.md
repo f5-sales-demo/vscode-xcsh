@@ -1,8 +1,15 @@
-🌐 English | [日本語](README.ja.md) | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | [繁體中文](README.zh-tw.md) |
-[Español](README.es.md) | [Português](README.pt-br.md) |
-[Français](README.fr.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) |
-[العربية](README.ar.md) | [हिन्दी](README.hi.md) | [ไทย](README.th.md)
+🌐 English | [日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
+[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
 
 # xcsh for VS Code
 
