@@ -122,7 +122,7 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
       if (builtInNs.length > 0) {
         groups.push(
           new NamespaceGroupNode(
-            'Built-in Namespaces',
+            vscode.l10n.t('Built-in Namespaces'),
             builtInNs.map((ns) => ns.name),
             activeContext.name,
             this.clientFactory,
@@ -137,7 +137,7 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
       if (customNamespaces.length > 0) {
         groups.push(
           new NamespaceGroupNode(
-            'Custom Namespaces',
+            vscode.l10n.t('Custom Namespaces'),
             customNamespaces.map((ns) => ns.name),
             activeContext.name,
             this.clientFactory,
@@ -152,7 +152,7 @@ export class F5XCExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
     } catch (error) {
       this.logger.error('Failed to load namespaces', error as Error);
       const errorMessage = this.getErrorMessage(error as Error);
-      return [new ErrorNode('Failed to load namespaces', errorMessage)];
+      return [new ErrorNode(vscode.l10n.t('Failed to load namespaces'), errorMessage)];
     }
   }
 }
@@ -175,7 +175,7 @@ class NamespaceGroupNode implements F5XCTreeItem {
     const item = new vscode.TreeItem(this.groupName, vscode.TreeItemCollapsibleState.Expanded);
     item.contextValue = TreeItemContext.NAMESPACE_GROUP;
     item.iconPath = new vscode.ThemeIcon(this.icon);
-    item.tooltip = `${this.namespaceNames.length} namespaces`;
+    item.tooltip = vscode.l10n.t('{0} namespaces', this.namespaceNames.length);
     return item;
   }
 
@@ -208,7 +208,7 @@ export class NamespaceNode implements F5XCTreeItem {
     // Use differentiated context value for built-in vs custom namespaces
     item.contextValue = this.data.isBuiltIn ? TreeItemContext.NAMESPACE_BUILTIN : TreeItemContext.NAMESPACE_CUSTOM;
     item.iconPath = new vscode.ThemeIcon('folder');
-    item.tooltip = `Namespace: ${this.data.name}`;
+    item.tooltip = `${vscode.l10n.t('Namespace')}: ${this.data.name}`;
     return item;
   }
 
@@ -336,18 +336,18 @@ class ResourceTypeNode implements F5XCTreeItem {
     const tooltip = new vscode.MarkdownString();
     tooltip.appendMarkdown(`**${this.data.resourceType.displayName}**`);
     if (isPreview) {
-      tooltip.appendMarkdown(' 🧪 *(Preview)*');
+      tooltip.appendMarkdown(` 🧪 *${vscode.l10n.t('(Preview)')}*`);
     }
     tooltip.appendMarkdown('\n\n');
 
     if (this.data.resourceType.description) {
       tooltip.appendMarkdown(`${this.data.resourceType.description}\n\n`);
     }
-    tooltip.appendMarkdown(`**Category**: ${this.data.resourceType.category}\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${this.data.resourceType.category}\n\n`);
 
     // Add tier requirement if applicable
     if (tierRequirement) {
-      tooltip.appendMarkdown(`**Requires**: ${tierRequirement} tier\n\n`);
+      tooltip.appendMarkdown(`**${vscode.l10n.t('Requires')}**: ${tierRequirement} tier\n\n`);
     }
 
     // Add complexity level from domain metadata
@@ -357,13 +357,13 @@ class ResourceTypeNode implements F5XCTreeItem {
       if (complexity) {
         const complexityLabel = complexity.charAt(0).toUpperCase() + complexity.slice(1);
         const complexityIcon = complexity === 'expert' ? '🔴' : complexity === 'advanced' ? '🟡' : '🟢';
-        tooltip.appendMarkdown(`**Complexity**: ${complexityIcon} ${complexityLabel}\n\n`);
+        tooltip.appendMarkdown(`**${vscode.l10n.t('Complexity')}**: ${complexityIcon} ${complexityLabel}\n\n`);
       }
 
       // Add use cases (show first 3)
       const useCases = getDomainUseCases(domain);
       if (useCases.length > 0) {
-        tooltip.appendMarkdown(`---\n\n**Use Cases:**\n\n`);
+        tooltip.appendMarkdown(`---\n\n**${vscode.l10n.t('Use Cases')}:**\n\n`);
         for (const useCase of useCases.slice(0, 3)) {
           tooltip.appendMarkdown(`• ${useCase}\n`);
         }
@@ -377,22 +377,22 @@ class ResourceTypeNode implements F5XCTreeItem {
     const deleteDanger = getDangerLevel(this.data.resourceTypeKey, 'delete');
 
     tooltip.appendMarkdown(`---\n\n`);
-    tooltip.appendMarkdown(`**Available Operations:**\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Available Operations')}:**\n\n`);
     if (listPurpose) {
-      tooltip.appendMarkdown(`- List: ${listPurpose}\n`);
+      tooltip.appendMarkdown(`- ${vscode.l10n.t('List')}: ${listPurpose}\n`);
     }
     if (createPurpose) {
-      tooltip.appendMarkdown(`- Create: ${createPurpose}\n`);
+      tooltip.appendMarkdown(`- ${vscode.l10n.t('Create')}: ${createPurpose}\n`);
     }
     const dangerIcon = deleteDanger === 'high' ? '⚠️' : deleteDanger === 'medium' ? '⚡' : '✓';
     tooltip.appendMarkdown(
-      `- Delete: ${dangerIcon} ${deleteDanger === 'high' ? 'High Risk' : deleteDanger === 'medium' ? 'Medium' : 'Low'}\n`,
+      `- ${vscode.l10n.t('Delete')}: ${dangerIcon} ${deleteDanger === 'high' ? vscode.l10n.t('High Risk') : deleteDanger === 'medium' ? vscode.l10n.t('Medium') : vscode.l10n.t('Low')}\n`,
     );
 
     // Add prerequisites from create operation
     const createPrereqs = getPrerequisites(this.data.resourceTypeKey, 'create');
     if (createPrereqs.length > 0) {
-      tooltip.appendMarkdown(`\n**Prerequisites**: ${createPrereqs.join(', ')}\n`);
+      tooltip.appendMarkdown(`\n**${vscode.l10n.t('Prerequisites')}**: ${createPrereqs.join(', ')}\n`);
     }
 
     // Add performance hint from discovered response time
@@ -411,7 +411,7 @@ class ResourceTypeNode implements F5XCTreeItem {
           if (typeof p95 === 'number') {
             parts.push(`p95: ${p95}ms`);
           }
-          tooltip.appendMarkdown(`\n**Response Time**: ${parts.join(', ')}\n`);
+          tooltip.appendMarkdown(`\n**${vscode.l10n.t('Response Time')}**: ${parts.join(', ')}\n`);
         }
       } catch {
         /* not parseable JSON */
@@ -424,7 +424,7 @@ class ResourceTypeNode implements F5XCTreeItem {
       if (domainMeta) {
         tooltip.appendMarkdown(`\n---\n\n`);
         tooltip.appendMarkdown(
-          `${domainMeta.icon} *Domain: ${domainMeta.title.replace(/^xcsh /, '').replace(/ API$/, '')}*\n`,
+          `${domainMeta.icon} *${vscode.l10n.t('Domain')}: ${domainMeta.title.replace(/^xcsh /, '').replace(/ API$/, '')}*\n`,
         );
       }
     }
@@ -516,7 +516,7 @@ class ResourceTypeNode implements F5XCTreeItem {
       );
     } catch (error) {
       this.logger.error(`Failed to load ${this.data.resourceType.displayName}`, error as Error);
-      return [new ErrorNode('Failed to load resources', (error as Error).message)];
+      return [new ErrorNode(vscode.l10n.t('Failed to load resources'), (error as Error).message)];
     }
   }
 
@@ -544,17 +544,22 @@ export class ResourceNode implements F5XCTreeItem {
     // Use MarkdownString for richer tooltip
     const tooltip = new vscode.MarkdownString();
     tooltip.appendMarkdown(`**${this.data.resourceType.displayName}**: ${this.data.name}\n\n`);
-    tooltip.appendMarkdown(`**Namespace**: ${this.data.namespace}\n\n`);
-    tooltip.appendMarkdown(`**Category**: ${this.data.resourceType.category}\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Namespace')}**: ${this.data.namespace}\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${this.data.resourceType.category}\n\n`);
     tooltip.appendMarkdown(`---\n\n`);
-    tooltip.appendMarkdown(`**Operations:**\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Operations')}:**\n\n`);
     if (getPurpose) {
       tooltip.appendMarkdown(`- View: ${getPurpose}\n`);
     }
     // Show danger level with appropriate indicator
     const dangerIcon = deleteDanger === 'high' ? '⚠️' : deleteDanger === 'medium' ? '⚡' : '✓';
-    const dangerText = deleteDanger === 'high' ? 'High Risk' : deleteDanger === 'medium' ? 'Medium' : 'Low';
-    tooltip.appendMarkdown(`- Delete: ${dangerIcon} ${dangerText}`);
+    const dangerText =
+      deleteDanger === 'high'
+        ? vscode.l10n.t('High Risk')
+        : deleteDanger === 'medium'
+          ? vscode.l10n.t('Medium')
+          : vscode.l10n.t('Low');
+    tooltip.appendMarkdown(`- ${vscode.l10n.t('Delete')}: ${dangerIcon} ${dangerText}`);
     if (deletePurpose) {
       tooltip.appendMarkdown(` - ${deletePurpose}`);
     }
@@ -571,7 +576,7 @@ export class ResourceNode implements F5XCTreeItem {
     );
 
     if (uniqueErrors.length > 0) {
-      tooltip.appendMarkdown(`\n---\n\n**Common Issues:**\n\n`);
+      tooltip.appendMarkdown(`\n---\n\n**${vscode.l10n.t('Common Issues')}:**\n\n`);
       for (const error of uniqueErrors.slice(0, 3)) {
         tooltip.appendMarkdown(`• **${error.code}**: ${error.solution || error.message}\n`);
       }
@@ -629,7 +634,7 @@ class ErrorNode implements F5XCTreeItem {
     const item = new vscode.TreeItem(this.title, vscode.TreeItemCollapsibleState.None);
     item.contextValue = TreeItemContext.ERROR;
     item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('list.errorForeground'));
-    item.description = 'Click to retry';
+    item.description = vscode.l10n.t('Click to retry');
     item.tooltip = this.message;
     item.command = {
       command: this.retryCommand,

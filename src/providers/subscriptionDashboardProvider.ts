@@ -55,7 +55,7 @@ export class SubscriptionDashboardProvider {
       } else {
         this.planPanel = vscode.window.createWebviewPanel(
           'f5xcPlanDashboard',
-          'Subscription Plan',
+          vscode.l10n.t('Subscription Plan'),
           vscode.ViewColumn.Beside,
           {
             enableScripts: true,
@@ -107,7 +107,7 @@ export class SubscriptionDashboardProvider {
       } else {
         this.quotasPanel = vscode.window.createWebviewPanel(
           'f5xcQuotasDashboard',
-          'Quota Usage',
+          vscode.l10n.t('Quota Usage'),
           vscode.ViewColumn.Beside,
           {
             enableScripts: true,
@@ -248,11 +248,11 @@ export class SubscriptionDashboardProvider {
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('billing')}
-      <span class="resource-type">Subscription</span>
-      <span class="resource-name">Plan</span>
+      <span class="resource-type">${vscode.l10n.t('Subscription')}</span>
+      <span class="resource-name">${vscode.l10n.t('Plan')}</span>
     </div>
     <div class="toolbar-right">
-      <button class="refresh-btn" onclick="refresh()">⟳ Refresh</button>
+      <button class="refresh-btn" onclick="refresh()">⟳ ${vscode.l10n.t('Refresh')}</button>
     </div>
   </div>
 
@@ -262,7 +262,7 @@ export class SubscriptionDashboardProvider {
       <!-- Plan Overview Card -->
       <div class="card plan-card">
         <div class="card-header">
-          <h2>Plan Overview</h2>
+          <h2>${vscode.l10n.t('Plan Overview')}</h2>
           ${tierBadge}
         </div>
         <div class="card-body">
@@ -274,22 +274,22 @@ export class SubscriptionDashboardProvider {
 
       <!-- Active Addons Section -->
       <div class="section">
-        <h3 class="section-header">Active Addon Services</h3>
+        <h3 class="section-header">${vscode.l10n.t('Active Addon Services')}</h3>
         ${this.renderAddonsByCategory(addonsByCategory, true)}
         ${
           planInfo.includedAddonServices.length === 0
-            ? '<div class="empty-state">No addon services currently active</div>'
+            ? `<div class="empty-state">${vscode.l10n.t('No addon services currently active')}</div>`
             : ''
         }
       </div>
 
       <!-- Available Addons Section -->
       <div class="section">
-        <h3 class="section-header">Available Addon Services</h3>
+        <h3 class="section-header">${vscode.l10n.t('Available Addon Services')}</h3>
         ${this.renderAddonsByCategory(availableByCategory, false, accessStatuses)}
         ${
           Object.keys(availableByCategory).length === 0
-            ? '<div class="empty-state">All available addon services are active</div>'
+            ? `<div class="empty-state">${vscode.l10n.t('All available addon services are active')}</div>`
             : ''
         }
       </div>
@@ -468,11 +468,11 @@ export class SubscriptionDashboardProvider {
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('billing')}
-      <span class="resource-type">Subscription</span>
-      <span class="resource-name">Quotas</span>
+      <span class="resource-type">${vscode.l10n.t('Subscription')}</span>
+      <span class="resource-name">${vscode.l10n.t('Quotas')}</span>
     </div>
     <div class="toolbar-right">
-      <button class="refresh-btn" onclick="refresh()">⟳ Refresh</button>
+      <button class="refresh-btn" onclick="refresh()">⟳ ${vscode.l10n.t('Refresh')}</button>
     </div>
   </div>
 
@@ -483,11 +483,11 @@ export class SubscriptionDashboardProvider {
       <div class="summary-cards">
         <div class="summary-card">
           <div class="summary-value">${totalUsed}</div>
-          <div class="summary-label">Total Used</div>
+          <div class="summary-label">${vscode.l10n.t('Total Used')}</div>
         </div>
         <div class="summary-card">
           <div class="summary-value">${totalLimit}</div>
-          <div class="summary-label">Total Limit</div>
+          <div class="summary-label">${vscode.l10n.t('Total Limit')}</div>
         </div>
         <div class="summary-card ${criticalItems.length > 0 ? 'warning' : ''}">
           <div class="summary-value">${criticalItems.length}</div>
@@ -500,7 +500,7 @@ export class SubscriptionDashboardProvider {
         quotaUsage.objects.length > 0
           ? `
       <div class="section">
-        <h3 class="section-header">Object Quotas</h3>
+        <h3 class="section-header">${vscode.l10n.t('Object Quotas')}</h3>
         <div class="quota-table">
           ${quotaUsage.objects.map((item) => this.renderQuotaItem(item)).join('')}
         </div>
@@ -514,7 +514,7 @@ export class SubscriptionDashboardProvider {
         quotaUsage.resources.length > 0
           ? `
       <div class="section">
-        <h3 class="section-header">Resource Quotas</h3>
+        <h3 class="section-header">${vscode.l10n.t('Resource Quotas')}</h3>
         <div class="quota-table">
           ${quotaUsage.resources.map((item) => this.renderQuotaItem(item)).join('')}
         </div>
@@ -528,7 +528,7 @@ export class SubscriptionDashboardProvider {
         quotaUsage.apis.length > 0
           ? `
       <div class="section">
-        <h3 class="section-header">API Rate Limits</h3>
+        <h3 class="section-header">${vscode.l10n.t('API Rate Limits')}</h3>
         <div class="quota-table">
           ${quotaUsage.apis.map((item) => this.renderQuotaItem(item)).join('')}
         </div>
@@ -537,7 +537,7 @@ export class SubscriptionDashboardProvider {
           : ''
       }
 
-      ${allItems.length === 0 ? '<div class="empty-state">No quota information available</div>' : ''}
+      ${allItems.length === 0 ? `<div class="empty-state">${vscode.l10n.t('No quota information available')}</div>` : ''}
     </main>
   </div>
 

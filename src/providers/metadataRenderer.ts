@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import * as vscode from 'vscode';
+
 interface BestPracticesInput {
   commonErrors?: Array<{ code: number; message: string; resolution: string; prevention?: string }>;
   securityNotes?: string[];
@@ -29,24 +31,24 @@ export function renderBestPractices(bp: BestPracticesInput | undefined): string 
       .map((e) => `<tr><td><code>${e.code}</code></td><td>${esc(e.message)}</td><td>${esc(e.resolution)}</td></tr>`)
       .join('');
     parts.push(
-      `<div class="bp-section"><h4>Common Errors</h4><table class="bp-table"><thead><tr><th>Code</th><th>Error</th><th>Resolution</th></tr></thead><tbody>${rows}</tbody></table></div>`,
+      `<div class="bp-section"><h4>${vscode.l10n.t('Common Errors')}</h4><table class="bp-table"><thead><tr><th>Code</th><th>Error</th><th>Resolution</th></tr></thead><tbody>${rows}</tbody></table></div>`,
     );
   }
 
   if (bp.securityNotes && bp.securityNotes.length > 0) {
     const items = bp.securityNotes.map((n) => `<li>${esc(n)}</li>`).join('');
-    parts.push(`<div class="bp-section"><h4>Security Notes</h4><ul>${items}</ul></div>`);
+    parts.push(`<div class="bp-section"><h4>${vscode.l10n.t('Security Notes')}</h4><ul>${items}</ul></div>`);
   }
 
   if (bp.performanceTips && bp.performanceTips.length > 0) {
     const items = bp.performanceTips.map((t) => `<li>${esc(t)}</li>`).join('');
-    parts.push(`<div class="bp-section"><h4>Performance Tips</h4><ul>${items}</ul></div>`);
+    parts.push(`<div class="bp-section"><h4>${vscode.l10n.t('Performance Tips')}</h4><ul>${items}</ul></div>`);
   }
 
   if (parts.length === 0) {
     return '';
   }
-  return `<div class="best-practices"><h3>Best Practices</h3>${parts.join('')}</div>`;
+  return `<div class="best-practices"><h3>${vscode.l10n.t('Best Practices')}</h3>${parts.join('')}</div>`;
 }
 
 export function renderConstraintBadge(c: ConstraintInput | undefined): string {
@@ -59,13 +61,13 @@ export function renderConstraintBadge(c: ConstraintInput | undefined): string {
       `<span class="badge badge-info" title="${esc(c.formatDescription)}">${esc(c.formatDescription)}</span>`,
     );
   } else if (c.pattern) {
-    badges.push(`<span class="badge badge-info" title="Pattern: ${esc(c.pattern)}">pattern</span>`);
+    badges.push(`<span class="badge badge-info" title="Pattern: ${esc(c.pattern)}">${vscode.l10n.t('pattern')}</span>`);
   }
   if (c.maxLength !== undefined) {
-    badges.push(`<span class="badge badge-info">max ${c.maxLength}</span>`);
+    badges.push(`<span class="badge badge-info">${vscode.l10n.t('max')} ${c.maxLength}</span>`);
   }
   if (c.minLength !== undefined && c.minLength > 0) {
-    badges.push(`<span class="badge badge-info">min ${c.minLength}</span>`);
+    badges.push(`<span class="badge badge-info">${vscode.l10n.t('min')} ${c.minLength}</span>`);
   }
   return badges.join(' ');
 }
@@ -74,7 +76,7 @@ export function renderConflictWarning(conflicts: string[] | undefined): string {
   if (!conflicts || conflicts.length === 0) {
     return '';
   }
-  return `<span class="badge badge-warning" title="Conflicts with: ${conflicts.join(', ')}">conflicts</span>`;
+  return `<span class="badge badge-warning" title="Conflicts with: ${conflicts.join(', ')}">${vscode.l10n.t('conflicts')}</span>`;
 }
 
 export function renderDangerBadge(level: string | undefined): string {
@@ -83,5 +85,5 @@ export function renderDangerBadge(level: string | undefined): string {
   }
   const colors: Record<string, string> = { low: '#28a745', medium: '#ffc107', high: '#dc3545' };
   const color = colors[level] || '#6c757d';
-  return `<span class="badge" style="background:${color};color:#fff">${esc(level)} risk</span>`;
+  return `<span class="badge" style="background:${color};color:#fff">${vscode.l10n.t('{0} risk', esc(level))}</span>`;
 }

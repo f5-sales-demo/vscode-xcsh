@@ -15,10 +15,10 @@ export class SubscriptionGroupNode implements F5XCTreeItem {
   constructor(private readonly profileName: string) {}
 
   getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem('Subscription', vscode.TreeItemCollapsibleState.Collapsed);
+    const item = new vscode.TreeItem(vscode.l10n.t('Subscription'), vscode.TreeItemCollapsibleState.Collapsed);
     item.contextValue = TreeItemContext.SUBSCRIPTION_GROUP;
     item.iconPath = new vscode.ThemeIcon('credit-card');
-    item.tooltip = 'View subscription plan and quota usage';
+    item.tooltip = vscode.l10n.t('View subscription plan and quota usage');
     return item;
   }
 
@@ -35,10 +35,10 @@ export class PlanNode implements F5XCTreeItem {
   constructor(private readonly profileName: string) {}
 
   getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem('Plan', vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(vscode.l10n.t('Plan'), vscode.TreeItemCollapsibleState.None);
     item.contextValue = TreeItemContext.SUBSCRIPTION_PLAN;
     item.iconPath = new vscode.ThemeIcon('file-text');
-    item.tooltip = 'View subscription plan details and addon services';
+    item.tooltip = vscode.l10n.t('View subscription plan details and addon services');
     item.command = {
       command: 'f5xc.showPlan',
       title: 'Show Subscription Plan',
@@ -65,10 +65,10 @@ export class QuotasNode implements F5XCTreeItem {
   constructor(private readonly profileName: string) {}
 
   getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem('Quotas', vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(vscode.l10n.t('Quotas'), vscode.TreeItemCollapsibleState.None);
     item.contextValue = TreeItemContext.SUBSCRIPTION_QUOTAS;
     item.iconPath = new vscode.ThemeIcon('graph');
-    item.tooltip = 'View resource quota usage and limits';
+    item.tooltip = vscode.l10n.t('View resource quota usage and limits');
     item.command = {
       command: 'f5xc.showQuotas',
       title: 'Show Quota Usage',
