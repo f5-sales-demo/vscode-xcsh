@@ -20,6 +20,18 @@
   "config.xcsh.panelMode.description": "تجربة لوحة xcsh: واجهة ويب غنية أو محطة CLI كلاسيكية",
   "config.xcsh.panelMode.webview": "لوحة دردشة متكاملة غنية (موصى بها)",
   "config.xcsh.panelMode.terminal": "تجربة محطة CLI الكلاسيكية",
+
+  "view.profiles.name": "السياقات",
+  "view.profiles.contextualTitle": "سياقات xcsh",
+  "view.subscription.name": "الاشتراك",
+  "view.subscription.contextualTitle": "اشتراك xcsh",
+  "view.explorer.name": "الموارد",
+  "view.explorer.contextualTitle": "موارد xcsh",
+  "view.cloudStatus.name": "حالة السحابة",
+  "view.cloudStatus.contextualTitle": "حالة سحابة xcsh",
+
+  "viewsWelcome.explorer": "لم يتم تهيئة سياق xcsh.\n[إضافة سياق](command:f5xc.addContext)\nتعرف على المزيد حول [F5 Distributed Cloud](https://www.f5.com/cloud).",
+
   "command.addContext.title": "إضافة سياق",
   "command.editContext.title": "تعديل السياق",
   "command.deleteContext.title": "حذف السياق",
@@ -58,5 +70,22 @@
   "command.xcsh.openTerminal.title": "فتح محطة xcsh",
   "command.xcsh.restart.title": "إعادة تشغيل xcsh",
   "command.xcsh.openPanel.title": "فتح لوحة xcsh",
-  "command.xcsh.newSession.title": "جلسة xcsh جديدة"
+  "command.xcsh.newSession.title": "جلسة xcsh جديدة",
+
+  "tool.readFile.displayName": "قراءة ملف",
+  "tool.readFile.userDescription": "قراءة ملف من مساحة العمل",
+  "tool.getSelection.displayName": "الحصول على تحديد المحرر",
+  "tool.getSelection.userDescription": "الحصول على النص المحدد من المحرر",
+  "tool.getDiagnostics.displayName": "الحصول على تشخيصات الملف",
+  "tool.getDiagnostics.userDescription": "الحصول على الأخطاء والتحذيرات لملف",
+  "tool.openFile.displayName": "فتح ملف في المحرر",
+  "tool.openFile.userDescription": "فتح ملف في المحرر",
+
+  "chat.xcsh.description": "اسأل عن موارد F5 Distributed Cloud والتهيئة واستكشاف الأخطاء وإصلاحها عبر xcsh",
+  "chat.xcsh.command.status": "عرض حالة سلامة واتصال تكامل xcsh",
+  "chat.xcsh.command.context": "عرض تفاصيل سياق xcsh النشط (المستأجر، مساحة الاسم، عنوان URL لـ API)",
+  "chat.xcsh.command.resources": "سرد الموارد في مساحة الاسم الحالية",
+  "chat.xcsh.disambiguation.networking": "أسئلة حول شبكات F5 Distributed Cloud، وموازنات الحمل، ومجمعات الأصل، والمسارات، وDNS، وCDN، والمضيفات الافتراضية، وتهيئة موازن حمل HTTP",
+  "chat.xcsh.disambiguation.security": "أسئلة حول أمان F5 Distributed Cloud، وسياسات WAF، وسياسات الخدمة، والحماية من DDoS، والدفاع ضد الروبوتات، وأمان API، وتهيئة جدار حماية التطبيقات",
+  "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية"
 }

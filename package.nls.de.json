@@ -20,6 +20,18 @@
   "config.xcsh.panelMode.description": "xcsh-Panel-Erlebnis: Rich-Webview oder klassisches CLI-Terminal",
   "config.xcsh.panelMode.webview": "Integriertes Rich-Chat-Panel (empfohlen)",
   "config.xcsh.panelMode.terminal": "Klassisches CLI-Terminal-Erlebnis",
+
+  "view.profiles.name": "Kontexte",
+  "view.profiles.contextualTitle": "xcsh-Kontexte",
+  "view.subscription.name": "Abonnement",
+  "view.subscription.contextualTitle": "xcsh-Abonnement",
+  "view.explorer.name": "Ressourcen",
+  "view.explorer.contextualTitle": "xcsh-Ressourcen",
+  "view.cloudStatus.name": "Cloud-Status",
+  "view.cloudStatus.contextualTitle": "xcsh-Cloud-Status",
+
+  "viewsWelcome.explorer": "Kein xcsh-Kontext konfiguriert.\n[Kontext hinzufügen](command:f5xc.addContext)\nErfahren Sie mehr über [F5 Distributed Cloud](https://www.f5.com/cloud).",
+
   "command.addContext.title": "Kontext hinzufügen",
   "command.editContext.title": "Kontext bearbeiten",
   "command.deleteContext.title": "Kontext löschen",
@@ -58,5 +70,22 @@
   "command.xcsh.openTerminal.title": "xcsh-Terminal öffnen",
   "command.xcsh.restart.title": "xcsh neu starten",
   "command.xcsh.openPanel.title": "xcsh-Panel öffnen",
-  "command.xcsh.newSession.title": "Neue xcsh-Sitzung"
+  "command.xcsh.newSession.title": "Neue xcsh-Sitzung",
+
+  "tool.readFile.displayName": "Datei lesen",
+  "tool.readFile.userDescription": "Eine Datei aus dem Arbeitsbereich lesen",
+  "tool.getSelection.displayName": "Editorauswahl abrufen",
+  "tool.getSelection.userDescription": "Ausgewählten Text aus dem Editor abrufen",
+  "tool.getDiagnostics.displayName": "Dateidiagnose abrufen",
+  "tool.getDiagnostics.userDescription": "Fehler und Warnungen für eine Datei abrufen",
+  "tool.openFile.displayName": "Datei im Editor öffnen",
+  "tool.openFile.userDescription": "Eine Datei im Editor öffnen",
+
+  "chat.xcsh.description": "Fragen zu F5 Distributed Cloud-Ressourcen, Konfiguration und Fehlerbehebung über xcsh stellen",
+  "chat.xcsh.command.status": "Integritäts- und Verbindungsstatus der xcsh-Integration anzeigen",
+  "chat.xcsh.command.context": "Details des aktiven xcsh-Kontexts anzeigen (Mandant, Namespace, API-URL)",
+  "chat.xcsh.command.resources": "Ressourcen im aktuellen Namespace auflisten",
+  "chat.xcsh.disambiguation.networking": "Fragen zum F5 Distributed Cloud-Netzwerk, Lastverteilern, Ursprungspools, Routen, DNS, CDN, virtuellen Hosts und HTTP-Lastverteiler-Konfiguration",
+  "chat.xcsh.disambiguation.security": "Fragen zur F5 Distributed Cloud-Sicherheit, WAF-Richtlinien, Dienstrichtlinien, DDoS-Schutz, Bot-Abwehr, API-Sicherheit und Anwendungs-Firewall-Konfiguration",
+  "chat.xcsh.disambiguation.infrastructure": "Fragen zu F5 Distributed Cloud-Sites, Site-Zustand, Cloud-Konnektoren, Netzwerkkonnektoren, Flottenverwaltung und Infrastrukturstatus"
 }

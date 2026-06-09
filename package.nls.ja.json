@@ -20,6 +20,18 @@
   "config.xcsh.panelMode.description": "xcsh パネルの表示形式: リッチな webview またはクラシックな CLI ターミナル",
   "config.xcsh.panelMode.webview": "リッチな統合チャットパネル (推奨)",
   "config.xcsh.panelMode.terminal": "クラシックな CLI ターミナル",
+
+  "view.profiles.name": "コンテキスト",
+  "view.profiles.contextualTitle": "xcsh コンテキスト",
+  "view.subscription.name": "サブスクリプション",
+  "view.subscription.contextualTitle": "xcsh サブスクリプション",
+  "view.explorer.name": "リソース",
+  "view.explorer.contextualTitle": "xcsh リソース",
+  "view.cloudStatus.name": "クラウドステータス",
+  "view.cloudStatus.contextualTitle": "xcsh クラウドステータス",
+
+  "viewsWelcome.explorer": "xcsh コンテキストが設定されていません。\n[コンテキストを追加](command:f5xc.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud) の詳細を見る。",
+
   "command.addContext.title": "コンテキストを追加",
   "command.editContext.title": "コンテキストを編集",
   "command.deleteContext.title": "コンテキストを削除",
@@ -58,5 +70,22 @@
   "command.xcsh.openTerminal.title": "xcsh ターミナルを開く",
   "command.xcsh.restart.title": "xcsh を再起動",
   "command.xcsh.openPanel.title": "xcsh パネルを開く",
-  "command.xcsh.newSession.title": "新しい xcsh セッション"
+  "command.xcsh.newSession.title": "新しい xcsh セッション",
+
+  "tool.readFile.displayName": "ファイルを読み取る",
+  "tool.readFile.userDescription": "ワークスペースからファイルを読み取ります",
+  "tool.getSelection.displayName": "エディターの選択範囲を取得",
+  "tool.getSelection.userDescription": "エディターで選択されたテキストを取得します",
+  "tool.getDiagnostics.displayName": "ファイル診断を取得",
+  "tool.getDiagnostics.userDescription": "ファイルのエラーと警告を取得します",
+  "tool.openFile.displayName": "エディターでファイルを開く",
+  "tool.openFile.userDescription": "ファイルをエディターで開きます",
+
+  "chat.xcsh.description": "xcsh を介して F5 Distributed Cloud のリソース、構成、トラブルシューティングについて質問する",
+  "chat.xcsh.command.status": "xcsh 連携のヘルスと接続状況を表示",
+  "chat.xcsh.command.context": "アクティブな xcsh コンテキストの詳細を表示 (テナント、名前空間、API URL)",
+  "chat.xcsh.command.resources": "現在の名前空間のリソースを一覧表示",
+  "chat.xcsh.disambiguation.networking": "F5 Distributed Cloud のネットワーキング、ロードバランサー、オリジンプール、ルート、DNS、CDN、仮想ホスト、HTTP ロードバランサーの構成に関する質問",
+  "chat.xcsh.disambiguation.security": "F5 Distributed Cloud のセキュリティ、WAF ポリシー、サービスポリシー、DDoS 保護、ボット防御、API セキュリティ、アプリケーションファイアウォールの構成に関する質問",
+  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud のサイト、サイトヘルス、クラウドコネクタ、ネットワークコネクタ、フリート管理、インフラストラクチャステータスに関する質問"
 }

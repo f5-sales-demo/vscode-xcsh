@@ -20,6 +20,18 @@
   "config.xcsh.panelMode.description": "xcsh 面板體驗：豐富的網頁檢視或傳統 CLI 終端機",
   "config.xcsh.panelMode.webview": "豐富的整合式聊天面板（建議）",
   "config.xcsh.panelMode.terminal": "傳統 CLI 終端機體驗",
+
+  "view.profiles.name": "內容",
+  "view.profiles.contextualTitle": "xcsh 內容",
+  "view.subscription.name": "訂閱",
+  "view.subscription.contextualTitle": "xcsh 訂閱",
+  "view.explorer.name": "資源",
+  "view.explorer.contextualTitle": "xcsh 資源",
+  "view.cloudStatus.name": "雲端狀態",
+  "view.cloudStatus.contextualTitle": "xcsh 雲端狀態",
+
+  "viewsWelcome.explorer": "未設定 xcsh 內容。\n[新增內容](command:f5xc.addContext)\n深入了解 [F5 Distributed Cloud](https://www.f5.com/cloud)。",
+
   "command.addContext.title": "新增內容",
   "command.editContext.title": "編輯內容",
   "command.deleteContext.title": "刪除內容",
@@ -42,7 +54,7 @@
   "command.diagram.title": "產生圖表",
   "command.createFromTemplate.title": "從範本新建",
   "command.openInBrowser.title": "在瀏覽器中開啟",
-  "command.toggleViewMode.title": "切換檢視模式（Console/Full）",
+  "command.toggleViewMode.title": "切換檢視模式（主控台/完整）",
   "command.cloudStatus.refresh.title": "重新整理雲端狀態",
   "command.cloudStatus.openDashboard.title": "開啟雲端狀態儀表板",
   "command.showOnboarding.title": "平台整備狀態",
@@ -58,5 +70,22 @@
   "command.xcsh.openTerminal.title": "開啟 xcsh 終端機",
   "command.xcsh.restart.title": "重新啟動 xcsh",
   "command.xcsh.openPanel.title": "開啟 xcsh 面板",
-  "command.xcsh.newSession.title": "新增 xcsh 工作階段"
+  "command.xcsh.newSession.title": "新增 xcsh 工作階段",
+
+  "tool.readFile.displayName": "讀取檔案",
+  "tool.readFile.userDescription": "從工作區讀取檔案",
+  "tool.getSelection.displayName": "取得編輯器選取內容",
+  "tool.getSelection.userDescription": "取得編輯器中的選取文字",
+  "tool.getDiagnostics.displayName": "取得檔案診斷資訊",
+  "tool.getDiagnostics.userDescription": "取得檔案的錯誤和警告",
+  "tool.openFile.displayName": "在編輯器中開啟檔案",
+  "tool.openFile.userDescription": "在編輯器中開啟檔案",
+
+  "chat.xcsh.description": "透過 xcsh 詢問 F5 Distributed Cloud 資源、設定和疑難排解相關問題",
+  "chat.xcsh.command.status": "顯示 xcsh 整合健康狀態和連線狀態",
+  "chat.xcsh.command.context": "顯示使用中的 xcsh 內容詳細資訊（租用戶、命名空間、API URL）",
+  "chat.xcsh.command.resources": "列出目前命名空間中的資源",
+  "chat.xcsh.disambiguation.networking": "關於 F5 Distributed Cloud 網路、負載平衡器、來源集區、路由、DNS、CDN、虛擬主機和 HTTP 負載平衡器設定的問題",
+  "chat.xcsh.disambiguation.security": "關於 F5 Distributed Cloud 安全性、WAF 原則、服務原則、DDoS 防護、機器人防禦、API 安全性和應用程式防火牆設定的問題",
+  "chat.xcsh.disambiguation.infrastructure": "關於 F5 Distributed Cloud 站台、站台健康狀況、雲端連接器、網路連接器、叢集管理和基礎架構狀態的問題"
 }

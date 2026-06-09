@@ -20,6 +20,18 @@
   "config.xcsh.panelMode.description": "Expérience du panneau xcsh : webview enrichie ou terminal CLI classique",
   "config.xcsh.panelMode.webview": "Panneau de chat intégré enrichi (recommandé)",
   "config.xcsh.panelMode.terminal": "Expérience terminal CLI classique",
+
+  "view.profiles.name": "Contextes",
+  "view.profiles.contextualTitle": "Contextes xcsh",
+  "view.subscription.name": "Abonnement",
+  "view.subscription.contextualTitle": "Abonnement xcsh",
+  "view.explorer.name": "Ressources",
+  "view.explorer.contextualTitle": "Ressources xcsh",
+  "view.cloudStatus.name": "État du cloud",
+  "view.cloudStatus.contextualTitle": "État du cloud xcsh",
+
+  "viewsWelcome.explorer": "Aucun contexte xcsh configuré.\n[Ajouter un contexte](command:f5xc.addContext)\nEn savoir plus sur [F5 Distributed Cloud](https://www.f5.com/cloud).",
+
   "command.addContext.title": "Ajouter un contexte",
   "command.editContext.title": "Modifier le contexte",
   "command.deleteContext.title": "Supprimer le contexte",
@@ -58,5 +70,22 @@
   "command.xcsh.openTerminal.title": "Ouvrir le terminal xcsh",
   "command.xcsh.restart.title": "Redémarrer xcsh",
   "command.xcsh.openPanel.title": "Ouvrir le panneau xcsh",
-  "command.xcsh.newSession.title": "Nouvelle session xcsh"
+  "command.xcsh.newSession.title": "Nouvelle session xcsh",
+
+  "tool.readFile.displayName": "Lire un fichier",
+  "tool.readFile.userDescription": "Lire un fichier depuis l'espace de travail",
+  "tool.getSelection.displayName": "Obtenir la sélection de l'éditeur",
+  "tool.getSelection.userDescription": "Obtenir le texte sélectionné dans l'éditeur",
+  "tool.getDiagnostics.displayName": "Obtenir les diagnostics du fichier",
+  "tool.getDiagnostics.userDescription": "Obtenir les erreurs et avertissements d'un fichier",
+  "tool.openFile.displayName": "Ouvrir un fichier dans l'éditeur",
+  "tool.openFile.userDescription": "Ouvrir un fichier dans l'éditeur",
+
+  "chat.xcsh.description": "Posez des questions sur les ressources, la configuration et le dépannage de F5 Distributed Cloud via xcsh",
+  "chat.xcsh.command.status": "Afficher l'état de santé et de connexion de l'intégration xcsh",
+  "chat.xcsh.command.context": "Afficher les détails du contexte xcsh actif (locataire, espace de noms, URL de l'API)",
+  "chat.xcsh.command.resources": "Lister les ressources de l'espace de noms actuel",
+  "chat.xcsh.disambiguation.networking": "Questions sur le réseau F5 Distributed Cloud, les répartiteurs de charge, les pools d'origines, les routes, le DNS, le CDN, les hôtes virtuels et la configuration du répartiteur de charge HTTP",
+  "chat.xcsh.disambiguation.security": "Questions sur la sécurité F5 Distributed Cloud, les politiques WAF, les politiques de service, la protection DDoS, la défense contre les bots, la sécurité API et la configuration du pare-feu applicatif",
+  "chat.xcsh.disambiguation.infrastructure": "Questions sur les sites F5 Distributed Cloud, la santé des sites, les connecteurs cloud, les connecteurs réseau, la gestion de flotte et l'état de l'infrastructure"
 }

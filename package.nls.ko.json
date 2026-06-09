@@ -20,6 +20,18 @@
   "config.xcsh.panelMode.description": "xcsh 패널 환경: 리치 웹뷰 또는 클래식 CLI 터미널",
   "config.xcsh.panelMode.webview": "리치 통합 채팅 패널 (권장)",
   "config.xcsh.panelMode.terminal": "클래식 CLI 터미널 환경",
+
+  "view.profiles.name": "컨텍스트",
+  "view.profiles.contextualTitle": "xcsh 컨텍스트",
+  "view.subscription.name": "구독",
+  "view.subscription.contextualTitle": "xcsh 구독",
+  "view.explorer.name": "리소스",
+  "view.explorer.contextualTitle": "xcsh 리소스",
+  "view.cloudStatus.name": "클라우드 상태",
+  "view.cloudStatus.contextualTitle": "xcsh 클라우드 상태",
+
+  "viewsWelcome.explorer": "xcsh 컨텍스트가 구성되지 않았습니다.\n[컨텍스트 추가](command:f5xc.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud)에 대해 자세히 알아보세요.",
+
   "command.addContext.title": "컨텍스트 추가",
   "command.editContext.title": "컨텍스트 편집",
   "command.deleteContext.title": "컨텍스트 삭제",
@@ -58,5 +70,22 @@
   "command.xcsh.openTerminal.title": "xcsh 터미널 열기",
   "command.xcsh.restart.title": "xcsh 다시 시작",
   "command.xcsh.openPanel.title": "xcsh 패널 열기",
-  "command.xcsh.newSession.title": "새 xcsh 세션"
+  "command.xcsh.newSession.title": "새 xcsh 세션",
+
+  "tool.readFile.displayName": "파일 읽기",
+  "tool.readFile.userDescription": "워크스페이스에서 파일을 읽습니다",
+  "tool.getSelection.displayName": "편집기 선택 영역 가져오기",
+  "tool.getSelection.userDescription": "편집기에서 선택한 텍스트를 가져옵니다",
+  "tool.getDiagnostics.displayName": "파일 진단 가져오기",
+  "tool.getDiagnostics.userDescription": "파일의 오류 및 경고를 가져옵니다",
+  "tool.openFile.displayName": "편집기에서 파일 열기",
+  "tool.openFile.userDescription": "편집기에서 파일을 엽니다",
+
+  "chat.xcsh.description": "xcsh를 통해 F5 Distributed Cloud 리소스, 구성 및 문제 해결에 대해 질문하세요",
+  "chat.xcsh.command.status": "xcsh 통합 상태 및 연결 상태 표시",
+  "chat.xcsh.command.context": "활성 xcsh 컨텍스트 세부 정보 표시 (테넌트, 네임스페이스, API URL)",
+  "chat.xcsh.command.resources": "현재 네임스페이스의 리소스 나열",
+  "chat.xcsh.disambiguation.networking": "F5 Distributed Cloud 네트워킹, 로드 밸런서, 원본 풀, 라우트, DNS, CDN, 가상 호스트 및 HTTP 로드 밸런서 구성에 대한 질문",
+  "chat.xcsh.disambiguation.security": "F5 Distributed Cloud 보안, WAF 정책, 서비스 정책, DDoS 보호, 봇 방어, API 보안 및 애플리케이션 방화벽 구성에 대한 질문",
+  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud 사이트, 사이트 상태, 클라우드 커넥터, 네트워크 커넥터, 플릿 관리 및 인프라 상태에 대한 질문"
 }
