@@ -4,62 +4,36 @@
 [Français](README.fr.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) |
 **العربية** | [हिन्दी](README.hi.md) | [ไทย](README.th.md)
 
-# إضافة VS Code
+# xcsh لـ VS Code
 
-[![GitHub Pages Deploy](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/github-pages-deploy.yml)
-[![Repository Settings](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/enforce-repo-settings.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/enforce-repo-settings.yml)
-[![CI](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/ci.yml)
-[![Release](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/release.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/release.yml)
-[![License](https://img.shields.io/github/license/f5xc-salesdemos/vscode-f5xc-tools)](LICENSE)
+> إدارة موارد F5 Distributed Cloud مباشرة من VS Code
 
-إضافة VS Code لإدارة موارد F5 Distributed Cloud مع IntelliSense ودردشة xcsh
-
-## الميزات
-
-- **إدارة الموارد** — تصفح وإنشاء وتعديل وحذف موارد F5 Distributed Cloud مباشرة
-  من VS Code
-- **حالة السحابة** — لوحة معلومات صحة البنية التحتية العالمية في الوقت الفعلي
-- **مساعد الدردشة بالذكاء الاصطناعي** — مشارك الدردشة `@xcsh` لعمليات المنصة
-  باللغة الطبيعية
-- **IntelliSense** — إكمالات مخطط JSON لجميع أنواع موارد F5 XC
-- **تكاملات السحابة المتعددة** — يعمل مع AWS و Azure و GCP و GitHub و GitLab و
-  Terraform و Salesforce
+![xcsh](resources/screenshot-welcome.png)
 
 ## البدء
 
-1. قم بتثبيت الإضافة من
-   [سوق VS Code](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
-2. قم بتثبيت xcsh: `brew install f5xc-salesdemos/tap/xcsh`
-3. افتح لوحة الأوامر (`Cmd+Shift+P`) وقم بتشغيل **xcsh: Platform Readiness**
-   للتحقق من إعدادك
-4. أضف سياق F5 XC عبر **xcsh: Add Context**
+1. **تثبيت الإضافة** — ابحث عن "xcsh" في لوحة إضافات VS Code
+2. **تثبيت xcsh** — `brew install f5xc-salesdemos/tap/xcsh`
+3. **إضافة سياق** — افتح لوحة الأوامر (`Cmd+Shift+P`) وشغّل **xcsh: Add
+   Context**
 
-## التكاملات المدعومة
+## ما يمكنك فعله
 
-| التكامل        | التثبيت                                 | المصادقة            |
-| -------------- | --------------------------------------- | ------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | مضمن مع التثبيت     |
-| AWS CLI        | `brew install awscli`                   | `aws sso login`     |
-| Azure CLI      | `brew install azure-cli`                | `az login`          |
-| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
-| GitHub CLI     | `brew install gh`                       | `gh auth login`     |
-| GitLab CLI     | `brew install glab`                     | `glab auth login`   |
-| Terraform      | `brew install terraform`                | غير متاح            |
-| Salesforce CLI | `brew install sf`                       | `sf org login web`  |
-
-قم بتشغيل **xcsh: Platform Readiness** في VS Code لمعرفة التكاملات المثبتة
-والمصادق عليها.
+- **تصفح وإدارة الموارد** — إنشاء وتحرير وحذف موازنات الأحمال وسياسات WAF
+  ومجموعات المصدر والمزيد من الشريط الجانبي
+- **مساعد الدردشة بالذكاء الاصطناعي** — اطرح أسئلة على `@xcsh` بلغة طبيعية
+  لإدارة منصتك
+- **لوحة معلومات حالة السحابة** — حالة البنية التحتية العالمية في الوقت الفعلي
+  بنظرة واحدة
+- **IntelliSense** — إكمال مخططات JSON لجميع أنواع موارد F5 XC
+- **متعدد السحابات** — يتكامل مع AWS وAzure وGCP وGitHub وGitLab وTerraform
+  وSalesforce
 
 ## التوثيق
 
-التوثيق الكامل متاح على
-**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
-
-## المساهمة
-
-راجع [CONTRIBUTING.md](CONTRIBUTING.md) لقواعد سير العمل وتسمية الفروع ومتطلبات
-CI.
+الأدلة الكاملة والمرجع على
+[f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/)
 
 ## الرخصة
 
-راجع [LICENSE](LICENSE).
+[Apache-2.0](LICENSE)
