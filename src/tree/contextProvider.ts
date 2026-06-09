@@ -66,7 +66,7 @@ export class ContextTreeItem implements F5XCTreeItem {
   ) {}
 
   getTreeItem(): vscode.TreeItem {
-    const label = this.isActive ? `${this.context.name} (active)` : this.context.name;
+    const label = this.isActive ? `${this.context.name} ${vscode.l10n.t('(active)')}` : this.context.name;
 
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
 
@@ -112,20 +112,20 @@ export class ContextTreeItem implements F5XCTreeItem {
 
   private buildTooltip(): string {
     const lines = [
-      `Name: ${this.context.name}`,
-      `URL: ${this.context.apiUrl}`,
-      `Token: ${maskToken(this.context.apiToken)}`,
-      `Namespace: ${this.context.defaultNamespace}`,
+      `${vscode.l10n.t('Name')}: ${this.context.name}`,
+      `${vscode.l10n.t('URL')}: ${this.context.apiUrl}`,
+      `${vscode.l10n.t('Token')}: ${maskToken(this.context.apiToken)}`,
+      `${vscode.l10n.t('Namespace')}: ${this.context.defaultNamespace}`,
     ];
 
     if (this.context.metadata?.expiresAt) {
-      lines.push(`Expires: ${this.context.metadata.expiresAt}`);
+      lines.push(`${vscode.l10n.t('Expires')}: ${this.context.metadata.expiresAt}`);
     }
 
-    lines.push(`Health: ${this.health}`);
+    lines.push(`${vscode.l10n.t('Health')}: ${this.health}`);
 
     if (this.isActive) {
-      lines.push('Status: Active');
+      lines.push(vscode.l10n.t('Status: Active'));
     }
 
     return lines.join('\n');

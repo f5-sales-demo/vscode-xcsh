@@ -48,11 +48,16 @@ export class CloudStatusDashboardProvider {
       return;
     }
 
-    this.panel = vscode.window.createWebviewPanel('cloudStatusDashboard', 'xcsh Cloud Status', vscode.ViewColumn.One, {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [],
-    });
+    this.panel = vscode.window.createWebviewPanel(
+      'cloudStatusDashboard',
+      vscode.l10n.t('xcsh Cloud Status'),
+      vscode.ViewColumn.One,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [],
+      },
+    );
 
     this.panel.onDidDispose(() => {
       this.panel = undefined;
@@ -203,7 +208,7 @@ export class CloudStatusDashboardProvider {
         <div class="section">
           <h2 class="section-title incident-title">
             <span class="incident-icon"></span>
-            Active Incidents (${unresolvedIncidents.length})
+            ${vscode.l10n.t('Active Incidents')} (${unresolvedIncidents.length})
           </h2>
           <div class="incidents-list">
             ${unresolvedIncidents.map((i) => this.renderIncident(i)).join('\n')}
@@ -220,7 +225,7 @@ export class CloudStatusDashboardProvider {
         <div class="section">
           <h2 class="section-title maintenance-title">
             <span class="maintenance-icon"></span>
-            Scheduled Maintenance (${activeMaintenance.length})
+            ${vscode.l10n.t('Scheduled Maintenance')} (${activeMaintenance.length})
           </h2>
           <div class="maintenance-list">
             ${activeMaintenance.map((m) => this.renderMaintenance(m)).join('\n')}
@@ -240,7 +245,7 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>xcsh Cloud Status</title>
+  <title>${vscode.l10n.t('xcsh Cloud Status')}</title>
   <style>${this.getStyles()}</style>
 </head>
 <body>
@@ -248,16 +253,16 @@ export class CloudStatusDashboardProvider {
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('observability')}
-      <span class="title">Cloud Status Dashboard</span>
+      <span class="title">${vscode.l10n.t('Cloud Status Dashboard')}</span>
     </div>
     <div class="toolbar-right">
       <button class="btn btn-secondary" id="openExternal">
         <span class="external-icon"></span>
-        Open in Browser
+        ${vscode.l10n.t('Open in Browser')}
       </button>
       <button class="btn btn-primary" id="refresh">
         <span class="refresh-icon"></span>
-        Refresh
+        ${vscode.l10n.t('Refresh')}
       </button>
     </div>
   </div>
@@ -273,7 +278,7 @@ export class CloudStatusDashboardProvider {
   <div class="container">
     <!-- Components Section -->
     <div class="section">
-      <h2 class="section-title">Service Status</h2>
+      <h2 class="section-title">${vscode.l10n.t('Service Status')}</h2>
       <div class="component-groups">
         ${groupsHtml}
         ${standaloneHtml}
@@ -289,7 +294,7 @@ export class CloudStatusDashboardProvider {
     <!-- Empty State -->
     ${
       unresolvedIncidents.length === 0 && activeMaintenance.length === 0
-        ? '<div class="empty-state"><span class="check-icon"></span>No active incidents or scheduled maintenance</div>'
+        ? `<div class="empty-state"><span class="check-icon"></span>${vscode.l10n.t('No active incidents or scheduled maintenance')}</div>`
         : ''
     }
   </div>
@@ -356,13 +361,13 @@ export class CloudStatusDashboardProvider {
         </div>
         <div class="incident-details">
           <div class="incident-meta">
-            <span class="meta-item"><strong>Impact:</strong> ${incident.impact}</span>
-            <span class="meta-item"><strong>Started:</strong> ${startedAt}</span>
+            <span class="meta-item"><strong>${vscode.l10n.t('Impact:')}</strong> ${incident.impact}</span>
+            <span class="meta-item"><strong>${vscode.l10n.t('Started:')}</strong> ${startedAt}</span>
           </div>
-          ${affectedComponents ? `<div class="affected"><strong>Affected:</strong> ${escapeHtml(affectedComponents)}</div>` : ''}
-          ${latestUpdate ? `<div class="latest-update"><strong>Latest Update:</strong> ${escapeHtml(latestUpdate.body)}</div>` : ''}
+          ${affectedComponents ? `<div class="affected"><strong>${vscode.l10n.t('Affected:')}</strong> ${escapeHtml(affectedComponents)}</div>` : ''}
+          ${latestUpdate ? `<div class="latest-update"><strong>${vscode.l10n.t('Latest Update:')}</strong> ${escapeHtml(latestUpdate.body)}</div>` : ''}
         </div>
-        <a href="${incident.shortlink}" class="incident-link" target="_blank">View Details</a>
+        <a href="${incident.shortlink}" class="incident-link" target="_blank">${vscode.l10n.t('View Details')}</a>
       </div>
     `;
   }
@@ -384,11 +389,11 @@ export class CloudStatusDashboardProvider {
         </div>
         <div class="maintenance-details">
           <div class="maintenance-meta">
-            <span class="meta-item"><strong>Scheduled:</strong> ${scheduledFor} - ${scheduledUntil}</span>
+            <span class="meta-item"><strong>${vscode.l10n.t('Scheduled:')}</strong> ${scheduledFor} - ${scheduledUntil}</span>
           </div>
-          ${affectedComponents ? `<div class="affected"><strong>Affected:</strong> ${escapeHtml(affectedComponents)}</div>` : ''}
+          ${affectedComponents ? `<div class="affected"><strong>${vscode.l10n.t('Affected:')}</strong> ${escapeHtml(affectedComponents)}</div>` : ''}
         </div>
-        <a href="${maintenance.shortlink}" class="maintenance-link" target="_blank">View Details</a>
+        <a href="${maintenance.shortlink}" class="maintenance-link" target="_blank">${vscode.l10n.t('View Details')}</a>
       </div>
     `;
   }
@@ -405,28 +410,28 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>xcsh Cloud Status - Error</title>
+  <title>${vscode.l10n.t('xcsh Cloud Status')} - ${vscode.l10n.t('Error')}</title>
   <style>${this.getStyles()}</style>
 </head>
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('observability')}
-      <span class="title">Cloud Status Dashboard</span>
+      <span class="title">${vscode.l10n.t('Cloud Status Dashboard')}</span>
     </div>
     <div class="toolbar-right">
       <button class="btn btn-primary" id="refresh">
         <span class="refresh-icon"></span>
-        Retry
+        ${vscode.l10n.t('Retry')}
       </button>
     </div>
   </div>
   <div class="container">
     <div class="error-state">
       <span class="error-icon"></span>
-      <h2>Failed to Load Status</h2>
+      <h2>${vscode.l10n.t('Failed to Load Status')}</h2>
       <p>${escapeHtml(message)}</p>
-      <button class="btn btn-primary" id="retryBtn">Try Again</button>
+      <button class="btn btn-primary" id="retryBtn">${vscode.l10n.t('Try Again')}</button>
     </div>
   </div>
   <script nonce="${nonce}">${this.getScript()}</script>
@@ -869,19 +874,19 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>Maintenance Details</title>
+  <title>${vscode.l10n.t('Maintenance Details')}</title>
   <style>${this.getMaintenanceStyles()}</style>
 </head>
 <body>
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('shared-configuration')}
-      <span class="title">Scheduled Maintenance</span>
+      <span class="title">${vscode.l10n.t('Scheduled Maintenance')}</span>
     </div>
     <div class="toolbar-right">
       <button class="btn btn-secondary" id="openExternal">
         <span class="external-icon"></span>
-        Open in Browser
+        ${vscode.l10n.t('Open in Browser')}
       </button>
     </div>
   </div>
@@ -894,29 +899,29 @@ export class CloudStatusDashboardProvider {
 
     <div class="info-grid">
       <div class="info-card">
-        <h3>Schedule</h3>
+        <h3>${vscode.l10n.t('Schedule')}</h3>
         <div class="info-item">
-          <span class="label">Start:</span>
+          <span class="label">${vscode.l10n.t('Start:')}</span>
           <span class="value">${scheduledFor}</span>
         </div>
         <div class="info-item">
-          <span class="label">End:</span>
+          <span class="label">${vscode.l10n.t('End:')}</span>
           <span class="value">${scheduledUntil}</span>
         </div>
       </div>
 
       <div class="info-card">
-        <h3>Details</h3>
+        <h3>${vscode.l10n.t('Details')}</h3>
         <div class="info-item">
-          <span class="label">Impact:</span>
+          <span class="label">${vscode.l10n.t('Impact:')}</span>
           <span class="value impact-${maintenance.impact}">${maintenance.impact}</span>
         </div>
         <div class="info-item">
-          <span class="label">Created:</span>
+          <span class="label">${vscode.l10n.t('Created:')}</span>
           <span class="value">${createdAt}</span>
         </div>
         <div class="info-item">
-          <span class="label">Updated:</span>
+          <span class="label">${vscode.l10n.t('Updated:')}</span>
           <span class="value">${updatedAt}</span>
         </div>
       </div>
@@ -926,7 +931,7 @@ export class CloudStatusDashboardProvider {
       affectedComponents.length > 0
         ? `
     <div class="section">
-      <h2>Affected Components</h2>
+      <h2>${vscode.l10n.t('Affected Components')}</h2>
       <div class="components-list">
         ${affectedComponents.map((c) => `<span class="component-badge">${escapeHtml(c)}</span>`).join('\n')}
       </div>
@@ -939,7 +944,7 @@ export class CloudStatusDashboardProvider {
       maintenance.incident_updates.length > 0
         ? `
     <div class="section">
-      <h2>Updates Timeline</h2>
+      <h2>${vscode.l10n.t('Updates Timeline')}</h2>
       <div class="updates-list">
         ${updatesHtml}
       </div>
@@ -1188,7 +1193,7 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>Incident Details</title>
+  <title>${vscode.l10n.t('Incident Details')}</title>
   <style>${this.getMaintenanceStyles()}
     .incident-icon::before {
       content: "⚠️";
@@ -1220,12 +1225,12 @@ export class CloudStatusDashboardProvider {
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('audit-logs-and-alerts')}
-      <span class="title">Active Incident</span>
+      <span class="title">${vscode.l10n.t('Active Incident')}</span>
     </div>
     <div class="toolbar-right">
       <button class="btn btn-secondary" id="openExternal">
         <span class="external-icon"></span>
-        Open in Browser
+        ${vscode.l10n.t('Open in Browser')}
       </button>
     </div>
   </div>
@@ -1238,29 +1243,29 @@ export class CloudStatusDashboardProvider {
 
     <div class="info-grid">
       <div class="info-card">
-        <h3>Timeline</h3>
+        <h3>${vscode.l10n.t('Timeline')}</h3>
         <div class="info-item">
-          <span class="label">Started:</span>
+          <span class="label">${vscode.l10n.t('Started:')}</span>
           <span class="value">${startedAt}</span>
         </div>
         <div class="info-item">
-          <span class="label">Resolved:</span>
+          <span class="label">${vscode.l10n.t('Resolved:')}</span>
           <span class="value">${resolvedAt}</span>
         </div>
       </div>
 
       <div class="info-card">
-        <h3>Details</h3>
+        <h3>${vscode.l10n.t('Details')}</h3>
         <div class="info-item">
-          <span class="label">Impact:</span>
+          <span class="label">${vscode.l10n.t('Impact:')}</span>
           <span class="value impact-${incident.impact}">${incident.impact}</span>
         </div>
         <div class="info-item">
-          <span class="label">Created:</span>
+          <span class="label">${vscode.l10n.t('Created:')}</span>
           <span class="value">${createdAt}</span>
         </div>
         <div class="info-item">
-          <span class="label">Updated:</span>
+          <span class="label">${vscode.l10n.t('Updated:')}</span>
           <span class="value">${updatedAt}</span>
         </div>
       </div>
@@ -1270,7 +1275,7 @@ export class CloudStatusDashboardProvider {
       affectedComponents.length > 0
         ? `
     <div class="section">
-      <h2>Affected Components</h2>
+      <h2>${vscode.l10n.t('Affected Components')}</h2>
       <div class="components-list">
         ${affectedComponents.map((c) => `<span class="component-badge">${escapeHtml(c)}</span>`).join('\n')}
       </div>
@@ -1283,7 +1288,7 @@ export class CloudStatusDashboardProvider {
       incident.incident_updates.length > 0
         ? `
     <div class="section">
-      <h2>Incident Updates</h2>
+      <h2>${vscode.l10n.t('Incident Updates')}</h2>
       <div class="updates-list">
         ${updatesHtml}
       </div>
@@ -1369,7 +1374,7 @@ export class CloudStatusDashboardProvider {
             `;
             })
             .join('\n')
-        : '<div class="no-incidents">No active incidents affecting this service</div>';
+        : `<div class="no-incidents">${vscode.l10n.t('No active incidents affecting this service')}</div>`;
 
     // Build resolved incidents HTML
     const resolvedIncidentsHtml =
@@ -1392,7 +1397,7 @@ export class CloudStatusDashboardProvider {
             `;
             })
             .join('\n')
-        : '<div class="no-incidents">No recent resolved incidents</div>';
+        : `<div class="no-incidents">${vscode.l10n.t('No recent resolved incidents')}</div>`;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -1400,7 +1405,7 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>Service Details</title>
+  <title>${vscode.l10n.t('Service Details')}</title>
   <style>${this.getMaintenanceStyles()}
     .component-icon::before {
       content: "🔧";
@@ -1493,12 +1498,12 @@ export class CloudStatusDashboardProvider {
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('platform')}
-      <span class="title">Service Status</span>
+      <span class="title">${vscode.l10n.t('Service Status')}</span>
     </div>
     <div class="toolbar-right">
       <button class="btn btn-secondary" id="openExternal">
         <span class="external-icon"></span>
-        Open Status Page
+        ${vscode.l10n.t('Open Status Page')}
       </button>
     </div>
   </div>
@@ -1511,21 +1516,21 @@ export class CloudStatusDashboardProvider {
 
     <div class="info-grid">
       <div class="info-card">
-        <h3>Status Information</h3>
+        <h3>${vscode.l10n.t('Status Information')}</h3>
         <div class="info-item">
-          <span class="label">Current Status:</span>
+          <span class="label">${vscode.l10n.t('Current Status:')}</span>
           <span class="value">${getStatusDisplayText(component.status)}</span>
         </div>
         <div class="info-item">
-          <span class="label">Last Updated:</span>
+          <span class="label">${vscode.l10n.t('Last Updated:')}</span>
           <span class="value">${updatedAt}</span>
         </div>
       </div>
 
       <div class="info-card">
-        <h3>Service Details</h3>
+        <h3>${vscode.l10n.t('Service Details')}</h3>
         <div class="info-item">
-          <span class="label">Service Start:</span>
+          <span class="label">${vscode.l10n.t('Service Start:')}</span>
           <span class="value">${startDate}</span>
         </div>
         <div class="info-item">
@@ -1546,14 +1551,14 @@ export class CloudStatusDashboardProvider {
     </div>
 
     <div class="section">
-      <h2>Active Incidents (${activeIncidents.length})</h2>
+      <h2>${vscode.l10n.t('Active Incidents')} (${activeIncidents.length})</h2>
       <div class="incidents-list">
         ${activeIncidentsHtml}
       </div>
     </div>
 
     <div class="section">
-      <h2>Recent Incident History</h2>
+      <h2>${vscode.l10n.t('Recent Incident History')}</h2>
       <div class="incidents-list">
         ${resolvedIncidentsHtml}
       </div>
@@ -1675,7 +1680,7 @@ export class CloudStatusDashboardProvider {
             `;
             })
             .join('\n')
-        : '<div class="no-incidents">No active incidents affecting this PoP</div>';
+        : `<div class="no-incidents">${vscode.l10n.t('No active incidents affecting this PoP')}</div>`;
 
     // Build resolved incidents HTML
     const resolvedIncidentsHtml =
@@ -1698,7 +1703,7 @@ export class CloudStatusDashboardProvider {
             `;
             })
             .join('\n')
-        : '<div class="no-incidents">No recent resolved incidents</div>';
+        : `<div class="no-incidents">${vscode.l10n.t('No recent resolved incidents')}</div>`;
 
     // Build XC Regional Edge section
     // Note: F5-managed Regional Edge sites only expose labels data, not full spec with coordinates
@@ -1721,7 +1726,7 @@ export class CloudStatusDashboardProvider {
 
       xcDetailsHtml = `
       <div class="info-card xc-details">
-        <h3>Regional Edge Details <span class="xc-badge">xcsh</span></h3>
+        <h3>${vscode.l10n.t('Regional Edge Details')} <span class="xc-badge">xcsh</span></h3>
         <div class="info-item">
           <span class="label">Site Name:</span>
           <span class="value">${escapeHtml(siteName)}</span>
@@ -1773,8 +1778,8 @@ export class CloudStatusDashboardProvider {
       <div class="info-card auth-notice">
         <div class="auth-icon">ℹ️</div>
         <div class="auth-message">
-          <strong>Extended Details Available</strong>
-          <p>Sign in to an xcsh context to view additional Regional Edge details including region classification and tenant information.</p>
+          <strong>${vscode.l10n.t('Extended Details Available')}</strong>
+          <p>${vscode.l10n.t('Sign in to an xcsh context to view additional Regional Edge details including region classification and tenant information.')}</p>
         </div>
       </div>
       `;
@@ -1786,7 +1791,7 @@ export class CloudStatusDashboardProvider {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource};">
-  <title>PoP Details</title>
+  <title>${vscode.l10n.t('PoP Details')}</title>
   <style>${this.getMaintenanceStyles()}
     .pop-icon::before {
       content: "🌐";
@@ -1921,12 +1926,12 @@ export class CloudStatusDashboardProvider {
   <div class="toolbar">
     <div class="toolbar-left">
       ${getToolbarIconSvg('multi-cloud-network-connect')}
-      <span class="title">Regional Edge Status</span>
+      <span class="title">${vscode.l10n.t('Regional Edge Status')}</span>
     </div>
     <div class="toolbar-right">
       <button class="btn btn-secondary" id="openExternal">
         <span class="external-icon"></span>
-        Open Status Page
+        ${vscode.l10n.t('Open Status Page')}
       </button>
     </div>
   </div>
@@ -1939,7 +1944,7 @@ export class CloudStatusDashboardProvider {
 
     <div class="info-grid">
       <div class="info-card">
-        <h3>Cloud Status</h3>
+        <h3>${vscode.l10n.t('Cloud Status')}</h3>
         <div class="info-item">
           <span class="label">Current Status:</span>
           <span class="value">${getStatusDisplayText(component.status)}</span>
@@ -1961,7 +1966,7 @@ export class CloudStatusDashboardProvider {
       </div>
 
       <div class="info-card">
-        <h3>Location</h3>
+        <h3>${vscode.l10n.t('Location')}</h3>
         <div class="info-item">
           <span class="label">City:</span>
           <span class="value">${escapeHtml(city)}</span>
@@ -2006,14 +2011,14 @@ export class CloudStatusDashboardProvider {
     ${xcDetailsHtml}
 
     <div class="section">
-      <h2>Active Incidents (${activeIncidents.length})</h2>
+      <h2>${vscode.l10n.t('Active Incidents')} (${activeIncidents.length})</h2>
       <div class="incidents-list">
         ${activeIncidentsHtml}
       </div>
     </div>
 
     <div class="section">
-      <h2>Recent Incident History</h2>
+      <h2>${vscode.l10n.t('Recent Incident History')}</h2>
       <div class="incidents-list">
         ${resolvedIncidentsHtml}
       </div>

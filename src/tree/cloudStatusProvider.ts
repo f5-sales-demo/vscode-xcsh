@@ -141,7 +141,7 @@ export class CloudStatusProvider implements vscode.TreeDataProvider<CloudStatusT
 
       return items;
     } catch (error) {
-      return [new ErrorNode(error instanceof Error ? error.message : 'Failed to load status')];
+      return [new ErrorNode(error instanceof Error ? error.message : vscode.l10n.t('Failed to load status'))];
     }
   }
 }
@@ -162,7 +162,7 @@ class ComponentGroupNode implements CloudStatusTreeItem {
     item.contextValue = CloudStatusContext.GROUP;
     item.iconPath = getStatusIcon(worstStatus);
     item.description = getStatusDisplayText(worstStatus);
-    item.tooltip = `${this.group.name}\n${this.children.length} components\nStatus: ${getStatusDisplayText(worstStatus)}`;
+    item.tooltip = `${this.group.name}\n${vscode.l10n.t('{0} components', this.children.length)}\n${vscode.l10n.t('Status')}: ${getStatusDisplayText(worstStatus)}`;
     return item;
   }
 
@@ -205,7 +205,7 @@ class ComponentNode implements CloudStatusTreeItem {
     item.description = getStatusDisplayText(this.component.status);
 
     item.tooltip = new vscode.MarkdownString(
-      `**${this.component.name}**\n\nStatus: ${getStatusDisplayText(this.component.status)}${this.component.description ? `\n\n${this.component.description}` : ''}`,
+      `**${this.component.name}**\n\n${vscode.l10n.t('Status')}: ${getStatusDisplayText(this.component.status)}${this.component.description ? `\n\n${this.component.description}` : ''}`,
     );
 
     // Use PoP-specific command for Regional Edge PoPs
@@ -237,11 +237,11 @@ class IncidentsGroupNode implements CloudStatusTreeItem {
   constructor(private readonly incidents: Incident[]) {}
 
   getTreeItem(): vscode.TreeItem {
-    const label = `Active Incidents (${this.incidents.length})`;
+    const label = vscode.l10n.t('Active Incidents ({0})', this.incidents.length);
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Expanded);
     item.contextValue = CloudStatusContext.INCIDENTS_GROUP;
     item.iconPath = new vscode.ThemeIcon('bell-dot', new vscode.ThemeColor('list.errorForeground'));
-    item.tooltip = `${this.incidents.length} active incident${this.incidents.length === 1 ? '' : 's'}`;
+    item.tooltip = vscode.l10n.t('{0} active incidents', this.incidents.length);
     return item;
   }
 
@@ -267,14 +267,14 @@ class IncidentNode implements CloudStatusTreeItem {
     const affectedComponents = this.incident.components.map((c) => c.name).join(', ');
 
     let tooltipContent = `**${this.incident.name}**\n\n`;
-    tooltipContent += `Status: ${getIncidentStatusText(this.incident.status)}\n`;
-    tooltipContent += `Impact: ${this.incident.impact}\n`;
-    tooltipContent += `Started: ${startedAt}\n`;
+    tooltipContent += `${vscode.l10n.t('Status')}: ${getIncidentStatusText(this.incident.status)}\n`;
+    tooltipContent += `${vscode.l10n.t('Impact')}: ${this.incident.impact}\n`;
+    tooltipContent += `${vscode.l10n.t('Started')}: ${startedAt}\n`;
     if (affectedComponents) {
-      tooltipContent += `\nAffected: ${affectedComponents}\n`;
+      tooltipContent += `\n${vscode.l10n.t('Affected')}: ${affectedComponents}\n`;
     }
     if (latestUpdate) {
-      tooltipContent += `\n---\n\n**Latest Update:**\n${latestUpdate.body}`;
+      tooltipContent += `\n---\n\n**${vscode.l10n.t('Latest Update')}:**\n${latestUpdate.body}`;
     }
 
     item.tooltip = new vscode.MarkdownString(tooltipContent);
@@ -298,11 +298,11 @@ class MaintenanceGroupNode implements CloudStatusTreeItem {
   constructor(private readonly maintenances: ScheduledMaintenance[]) {}
 
   getTreeItem(): vscode.TreeItem {
-    const label = `Scheduled Maintenance (${this.maintenances.length})`;
+    const label = vscode.l10n.t('Scheduled Maintenance ({0})', this.maintenances.length);
     const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Collapsed);
     item.contextValue = CloudStatusContext.MAINTENANCE_GROUP;
     item.iconPath = new vscode.ThemeIcon('calendar', new vscode.ThemeColor('list.deemphasizedForeground'));
-    item.tooltip = `${this.maintenances.length} scheduled maintenance${this.maintenances.length === 1 ? '' : 's'}`;
+    item.tooltip = vscode.l10n.t('{0} scheduled maintenances', this.maintenances.length);
     return item;
   }
 
@@ -328,10 +328,10 @@ class MaintenanceNode implements CloudStatusTreeItem {
     const affectedComponents = this.maintenance.components.map((c) => c.name).join(', ');
 
     let tooltipContent = `**${this.maintenance.name}**\n\n`;
-    tooltipContent += `Status: ${getIncidentStatusText(this.maintenance.status)}\n`;
-    tooltipContent += `Scheduled: ${scheduledFor} - ${scheduledUntil}\n`;
+    tooltipContent += `${vscode.l10n.t('Status')}: ${getIncidentStatusText(this.maintenance.status)}\n`;
+    tooltipContent += `${vscode.l10n.t('Scheduled')}: ${scheduledFor} - ${scheduledUntil}\n`;
     if (affectedComponents) {
-      tooltipContent += `\nAffected: ${affectedComponents}`;
+      tooltipContent += `\n${vscode.l10n.t('Affected')}: ${affectedComponents}`;
     }
 
     item.tooltip = new vscode.MarkdownString(tooltipContent);
@@ -355,10 +355,10 @@ class ErrorNode implements CloudStatusTreeItem {
   constructor(private readonly message: string) {}
 
   getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem('Error loading status', vscode.TreeItemCollapsibleState.None);
+    const item = new vscode.TreeItem(vscode.l10n.t('Error loading status'), vscode.TreeItemCollapsibleState.None);
     item.contextValue = CloudStatusContext.ERROR;
     item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('list.errorForeground'));
-    item.description = 'Click to retry';
+    item.description = vscode.l10n.t('Click to retry');
     item.tooltip = this.message;
     item.command = {
       command: 'f5xc.cloudStatus.refresh',
