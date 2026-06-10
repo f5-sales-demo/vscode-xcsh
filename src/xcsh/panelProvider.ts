@@ -80,6 +80,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
 
     this.sendWelcomeState();
     this.sendL10nBundle();
+    this.sendLocale();
 
     webviewView.onDidDispose(() => {
       this.webviewView = null;
@@ -139,6 +140,12 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       });
   }
 
+  private sendLocale(): void {
+    this.rpcBridge.setLocale(vscode.env.language).catch(() => {
+      this.logger.warn('Failed to set locale on xcsh (may not support set_locale yet)');
+    });
+  }
+
   private sendL10nBundle(): void {
     const view = this.webviewView;
     if (!view) {
@@ -164,7 +171,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       case 'prompt': {
         const text = msg.text as string | undefined;
         if (text) {
-          this.rpcBridge.prompt(text);
+          this.rpcBridge.prompt(text, { locale: vscode.env.language });
         }
         break;
       }

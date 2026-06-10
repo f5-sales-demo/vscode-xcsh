@@ -13,6 +13,7 @@ function createMockBridge() {
     getState: jest.fn().mockResolvedValue({ model: { name: 'test' } }),
     getIntegrations: jest.fn().mockRejectedValue(new Error('not supported')),
     sendCommand: jest.fn().mockResolvedValue({ type: 'response', success: true }),
+    setLocale: jest.fn().mockResolvedValue(undefined),
   } as unknown as XcshRpcBridge;
 }
 
@@ -70,6 +71,7 @@ describe('XcshPanelProvider', () => {
         getState: jest.fn().mockResolvedValue({ model: { name: 'test' } }),
         getIntegrations: jest.fn().mockRejectedValue(new Error('not supported')),
         sendCommand: sendCommandMock,
+        setLocale: jest.fn().mockResolvedValue(undefined),
       } as unknown as XcshRpcBridge;
       const provider = new XcshPanelProvider(mockUri, bridge);
       const { mockWebviewView, messageHandlers: handlers } = createMockWebviewView();
@@ -120,6 +122,68 @@ describe('XcshPanelProvider', () => {
       const vscode = await import('vscode');
       (vscode.window.showOpenDialog as jest.Mock).mockResolvedValue(undefined);
       expect(() => dispatch({ type: 'request_file_picker' })).not.toThrow();
+    });
+
+    it('routes prompt with locale option from vscode.env.language', async () => {
+      const vscode = await import('vscode');
+      const originalLang = vscode.env.language;
+      (vscode.env as { language: string }).language = 'ko';
+
+      const bridge = jest.requireMock('../../xcsh/rpcBridge')._lastBridge ?? { prompt: jest.fn() };
+      // Use the real bridge from the provider
+      const promptMock = jest.fn();
+      const testBridge = {
+        onEvent: jest.fn(() => ({ dispose: jest.fn() })),
+        onMessageStream: jest.fn(() => ({ dispose: jest.fn() })),
+        prompt: promptMock,
+        abort: jest.fn(),
+        getState: jest.fn().mockResolvedValue({ model: { name: 'test' } }),
+        getIntegrations: jest.fn().mockRejectedValue(new Error('not supported')),
+        sendCommand: jest.fn().mockResolvedValue({ type: 'response', success: true }),
+        setLocale: jest.fn().mockResolvedValue(undefined),
+      } as unknown as XcshRpcBridge;
+      const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
+      const provider = new XcshPanelProvider(mockUri, testBridge);
+      const { mockWebviewView, messageHandlers: handlers } = createMockWebviewView();
+      provider.resolveWebviewView(
+        mockWebviewView,
+        {} as vscode.WebviewViewResolveContext,
+        {} as vscode.CancellationToken,
+      );
+
+      const fn = handlers[0];
+      if (fn) {
+        fn({ type: 'prompt', text: '안녕하세요' });
+      }
+      expect(promptMock).toHaveBeenCalledWith('안녕하세요', { locale: 'ko' });
+
+      (vscode.env as { language: string }).language = originalLang;
+      void bridge;
+    });
+
+    it('calls setLocale on resolveWebviewView', async () => {
+      const vscode = await import('vscode');
+      const setLocaleMock = jest.fn().mockResolvedValue(undefined);
+      const testBridge = {
+        onEvent: jest.fn(() => ({ dispose: jest.fn() })),
+        onMessageStream: jest.fn(() => ({ dispose: jest.fn() })),
+        prompt: jest.fn(),
+        abort: jest.fn(),
+        getState: jest.fn().mockResolvedValue({ model: { name: 'test' } }),
+        getIntegrations: jest.fn().mockRejectedValue(new Error('not supported')),
+        sendCommand: jest.fn().mockResolvedValue({ type: 'response', success: true }),
+        setLocale: setLocaleMock,
+      } as unknown as XcshRpcBridge;
+      const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
+      const provider = new XcshPanelProvider(mockUri, testBridge);
+      const { mockWebviewView } = createMockWebviewView();
+      provider.resolveWebviewView(
+        mockWebviewView,
+        {} as vscode.WebviewViewResolveContext,
+        {} as vscode.CancellationToken,
+      );
+
+      expect(setLocaleMock).toHaveBeenCalledWith(vscode.env.language);
     });
 
     it('request_file_picker posts file_attached message when file is selected', async () => {

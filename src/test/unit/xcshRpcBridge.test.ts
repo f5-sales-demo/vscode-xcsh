@@ -327,4 +327,58 @@ describe('XcshRpcBridge', () => {
 
     await expect(promise).rejects.toThrow('Unknown level');
   });
+
+  it('setLocale sends set_locale command with locale string', async () => {
+    const promise = bridge.setLocale('ko');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+    expect(sent.type).toBe('set_locale');
+    expect(sent.locale).toBe('ko');
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_locale',
+      success: true,
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await promise;
+  });
+
+  it('setLocale throws on failure response', async () => {
+    const promise = bridge.setLocale('xx-invalid');
+
+    const written = await new Promise<string>((resolve) => {
+      stdin.once('data', (chunk: Buffer) => resolve(chunk.toString('utf-8')));
+    });
+    const sent = JSON.parse(written.trim());
+
+    const response: RpcResponse = {
+      id: sent.id,
+      type: 'response',
+      command: 'set_locale',
+      success: false,
+      error: 'Invalid locale',
+    };
+    stdout.write(`${JSON.stringify(response)}\n`);
+
+    await expect(promise).rejects.toThrow('Invalid locale');
+  });
+
+  it('prompt includes locale option in serialized JSON when provided', () => {
+    const chunks: Buffer[] = [];
+    stdin.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+    bridge.prompt('Hello', { locale: 'ko' });
+
+    const written = Buffer.concat(chunks).toString('utf-8');
+    const parsed = JSON.parse(written.trim());
+    expect(parsed.type).toBe('prompt');
+    expect(parsed.message).toBe('Hello');
+    expect(parsed.locale).toBe('ko');
+  });
 });

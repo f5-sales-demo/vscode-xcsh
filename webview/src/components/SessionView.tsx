@@ -3,6 +3,7 @@
 
 import { useCallback, useRef, useState, useSyncExternalStore } from 'react';
 import { PlusIcon } from '../assets/icons';
+import { t } from '../lib/i18n';
 import { createNewSession, getActiveSession, subscribe } from '../state/sessions';
 import { ChatContainer } from './ChatContainer';
 
@@ -50,7 +51,7 @@ export function SessionView() {
           )}
         </div>
         <div className="headerSpacer" />
-        <button className="iconButton" type="button" title="New conversation" onClick={() => createNewSession()}>
+        <button className="iconButton" type="button" title={t('New conversation')} onClick={() => createNewSession()}>
           <PlusIcon />
         </button>
       </div>
@@ -61,7 +62,7 @@ export function SessionView() {
           ) : (
             <div className="chatContainer">
               <div className="emptyState">
-                <div className="emptyStateContent">What can I help you with?</div>
+                <div className="emptyStateContent">{t('What can I help you with?')}</div>
               </div>
             </div>
           )}
