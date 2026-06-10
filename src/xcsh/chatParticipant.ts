@@ -288,7 +288,7 @@ export function registerChatParticipant(
       });
     });
 
-    rpcBridge.prompt(enrichedPrompt);
+    rpcBridge.prompt(enrichedPrompt, { locale: vscode.env.language });
 
     try {
       await messagePromise;

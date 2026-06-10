@@ -128,6 +128,7 @@ export async function activateXcsh(
       if (newProcess?.stdin && newProcess?.stdout) {
         rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
         registerHostToolsOnBridge(rpcBridge);
+        rpcBridge.setLocale(vscode.env.language).catch(() => {});
       }
     }),
   );
@@ -142,12 +143,18 @@ export async function activateXcsh(
       if (newProcess?.stdin && newProcess?.stdout) {
         rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
         registerHostToolsOnBridge(rpcBridge);
+        rpcBridge.setLocale(vscode.env.language).catch(() => {});
       }
     }),
   );
 
   // Register host tools and handler
   registerHostToolsOnBridge(rpcBridge);
+
+  // Set locale so xcsh responds in the user's display language
+  rpcBridge.setLocale(vscode.env.language).catch(() => {
+    logger.warn('Failed to set locale on xcsh');
+  });
 
   // Register Language Model Tools for agent mode
   registerLanguageModelTools(extensionContext);
@@ -219,6 +226,7 @@ export async function activateXcsh(
       if (newProcess?.stdin && newProcess?.stdout) {
         rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
         registerHostToolsOnBridge(rpcBridge);
+        rpcBridge.setLocale(vscode.env.language).catch(() => {});
       }
 
       void vscode.window.showInformationMessage('xcsh restarted');

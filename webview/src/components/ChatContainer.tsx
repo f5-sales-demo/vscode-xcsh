@@ -2,6 +2,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
+import { t } from '../lib/i18n';
 import { sendAbort, sendPrompt } from '../lib/protocol';
 import type { Session } from '../state/session';
 import { EmptyState } from './EmptyState';
@@ -83,7 +84,7 @@ export function ChatContainer({ session }: ChatContainerProps) {
               session.notify();
             }}
           >
-            Dismiss
+            {t('Dismiss')}
           </button>
         </div>
       )}

@@ -163,6 +163,13 @@ export class XcshRpcBridge implements vscode.Disposable {
     }
   }
 
+  async setLocale(locale: string): Promise<void> {
+    const response = await this.sendCommand({ type: 'set_locale', locale });
+    if (!response.success) {
+      throw new Error(response.error ?? 'Failed to set locale');
+    }
+  }
+
   // ───────── event handling ─────────
 
   /**

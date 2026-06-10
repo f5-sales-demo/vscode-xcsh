@@ -187,7 +187,9 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
               setShowModesMenu(!showModesMenu);
             }}
           >
-            <span>{permissionMode === 'auto' ? 'Auto' : permissionMode === 'confirm' ? 'Confirm' : 'Read-only'}</span>
+            <span>
+              {permissionMode === 'auto' ? t('Auto') : permissionMode === 'confirm' ? t('Confirm') : t('Read-only')}
+            </span>
           </button>
         </div>
         {busy ? (
