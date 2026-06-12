@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { SLUG_LIST } from '@f5xc-salesdemos/i18n-core';
 
-const slugs = SLUG_LIST as readonly string[];
+const slugs = SLUG_LIST;
 const l10nDir = path.resolve(import.meta.dirname, '..', 'l10n');
 const missing: string[] = [];
 
