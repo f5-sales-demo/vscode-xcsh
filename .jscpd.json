@@ -15,9 +15,6 @@
     "**/templates/**",
     "**/docs/resources/**",
     "**/docs/data-sources/**",
-    "**/docs/functions/**",
-    "**/test/**",
-    "**/__tests__/**",
-    "**/l10n/**"
+    "**/docs/functions/**"
   ]
 }
