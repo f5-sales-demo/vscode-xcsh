@@ -1,6 +1,6 @@
 ---
 title: JSON IntelliSense
-description: F5 XC リソース構成のスキーマ検証と自動補完。
+description: F5 XC リソース設定のスキーマ検証と自動補完。
 sidebar:
   order: 4
 i18n:
@@ -10,18 +10,18 @@ i18n:
 
 ## スキーマ検証
 
-この拡張機能は、一般的なリソースタイプの JSON スキーマを提供します。リソース JSON ファイルを編集する際、VS Code が構成をリアルタイムで検証し、エラーをハイライト表示します。
+この拡張機能は、一般的なリソースタイプの JSON スキーマを提供します。リソース JSON ファイルの編集時に、VS Code はリアルタイムで設定を検証し、エラーをハイライト表示します。
 
-## サポートされるスキーマ
+## サポートされているスキーマ
 
 - HTTP ロードバランサー (`.http_loadbalancer.json`)
-- オリジンプール (`.origin_pool.json`)
+- オリジンサーバープール (`.origin_pool.json`)
 - アプリファイアウォール / WAF (`.app_firewall.json`)
 - ヘルスチェック (`.healthcheck.json`)
 - TCP ロードバランサー (`.tcp_loadbalancer.json`)
-- DNS ロードバランサー (`.dns_load_balancer.json`)
-- 仮想サイト (`.virtual_site.json`)
+- DNS ロードバランシング (`.dns_load_balancer.json`)
+- バーチャルサイト (`.virtual_site.json`)
 
 ## 自動補完
 
-IntelliSense は、F5 XC OpenAPI 仕様に基づいて、フィールド名、列挙値、およびネストされたオブジェクト構造の自動補完を提供します。
+IntelliSense は、F5 XC OpenAPI 仕様に基づき、フィールド名、列挙値、およびネストされたオブジェクト構造の自動補完を提供します。
