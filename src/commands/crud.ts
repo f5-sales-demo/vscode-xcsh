@@ -894,6 +894,7 @@ function buildSpecWithDefaults(resourceTypeKey: string, includeRecommended: bool
  */
 function createResourceTemplate(resourceTypeKey: string, namespace: string): object {
   const baseTemplate = {
+    kind: resourceTypeKey,
     metadata: {
       name: `new-${resourceTypeKey}`,
       namespace,
@@ -997,27 +998,13 @@ function createResourceTemplate(resourceTypeKey: string, namespace: string): obj
 /**
  * Detect resource type from filename or content
  */
-function detectResourceType(fileName: string, _resource: object): string | undefined {
-  // Try to extract from filename pattern: *.{type}.f5xc.json or *.{type}.json
-  const patterns = [/\.([a-z_]+)\.f5xc\.json$/i, /\.([a-z_]+)\.json$/i];
-
-  for (const pattern of patterns) {
-    const match = fileName.match(pattern);
-    if (match?.[1]) {
-      const typeKey = match[1];
-      if (RESOURCE_TYPES[typeKey]) {
-        return typeKey;
-      }
-      // Try to find by API path
-      const byApiPath = getResourceTypeByApiPath(typeKey);
-      if (byApiPath) {
-        const entry = Object.entries(RESOURCE_TYPES).find(([, v]) => v === byApiPath);
-        if (entry) {
-          return entry[0];
-        }
-      }
+function detectResourceType(_fileName: string, resource: object): string | undefined {
+  const resourceAny = resource as Record<string, unknown>;
+  if (typeof resourceAny.kind === 'string' && resourceAny.kind) {
+    const kind = resourceAny.kind;
+    if (RESOURCE_TYPES[kind]) {
+      return kind;
     }
   }
-
   return undefined;
 }
