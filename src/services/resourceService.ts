@@ -1,4 +1,10 @@
 import type { F5XCClient } from '../api/client';
+import {
+  getFieldConflicts,
+  getFieldDefaults,
+  getMinimumConfigFields,
+  getServerDefaultFields,
+} from '../api/resourceTypes';
 import type { ContextManager } from '../config/contextManager';
 import { F5XCApiError } from '../utils/errors';
 import { getKindResolver } from '../xcsh/specBridge';
@@ -6,10 +12,58 @@ import { getKindResolver } from '../xcsh/specBridge';
 const piResourceManagement = require('@f5xc-salesdemos/pi-resource-management') as {
   ResourceClient: new (options: ResourceClientOptions) => ResourceClientInstance;
   toManifest: (resource: Record<string, unknown>, kind: string) => ExportedManifest;
+  applyMinimalExportFilter: (
+    spec: Record<string, unknown>,
+    filter: MinimalExportFilter | undefined,
+  ) => Record<string, unknown>;
   formatManifestOutput: (manifests: ExportedManifest[], format: ManifestOutputFormat) => string;
   parseManifests: (objects: Record<string, unknown>[], sourcePath: string) => ResourceManifest[];
   formatDiff: (diff: ResourceDiff) => string;
 };
+
+interface MinimalExportFilter {
+  serverDefaults?: Record<string, unknown>;
+  serverDefaultFields?: string[];
+  minimumConfigFields?: string[];
+  oneofDefaultVariants?: Record<string, string>;
+}
+
+export function buildMinimalExportFilter(kind: string): MinimalExportFilter | undefined {
+  const serverDefaultFieldPaths = getServerDefaultFields(kind);
+  if (serverDefaultFieldPaths.length === 0) {
+    return undefined;
+  }
+
+  const fieldDefaults = getFieldDefaults(kind);
+  const minimumConfigFieldPaths = getMinimumConfigFields(kind);
+  const conflicts = getFieldConflicts(kind);
+
+  const serverDefaults: Record<string, unknown> = {};
+  const serverDefaultFields: string[] = [];
+
+  for (const path of serverDefaultFieldPaths) {
+    const specPath = path.startsWith('spec.') ? path.slice(5) : path;
+    if (path in fieldDefaults) {
+      serverDefaults[specPath] = fieldDefaults[path];
+    } else {
+      serverDefaultFields.push(specPath);
+    }
+  }
+
+  const oneofDefaultVariants: Record<string, string> = {};
+  for (const [path, conflictList] of Object.entries(conflicts)) {
+    const specPath = path.startsWith('spec.') ? path.slice(5) : path;
+    const fieldName = specPath.split('.').pop()!;
+    const isServerDefault = serverDefaultFieldPaths.includes(path);
+    if (isServerDefault && conflictList.length > 0) {
+      oneofDefaultVariants[fieldName] = fieldName;
+    }
+  }
+
+  const minimumConfigFields = minimumConfigFieldPaths.map((p) => (p.startsWith('spec.') ? p.slice(5) : p));
+
+  return { serverDefaults, serverDefaultFields, minimumConfigFields, oneofDefaultVariants };
+}
 
 interface HttpTransportRequest {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -224,8 +278,13 @@ export class ResourceService {
       return { error: `No manifest returned for ${kind}/${name}` };
     }
 
-    const content = piResourceManagement.formatManifestOutput([result.manifest], format);
-    return { content, manifest: result.manifest };
+    const filter = buildMinimalExportFilter(kind);
+    const manifest = filter
+      ? { ...result.manifest, spec: piResourceManagement.applyMinimalExportFilter(result.manifest.spec, filter) }
+      : result.manifest;
+
+    const content = piResourceManagement.formatManifestOutput([manifest], format);
+    return { content, manifest };
   }
 
   async exportAll(
@@ -261,8 +320,15 @@ export class ResourceService {
         continue;
       }
 
-      manifests.push(exportResult.manifest);
-      contents.set(name, piResourceManagement.formatManifestOutput([exportResult.manifest], format));
+      const filter = buildMinimalExportFilter(kind);
+      const manifest = filter
+        ? {
+            ...exportResult.manifest,
+            spec: piResourceManagement.applyMinimalExportFilter(exportResult.manifest.spec, filter),
+          }
+        : exportResult.manifest;
+      manifests.push(manifest);
+      contents.set(name, piResourceManagement.formatManifestOutput([manifest], format));
     }
 
     return { manifests, contents };

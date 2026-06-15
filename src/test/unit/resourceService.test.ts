@@ -64,11 +64,20 @@ jest.mock(
         rawObject: obj,
       }));
     }),
+    applyMinimalExportFilter: jest.fn((spec: Record<string, unknown>) => spec),
     computeResourceDiff: jest.fn(),
     formatDiff: jest.fn().mockReturnValue('+ added field\n- removed field'),
   }),
   { virtual: true },
 );
+
+jest.mock('../../api/resourceTypes', () => ({
+  getServerDefaultFields: jest.fn().mockReturnValue([]),
+  getFieldDefaults: jest.fn().mockReturnValue({}),
+  getMinimumConfigFields: jest.fn().mockReturnValue([]),
+  getFieldConflicts: jest.fn().mockReturnValue({}),
+  RESOURCE_TYPES: {},
+}));
 
 jest.mock('../../xcsh/specBridge', () => ({
   getKindResolver: jest.fn().mockReturnValue(mockKindResolver),
