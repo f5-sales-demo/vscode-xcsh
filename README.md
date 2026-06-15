@@ -1,3 +1,5 @@
+🌐 English | [日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) | [한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) | [简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) | [繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) | [Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) | [Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) | [Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) | [Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) | [Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) | [العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) | [हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) | [ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
+
 # VS Code Extension
 
 [![GitHub Pages Deploy](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/github-pages-deploy.yml/badge.svg)](https://github.com/f5xc-salesdemos/vscode-f5xc-tools/actions/workflows/github-pages-deploy.yml)
