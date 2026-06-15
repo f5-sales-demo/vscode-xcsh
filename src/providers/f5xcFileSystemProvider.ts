@@ -186,8 +186,8 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
         throw new Error('API response does not contain expected metadata and spec fields');
       }
 
-      // Build the editable resource with only metadata and spec
-      const resource = { metadata, spec };
+      // Build the editable resource with kind, metadata, and spec
+      const resource = { kind: resourceType, metadata, spec };
 
       const content = JSON.stringify(resource, null, 2);
       const data = new TextEncoder().encode(content);
