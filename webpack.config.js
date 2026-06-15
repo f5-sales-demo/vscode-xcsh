@@ -36,7 +36,7 @@ const extensionConfig = {
       },
       {
         test: /\.ts$/,
-        include: /node_modules\/@f5xc-salesdemos/,
+        include: /node_modules[\\/]@f5xc-salesdemos/,
         use: [
           {
             loader: 'ts-loader',
