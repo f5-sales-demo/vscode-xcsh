@@ -233,8 +233,8 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
     }
   }
 
-  // Allow additional properties for flexibility
-  specSchema.additionalProperties = true;
+  const fieldCount = Object.keys(specSchema.properties ?? {}).length;
+  specSchema.additionalProperties = fieldCount < 5;
 
   return specSchema;
 }
@@ -324,6 +324,10 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
   // Preserve short description for tooltip detail field
   if (metadata.descriptionShort) {
     props['x-f5xc-description-short'] = metadata.descriptionShort;
+  }
+
+  if (Array.isArray(metadata.enumValues) && metadata.enumValues.length > 1) {
+    props.enum = metadata.enumValues.map(String);
   }
 
   return props;

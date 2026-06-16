@@ -9,8 +9,15 @@ import type * as vscode from 'vscode';
 import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
 import { getLogger } from './logger';
+import { getManifestKind } from './manifestDetector';
 
 const logger = getLogger();
+
+const detectionCache = new Map<string, { version: number; kind: string | undefined }>();
+
+export function clearDetectionCache(): void {
+  detectionCache.clear();
+}
 
 /**
  * Context information for JSON position
@@ -58,19 +65,42 @@ export function detectResourceType(document: vscode.TextDocument): string | unde
 
   // Check f5xc:// scheme
   if (uri.scheme === 'f5xc') {
-    // Parse: f5xc://profile/namespace/resourceType/resourceName.json
     const parts = uri.path.split('/').filter((p) => p.length > 0);
     if (parts.length >= 2) {
-      return parts[1]; // resourceType is second path component
+      return parts[1];
     }
   }
 
-  // Check file:// scheme - extract from filename
+  // Check file:// scheme - extract from filename first (fast path)
   if (uri.scheme === 'file') {
-    return extractResourceTypeFromFilename(uri.fsPath);
+    const fromFilename = extractResourceTypeFromFilename(uri.fsPath);
+    if (fromFilename) {
+      return fromFilename;
+    }
   }
 
-  return undefined;
+  // Content-based fallback: inspect file content for kind field
+  return detectResourceTypeFromContent(document);
+}
+
+function detectResourceTypeFromContent(document: vscode.TextDocument): string | undefined {
+  const cacheKey = document.uri.toString();
+  const cached = detectionCache.get(cacheKey);
+  if (cached && cached.version === document.version) {
+    return cached.kind;
+  }
+
+  const kind = getManifestKind(document.getText());
+  let validKind: string | undefined;
+  if (kind) {
+    const registry = getSchemaRegistry();
+    if (registry.hasSchema(kind)) {
+      validKind = kind;
+    }
+  }
+
+  detectionCache.set(cacheKey, { version: document.version, kind: validKind });
+  return validKind;
 }
 
 /**
@@ -494,24 +524,15 @@ export function generateObjectTemplate(
  * Check if a document is an F5 XC JSON file
  */
 export function isF5XCJsonFile(document: vscode.TextDocument): boolean {
-  // Must be JSON language
   if (document.languageId !== 'json') {
     return false;
   }
 
-  // Check URI scheme
   if (document.uri.scheme === 'f5xc') {
     return true;
   }
 
-  // Check file extension and name pattern
-  if (document.uri.scheme === 'file' && document.fileName.endsWith('.json')) {
-    // Check if filename contains resource type pattern
-    const resourceType = extractResourceTypeFromFilename(document.fileName);
-    return resourceType !== undefined;
-  }
-
-  return false;
+  return detectResourceType(document) !== undefined;
 }
 
 /**

@@ -37,5 +37,29 @@ describe('Conflict diagnostics', () => {
       };
       expect(findConflicts(specProperties, ['field_a', 'field_b'])).toEqual([]);
     });
+
+    it('handles empty specProperties', () => {
+      expect(findConflicts({}, [])).toEqual([]);
+    });
+
+    it('handles multiple conflict groups independently', () => {
+      const specProperties: Record<string, unknown> = {
+        no_waf: { 'x-f5xc-conflicts-with': ['app_firewall'] },
+        app_firewall: { 'x-f5xc-conflicts-with': ['no_waf'] },
+        no_challenge: { 'x-f5xc-conflicts-with': ['js_challenge'] },
+        js_challenge: { 'x-f5xc-conflicts-with': ['no_challenge'] },
+      };
+      const conflicts = findConflicts(specProperties, ['no_waf', 'app_firewall', 'no_challenge', 'js_challenge']);
+      expect(conflicts.length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('detects conflict when field has multiple conflicts-with entries', () => {
+      const specProperties: Record<string, unknown> = {
+        round_robin: { 'x-f5xc-conflicts-with': ['least_active', 'random'] },
+        least_active: { 'x-f5xc-conflicts-with': ['round_robin', 'random'] },
+      };
+      const conflicts = findConflicts(specProperties, ['round_robin', 'least_active']);
+      expect(conflicts.length).toBeGreaterThan(0);
+    });
   });
 });
