@@ -1,34 +1,65 @@
-🌐 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | **繁體中文** | [Español](README.es.md) |
-[Português](README.pt-br.md) | [Français](README.fr.md) |
-[Deutsch](README.de.md) | [Italiano](README.it.md) | [العربية](README.ar.md) |
-[हिन्दी](README.hi.md) | [ไทย](README.th.md)
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) |
+[日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+**繁體中文** |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
+[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
 
-# xcsh for VS Code
+# VS Code 擴充功能
 
-> 直接在 VS Code 中管理 F5 Distributed Cloud 資源
+支援 IntelliSense 和 xcsh 聊天功能的 F5 Distributed Cloud 資源管理 VS
+Code 擴充功能
 
-![xcsh](resources/screenshot-welcome.png)
+## 功能
 
-## 快速開始
-
-1. **安裝擴充功能** — 在 VS Code 擴充功能面板中搜尋 "xcsh"
-2. **安裝 xcsh** — `brew install f5xc-salesdemos/tap/xcsh`
-3. **新增上下文** — 開啟命令面板（`Cmd+Shift+P`）並執行 **xcsh: Add Context**
-
-## 功能概覽
-
-- **瀏覽和管理資源** — 從側邊欄建立、編輯、刪除負載平衡器、WAF 策略、來源池等
-- **AI 聊天助理** — 用自然語言向 `@xcsh` 提問來管理您的平台
-- **雲端狀態儀表板** — 即時全球基礎設施健康狀態一覽
+- **資源管理** — 直接在 VS Code 中瀏覽、建立、編輯和刪除 F5 Distributed
+  Cloud 資源
+- **雲端狀態** — 即時全球基礎設施健康狀態儀表板
+- **AI 聊天助理** — `@xcsh` 聊天參與者，以自然語言操作平台
 - **IntelliSense** — 所有 F5 XC 資源類型的 JSON Schema 自動補全
 - **多雲端整合** — 支援 AWS、Azure、GCP、GitHub、GitLab、Terraform 和 Salesforce
 
+## 快速開始
+
+1. 從
+   [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
+   安裝擴充功能
+2. 安裝 xcsh：`brew install f5xc-salesdemos/tap/xcsh`
+3. 開啟命令面板（`Cmd+Shift+P`）並執行 **xcsh: Platform Readiness** 檢查您的設定
+4. 透過 **xcsh: Add Context** 新增 F5 XC 上下文
+
+## 支援的整合
+
+| 整合項目       | 安裝                                    | 認證                |
+| -------------- | --------------------------------------- | ------------------- |
+| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | 安裝時內建          |
+| AWS CLI        | `brew install awscli`                   | `aws sso login`     |
+| Azure CLI      | `brew install azure-cli`                | `az login`          |
+| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
+| GitHub CLI     | `brew install gh`                       | `gh auth login`     |
+| GitLab CLI     | `brew install glab`                     | `glab auth login`   |
+| Terraform      | `brew install hashicorp/tap/terraform`  | 不適用              |
+| Salesforce CLI | `brew install sf`                       | `sf org login web`  |
+
+在 VS Code 中執行 **xcsh: Platform Readiness**
+即可查看已安裝和已認證的整合項目。
+
 ## 文件
 
-完整指南與參考文件請造訪
-[f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/)
+完整文件請參閱
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**。
+
+## 貢獻
+
+請參閱 [CONTRIBUTING.md](CONTRIBUTING.md) 了解工作流程規範、分支命名和 CI 要求。
 
 ## 授權條款
 
-[Apache-2.0](LICENSE)
+請參閱 [LICENSE](LICENSE)。
