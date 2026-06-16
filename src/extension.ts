@@ -5,6 +5,8 @@ import { registerCloudStatusCommands } from './commands/cloudStatus';
 import { registerContextCommands } from './commands/context';
 import { registerCrudCommands } from './commands/crud';
 import { registerDiagramCommands } from './commands/diagram';
+import { registerExportCommands } from './commands/exportResource';
+import { registerFileOperationCommands } from './commands/fileOperations';
 import { registerObservabilityCommands } from './commands/observability';
 import { ContextManager } from './config/contextManager';
 import { migrateProfilesToContexts } from './config/contextMigration';
@@ -25,6 +27,7 @@ import { ContextProvider } from './tree/contextProvider';
 import { F5XCExplorerProvider } from './tree/f5xcExplorer';
 import { SubscriptionProvider } from './tree/subscriptionProvider';
 import { getLogger, type Logger } from './utils/logger';
+import { ManifestDetector } from './utils/manifestDetector';
 import { activateXcsh } from './xcsh/index';
 
 let logger: Logger;
@@ -221,6 +224,16 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Register diagram commands
   registerDiagramCommands(context, contextManager);
+
+  // Register export commands (Export as JSON/YAML from explorer)
+  registerExportCommands(context, explorerProvider, contextManager);
+
+  // Register file-based operation commands (Apply/Create/Diff/Delete from file explorer)
+  registerFileOperationCommands(context, explorerProvider, contextManager);
+
+  // Register manifest detector for file-based operations context key
+  const manifestDetector = new ManifestDetector();
+  context.subscriptions.push(manifestDetector);
 
   // Register cloud status commands
   registerCloudStatusCommands(context, cloudStatusProvider, cloudStatusDashboardProvider);

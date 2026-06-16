@@ -34,6 +34,20 @@ const extensionConfig = {
           },
         ],
       },
+      {
+        test: /\.ts$/,
+        include: /node_modules[\\/]@f5xc-salesdemos/,
+        use: [
+          {
+            loader: 'ts-loader',
+            options: {
+              allowTsInNodeModules: true,
+              transpileOnly: true,
+              configFile: path.resolve(__dirname, 'tsconfig.vendor.json'),
+            },
+          },
+        ],
+      },
     ],
   },
   devtool: 'nosources-source-map',
