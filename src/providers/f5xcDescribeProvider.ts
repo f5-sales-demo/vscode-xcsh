@@ -8,6 +8,7 @@ import { API_ENDPOINTS } from '../generated/constants';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
 import { getIconForCategory, getToolbarIconSvg } from '../utils/f5xcIcons';
+import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import { renderBestPractices } from './metadataRenderer';
@@ -167,7 +168,7 @@ export class F5XCDescribeProvider {
       logger.debug(`Describing resource: ${resourceName} (${resourceType})`);
 
       const resourceTypeInfo = this.findResourceTypeInfo(resourceType);
-      const displayName = resourceTypeInfo?.displayName || resourceType;
+      const displayName = resourceTypeInfo ? getLocalizedDisplayName(resourceTypeInfo.displayName) : resourceType;
 
       let resource: Record<string, unknown>;
 

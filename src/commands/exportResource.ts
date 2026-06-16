@@ -4,6 +4,7 @@ import { ResourceService } from '../services/resourceService';
 import type { F5XCExplorerProvider, ResourceNode } from '../tree/f5xcExplorer';
 import type { ResourceTypeNodeData } from '../tree/treeTypes';
 import { showWarning, withErrorHandling } from '../utils/errors';
+import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -24,7 +25,7 @@ function getWorkspaceRoot(): vscode.Uri | undefined {
     showWarning(vscode.l10n.t('No workspace folder open. Open a folder first to export resources.'));
     return undefined;
   }
-  return folders[0]!.uri;
+  return folders[0]?.uri;
 }
 
 async function exportSingleResource(
@@ -111,7 +112,7 @@ async function exportAllResources(
   await vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
-      title: vscode.l10n.t('Exporting all {0} resources...', data.resourceType.displayName),
+      title: vscode.l10n.t('Exporting all {0} resources...', getLocalizedDisplayName(data.resourceType.displayName)),
       cancellable: false,
     },
     async () => {
@@ -133,14 +134,18 @@ async function exportAllResources(
 
       if (exportCount === 0) {
         void vscode.window.showInformationMessage(
-          vscode.l10n.t('No {0} resources found in namespace "{1}"', data.resourceType.displayName, data.namespace),
+          vscode.l10n.t(
+            'No {0} resources found in namespace "{1}"',
+            getLocalizedDisplayName(data.resourceType.displayName),
+            data.namespace,
+          ),
         );
       } else {
         void vscode.window.showInformationMessage(
           vscode.l10n.t(
             'Exported {0} {1} resources to workspace root',
             exportCount.toString(),
-            data.resourceType.displayName,
+            getLocalizedDisplayName(data.resourceType.displayName),
           ),
         );
       }

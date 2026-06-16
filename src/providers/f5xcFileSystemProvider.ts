@@ -5,6 +5,7 @@ import type { Resource } from '../api/client';
 import { RESOURCE_TYPES } from '../api/resourceTypes';
 import type { ContextManager } from '../config/contextManager';
 import { showError, showInfo } from '../utils/errors';
+import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 
 const logger = getLogger();
@@ -317,7 +318,7 @@ export class F5XCFileSystemProvider implements vscode.FileSystemProvider {
         mtime: Date.now(),
       });
 
-      showInfo(`Saved ${resourceTypeInfo.displayName}: ${resourceName}`);
+      showInfo(vscode.l10n.t('Saved {0}: {1}', getLocalizedDisplayName(resourceTypeInfo.displayName), resourceName));
       logger.info(`Saved resource to F5 XC: ${resourceName}`);
 
       // Notify that resource was updated (for tree refresh)

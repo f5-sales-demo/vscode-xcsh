@@ -28,6 +28,7 @@ import {
   getDomainUseCases,
   type UiCategory,
 } from '../generated/domainCategories';
+import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import {
   type CategoryNodeData,
@@ -326,7 +327,8 @@ class ResourceTypeNode implements F5XCTreeItem {
     const tierRequirement = getResourceTypeTierRequirement(this.data.resourceTypeKey);
 
     // Add preview badge to display name if applicable
-    const displayName = isPreview ? `${this.data.resourceType.displayName} 🧪` : this.data.resourceType.displayName;
+    const localizedName = getLocalizedDisplayName(this.data.resourceType.displayName);
+    const displayName = isPreview ? `${localizedName} 🧪` : localizedName;
 
     const item = new vscode.TreeItem(displayName, vscode.TreeItemCollapsibleState.Collapsed);
     item.contextValue = `${TreeItemContext.RESOURCE_TYPE}:${this.data.resourceTypeKey}`;
@@ -334,7 +336,7 @@ class ResourceTypeNode implements F5XCTreeItem {
 
     // Build enhanced tooltip with resource type information
     const tooltip = new vscode.MarkdownString();
-    tooltip.appendMarkdown(`**${this.data.resourceType.displayName}**`);
+    tooltip.appendMarkdown(`**${localizedName}**`);
     if (isPreview) {
       tooltip.appendMarkdown(` 🧪 *${vscode.l10n.t('(Preview)')}*`);
     }
@@ -343,7 +345,7 @@ class ResourceTypeNode implements F5XCTreeItem {
     if (this.data.resourceType.description) {
       tooltip.appendMarkdown(`${this.data.resourceType.description}\n\n`);
     }
-    tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${this.data.resourceType.category}\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${vscode.l10n.t(this.data.resourceType.category)}\n\n`);
 
     // Add tier requirement if applicable
     if (tierRequirement) {
@@ -543,9 +545,9 @@ export class ResourceNode implements F5XCTreeItem {
 
     // Use MarkdownString for richer tooltip
     const tooltip = new vscode.MarkdownString();
-    tooltip.appendMarkdown(`**${this.data.resourceType.displayName}**: ${this.data.name}\n\n`);
+    tooltip.appendMarkdown(`**${getLocalizedDisplayName(this.data.resourceType.displayName)}**: ${this.data.name}\n\n`);
     tooltip.appendMarkdown(`**${vscode.l10n.t('Namespace')}**: ${this.data.namespace}\n\n`);
-    tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${this.data.resourceType.category}\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${vscode.l10n.t(this.data.resourceType.category)}\n\n`);
     tooltip.appendMarkdown(`---\n\n`);
     tooltip.appendMarkdown(`**${vscode.l10n.t('Operations')}:**\n\n`);
     if (getPurpose) {

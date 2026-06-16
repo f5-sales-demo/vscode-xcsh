@@ -1,41 +1,70 @@
-🌐 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | [繁體中文](README.zh-tw.md) |
-[Español](README.es.md) | [Português](README.pt-br.md) |
-[Français](README.fr.md) | [Deutsch](README.de.md) | **Italiano** |
-[العربية](README.ar.md) | [हिन्दी](README.hi.md) | [ไทย](README.th.md)
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) |
+[日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+**Italiano** |
+[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
 
-# xcsh per VS Code
+# Estensione VS Code
 
-> Gestisci le risorse F5 Distributed Cloud direttamente da VS Code
+Estensione VS Code per la gestione delle risorse F5 Distributed Cloud con
+IntelliSense e chat xcsh
 
-![xcsh](resources/screenshot-welcome.png)
+## Funzionalita
+
+- **Gestione risorse** — Esplora, crea, modifica ed elimina le risorse F5
+  Distributed Cloud direttamente da VS Code
+- **Stato del cloud** — Dashboard in tempo reale sullo stato dell'infrastruttura
+  globale
+- **Assistente IA via chat** — Il partecipante alla chat `@xcsh` permette
+  operazioni sulla piattaforma in linguaggio naturale
+- **IntelliSense** — Completamento degli schemi JSON per tutti i tipi di risorse
+  F5 XC
+- **Integrazioni multi-cloud** — Compatibile con AWS, Azure, GCP, GitHub,
+  GitLab, Terraform e Salesforce
 
 ## Per iniziare
 
-1. **Installare l'estensione** — cerca « xcsh » nel pannello Estensioni di VS
-   Code
-2. **Installare xcsh** — `brew install f5xc-salesdemos/tap/xcsh`
-3. **Aggiungere un contesto** — apri il riquadro comandi (`Cmd+Shift+P`) ed
-   esegui **xcsh: Add Context**
+1. Installa l'estensione dal
+   [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
+2. Installa xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+3. Apri il riquadro comandi (`Cmd+Shift+P`) ed esegui **xcsh: Platform
+   Readiness** per verificare la configurazione
+4. Aggiungi un contesto F5 XC tramite **xcsh: Add Context**
 
-## Cosa puoi fare
+## Integrazioni supportate
 
-- **Esplorare e gestire le risorse** — crea, modifica ed elimina bilanciatori di
-  carico, policy WAF, pool di origine e molto altro dalla barra laterale
-- **Assistente IA via chat** — poni le tue domande a `@xcsh` in linguaggio
-  naturale per gestire la tua piattaforma
-- **Dashboard dello stato del cloud** — panoramica in tempo reale dello stato
-  della tua infrastruttura globale
-- **IntelliSense** — completamento degli schemi JSON per tutti i tipi di risorse
-  F5 XC
-- **Multi-cloud** — si integra con AWS, Azure, GCP, GitHub, GitLab, Terraform e
-  Salesforce
+| Integrazione   | Installazione                           | Autenticazione              |
+| -------------- | --------------------------------------- | --------------------------- |
+| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | Inclusa con l'installazione |
+| AWS CLI        | `brew install awscli`                   | `aws sso login`             |
+| Azure CLI      | `brew install azure-cli`                | `az login`                  |
+| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login`         |
+| GitHub CLI     | `brew install gh`                       | `gh auth login`             |
+| GitLab CLI     | `brew install glab`                     | `glab auth login`           |
+| Terraform      | `brew install hashicorp/tap/terraform`  | N/A                         |
+| Salesforce CLI | `brew install sf`                       | `sf org login web`          |
+
+Esegui **xcsh: Platform Readiness** in VS Code per verificare quali integrazioni
+sono installate e autenticate.
 
 ## Documentazione
 
-Guide complete e riferimenti su
-[f5xc-salesdemos.github.io/vscode-f5xc-tools](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/)
+La documentazione completa e disponibile su
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
+
+## Contribuire
+
+Consulta [CONTRIBUTING.md](CONTRIBUTING.md) per le regole del flusso di lavoro,
+la nomenclatura dei branch e i requisiti CI.
 
 ## Licenza
 
-[Apache-2.0](LICENSE)
+Consulta [LICENSE](LICENSE).

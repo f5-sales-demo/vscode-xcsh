@@ -1,39 +1,66 @@
-🌐 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | [繁體中文](README.zh-tw.md) |
-[Español](README.es.md) | [Português](README.pt-br.md) |
-[Français](README.fr.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) |
-**العربية** | [हिन्दी](README.hi.md) | [ไทย](README.th.md)
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) |
+[日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
+**العربية** | [हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/)
+| [ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
 
-# xcsh لـ VS Code
+# إضافة VS Code
 
-> إدارة موارد F5 Distributed Cloud مباشرة من VS Code
+إضافة VS Code لإدارة موارد F5 Distributed Cloud مع IntelliSense ومحادثة xcsh
 
-![xcsh](resources/screenshot-welcome.png)
+## الميزات
+
+- **إدارة الموارد** — تصفح وإنشاء وتحرير وحذف موارد F5 Distributed Cloud مباشرة
+  من VS Code
+- **حالة السحابة** — لوحة معلومات حالة البنية التحتية العالمية في الوقت الفعلي
+- **مساعد الدردشة بالذكاء الاصطناعي** — مشارك المحادثة `@xcsh` لعمليات المنصة
+  باللغة الطبيعية
+- **IntelliSense** — إكمال مخططات JSON لجميع أنواع موارد F5 XC
+- **تكامل متعدد السحابات** — يعمل مع AWS وAzure وGCP وGitHub وGitLab وTerraform
+  وSalesforce
 
 ## البدء
 
-1. **تثبيت الإضافة** — ابحث عن "xcsh" في لوحة إضافات VS Code
-2. **تثبيت xcsh** — `brew install f5xc-salesdemos/tap/xcsh`
-3. **إضافة سياق** — افتح لوحة الأوامر (`Cmd+Shift+P`) وشغّل **xcsh: Add
-   Context**
+1. ثبّت الإضافة من
+   [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
+2. ثبّت xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+3. افتح لوحة الأوامر (`Cmd+Shift+P`) وشغّل **xcsh: Platform Readiness** للتحقق
+   من الإعداد
+4. أضف سياق F5 XC عبر **xcsh: Add Context**
 
-## ما يمكنك فعله
+## التكاملات المدعومة
 
-- **تصفح وإدارة الموارد** — إنشاء وتحرير وحذف موازنات الأحمال وسياسات WAF
-  ومجموعات المصدر والمزيد من الشريط الجانبي
-- **مساعد الدردشة بالذكاء الاصطناعي** — اطرح أسئلة على `@xcsh` بلغة طبيعية
-  لإدارة منصتك
-- **لوحة معلومات حالة السحابة** — حالة البنية التحتية العالمية في الوقت الفعلي
-  بنظرة واحدة
-- **IntelliSense** — إكمال مخططات JSON لجميع أنواع موارد F5 XC
-- **متعدد السحابات** — يتكامل مع AWS وAzure وGCP وGitHub وGitLab وTerraform
-  وSalesforce
+| التكامل        | التثبيت                                 | المصادقة            |
+| -------------- | --------------------------------------- | ------------------- |
+| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | مضمّن مع التثبيت    |
+| AWS CLI        | `brew install awscli`                   | `aws sso login`     |
+| Azure CLI      | `brew install azure-cli`                | `az login`          |
+| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
+| GitHub CLI     | `brew install gh`                       | `gh auth login`     |
+| GitLab CLI     | `brew install glab`                     | `glab auth login`   |
+| Terraform      | `brew install hashicorp/tap/terraform`  | غير مطلوب           |
+| Salesforce CLI | `brew install sf`                       | `sf org login web`  |
+
+شغّل **xcsh: Platform Readiness** في VS Code لمعرفة التكاملات المثبّتة والمصادق
+عليها.
 
 ## التوثيق
 
-الأدلة الكاملة والمرجع على
-[f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/)
+التوثيق الكامل متاح على
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**.
+
+## المساهمة
+
+راجع [CONTRIBUTING.md](CONTRIBUTING.md) لمعرفة قواعد سير العمل وتسمية الفروع
+ومتطلبات CI.
 
 ## الرخصة
 
-[Apache-2.0](LICENSE)
+راجع [LICENSE](LICENSE).

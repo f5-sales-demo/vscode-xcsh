@@ -1,40 +1,68 @@
-🌐 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | [繁體中文](README.zh-tw.md) |
-[Español](README.es.md) | [Português](README.pt-br.md) |
-[Français](README.fr.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) |
-[العربية](README.ar.md) | **हिन्दी** | [ไทย](README.th.md)
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) |
+[日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
+[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) | **हिन्दी**
+| [ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
 
-# VS Code के लिए xcsh
+# VS Code Extension
 
-> VS Code से सीधे F5 Distributed Cloud संसाधनों का प्रबंधन करें
+IntelliSense और xcsh चैट के साथ F5 Distributed Cloud संसाधनों के प्रबंधन के लिए
+VS Code एक्सटेंशन
 
-![xcsh](resources/screenshot-welcome.png)
+## विशेषताएँ
+
+- **संसाधन प्रबंधन** — VS Code से सीधे F5 Distributed Cloud संसाधनों को ब्राउज़
+  करें, बनाएँ, संपादित करें और हटाएँ
+- **क्लाउड स्टेटस** — रियल-टाइम वैश्विक इन्फ्रास्ट्रक्चर हेल्थ डैशबोर्ड
+- **AI चैट सहायक** — प्राकृतिक भाषा में प्लेटफ़ॉर्म संचालन के लिए `@xcsh` चैट
+  प्रतिभागी
+- **IntelliSense** — सभी F5 XC रिसोर्स टाइप के लिए JSON स्कीमा कम्पलीशन
+- **मल्टी-क्लाउड एकीकरण** — AWS, Azure, GCP, GitHub, GitLab, Terraform और
+  Salesforce के साथ संगत
 
 ## शुरू करें
 
-1. **एक्सटेंशन इंस्टॉल करें** — VS Code एक्सटेंशन पैनल में "xcsh" खोजें
-2. **xcsh इंस्टॉल करें** — `brew install f5xc-salesdemos/tap/xcsh`
-3. **कॉन्टेक्स्ट जोड़ें** — कमांड पैलेट (`Cmd+Shift+P`) खोलें और **xcsh: Add
-   Context** चलाएँ
+1. [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
+   से एक्सटेंशन इंस्टॉल करें
+2. xcsh इंस्टॉल करें: `brew install f5xc-salesdemos/tap/xcsh`
+3. कमांड पैलेट (`Cmd+Shift+P`) खोलें और अपना सेटअप जाँचने के लिए **xcsh:
+   Platform Readiness** चलाएँ
+4. **xcsh: Add Context** द्वारा F5 XC कॉन्टेक्स्ट जोड़ें
 
-## आप क्या कर सकते हैं
+## समर्थित एकीकरण
 
-- **संसाधन ब्राउज़ और प्रबंधित करें** — साइडबार से लोड बैलेंसर, WAF पॉलिसी,
-  ऑरिजिन पूल और अन्य संसाधन बनाएँ, संपादित करें और हटाएँ
-- **AI चैट सहायक** — अपने प्लेटफ़ॉर्म को प्रबंधित करने के लिए `@xcsh` से
-  प्राकृतिक भाषा में प्रश्न पूछें
-- **क्लाउड स्टेटस डैशबोर्ड** — एक नज़र में रियल-टाइम वैश्विक इन्फ्रास्ट्रक्चर
-  हेल्थ
-- **IntelliSense** — सभी F5 XC रिसोर्स टाइप के लिए JSON स्कीमा कम्पलीशन
-- **मल्टी-क्लाउड** — AWS, Azure, GCP, GitHub, GitLab, Terraform और Salesforce के
-  साथ एकीकृत
+| एकीकरण         | इंस्टॉल                                 | प्रमाणीकरण          |
+| -------------- | --------------------------------------- | ------------------- |
+| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | इंस्टॉल में शामिल   |
+| AWS CLI        | `brew install awscli`                   | `aws sso login`     |
+| Azure CLI      | `brew install azure-cli`                | `az login`          |
+| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
+| GitHub CLI     | `brew install gh`                       | `gh auth login`     |
+| GitLab CLI     | `brew install glab`                     | `glab auth login`   |
+| Terraform      | `brew install hashicorp/tap/terraform`  | N/A                 |
+| Salesforce CLI | `brew install sf`                       | `sf org login web`  |
+
+कौन से एकीकरण इंस्टॉल और प्रमाणित हैं यह देखने के लिए VS Code में **xcsh:
+Platform Readiness** चलाएँ।
 
 ## प्रलेखन
 
-पूर्ण गाइड और संदर्भ
-[f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/)
-पर उपलब्ध हैं
+संपूर्ण प्रलेखन
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**
+पर उपलब्ध है।
+
+## योगदान
+
+वर्कफ़्लो नियम, ब्रांच नामकरण और CI आवश्यकताओं के लिए
+[CONTRIBUTING.md](CONTRIBUTING.md) देखें।
 
 ## लाइसेंस
 
-[Apache-2.0](LICENSE)
+[LICENSE](LICENSE) देखें।
