@@ -197,6 +197,8 @@ export interface FieldMetadata {
   isMinimumConfig?: boolean;
   /** Recommended oneof variant (from x-f5xc-recommended-oneof-variant) */
   recommendedOneofVariant?: string;
+  /** Enum values from OpenAPI spec (multi-value enums only) */
+  enumValues?: unknown[];
 }
 
 /**
@@ -264,6 +266,7 @@ export interface SchemaObject {
   required?: string[];
   allOf?: SchemaObject[];
   $ref?: string;
+  enum?: unknown[];
 }
 
 /**
@@ -1053,6 +1056,7 @@ function extractFieldMetadataFromProperty(
   const hasRequiredFor = prop['x-f5xc-required-for'] !== undefined;
   const hasRecommendedValue = prop['x-f5xc-recommended-value'] !== undefined;
   const hasSingleEnum = prop.enum && Array.isArray(prop.enum) && prop.enum.length === 1;
+  const hasMultiEnum = Array.isArray(prop.enum) && prop.enum.length > 1;
 
   // New extension flags
   const hasDescShort = prop['x-f5xc-description-short'] !== undefined;
@@ -1088,7 +1092,8 @@ function extractFieldMetadataFromProperty(
     hasConstraints ||
     hasMinConfig ||
     hasConflicts ||
-    hasRecOneof
+    hasRecOneof ||
+    hasMultiEnum
   ) {
     const fieldMeta: FieldMetadata = {
       path: basePath,
@@ -1205,6 +1210,10 @@ function extractFieldMetadataFromProperty(
       fieldMeta.recommendedOneofVariant = prop['x-f5xc-recommended-oneof-variant'];
     }
 
+    if (Array.isArray(prop.enum) && prop.enum.length > 1) {
+      fieldMeta.enumValues = prop.enum;
+    }
+
     metadata[basePath] = fieldMeta;
   }
 
@@ -1218,6 +1227,13 @@ function extractFieldMetadataFromProperty(
         const childPath = basePath ? `${basePath}.${propName}` : propName;
         extractFieldMetadataFromProperty(propValue, childPath, metadata, schemas);
       }
+    }
+    // Capture enum values from referenced enum schemas
+    if (refSchema && Array.isArray(refSchema.enum) && refSchema.enum.length > 1) {
+      if (!metadata[basePath]) {
+        metadata[basePath] = { path: basePath };
+      }
+      metadata[basePath].enumValues = refSchema.enum;
     }
     // Don't return early - continue to check for nested properties
   }

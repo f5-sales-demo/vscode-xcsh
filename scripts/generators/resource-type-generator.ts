@@ -116,6 +116,8 @@ export interface GeneratedFieldMetadata {
   recommendedOneofVariant?: string;
   /** Field type inferred from spec (e.g., 'string', 'object', 'array') */
   type?: string;
+  /** Enum values from OpenAPI spec (multi-value enums only) */
+  enumValues?: unknown[];
 }
 
 /**
@@ -253,6 +255,9 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
       }
       if (meta.recommendedOneofVariant !== undefined) {
         genMeta.recommendedOneofVariant = meta.recommendedOneofVariant;
+      }
+      if (meta.enumValues && meta.enumValues.length > 1) {
+        genMeta.enumValues = meta.enumValues;
       }
 
       // Only include if there's meaningful metadata
@@ -479,6 +484,8 @@ export interface GeneratedFieldMetadata {
   recommendedOneofVariant?: string;
   /** Field type inferred from spec (e.g., 'string', 'object', 'array') */
   type?: string;
+  /** Enum values from OpenAPI spec (multi-value enums only) */
+  enumValues?: unknown[];
 }
 
 /**
