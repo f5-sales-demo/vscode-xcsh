@@ -1215,6 +1215,12 @@ function extractFieldMetadataFromProperty(
     }
 
     metadata[basePath] = fieldMeta;
+  } else if (basePath && (prop.type || prop.description)) {
+    metadata[basePath] = {
+      path: basePath,
+      type: prop.type,
+      description: prop.description,
+    };
   }
 
   // Handle $ref by resolving to actual schema for nested properties
@@ -1311,25 +1317,31 @@ function extractFieldMetadataFromSchema(
  * @returns The schema name if found
  */
 function findCreateSpecSchemaName(schemas: Record<string, SchemaObject>, resourceKey: string): string | undefined {
-  // Convert resource key to schema prefix patterns
-  // e.g., 'http_loadbalancer' -> 'http_loadbalancer', 'httpLoadbalancer', 'http_Loadbalancer'
-  // Also handle views-prefixed schemas (e.g., 'viewsorigin_poolCreateSpecType' for 'origin_pool')
-  const patterns = [
-    `${resourceKey}CreateSpecType`,
-    `${resourceKey}SpecType`,
-    // Handle cases where resource name is camelCased in schema
-    `${resourceKey.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase())}CreateSpecType`,
-    // Handle views-prefixed schemas (origin_pool, http_loadbalancer, etc.)
-    `views${resourceKey}CreateSpecType`,
-    `views${resourceKey}SpecType`,
-  ];
+  const suffixes = ['CreateSpecType', 'ReplaceSpecType', 'GetSpecType', 'GlobalSpecType', 'SpecType'];
+  const keyLower = resourceKey.toLowerCase();
 
-  for (const schemaName of Object.keys(schemas)) {
-    const lowerName = schemaName.toLowerCase();
-    for (const pattern of patterns) {
-      if (lowerName === pattern.toLowerCase()) {
-        return schemaName;
+  for (const suffix of suffixes) {
+    let bestMatch: string | undefined;
+    let bestPropertyCount = -1;
+
+    for (const schemaName of Object.keys(schemas)) {
+      if (!schemaName.endsWith(suffix)) {
+        continue;
       }
+
+      const base = schemaName.slice(0, -suffix.length).toLowerCase();
+      if (base === keyLower || base.endsWith(keyLower)) {
+        const schema = schemas[schemaName];
+        const propCount = schema?.properties ? Object.keys(schema.properties).length : 0;
+        if (propCount > bestPropertyCount) {
+          bestPropertyCount = propCount;
+          bestMatch = schemaName;
+        }
+      }
+    }
+
+    if (bestMatch) {
+      return bestMatch;
     }
   }
 

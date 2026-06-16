@@ -245,9 +245,10 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
 function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaProperty> {
   const props: Partial<SchemaProperty> = {};
 
-  // Use descriptionShort as the primary description (before serverDefault append)
   if (typeof metadata.descriptionShort === 'string') {
     props.description = metadata.descriptionShort;
+  } else if (typeof metadata.description === 'string') {
+    props.description = metadata.description;
   }
 
   // Use explicit type from field metadata when available
