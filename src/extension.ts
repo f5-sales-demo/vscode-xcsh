@@ -15,6 +15,7 @@ import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
 import { registerConflictDiagnostics } from './providers/f5xcConflictDiagnosticProvider';
 import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
 import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
+import { F5XCHoverProvider } from './providers/f5xcHoverProvider';
 import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
 import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
 import { F5XCViewProvider } from './providers/f5xcViewProvider';
@@ -125,10 +126,14 @@ export function activate(context: vscode.ExtensionContext): void {
       vscode.languages.registerInlineCompletionItemProvider(f5xcDocumentSelector, inlineCompletionProvider),
     );
 
-    logger.info('Completion providers registered successfully');
+    // Register hover provider (field documentation on hover)
+    const hoverProvider = new F5XCHoverProvider();
+    context.subscriptions.push(vscode.languages.registerHoverProvider(f5xcDocumentSelector, hoverProvider));
+
+    logger.info('Completion and hover providers registered successfully');
   } catch (error) {
-    logger.error('Failed to register completion providers', error as Error);
-    // Continue extension activation even if completion providers fail
+    logger.error('Failed to register language providers', error as Error);
+    // Continue extension activation even if providers fail
   }
 
   // Initialize the subscription dashboard provider for Plan and Quotas views

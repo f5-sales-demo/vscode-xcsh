@@ -327,7 +327,7 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
   }
 
   if (Array.isArray(metadata.enumValues) && metadata.enumValues.length > 1) {
-    props.enum = metadata.enumValues as string[];
+    props.enum = metadata.enumValues.map(String);
   }
 
   return props;

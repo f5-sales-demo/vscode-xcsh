@@ -331,6 +331,14 @@ export class LanguageModelToolCallPart {
   ) {}
 }
 
+// Mock Hover
+export class Hover {
+  constructor(
+    public readonly contents: MarkdownString | MarkdownString[],
+    public readonly range?: Range,
+  ) {}
+}
+
 // Mock LanguageModelToolResultPart
 export class LanguageModelToolResultPart {
   constructor(
