@@ -22,6 +22,7 @@ import { F5XCViewProvider } from '../providers/f5xcViewProvider';
 import type { F5XCExplorerProvider, NamespaceNode, ResourceNode } from '../tree/f5xcExplorer';
 import type { ResourceNodeData } from '../tree/treeTypes';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
+import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import { filterResource, getFilterOptionsForViewMode, type ViewMode } from '../utils/resourceFilter';
 import { validateResourcePayload } from '../utils/validation';
@@ -190,8 +191,8 @@ export function registerCrudCommands(
         // If no resource type, prompt user to select
         if (!resourceTypeKey) {
           const items = Object.entries(RESOURCE_TYPES).map(([key, info]) => ({
-            label: info.displayName,
-            description: info.category,
+            label: getLocalizedDisplayName(info.displayName),
+            description: vscode.l10n.t(info.category),
             detail: info.description,
             key,
           }));
@@ -220,7 +221,11 @@ export function registerCrudCommands(
         if (prerequisites.length > 0) {
           const prereqList = prerequisites.join(', ');
           const proceed = await vscode.window.showInformationMessage(
-            vscode.l10n.t('Prerequisites for creating {0}: {1}', resourceType.displayName, prereqList),
+            vscode.l10n.t(
+              'Prerequisites for creating {0}: {1}',
+              getLocalizedDisplayName(resourceType.displayName),
+              prereqList,
+            ),
             { modal: false },
             vscode.l10n.t('Continue'),
             vscode.l10n.t('Cancel'),
@@ -253,7 +258,10 @@ export function registerCrudCommands(
 
         await vscode.window.showTextDocument(doc, { preview: false });
         showInfo(
-          vscode.l10n.t('Created template for {0}. Edit and use "xcsh: Apply" to create.', resourceType.displayName),
+          vscode.l10n.t(
+            'Created template for {0}. Edit and use "xcsh: Apply" to create.',
+            getLocalizedDisplayName(resourceType.displayName),
+          ),
         );
       }, 'Create resource');
     }),
@@ -361,7 +369,7 @@ export function registerCrudCommands(
         let confirmMessage = vscode.l10n.t(
           '{0} {1} "{2}" in namespace "{3}"?',
           action,
-          resourceType.displayName,
+          getLocalizedDisplayName(resourceType.displayName),
           name,
           namespace,
         );
@@ -408,7 +416,7 @@ export function registerCrudCommands(
           },
         );
 
-        showInfo(vscode.l10n.t('{0}d {1}: {2}', action, resourceType.displayName, name));
+        showInfo(vscode.l10n.t('{0}d {1}: {2}', action, getLocalizedDisplayName(resourceType.displayName), name));
         explorer.refresh();
       }, 'Apply resource');
     }),
@@ -447,7 +455,7 @@ export function registerCrudCommands(
           showWarning(
             vscode.l10n.t(
               'Permission denied: You do not have access to delete {0} "{1}".',
-              data.resourceType.displayName,
+              getLocalizedDisplayName(data.resourceType.displayName),
               data.name,
             ),
           );
@@ -503,7 +511,7 @@ export function registerCrudCommands(
           // Build confirmation message based on danger level
           let confirmMessage = vscode.l10n.t(
             'Delete {0} "{1}" from namespace "{2}"?',
-            data.resourceType.displayName,
+            getLocalizedDisplayName(data.resourceType.displayName),
             data.name,
             data.namespace,
           );
@@ -516,7 +524,7 @@ export function registerCrudCommands(
               '\n\n' +
               vscode.l10n.t(
                 'Delete {0} "{1}" from namespace "{2}"?',
-                data.resourceType.displayName,
+                getLocalizedDisplayName(data.resourceType.displayName),
                 data.name,
                 data.namespace,
               ) +
@@ -559,7 +567,7 @@ export function registerCrudCommands(
           },
         );
 
-        showInfo(vscode.l10n.t('Deleted {0}: {1}', data.resourceType.displayName, data.name));
+        showInfo(vscode.l10n.t('Deleted {0}: {1}', getLocalizedDisplayName(data.resourceType.displayName), data.name));
         explorer.refresh();
       }, 'Delete resource');
     }),

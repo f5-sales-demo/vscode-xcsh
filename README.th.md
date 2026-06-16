@@ -1,39 +1,67 @@
-🌐 [English](README.md) | [日本語](README.ja.md) | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | [繁體中文](README.zh-tw.md) |
-[Español](README.es.md) | [Português](README.pt-br.md) |
-[Français](README.fr.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) |
-[العربية](README.ar.md) | [हिन्दी](README.hi.md) | **ไทย**
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) |
+[日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
+[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) | **ไทย**
 
-# xcsh สำหรับ VS Code
+# VS Code Extension
 
-> จัดการทรัพยากร F5 Distributed Cloud โดยตรงจาก VS Code
+ส่วนขยาย VS Code สำหรับจัดการทรัพยากร F5 Distributed Cloud พร้อม IntelliSense
+และ xcsh chat
 
-![xcsh](resources/screenshot-welcome.png)
+## คุณสมบัติ
+
+- **การจัดการทรัพยากร** — เรียกดู สร้าง แก้ไข และลบทรัพยากร F5 Distributed Cloud
+  โดยตรงจาก VS Code
+- **สถานะคลาวด์** — แดชบอร์ดสถานะโครงสร้างพื้นฐานระดับโลกแบบเรียลไทม์
+- **ผู้ช่วยแชท AI** — ผู้เข้าร่วมแชท `@xcsh`
+  สำหรับการดำเนินงานแพลตฟอร์มด้วยภาษาธรรมชาติ
+- **IntelliSense** — การเติมข้อมูล JSON schema สำหรับทรัพยากร F5 XC ทุกประเภท
+- **การผสานรวมมัลติคลาวด์** — ทำงานร่วมกับ AWS, Azure, GCP, GitHub, GitLab,
+  Terraform และ Salesforce
 
 ## เริ่มต้นใช้งาน
 
-1. **ติดตั้งส่วนขยาย** — ค้นหา "xcsh" ในแผงส่วนขยายของ VS Code
-2. **ติดตั้ง xcsh** — `brew install f5xc-salesdemos/tap/xcsh`
-3. **เพิ่มคอนเท็กซ์** — เปิด Command Palette (`Cmd+Shift+P`) แล้วเรียกใช้
-   **xcsh: Add Context**
+1. ติดตั้งส่วนขยายจาก
+   [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
+2. ติดตั้ง xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+3. เปิด Command Palette (`Cmd+Shift+P`) แล้วเรียกใช้ **xcsh: Platform
+   Readiness** เพื่อตรวจสอบการตั้งค่าของคุณ
+4. เพิ่มคอนเท็กซ์ F5 XC ผ่าน **xcsh: Add Context**
 
-## สิ่งที่คุณทำได้
+## การผสานรวมที่รองรับ
 
-- **เรียกดูและจัดการทรัพยากร** — สร้าง แก้ไข ลบโหลดบาลานเซอร์ นโยบาย WAF
-  ออริจินพูล และอื่น ๆ จากแถบด้านข้าง
-- **ผู้ช่วยแชท AI** — ถามคำถาม `@xcsh`
-  ด้วยภาษาธรรมชาติเพื่อจัดการแพลตฟอร์มของคุณ
-- **แดชบอร์ดสถานะคลาวด์** —
-  สถานะโครงสร้างพื้นฐานระดับโลกแบบเรียลไทม์ในมุมมองเดียว
-- **IntelliSense** — การเติมข้อมูล JSON schema สำหรับทรัพยากร F5 XC ทุกประเภท
-- **มัลติคลาวด์** — ทำงานร่วมกับ AWS, Azure, GCP, GitHub, GitLab, Terraform และ
-  Salesforce
+| การผสานรวม     | ติดตั้ง                                 | ยืนยันตัวตน         |
+| -------------- | --------------------------------------- | ------------------- |
+| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | รวมอยู่ในการติดตั้ง |
+| AWS CLI        | `brew install awscli`                   | `aws sso login`     |
+| Azure CLI      | `brew install azure-cli`                | `az login`          |
+| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
+| GitHub CLI     | `brew install gh`                       | `gh auth login`     |
+| GitLab CLI     | `brew install glab`                     | `glab auth login`   |
+| Terraform      | `brew install hashicorp/tap/terraform`  | N/A                 |
+| Salesforce CLI | `brew install sf`                       | `sf org login web`  |
+
+เรียกใช้ **xcsh: Platform Readiness** ใน VS Code
+เพื่อดูว่าการผสานรวมใดติดตั้งและยืนยันตัวตนแล้ว
 
 ## เอกสารประกอบ
 
-คู่มือฉบับเต็มและข้อมูลอ้างอิงที่
-[f5xc-salesdemos.github.io/vscode-f5xc-tools/th/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
+เอกสารฉบับเต็มมีให้ที่
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**
+
+## การมีส่วนร่วม
+
+ดู [CONTRIBUTING.md](CONTRIBUTING.md) สำหรับกฎการทำงาน การตั้งชื่อ branch
+และข้อกำหนด CI
 
 ## สัญญาอนุญาต
 
-[Apache-2.0](LICENSE)
+ดู [LICENSE](LICENSE)

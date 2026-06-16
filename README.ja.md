@@ -1,40 +1,69 @@
-🌐 [English](README.md) | **日本語** | [한국어](README.ko.md) |
-[简体中文](README.zh-cn.md) | [繁體中文](README.zh-tw.md) |
-[Español](README.es.md) | [Português](README.pt-br.md) |
-[Français](README.fr.md) | [Deutsch](README.de.md) | [Italiano](README.it.md) |
-[العربية](README.ar.md) | [हिन्दी](README.hi.md) | [ไทย](README.th.md)
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) | **日本語**
+| [한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+[繁體中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-tw/) |
+[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
+[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
 
-# xcsh for VS Code
+# VS Code Extension
 
-> VS Code から直接 F5 Distributed Cloud リソースを管理
+F5 Distributed Cloud リソース管理のための VS Code 拡張機能 —
+IntelliSense と xcsh チャットに対応
 
-![xcsh](resources/screenshot-welcome.png)
+## 機能
+
+- **リソース管理** — VS Code から直接 F5 Distributed
+  Cloud リソースの閲覧、作成、編集、削除が可能
+- **クラウドステータス**
+  —グローバルインフラストラクチャの健全性をリアルタイムで確認できるダッシュボード
+- **AI チャットアシスタント** — `@xcsh`
+  チャットパーティシパントで自然言語によるプラットフォーム操作が可能
+- **IntelliSense** — すべての F5 XC リソースタイプに対応した JSON スキーマ補完
+- **マルチクラウド連携** —
+  AWS、Azure、GCP、GitHub、GitLab、Terraform、Salesforceと連携
 
 ## はじめに
 
-1. **拡張機能のインストール** — VS Code の拡張機能パネルで「xcsh」を検索
-2. **xcsh のインストール** — `brew install f5xc-salesdemos/tap/xcsh`
-3. **コンテキストの追加** — コマンドパレット（`Cmd+Shift+P`）を開き、**xcsh: Add
-   Context** を実行
+1. [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
+   から拡張機能をインストール
+2. xcsh をインストール: `brew install f5xc-salesdemos/tap/xcsh`
+3. コマンドパレット（`Cmd+Shift+P`）を開き、**xcsh: Platform Readiness**
+   を実行してセットアップを確認
+4. **xcsh: Add Context** で F5 XC コンテキストを追加
 
-## できること
+## 対応インテグレーション
 
-- **リソースの閲覧と管理**
-  — サイドバーからロードバランサー、WAF ポリシー、オリジンプールなどを作成・編集・削除
-- **AI チャットアシスタント** — `@xcsh`
-  に自然言語で質問してプラットフォームを管理
-- **クラウドステータスダッシュボード**
-  — グローバルインフラストラクチャの健全性をリアルタイムで一目確認
-- **IntelliSense** — すべての F5 XC リソースタイプに対応した JSON スキーマ補完
-- **マルチクラウド** —
-  AWS、Azure、GCP、GitHub、GitLab、Terraform、Salesforce と連携
+| インテグレーション | インストール                            | 認証                   |
+| ------------------ | --------------------------------------- | ---------------------- |
+| xcsh               | `brew install f5xc-salesdemos/tap/xcsh` | インストールに含まれる |
+| AWS CLI            | `brew install awscli`                   | `aws sso login`        |
+| Azure CLI          | `brew install azure-cli`                | `az login`             |
+| Google Cloud       | `brew install google-cloud-sdk`         | `gcloud auth login`    |
+| GitHub CLI         | `brew install gh`                       | `gh auth login`        |
+| GitLab CLI         | `brew install glab`                     | `glab auth login`      |
+| Terraform          | `brew install hashicorp/tap/terraform`  | N/A                    |
+| Salesforce CLI     | `brew install sf`                       | `sf org login web`     |
+
+VS Code で **xcsh: Platform Readiness**
+を実行すると、インストール済みおよび認証済みのインテグレーションを確認できます。
 
 ## ドキュメント
 
-ガイドとリファレンスの全文は
-[f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/)
-をご覧ください
+完全なドキュメントは
+**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**
+でご覧いただけます。
+
+## コントリビューション
+
+ワークフロールール、ブランチ命名規則、CI要件については
+[CONTRIBUTING.md](CONTRIBUTING.md) をご覧ください。
 
 ## ライセンス
 
-[Apache-2.0](LICENSE)
+[LICENSE](LICENSE) をご覧ください。
