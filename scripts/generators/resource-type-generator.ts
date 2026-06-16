@@ -152,6 +152,8 @@ export interface GeneratedResourceTypeInfo {
   domain?: string;
   /** Operation metadata for CRUD operations (from x-f5xc-operation-metadata) */
   operationMetadata?: ResourceOperationMetadata;
+  /** Whether this resource supports manifest-based operations */
+  manifestSupported?: boolean;
   /** Field metadata for server defaults and required fields */
   fieldMetadata?: {
     /** Map of field paths to their metadata */
@@ -205,8 +207,12 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
     result.operationMetadata = info.operationMetadata;
   }
 
+  // Set manifestSupported based on whether field metadata was found
+  const hasFieldMetadata = info.fieldMetadata && Object.keys(info.fieldMetadata.fields).length > 0;
+  result.manifestSupported = !!hasFieldMetadata;
+
   // Only include fieldMetadata if it's defined and has fields
-  if (info.fieldMetadata && Object.keys(info.fieldMetadata.fields).length > 0) {
+  if (hasFieldMetadata && info.fieldMetadata) {
     // Convert FieldMetadata to GeneratedFieldMetadata (strip unnecessary properties)
     const generatedFields: Record<string, GeneratedFieldMetadata> = {};
 
@@ -545,6 +551,8 @@ export interface GeneratedResourceTypeInfo {
   domain?: string;
   /** Operation metadata for CRUD operations (from x-f5xc-operation-metadata) */
   operationMetadata?: ResourceOperationMetadata;
+  /** Whether this resource supports manifest-based operations (kind/metadata/spec) */
+  manifestSupported?: boolean;
   /** Field metadata for server defaults and required fields */
   fieldMetadata?: ResourceFieldMetadata;
   /** Domain-level best practices */
