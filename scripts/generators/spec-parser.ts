@@ -1468,8 +1468,18 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
 
     const resourceKey = deriveResourceKeyFromApiPath(apiPath);
 
-    // Skip duplicates (same resource may appear in different namespace patterns)
+    // Handle duplicates: prefer entry with richer field metadata
     if (seen.has(resourceKey)) {
+      const existingIdx = results.findIndex((r) => r.resourceKey === resourceKey);
+      if (existingIdx >= 0) {
+        const existing = results[existingIdx]!;
+        const existingFields = existing.fieldMetadata ? Object.keys(existing.fieldMetadata.fields).length : 0;
+        const candidateFields = extractResourceFieldMetadata(spec, resourceKey);
+        const candidateCount = candidateFields ? Object.keys(candidateFields.fields).length : 0;
+        if (candidateCount > existingFields && candidateFields) {
+          results[existingIdx] = { ...existing, fieldMetadata: candidateFields };
+        }
+      }
       continue;
     }
     seen.add(resourceKey);
@@ -1669,10 +1679,19 @@ export function parseAllDomainFiles(domainDir: string): ParsedSpecInfo[] {
     const domainResults = parseDomainFile(filePath);
 
     for (const info of domainResults) {
-      // Handle duplicates across domain files (prefer first occurrence)
       if (!seen.has(info.resourceKey)) {
         seen.add(info.resourceKey);
         results.push(info);
+      } else {
+        const existingIdx = results.findIndex((r) => r.resourceKey === info.resourceKey);
+        if (existingIdx >= 0) {
+          const existing = results[existingIdx]!;
+          const existingFieldCount = existing.fieldMetadata ? Object.keys(existing.fieldMetadata.fields).length : 0;
+          const candidateFieldCount = info.fieldMetadata ? Object.keys(info.fieldMetadata.fields).length : 0;
+          if (candidateFieldCount > existingFieldCount) {
+            results[existingIdx] = { ...existing, fieldMetadata: info.fieldMetadata };
+          }
+        }
       }
     }
   }
