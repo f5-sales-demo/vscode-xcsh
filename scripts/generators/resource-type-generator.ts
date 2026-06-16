@@ -118,6 +118,8 @@ export interface GeneratedFieldMetadata {
   type?: string;
   /** Enum values from OpenAPI spec (multi-value enums only) */
   enumValues?: unknown[];
+  /** OpenAPI description (fallback when descriptionShort is absent) */
+  description?: string;
 }
 
 /**
@@ -259,9 +261,12 @@ function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
       if (meta.enumValues && meta.enumValues.length > 1) {
         genMeta.enumValues = meta.enumValues;
       }
+      if (meta.description && !meta.descriptionShort) {
+        genMeta.description = meta.description;
+      }
 
-      // Only include if there's meaningful metadata
-      if (Object.keys(genMeta).length > 0) {
+      // Include if there's any meaningful data
+      if (Object.keys(genMeta).length > 0 || meta.type || meta.description) {
         generatedFields[path] = genMeta;
       }
     }
@@ -486,6 +491,8 @@ export interface GeneratedFieldMetadata {
   type?: string;
   /** Enum values from OpenAPI spec (multi-value enums only) */
   enumValues?: unknown[];
+  /** OpenAPI description (fallback when descriptionShort is absent) */
+  description?: string;
 }
 
 /**
