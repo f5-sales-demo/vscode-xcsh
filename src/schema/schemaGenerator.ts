@@ -233,8 +233,8 @@ function buildSpecSchema(resourceType: GeneratedResourceTypeInfo): SchemaPropert
     }
   }
 
-  // Allow additional properties for flexibility
-  specSchema.additionalProperties = true;
+  const fieldCount = Object.keys(specSchema.properties ?? {}).length;
+  specSchema.additionalProperties = fieldCount < 5;
 
   return specSchema;
 }

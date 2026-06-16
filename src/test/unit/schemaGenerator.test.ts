@@ -544,6 +544,25 @@ describe('Schema Generator', () => {
     });
   });
 
+  describe('strict validation', () => {
+    it('disallows additional properties on populated schemas', () => {
+      const schema = generateSchemaForResourceType('http_loadbalancer');
+      if (!schema) {
+        return;
+      }
+      const spec = schema.properties.spec as { additionalProperties: boolean; properties: Record<string, unknown> };
+      const fieldCount = Object.keys(spec.properties || {}).length;
+      expect(fieldCount).toBeGreaterThan(5);
+      expect(spec.additionalProperties).toBe(false);
+    });
+
+    it('allows additional properties on schemas with few fields', () => {
+      const schema = generateGenericSchema();
+      const spec = schema.properties.spec as { additionalProperties: boolean };
+      expect(spec.additionalProperties).toBe(true);
+    });
+  });
+
   describe('enum value propagation', () => {
     it('propagates enum values from field metadata to JSON Schema', () => {
       const schema = generateSchemaForResourceType('http_loadbalancer');
