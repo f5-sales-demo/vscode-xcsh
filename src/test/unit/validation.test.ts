@@ -376,6 +376,7 @@ describe('Validation Utilities', () => {
           // HTTP health check fields with recommended values
           http_health_check: {
             path: '/health',
+            expected_response: 'OK',
             expected_status_codes: ['200'],
             use_http2: false,
             use_origin_server_name: {},

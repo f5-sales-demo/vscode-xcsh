@@ -146,9 +146,9 @@ describe('specific resource type assertions', () => {
     expect(mc.length).toBe(2);
   });
 
-  it('healthcheck has 1 serverDefaultField', () => {
+  it('healthcheck has 7 serverDefaultFields', () => {
     const sd = getServerDefaultFields('healthcheck');
-    expect(sd.length).toBe(1);
+    expect(sd.length).toBe(7);
   });
 
   it('healthcheck has 6 minimumConfigFields', () => {
