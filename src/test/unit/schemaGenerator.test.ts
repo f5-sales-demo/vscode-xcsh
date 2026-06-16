@@ -543,4 +543,45 @@ describe('Schema Generator', () => {
       expect(testedNested).toBe(true);
     });
   });
+
+  describe('enum value propagation', () => {
+    it('propagates enum values from field metadata to JSON Schema', () => {
+      const schema = generateSchemaForResourceType('http_loadbalancer');
+      if (!schema) {
+        return;
+      }
+      const schemaStr = JSON.stringify(schema);
+      expect(schemaStr).toContain('"enum"');
+    });
+
+    it('includes multiple enum values as array', () => {
+      const schema = generateSchemaForResourceType('http_loadbalancer');
+      if (!schema) {
+        return;
+      }
+
+      function findEnums(obj: Record<string, unknown>, found: string[][]): void {
+        if (Array.isArray(obj.enum) && obj.enum.length > 1) {
+          found.push(obj.enum as string[]);
+        }
+        if (obj.properties && typeof obj.properties === 'object') {
+          for (const val of Object.values(obj.properties as Record<string, unknown>)) {
+            if (val && typeof val === 'object') {
+              findEnums(val as Record<string, unknown>, found);
+            }
+          }
+        }
+        if (obj.items && typeof obj.items === 'object') {
+          findEnums(obj.items as Record<string, unknown>, found);
+        }
+      }
+
+      const enums: string[][] = [];
+      findEnums(schema as unknown as Record<string, unknown>, enums);
+      expect(enums.length).toBeGreaterThan(0);
+      for (const e of enums) {
+        expect(e.length).toBeGreaterThan(1);
+      }
+    });
+  });
 });

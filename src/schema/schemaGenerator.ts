@@ -326,6 +326,10 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
     props['x-f5xc-description-short'] = metadata.descriptionShort;
   }
 
+  if (Array.isArray(metadata.enumValues) && metadata.enumValues.length > 1) {
+    props.enum = metadata.enumValues as string[];
+  }
+
   return props;
 }
 
