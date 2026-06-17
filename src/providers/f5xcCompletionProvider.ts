@@ -80,7 +80,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
       }
     }
 
-    return completions;
+    return new vscode.CompletionList(completions, false);
   }
 
   /**
