@@ -80,7 +80,12 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
       return undefined;
     }
 
-    // Get recommended or default value
+    // Skip server-default fields — don't suggest values the server already provides
+    if (propertySchema['x-f5xc-server-default']) {
+      return undefined;
+    }
+
+    // Get recommended or default value (only explicit, not guessed)
     const recommendedValue = this.getRecommendedValue(propertySchema);
     if (recommendedValue === undefined) {
       return undefined;
@@ -125,18 +130,12 @@ export class F5XCInlineCompletionProvider implements vscode.InlineCompletionItem
    * Get recommended value from schema
    */
   private getRecommendedValue(schema: SchemaProperty): unknown {
-    // Priority: recommended value > default value
     if (schema['x-f5xc-recommended-value'] !== undefined) {
       return schema['x-f5xc-recommended-value'];
     }
 
     if (schema.default !== undefined) {
       return schema.default;
-    }
-
-    // For boolean without default, suggest common default
-    if (schema.type === 'boolean') {
-      return false;
     }
 
     return undefined;

@@ -182,4 +182,37 @@ describe('completionHelper', () => {
       expect(isF5XCJsonFile(doc)).toBe(false);
     });
   });
+
+  describe('parseJsonPath', () => {
+    it('returns spec path after nested array closes', () => {
+      const { parseJsonPath } =
+        require('../../utils/completionHelper') as typeof import('../../utils/completionHelper');
+      const content = `{
+  "kind": "origin_pool",
+  "metadata": { "name": "test" },
+  "spec": {
+    "origin_servers": [
+      {
+        "public_ip": { "ip": "192.0.2.10" },
+        "labels": {}
+      }
+    ],
+`;
+      const path = parseJsonPath(content);
+      // After origin_servers array closes with ],
+      // we should be back at spec level
+      expect(path).toEqual(['spec']);
+    });
+
+    it('returns spec path for simple spec object', () => {
+      const { parseJsonPath } =
+        require('../../utils/completionHelper') as typeof import('../../utils/completionHelper');
+      const content = `{
+  "kind": "http_loadbalancer",
+  "spec": {
+`;
+      const path = parseJsonPath(content);
+      expect(path).toContain('spec');
+    });
+  });
 });
