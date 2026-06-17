@@ -494,6 +494,41 @@ export enum DiagnosticSeverity {
   Hint = 3,
 }
 
+// Mock Diagnostic
+export class Diagnostic {
+  constructor(
+    public readonly range: Range,
+    public readonly message: string,
+    public readonly severity: DiagnosticSeverity = DiagnosticSeverity.Error,
+  ) {}
+}
+
+// Mock CodeActionTriggerKind
+export enum CodeActionTriggerKind {
+  Invoke = 1,
+  Automatic = 2,
+}
+
+// Mock CodeActionKind
+export class CodeActionKind {
+  static readonly QuickFix = new CodeActionKind('quickfix');
+  static readonly Refactor = new CodeActionKind('refactor');
+  constructor(public readonly value: string) {}
+}
+
+// Mock CodeAction
+export class CodeAction {
+  edit?: WorkspaceEdit;
+  diagnostics?: Diagnostic[];
+  kind?: CodeActionKind;
+  constructor(
+    public readonly title: string,
+    kind?: CodeActionKind,
+  ) {
+    this.kind = kind;
+  }
+}
+
 // Mock SymbolKind
 export enum SymbolKind {
   File = 0,
@@ -559,6 +594,9 @@ export class WorkspaceEdit {
   private edits: Array<{ uri: ReturnType<typeof Uri.file>; range: Range; newText: string }> = [];
   replace(uri: ReturnType<typeof Uri.file>, range: Range, newText: string): void {
     this.edits.push({ uri, range, newText });
+  }
+  delete(uri: ReturnType<typeof Uri.file>, range: Range): void {
+    this.edits.push({ uri, range, newText: '' });
   }
   entries(): Array<[ReturnType<typeof Uri.file>, Array<{ range: Range; newText: string }>]> {
     const grouped = new Map<string, Array<{ range: Range; newText: string }>>();
