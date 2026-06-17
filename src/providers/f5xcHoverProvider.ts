@@ -107,54 +107,60 @@ function buildHoverContent(
   _fieldPath: string[],
 ): vscode.MarkdownString | undefined {
   const lines: string[] = [];
+  const typeStr = schemaNode.type
+    ? Array.isArray(schemaNode.type)
+      ? schemaNode.type.join(' | ')
+      : schemaNode.type
+    : '';
 
-  lines.push(`**${propertyName}**`);
+  lines.push(`**${propertyName}** \`${typeStr}\``);
 
-  if (schemaNode.description) {
-    const desc = schemaNode.description.replace(/ \(Server provides default value\)$/, '');
-    if (desc) {
-      lines.push('', desc);
-    }
+  const desc = schemaNode.description?.replace(/ \(Server provides default value\)$/, '');
+  if (desc) {
+    lines.push('', desc);
   }
 
-  if (schemaNode.type) {
-    const typeStr = Array.isArray(schemaNode.type) ? schemaNode.type.join(' | ') : schemaNode.type;
-    lines.push('', `Type: \`${typeStr}\``);
-  }
-
+  const constraints: string[][] = [];
   if (schemaNode['x-f5xc-required']) {
-    lines.push('', '**Required**');
+    constraints.push(['Required', 'Yes']);
   }
-
   if (schemaNode['x-f5xc-server-default']) {
-    lines.push('', 'Server provides a default value');
+    constraints.push(['Server default', 'Yes']);
   }
-
-  if (schemaNode['x-f5xc-recommended-value'] !== undefined) {
-    const val = JSON.stringify(schemaNode['x-f5xc-recommended-value']);
-    lines.push('', `Recommended: \`${val}\``);
+  if (typeof schemaNode.maxLength === 'number') {
+    constraints.push(['Max length', String(schemaNode.maxLength)]);
+  }
+  if (typeof schemaNode.minLength === 'number' && schemaNode.minLength > 0) {
+    constraints.push(['Min length', String(schemaNode.minLength)]);
+  }
+  if (schemaNode['x-f5xc-format-description']) {
+    constraints.push(['Format', String(schemaNode['x-f5xc-format-description'])]);
+  } else if (schemaNode.pattern) {
+    constraints.push(['Pattern', `\`${String(schemaNode.pattern)}\``]);
+  }
+  if (constraints.length > 0) {
+    lines.push('', '| | |', '|---|---|');
+    for (const [k, v] of constraints) {
+      lines.push(`| ${k} | ${v} |`);
+    }
   }
 
   if (schemaNode.enum && schemaNode.enum.length > 0) {
     const vals = schemaNode.enum.map((v) => `\`${String(v)}\``).join(' | ');
-    lines.push('', `Values: ${vals}`);
+    lines.push('', `**Values:** ${vals}`);
   }
 
-  if (schemaNode.pattern) {
-    lines.push('', `Pattern: \`${schemaNode.pattern}\``);
-  }
-
-  if (schemaNode.maxLength !== undefined) {
-    lines.push('', `Max length: ${schemaNode.maxLength}`);
+  if (schemaNode['x-f5xc-recommended-value'] !== undefined) {
+    lines.push('', `**Recommended:** \`${JSON.stringify(schemaNode['x-f5xc-recommended-value'])}\``);
   }
 
   if (schemaNode['x-f5xc-conflicts-with']) {
-    const conflicts = schemaNode['x-f5xc-conflicts-with'].join(', ');
-    lines.push('', `Conflicts with: ${conflicts}`);
+    const conflicts = schemaNode['x-f5xc-conflicts-with'].map((f) => `\`${f}\``).join(', ');
+    lines.push('', `**Conflicts with:** ${conflicts}`);
   }
 
   if (schemaNode.examples && schemaNode.examples.length > 0) {
-    lines.push('', `Example: \`${JSON.stringify(schemaNode.examples[0])}\``);
+    lines.push('', '```json', `"${propertyName}": ${JSON.stringify(schemaNode.examples[0])}`, '```');
   }
 
   if (lines.length <= 1) {

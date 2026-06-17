@@ -68,7 +68,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     else if (jsonContext.inObject && !jsonContext.afterColon) {
       const currentSchema = CompletionHelper.navigateSchemaPath(schema, jsonContext.path);
       if (currentSchema) {
-        completions.push(...this.generatePropertyCompletions(currentSchema, jsonContext));
+        completions.push(...this.generatePropertyCompletions(currentSchema, { ...jsonContext, document }));
       }
     }
     // Case 3: After property colon, waiting for value
@@ -119,7 +119,7 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
    */
   private generatePropertyCompletions(
     schema: SchemaProperty,
-    context: { indentString: string },
+    context: { indentString: string; document?: vscode.TextDocument },
   ): vscode.CompletionItem[] {
     const completions: vscode.CompletionItem[] = [];
 
@@ -128,96 +128,144 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     }
 
     const required = schema.required || [];
+    const setFields = this.getSetFieldNames(context.document);
+    let firstRequired = true;
 
     for (const [propName, propSchema] of Object.entries(schema.properties)) {
       const isRequired = required.includes(propName);
       const hasRecommended = propSchema['x-f5xc-recommended-value'] !== undefined;
+      const isObject = propSchema.type === 'object';
+      const isArray = propSchema.type === 'array';
+      const hasConflicts = Array.isArray(propSchema['x-f5xc-conflicts-with']);
 
-      // Create property completion with value template
-      const item = new vscode.CompletionItem(propName, vscode.CompletionItemKind.Property);
+      if (hasConflicts && propSchema['x-f5xc-conflicts-with']?.some((f) => setFields.has(f))) {
+        continue;
+      }
 
-      // Generate the insertion text based on property type
+      const typeStr = this.getTypeString(propSchema);
+      const kind = isRequired
+        ? vscode.CompletionItemKind.Constant
+        : isObject
+          ? vscode.CompletionItemKind.Module
+          : isArray
+            ? vscode.CompletionItemKind.Interface
+            : hasRecommended
+              ? vscode.CompletionItemKind.Value
+              : vscode.CompletionItemKind.Field;
+
+      const item = new vscode.CompletionItem(
+        { label: propName, detail: ` ${typeStr}`, description: isRequired ? 'required' : '' },
+        kind,
+      );
+
       const insertText = this.createPropertyInsertText(propName, propSchema, context.indentString);
       item.insertText = new vscode.SnippetString(insertText);
+      item.filterText = propName;
 
-      // Add documentation
-      const docs: string[] = [];
-      if (propSchema.description) {
-        docs.push(propSchema.description);
-      }
-      if (isRequired) {
-        docs.push('**Required**');
-      }
-      if (hasRecommended) {
-        docs.push(`Recommended: \`${JSON.stringify(propSchema['x-f5xc-recommended-value'])}\``);
-      }
-      if (propSchema['x-f5xc-server-default']) {
-        docs.push('*Server provides default*');
-      }
+      item.command = {
+        command: 'editor.action.triggerSuggest',
+        title: 'Suggest values',
+      };
 
-      // Enriched metadata from constraints
-      if (propSchema['x-f5xc-format-description']) {
-        docs.push(`**Format:** ${String(propSchema['x-f5xc-format-description'])}`);
-      } else if (propSchema.pattern) {
-        docs.push(`**Pattern:** \`${String(propSchema.pattern)}\``);
-      }
+      item.documentation = this.buildPropertyDocs(propName, propSchema, isRequired);
 
-      if (typeof propSchema.maxLength === 'number') {
-        docs.push(`**Max length:** ${propSchema.maxLength}`);
-      }
-
-      if (propSchema.examples && Array.isArray(propSchema.examples) && propSchema.examples.length > 0) {
-        docs.push(`**Example:** \`${JSON.stringify(propSchema.examples[0])}\``);
-      }
-
-      if (propSchema['x-f5xc-conflicts-with'] && Array.isArray(propSchema['x-f5xc-conflicts-with'])) {
-        const conflicts = propSchema['x-f5xc-conflicts-with'].map((f) => `\`${f}\``).join(', ');
-        docs.push(`**Conflicts with:** ${conflicts}`);
-      }
-
-      item.documentation = new vscode.MarkdownString(docs.join('\n\n'));
-
-      // Sort order: required first, then recommended, then alphabetical
       if (isRequired) {
         item.sortText = `0-${propName}`;
+        if (firstRequired) {
+          item.preselect = true;
+          firstRequired = false;
+        }
       } else if (hasRecommended) {
         item.sortText = `1-${propName}`;
       } else {
         item.sortText = `2-${propName}`;
       }
 
-      // Build detail string with constraint info
-      let detail = propSchema['x-f5xc-description-short'] ?? this.getPropertyDetail(propSchema, isRequired);
-
-      // Append constraint summary to detail if not already shown via description-short
-      if (!propSchema['x-f5xc-description-short']) {
-        const constraintParts: string[] = [];
-        if (propSchema.pattern) {
-          constraintParts.push(`pattern: ${String(propSchema.pattern)}`);
-        }
-        if (typeof propSchema.maxLength === 'number') {
-          constraintParts.push(`max: ${propSchema.maxLength}`);
-        }
-        if (typeof propSchema.minLength === 'number' && propSchema.minLength > 0) {
-          constraintParts.push(`min: ${propSchema.minLength}`);
-        }
-        if (typeof propSchema.minimum === 'number') {
-          constraintParts.push(`>= ${propSchema.minimum}`);
-        }
-        if (typeof propSchema.maximum === 'number') {
-          constraintParts.push(`<= ${propSchema.maximum}`);
-        }
-        if (constraintParts.length > 0) {
-          detail += ` (${constraintParts.join(', ')})`;
-        }
-      }
-
-      item.detail = detail;
-
       completions.push(item);
     }
 
     return completions;
+  }
+
+  private getTypeString(schema: SchemaProperty): string {
+    if (schema.enum && schema.enum.length > 0) {
+      return schema.enum.length <= 3 ? schema.enum.join(' | ') : `enum(${String(schema.enum.length)})`;
+    }
+    const t = schema.type;
+    if (!t) {
+      return 'any';
+    }
+    return Array.isArray(t) ? t.join(' | ') : t;
+  }
+
+  private getSetFieldNames(document?: vscode.TextDocument): Set<string> {
+    const fields = new Set<string>();
+    if (!document) {
+      return fields;
+    }
+    const text = document.getText();
+    const matches = text.matchAll(/"([a-z_]+)"\s*:/g);
+    for (const m of matches) {
+      if (m[1]) {
+        fields.add(m[1]);
+      }
+    }
+    return fields;
+  }
+
+  private buildPropertyDocs(propName: string, schema: SchemaProperty, isRequired: boolean): vscode.MarkdownString {
+    const lines: string[] = [];
+    const desc = schema.description?.replace(/ \(Server provides default value\)$/, '');
+    if (desc) {
+      lines.push(desc);
+    }
+
+    const constraints: string[][] = [];
+    if (isRequired) {
+      constraints.push(['Required', 'Yes']);
+    }
+    if (schema['x-f5xc-server-default']) {
+      constraints.push(['Server default', 'Yes']);
+    }
+    if (typeof schema.maxLength === 'number') {
+      constraints.push(['Max length', String(schema.maxLength)]);
+    }
+    if (typeof schema.minLength === 'number' && schema.minLength > 0) {
+      constraints.push(['Min length', String(schema.minLength)]);
+    }
+    if (schema.pattern) {
+      constraints.push(['Pattern', `\`${String(schema.pattern)}\``]);
+    }
+    if (schema['x-f5xc-format-description']) {
+      constraints.push(['Format', String(schema['x-f5xc-format-description'])]);
+    }
+    if (constraints.length > 0) {
+      lines.push('', '| | |', '|---|---|');
+      for (const [k, v] of constraints) {
+        lines.push(`| ${k} | ${v} |`);
+      }
+    }
+
+    if (schema.enum && schema.enum.length > 0) {
+      const vals = schema.enum.map((v) => `\`${String(v)}\``).join(' | ');
+      lines.push('', `**Values:** ${vals}`);
+    }
+
+    if (schema['x-f5xc-recommended-value'] !== undefined) {
+      lines.push('', `**Recommended:** \`${JSON.stringify(schema['x-f5xc-recommended-value'])}\``);
+    }
+
+    if (schema['x-f5xc-conflicts-with'] && Array.isArray(schema['x-f5xc-conflicts-with'])) {
+      const conflicts = schema['x-f5xc-conflicts-with'].map((f) => `\`${f}\``).join(', ');
+      lines.push('', `**Conflicts with:** ${conflicts}`);
+    }
+
+    if (schema.examples && Array.isArray(schema.examples) && schema.examples.length > 0) {
+      lines.push('', '```json', `"${propName}": ${JSON.stringify(schema.examples[0])}`, '```');
+    }
+
+    const md = new vscode.MarkdownString(lines.join('\n'));
+    return md;
   }
 
   /**
@@ -367,6 +415,12 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
       return `"${propName}": [\n  $0\n]`;
     }
 
+    // For enum fields, use snippet choice lists
+    if (propSchema.enum && propSchema.enum.length > 1 && propSchema.enum.length <= 20) {
+      const choices = propSchema.enum.map(String).join(',');
+      return `"${propName}": "\${1|${choices}|}"`;
+    }
+
     // For simple types with value
     if (value !== undefined) {
       const formattedValue = CompletionHelper.formatValueForJson(value, propSchema.type);
@@ -414,23 +468,5 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
       default:
         return '""';
     }
-  }
-
-  /**
-   * Get property detail text
-   */
-  private getPropertyDetail(schema: SchemaProperty, isRequired: boolean): string {
-    const parts: string[] = [];
-
-    if (isRequired) {
-      parts.push('required');
-    }
-
-    const typeStr = Array.isArray(schema.type) ? schema.type.join('|') : schema.type;
-    if (typeStr) {
-      parts.push(typeStr);
-    }
-
-    return parts.join(', ');
   }
 }
