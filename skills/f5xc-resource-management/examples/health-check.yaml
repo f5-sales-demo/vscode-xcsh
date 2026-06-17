@@ -1,5 +1,5 @@
 metadata:
-  name: my-app-hc
+  name: example-app-hc
   namespace: app-ns
 spec:
   http_health_check:

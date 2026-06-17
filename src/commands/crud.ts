@@ -935,7 +935,7 @@ function createResourceTemplate(resourceTypeKey: string, namespace: string): obj
               pool: {
                 tenant: '',
                 namespace,
-                name: 'my-origin-pool',
+                name: 'example-origin-pool',
               },
               weight: 1,
             },

@@ -1,5 +1,5 @@
 metadata:
-  name: my-app-pool
+  name: example-app-pool
   namespace: app-ns
 spec:
   origin_servers:
@@ -9,5 +9,5 @@ spec:
   use_tls:
     use_host_header_as_sni: {}
   healthcheck:
-    - name: my-app-hc
+    - name: example-app-hc
       namespace: app-ns
