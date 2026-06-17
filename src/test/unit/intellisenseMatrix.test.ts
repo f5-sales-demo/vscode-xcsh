@@ -200,12 +200,12 @@ describe('completion matrix across resource types', () => {
         }
       });
 
-      it('has triggerSuggest command on property items', () => {
+      it('does not auto-trigger suggest after property acceptance', () => {
         const doc = mockDoc(specContent(kind), `t.${kind}.json`);
         const result = provider.provideCompletionItems(doc, pos(4, 4), tok, ctx);
         const propItems = items(result).filter((i) => typeof i.label !== 'string');
         for (const item of propItems) {
-          expect(item.command?.command).toBe('editor.action.triggerSuggest');
+          expect(item.command).toBeUndefined();
         }
       });
 
@@ -397,7 +397,63 @@ describe('icon differentiation by field role', () => {
   });
 });
 
-// ─── SECTION 10: Schema Coverage ────────────────────────────
+// ─── SECTION 10: Nested Object Completions ──────────────────
+
+describe('completions inside nested objects', () => {
+  it('provides completions inside advanced_options', () => {
+    const content = `{
+  "kind": "origin_pool",
+  "metadata": { "name": "test" },
+  "spec": {
+    "advanced_options": {
+      "panic_threshold": 50,
+
+    }
+  }
+}`;
+    const doc = mockDoc(content, 't.origin_pool.json');
+    const result = provider.provideCompletionItems(doc, pos(6, 6), tok, ctx);
+    const ls = labels(result);
+    expect(ls.length).toBeGreaterThan(0);
+    expect(ls).not.toContain('panic_threshold');
+  });
+
+  it('provides completions inside https_auto_cert for http_loadbalancer', () => {
+    const content = `{
+  "kind": "http_loadbalancer",
+  "metadata": { "name": "test" },
+  "spec": {
+    "https_auto_cert": {
+
+    }
+  }
+}`;
+    const doc = mockDoc(content, 't.http_loadbalancer.json');
+    const result = provider.provideCompletionItems(doc, pos(5, 6), tok, ctx);
+    const ls = labels(result);
+    expect(ls.length).toBeGreaterThan(0);
+  });
+
+  it('returns no completions on closing brace line', () => {
+    const content = `{
+  "kind": "origin_pool",
+  "metadata": { "name": "test" },
+  "spec": {
+    "advanced_options": {
+      "panic_threshold": 50
+    }
+  }
+}`;
+    const doc = mockDoc(content, 't.origin_pool.json');
+    const result = provider.provideCompletionItems(doc, pos(6, 4), tok, ctx);
+    const ls = labels(result);
+    if (ls.length > 0) {
+      expect(ls).not.toContain('panic_threshold');
+    }
+  });
+});
+
+// ─── SECTION 11: Schema Coverage ────────────────────────────
 
 describe('schema coverage', () => {
   it('at least 170 resource types have schemas', () => {
