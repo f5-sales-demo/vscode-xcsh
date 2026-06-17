@@ -11,6 +11,7 @@ import { registerObservabilityCommands } from './commands/observability';
 import { ContextManager } from './config/contextManager';
 import { migrateProfilesToContexts } from './config/contextMigration';
 import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
+import { F5XCCodeActionProvider } from './providers/f5xcCodeActionProvider';
 import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
 import { registerConflictDiagnostics } from './providers/f5xcConflictDiagnosticProvider';
 import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
@@ -130,6 +131,13 @@ export function activate(context: vscode.ExtensionContext): void {
     // Register hover provider (field documentation on hover)
     const hoverProvider = new F5XCHoverProvider();
     context.subscriptions.push(vscode.languages.registerHoverProvider(f5xcDocumentSelector, hoverProvider));
+
+    // Register code action provider (quick fixes for conflicts)
+    context.subscriptions.push(
+      vscode.languages.registerCodeActionsProvider(f5xcDocumentSelector, new F5XCCodeActionProvider(), {
+        providedCodeActionKinds: F5XCCodeActionProvider.providedCodeActionKinds,
+      }),
+    );
 
     logger.info('Completion and hover providers registered successfully');
   } catch (error) {
