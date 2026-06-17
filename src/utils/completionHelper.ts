@@ -8,10 +8,7 @@
 import type * as vscode from 'vscode';
 import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
-import { getLogger } from './logger';
 import { getManifestKind } from './manifestDetector';
-
-const logger = getLogger();
 
 const detectionCache = new Map<string, { version: number; kind: string | undefined }>();
 
@@ -247,78 +244,94 @@ function detectContainerType(textBeforeCursor: string): {
  * Returns array of keys/indices from root to current position.
  */
 export function parseJsonPath(textBeforeCursor: string): string[] {
-  const path: string[] = [];
+  const stack: string[] = [];
+  const stackIsNamed: boolean[] = [];
+  let inString = false;
+  let escapeNext = false;
+  let lastKey = '';
+  let collectingKey = false;
+  let afterColon = false;
 
-  try {
-    let currentKey = '';
-    let inString = false;
-    let escapeNext = false;
-    let expectingKey = false;
+  for (let i = 0; i < textBeforeCursor.length; i++) {
+    const char = textBeforeCursor[i];
 
-    for (let i = 0; i < textBeforeCursor.length; i++) {
-      const char = textBeforeCursor[i];
-
-      if (escapeNext) {
-        if (inString) {
-          currentKey += char;
-        }
-        escapeNext = false;
-        continue;
+    if (escapeNext) {
+      if (collectingKey) {
+        lastKey += char;
       }
-
-      if (char === '\\') {
-        escapeNext = true;
-        if (inString) {
-          currentKey += char;
-        }
-        continue;
-      }
-
-      if (char === '"') {
-        if (inString) {
-          // End of string
-          if (expectingKey && currentKey) {
-            // This was a key
-            const nextColon = textBeforeCursor.indexOf(':', i);
-            if (nextColon !== -1 && nextColon - i < 10) {
-              path.push(currentKey);
-              expectingKey = false;
-            }
-          }
-          currentKey = '';
-          inString = false;
-        } else {
-          inString = true;
-          currentKey = '';
-        }
-        continue;
-      }
-
-      if (inString) {
-        currentKey += char;
-        continue;
-      }
-
-      if (char === '{') {
-        expectingKey = true;
-      } else if (char === '}') {
-        if (path.length > 0) {
-          path.pop();
-        }
-        expectingKey = false;
-      } else if (char === '[') {
-        path.push('0'); // Simplified: assume first array element
-      } else if (char === ']') {
-        if (path.length > 0) {
-          path.pop();
-        }
-      }
+      escapeNext = false;
+      continue;
     }
-  } catch (error) {
-    logger.debug('Error parsing JSON path:', error);
+
+    if (char === '\\') {
+      escapeNext = true;
+      continue;
+    }
+
+    if (char === '"') {
+      if (inString) {
+        inString = false;
+        collectingKey = false;
+      } else {
+        inString = true;
+        if (!afterColon) {
+          collectingKey = true;
+          lastKey = '';
+        } else {
+          collectingKey = false;
+        }
+      }
+      continue;
+    }
+
+    if (inString) {
+      if (collectingKey) {
+        lastKey += char;
+      }
+      continue;
+    }
+
+    if (char === ':') {
+      afterColon = true;
+    } else if (char === '{') {
+      if (lastKey) {
+        stack.push(lastKey);
+        stackIsNamed.push(true);
+      } else {
+        stackIsNamed.push(false);
+      }
+      lastKey = '';
+      afterColon = false;
+    } else if (char === '}') {
+      const named = stackIsNamed.pop();
+      if (named) {
+        stack.pop();
+      }
+      afterColon = false;
+      lastKey = '';
+    } else if (char === '[') {
+      if (lastKey) {
+        stack.push(lastKey);
+        stackIsNamed.push(true);
+      } else {
+        stackIsNamed.push(false);
+      }
+      lastKey = '';
+      afterColon = false;
+    } else if (char === ']') {
+      const named = stackIsNamed.pop();
+      if (named) {
+        stack.pop();
+      }
+      afterColon = false;
+      lastKey = '';
+    } else if (char === ',') {
+      afterColon = false;
+      lastKey = '';
+    }
   }
 
-  return path;
+  return stack;
 }
 
 /**
