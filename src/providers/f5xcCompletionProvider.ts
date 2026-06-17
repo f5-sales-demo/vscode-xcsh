@@ -138,6 +138,10 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
       const isArray = propSchema.type === 'array';
       const hasConflicts = Array.isArray(propSchema['x-f5xc-conflicts-with']);
 
+      if (setFields.has(propName)) {
+        continue;
+      }
+
       if (hasConflicts && propSchema['x-f5xc-conflicts-with']?.some((f) => setFields.has(f))) {
         continue;
       }
@@ -413,6 +417,11 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     // For arrays
     if (propSchema.type === 'array') {
       return `"${propName}": [\n  $0\n]`;
+    }
+
+    // oneOf toggle fields (conflictsWith) default to empty object
+    if (Array.isArray(propSchema['x-f5xc-conflicts-with']) && propSchema['x-f5xc-conflicts-with'].length > 0) {
+      return `"${propName}": \${1:{}}`;
     }
 
     // For enum fields, use snippet choice lists

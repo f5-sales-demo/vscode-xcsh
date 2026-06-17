@@ -17,7 +17,7 @@ import { registerConflictDiagnostics } from './providers/f5xcConflictDiagnosticP
 import { F5XCDescribeProvider } from './providers/f5xcDescribeProvider';
 import { F5XCFileSystemProvider } from './providers/f5xcFileSystemProvider';
 import { F5XCHoverProvider } from './providers/f5xcHoverProvider';
-import { F5XCInlineCompletionProvider } from './providers/f5xcInlineCompletionProvider';
+
 import { F5XCSchemaProvider } from './providers/f5xcSchemaProvider';
 import { F5XCViewProvider } from './providers/f5xcViewProvider';
 import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
@@ -120,12 +120,6 @@ export function activate(context: vscode.ExtensionContext): void {
         '{', // Trigger on opening brace
         ':', // Trigger on colon
       ),
-    );
-
-    // Register inline completion provider (ghost text)
-    const inlineCompletionProvider = new F5XCInlineCompletionProvider();
-    context.subscriptions.push(
-      vscode.languages.registerInlineCompletionItemProvider(f5xcDocumentSelector, inlineCompletionProvider),
     );
 
     // Register hover provider (field documentation on hover)
