@@ -18,19 +18,34 @@ function getResourceName(content: string): string | undefined {
   }
 }
 
+function formatFieldName(path: string): string {
+  const parts = path.split('.');
+  return parts[parts.length - 1] ?? path;
+}
+
 function formatChangedFields(diff: { changed: unknown[]; added: unknown[]; removed: unknown[] }): string {
-  const all = [
-    ...diff.changed.map((d) => (d as { path: string }).path),
-    ...diff.added.map((d) => `+${(d as { path: string }).path}`),
-    ...diff.removed.map((d) => `-${(d as { path: string }).path}`),
-  ];
-  if (all.length === 0) {
+  const lines: string[] = [];
+
+  for (const d of diff.changed) {
+    const p = (d as { path: string }).path;
+    lines.push(`${formatFieldName(p)} (changed)`);
+  }
+  for (const d of diff.added) {
+    const p = (d as { path: string }).path;
+    lines.push(`${formatFieldName(p)} (added)`);
+  }
+  for (const d of diff.removed) {
+    const p = (d as { path: string }).path;
+    lines.push(`${formatFieldName(p)} (removed)`);
+  }
+
+  if (lines.length === 0) {
     return '';
   }
-  if (all.length <= 3) {
-    return all.join(', ');
+  if (lines.length <= 4) {
+    return lines.join('  ');
   }
-  return `${all.slice(0, 3).join(', ')} +${all.length - 3} more`;
+  return `${lines.slice(0, 3).join('  ')}  +${lines.length - 3} more`;
 }
 
 async function getDocumentContent(arg: unknown): Promise<{ content: string; uri: vscode.Uri } | undefined> {

@@ -128,12 +128,11 @@ describe('F5XCCompletionProvider', () => {
       expect(preselected.length).toBeLessThanOrEqual(1);
     });
 
-    it('property completions have triggerSuggest command (Phase 1)', () => {
-      const items = getSpecItems();
-      const nonSnippet = items.filter((i) => typeof i.label !== 'string' || !String(i.label).includes('template'));
-      const withCommand = nonSnippet.filter((i) => i.command?.command === 'editor.action.triggerSuggest');
-      const snippetCount = items.filter((i) => typeof i.label === 'string').length;
-      expect(withCommand.length + snippetCount).toBeGreaterThan(0);
+    it('property completions do not auto-trigger suggest', () => {
+      const propItems = getSpecItems().filter((i) => typeof i.label !== 'string');
+      for (const item of propItems) {
+        expect(item.command).toBeUndefined();
+      }
     });
 
     it('has documentation on items (Phase 5)', () => {

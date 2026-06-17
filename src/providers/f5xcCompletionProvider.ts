@@ -165,12 +165,6 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
       const insertText = this.createPropertyInsertText(propName, propSchema, context.indentString);
       item.insertText = new vscode.SnippetString(insertText);
       item.filterText = propName;
-
-      item.command = {
-        command: 'editor.action.triggerSuggest',
-        title: 'Suggest values',
-      };
-
       item.documentation = this.buildPropertyDocs(propName, propSchema, isRequired);
 
       if (isRequired) {
