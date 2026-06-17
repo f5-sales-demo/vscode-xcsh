@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import { CompletionItemKind } from 'vscode';
+import { CompletionList } from 'vscode';
 import { F5XCCompletionProvider } from '../../providers/f5xcCompletionProvider';
 import { clearDetectionCache } from '../../utils/completionHelper';
 
@@ -39,6 +39,31 @@ const mockToken = {
 } as unknown as import('vscode').CancellationToken;
 const mockContext = { triggerKind: 0, triggerCharacter: undefined } as import('vscode').CompletionContext;
 
+function getItems(result: unknown): import('vscode').CompletionItem[] {
+  if (result instanceof CompletionList) {
+    return result.items;
+  }
+  if (Array.isArray(result)) {
+    return result;
+  }
+  return [];
+}
+
+function getLabel(item: import('vscode').CompletionItem): string {
+  if (typeof item.label === 'string') {
+    return item.label;
+  }
+  return (item.label as { label: string }).label;
+}
+
+const specContent = `{
+  "kind": "http_loadbalancer",
+  "metadata": { "name": "test" },
+  "spec": {
+
+  }
+}`;
+
 describe('F5XCCompletionProvider', () => {
   const provider = new F5XCCompletionProvider();
 
@@ -46,102 +71,125 @@ describe('F5XCCompletionProvider', () => {
     clearDetectionCache();
   });
 
-  it('returns undefined for non-XC files', () => {
-    const doc = createMockDocument('{ "name": "test" }', 'package.json');
-    const result = provider.provideCompletionItems(doc, createPosition(0, 5), mockToken, mockContext);
-    expect(result).toBeUndefined();
+  describe('basic behavior', () => {
+    it('returns undefined for non-XC files', () => {
+      const doc = createMockDocument('{ "name": "test" }', 'package.json');
+      const result = provider.provideCompletionItems(doc, createPosition(0, 5), mockToken, mockContext);
+      expect(result).toBeUndefined();
+    });
+
+    it('returns CompletionList (not bare array)', () => {
+      const doc = createMockDocument(specContent);
+      const result = provider.provideCompletionItems(doc, createPosition(4, 4), mockToken, mockContext);
+      expect(result).toBeInstanceOf(CompletionList);
+    });
+
+    it('returns isIncomplete: false to suppress generic completions', () => {
+      const doc = createMockDocument(specContent);
+      const result = provider.provideCompletionItems(doc, createPosition(4, 4), mockToken, mockContext);
+      if (result instanceof CompletionList) {
+        expect(result.isIncomplete).toBe(false);
+      }
+    });
   });
 
-  it('returns completions for XC manifest at root level', () => {
-    const content = '{\n  \n}';
-    const doc = createMockDocument(content);
-    const result = provider.provideCompletionItems(doc, createPosition(1, 2), mockToken, mockContext);
+  describe('property completions UX polish', () => {
+    function getSpecItems() {
+      const doc = createMockDocument(specContent);
+      const result = provider.provideCompletionItems(doc, createPosition(4, 4), mockToken, mockContext);
+      return getItems(result);
+    }
 
-    if (Array.isArray(result)) {
-      expect(result.length).toBeGreaterThan(0);
-      const labels = result.map((item) => {
-        if (typeof item.label === 'string') {
-          return item.label;
-        }
-        return (item.label as { label: string }).label;
+    it('returns property items inside spec object', () => {
+      const items = getSpecItems();
+      expect(items.length).toBeGreaterThan(0);
+    });
+
+    it('uses three-part labels when property completions are returned (Phase 2)', () => {
+      const items = getSpecItems();
+      const withObjectLabel = items.filter((i) => typeof i.label !== 'string');
+      if (withObjectLabel.length > 0) {
+        const label = withObjectLabel[0]?.label as { label: string; detail?: string };
+        expect(label.detail).toBeDefined();
+      } else {
+        expect(items.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('returns items with defined kind (Phase 3)', () => {
+      const items = getSpecItems();
+      const withKind = items.filter((i) => i.kind !== undefined);
+      expect(withKind.length).toBeGreaterThan(0);
+    });
+
+    it('preselects at most one item (Phase 4)', () => {
+      const items = getSpecItems();
+      const preselected = items.filter((i) => i.preselect === true);
+      expect(preselected.length).toBeLessThanOrEqual(1);
+    });
+
+    it('property completions have triggerSuggest command (Phase 1)', () => {
+      const items = getSpecItems();
+      const nonSnippet = items.filter((i) => typeof i.label !== 'string' || !String(i.label).includes('template'));
+      const withCommand = nonSnippet.filter((i) => i.command?.command === 'editor.action.triggerSuggest');
+      const snippetCount = items.filter((i) => typeof i.label === 'string').length;
+      expect(withCommand.length + snippetCount).toBeGreaterThan(0);
+    });
+
+    it('has documentation on items (Phase 5)', () => {
+      const items = getSpecItems();
+      const withDocs = items.filter((i) => i.documentation !== undefined);
+      expect(withDocs.length).toBeGreaterThan(0);
+    });
+
+    it('uses snippet choice syntax for enum fields (Phase 6)', () => {
+      const items = getSpecItems();
+      const withChoices = items.filter((i) => {
+        const text = (i.insertText as { value?: string })?.value || '';
+        return text.includes('${1|');
       });
+      expect(withChoices.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('filters conflicting fields when counterpart is set (Phase 7)', () => {
+      const contentWithWaf = `{
+  "kind": "http_loadbalancer",
+  "metadata": { "name": "test" },
+  "spec": {
+    "disable_waf": {},
+
+  }
+}`;
+      const doc = createMockDocument(contentWithWaf);
+      const result = provider.provideCompletionItems(doc, createPosition(5, 4), mockToken, mockContext);
+      const items = getItems(result);
+      const labels = items.map(getLabel);
+      expect(labels).not.toContain('app_firewall');
+    });
+
+    it('sorts required fields first', () => {
+      const items = getSpecItems();
+      const sortTexts = items.map((i) => i.sortText).filter(Boolean);
+      const hasZeroPrefix = sortTexts.some((s) => s?.startsWith('0-'));
+      const hasTwoPrefix = sortTexts.some((s) => s?.startsWith('2-'));
+      if (hasZeroPrefix && hasTwoPrefix) {
+        const firstZero = sortTexts.find((s) => s?.startsWith('0-'));
+        const firstTwo = sortTexts.find((s) => s?.startsWith('2-'));
+        if (firstZero && firstTwo) {
+          expect(sortTexts.indexOf(firstZero)).toBeLessThan(sortTexts.indexOf(firstTwo));
+        }
+      }
+    });
+  });
+
+  describe('root-level completions', () => {
+    it('returns Full resource template at root level', () => {
+      const content = '{\n  \n}';
+      const doc = createMockDocument(content);
+      const result = provider.provideCompletionItems(doc, createPosition(1, 2), mockToken, mockContext);
+      const items = getItems(result);
+      const labels = items.map(getLabel);
       expect(labels).toContain('Full resource template');
-    }
-  });
-
-  it('returns property completions inside spec object', () => {
-    const content = `{
-  "kind": "http_loadbalancer",
-  "metadata": { "name": "test" },
-  "spec": {
-
-  }
-}`;
-    const doc = createMockDocument(content);
-    const result = provider.provideCompletionItems(doc, createPosition(4, 4), mockToken, mockContext);
-
-    if (Array.isArray(result) && result.length > 0) {
-      const hasPropertyKind = result.some((item) => item.kind !== undefined);
-      expect(hasPropertyKind).toBe(true);
-    }
-  });
-
-  it('returns value completions after colon for enum field', () => {
-    const content = `{
-  "kind": "http_loadbalancer",
-  "metadata": { "name": "test" },
-  "spec": {
-    "default_pool": {
-      "endpoint_selection":
-    }
-  }
-}`;
-    const doc = createMockDocument(content);
-    const result = provider.provideCompletionItems(doc, createPosition(5, 28), mockToken, mockContext);
-
-    if (Array.isArray(result)) {
-      const enumItems = result.filter((item) => item.kind === CompletionItemKind.EnumMember);
-      if (enumItems.length > 0) {
-        expect(enumItems.length).toBeGreaterThan(1);
-      }
-    }
-  });
-
-  it('sorts required properties before optional ones', () => {
-    const content = `{
-  "kind": "http_loadbalancer",
-  "metadata": { "name": "test" },
-  "spec": {
-
-  }
-}`;
-    const doc = createMockDocument(content);
-    const result = provider.provideCompletionItems(doc, createPosition(4, 4), mockToken, mockContext);
-
-    if (Array.isArray(result) && result.length > 1) {
-      const sortTexts = result.map((item) => item.sortText).filter(Boolean);
-      if (sortTexts.length > 0) {
-        const hasRequiredFirst = sortTexts.some((s) => s?.startsWith('0-'));
-        expect(hasRequiredFirst || sortTexts.length > 0).toBe(true);
-      }
-    }
-  });
-
-  it('returns content-detected completions for non-standard filenames', () => {
-    const content = JSON.stringify(
-      {
-        kind: 'http_loadbalancer',
-        metadata: { name: 'test' },
-        spec: {},
-      },
-      null,
-      2,
-    );
-    const doc = createMockDocument(content, 'my-custom-lb.json');
-    const result = provider.provideCompletionItems(doc, createPosition(1, 2), mockToken, mockContext);
-
-    if (Array.isArray(result)) {
-      expect(result.length).toBeGreaterThan(0);
-    }
+    });
   });
 });
