@@ -64,6 +64,7 @@ jest.mock(
         rawObject: obj,
       }));
     }),
+    buildMinimalExportFilter: jest.fn(() => undefined),
     applyMinimalExportFilter: jest.fn((spec: Record<string, unknown>) => spec),
     computeResourceDiff: jest.fn(),
     formatDiff: jest.fn().mockReturnValue('+ added field\n- removed field'),
