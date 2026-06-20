@@ -21,23 +21,15 @@ updates:
   # --- npm ---
   - package-ecosystem: "npm"
     directory: "/"
-    # Daily so the in-house shared libraries track the latest published release
-    # closely (they iterate rapidly); third-party updates are still bundled to
-    # keep noise low.
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
     commit-message:
       prefix: "chore(deps):"
     labels:
       - "dependencies"
     open-pull-requests-limit: 10
     groups:
-      # Highest priority: the in-house shared libraries (pi-resource-management,
-      # i18n-core) — their own PR, any update type, tracked daily. Listed first so
-      # these packages land here instead of the catch-all group below.
-      f5xc-shared-libs:
-        patterns:
-          - "@f5xc-salesdemos/*"
       npm-minor-patch:
         update-types:
           - "minor"
