@@ -936,7 +936,7 @@
     "validate:generation": "npx ts-node scripts/validate-generation.ts",
     "validate:forms": "npx ts-node scripts/validate-form-defaults.ts",
     "validate:i18n": "npx @vscode/l10n-dev export -o ./l10n ./src",
-    "validate:i18n-coverage": "npx tsx scripts/validate-i18n-coverage.ts",
+    "validate:i18n-coverage": "npx tsx scripts/validate-i18n-coverage.mts",
     "compile": "npm run generate && webpack",
     "watch": "npm run generate && webpack --watch",
     "package": "npm run generate && npm run build:webview && webpack --mode production --devtool hidden-source-map",

@@ -58,7 +58,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.ts'],
+    files: ['scripts/**/*.ts', 'scripts/**/*.mts'],
     languageOptions: {
       parserOptions: {
         project: './scripts/tsconfig.json',
