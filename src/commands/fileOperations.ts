@@ -197,7 +197,7 @@ export function registerFileOperationCommands(
 
         if (result.status === 'error') {
           if (result.error?.message?.includes('ALREADY_EXISTS') || result.error?.httpStatus === 409) {
-            showWarning(vscode.l10n.t('Resource already exists. Use "XC: Apply" to update an existing resource.'));
+            showWarning(vscode.l10n.t('Resource already exists. Use "xcsh: Apply" to update an existing resource.'));
           } else {
             showWarning(vscode.l10n.t('Create failed: {0}', result.error?.message ?? 'Unknown error'));
           }
@@ -245,7 +245,7 @@ export function registerFileOperationCommands(
 
         if (result.isNew) {
           void vscode.window.showInformationMessage(
-            vscode.l10n.t('"{0}" not found remotely — use XC: Create to deploy it.', resourceName),
+            vscode.l10n.t('"{0}" not found remotely — use xcsh: Create to deploy it.', resourceName),
           );
           return;
         }

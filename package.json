@@ -721,6 +721,22 @@
         {
           "command": "f5xc.copyAsJson",
           "when": "false"
+        },
+        {
+          "command": "f5xc.fileApply",
+          "when": "false"
+        },
+        {
+          "command": "f5xc.fileCreate",
+          "when": "false"
+        },
+        {
+          "command": "f5xc.fileDiff",
+          "when": "false"
+        },
+        {
+          "command": "f5xc.fileDelete",
+          "when": "false"
         }
       ]
     },

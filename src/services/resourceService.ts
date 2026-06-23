@@ -325,7 +325,7 @@ export class ResourceService {
         status: 'error',
         error: {
           kind: 'conflict',
-          message: `"${manifest.metadata.name}" already exists. Use XC: Apply to update.`,
+          message: `"${manifest.metadata.name}" already exists. Use xcsh: Apply to update.`,
           httpStatus: 409,
         },
       };
