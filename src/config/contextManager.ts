@@ -13,7 +13,11 @@ import {
   getConfigDir,
   getContextPath,
   getContextsDir,
+  getLocalActiveContextPath,
+  getLocalContextPath,
+  getLocalContextsDir,
 } from './contextPaths';
+import type { ContextOverrides, PointerContext } from './contextResolver';
 import {
   type ContextManagerInterface,
   CURRENT_SCHEMA_VERSION,
@@ -40,6 +44,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   readonly onDidChangeContext: vscode.Event<void> = this._onDidChangeContext.event;
 
   private fileWatcher: vscode.Disposable | undefined;
+  private localFileWatcher: vscode.Disposable | undefined;
 
   // ───────── directory helpers ─────────
 
@@ -231,6 +236,156 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
   }
 
+  // ───────── local directory helpers ─────────
+
+  /** Ensure the local contexts directory exists with 0o700 permissions. */
+  private ensureLocalContextsDir(workspaceFolder: string): void {
+    const dir = getLocalContextsDir(workspaceFolder);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true, mode: DIR_MODE });
+    }
+    this.chmodSafe(dir, DIR_MODE);
+  }
+
+  // ───────── local read operations ─────────
+
+  /** List all context JSON files under the workspace's `.xcsh/contexts/`. */
+  getLocalContexts(workspaceFolder: string): Promise<F5XCContext[]> {
+    const dir = getLocalContextsDir(workspaceFolder);
+    if (!fs.existsSync(dir)) {
+      return Promise.resolve([]);
+    }
+
+    const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
+    const contexts: F5XCContext[] = [];
+
+    for (const file of files) {
+      try {
+        const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
+        const ctx = JSON.parse(raw) as F5XCContext;
+        contexts.push(ctx);
+      } catch (err) {
+        this.logger.warn(`Skipping unreadable local context file: ${file}`, err);
+      }
+    }
+
+    contexts.sort((a, b) => a.name.localeCompare(b.name));
+    return Promise.resolve(contexts);
+  }
+
+  /** Read the active_context pointer from the workspace's local contexts dir. */
+  getLocalActiveContextName(workspaceFolder: string): Promise<string | null> {
+    const p = getLocalActiveContextPath(workspaceFolder);
+    if (!fs.existsSync(p)) {
+      return Promise.resolve(null);
+    }
+    try {
+      const name = fs.readFileSync(p, 'utf-8').trim();
+      return Promise.resolve(name || null);
+    } catch {
+      return Promise.resolve(null);
+    }
+  }
+
+  // ───────── local write operations ─────────
+
+  /** Add an inline context JSON to the workspace's `.xcsh/contexts/`. */
+  async addLocalContext(ctx: F5XCContext, workspaceFolder: string): Promise<void> {
+    if (!isValidContextName(ctx.name)) {
+      throw new Error(`Invalid context name: "${ctx.name}"`);
+    }
+
+    this.ensureLocalContextsDir(workspaceFolder);
+
+    const filePath = getLocalContextPath(ctx.name, workspaceFolder);
+    if (fs.existsSync(filePath)) {
+      throw new Error(`Local context "${ctx.name}" already exists`);
+    }
+
+    const toWrite: F5XCContext = {
+      ...ctx,
+      version: ctx.version ?? CURRENT_SCHEMA_VERSION,
+    };
+
+    this.atomicWrite(filePath, `${JSON.stringify(toWrite, null, 2)}\n`, FILE_MODE);
+
+    // Auto-activate if this is the first local context
+    const all = await this.getLocalContexts(workspaceFolder);
+    if (all.length === 1) {
+      this.setLocalActiveContextInternal(ctx.name, workspaceFolder);
+    }
+
+    this._onDidChangeContext.fire();
+  }
+
+  /** Set the active local context pointer. */
+  setLocalActiveContext(name: string, workspaceFolder: string): Promise<void> {
+    const filePath = getLocalContextPath(name, workspaceFolder);
+    if (!fs.existsSync(filePath)) {
+      return Promise.reject(new Error(`Local context "${name}" not found`));
+    }
+    this.setLocalActiveContextInternal(name, workspaceFolder);
+    this._onDidChangeContext.fire();
+    return Promise.resolve();
+  }
+
+  /** Write the local active_context pointer without validation. */
+  private setLocalActiveContextInternal(name: string, workspaceFolder: string): void {
+    this.ensureLocalContextsDir(workspaceFolder);
+    this.atomicWrite(getLocalActiveContextPath(workspaceFolder), `${name}\n`, FILE_MODE);
+  }
+
+  /** Delete a local context file. */
+  async deleteLocalContext(name: string, workspaceFolder: string): Promise<void> {
+    const filePath = getLocalContextPath(name, workspaceFolder);
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Local context "${name}" not found`);
+    }
+
+    fs.unlinkSync(filePath);
+
+    // Clear active if it was the deleted context
+    const activeName = await this.getLocalActiveContextName(workspaceFolder);
+    if (activeName === name) {
+      const p = getLocalActiveContextPath(workspaceFolder);
+      if (fs.existsSync(p)) {
+        fs.unlinkSync(p);
+      }
+    }
+
+    this._onDidChangeContext.fire();
+  }
+
+  /**
+   * Create a pointer context in the workspace that references a global
+   * context by name, with optional overrides.
+   */
+  async linkGlobalContext(globalName: string, workspaceFolder: string, overrides?: ContextOverrides): Promise<void> {
+    // Verify the global context exists
+    const globalPath = getContextPath(globalName);
+    if (!fs.existsSync(globalPath)) {
+      throw new Error(`Global context "${globalName}" not found`);
+    }
+
+    this.ensureLocalContextsDir(workspaceFolder);
+
+    const pointer: PointerContext = { context: globalName };
+    if (overrides) {
+      pointer.overrides = overrides;
+    }
+
+    const filePath = getLocalContextPath(globalName, workspaceFolder);
+    this.atomicWrite(filePath, `${JSON.stringify(pointer, null, 2)}\n`, FILE_MODE);
+
+    // Auto-activate if this is the first local context
+    const all = await this.getLocalContexts(workspaceFolder);
+    if (all.length === 1) {
+      this.setLocalActiveContextInternal(globalName, workspaceFolder);
+    }
+
+    this._onDidChangeContext.fire();
+  }
+
   // ───────── cache management ─────────
 
   private clearCacheFor(name: string): void {
@@ -311,38 +466,66 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   /**
    * Watch the contexts directory and active_context file for external
    * changes.  Fires `onDidChangeContext` so tree views etc. can refresh.
+   *
+   * When `workspaceFolder` is provided, also watches the local
+   * `{workspaceFolder}/.xcsh/contexts/` directory.
    */
-  initFileWatcher(): void {
-    if (this.fileWatcher) {
-      return; // already watching
+  initFileWatcher(workspaceFolder?: string): void {
+    if (!this.fileWatcher) {
+      const contextsGlob = new vscode.RelativePattern(
+        vscode.Uri.file(getConfigDir()),
+        '{contexts/*.json,active_context}',
+      );
+
+      const watcher = vscode.workspace.createFileSystemWatcher(contextsGlob);
+
+      const onChange = () => {
+        this.clearAllCaches();
+        this._onDidChangeContext.fire();
+      };
+
+      const disposables = [
+        watcher,
+        watcher.onDidCreate(onChange),
+        watcher.onDidChange(onChange),
+        watcher.onDidDelete(onChange),
+      ];
+
+      this.fileWatcher = vscode.Disposable.from(...disposables);
     }
 
-    const contextsGlob = new vscode.RelativePattern(
-      vscode.Uri.file(getConfigDir()),
-      '{contexts/*.json,active_context}',
-    );
+    // Optionally watch local workspace contexts
+    if (workspaceFolder && !this.localFileWatcher) {
+      const localDir = getLocalContextsDir(workspaceFolder);
+      // Only set up watcher if parent .xcsh dir exists (avoids noise)
+      const xcshDir = path.dirname(localDir);
+      if (fs.existsSync(xcshDir)) {
+        const localGlob = new vscode.RelativePattern(vscode.Uri.file(localDir), '{*.json,active_context}');
 
-    const watcher = vscode.workspace.createFileSystemWatcher(contextsGlob);
+        const localWatcher = vscode.workspace.createFileSystemWatcher(localGlob);
 
-    const onChange = () => {
-      this.clearAllCaches();
-      this._onDidChangeContext.fire();
-    };
+        const onLocalChange = () => {
+          this.clearAllCaches();
+          this._onDidChangeContext.fire();
+        };
 
-    const disposables = [
-      watcher,
-      watcher.onDidCreate(onChange),
-      watcher.onDidChange(onChange),
-      watcher.onDidDelete(onChange),
-    ];
+        const localDisposables = [
+          localWatcher,
+          localWatcher.onDidCreate(onLocalChange),
+          localWatcher.onDidChange(onLocalChange),
+          localWatcher.onDidDelete(onLocalChange),
+        ];
 
-    this.fileWatcher = vscode.Disposable.from(...disposables);
+        this.localFileWatcher = vscode.Disposable.from(...localDisposables);
+      }
+    }
   }
 
   // ───────── disposal ─────────
 
   dispose(): void {
     this.fileWatcher?.dispose();
+    this.localFileWatcher?.dispose();
     this.clearAllCaches();
     this._onDidChangeContext.dispose();
   }
