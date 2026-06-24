@@ -227,293 +227,244 @@
       {
         "command": "f5xc.addContext",
         "title": "%command.addContext.title%",
-        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.editContext",
         "title": "%command.editContext.title%",
-        "category": "xcsh",
         "icon": "$(edit)"
       },
       {
         "command": "f5xc.deleteContext",
         "title": "%command.deleteContext.title%",
-        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.setActiveContext",
         "title": "%command.setActiveContext.title%",
-        "category": "xcsh",
         "icon": "$(check)"
       },
       {
         "command": "f5xc.linkGlobalContext",
-        "title": "Link Global Context to Project",
-        "category": "xcsh",
+        "title": "xcsh: Link Global Context to Project",
         "icon": "$(link)"
       },
       {
         "command": "f5xc.unlinkLocalContext",
-        "title": "Unlink Local Context",
-        "category": "xcsh",
+        "title": "xcsh: Unlink Local Context",
         "icon": "$(unlink)"
       },
       {
         "command": "f5xc.clearAuthCache",
         "title": "%command.clearAuthCache.title%",
-        "category": "xcsh",
         "icon": "$(clear-all)"
       },
       {
         "command": "f5xc.refresh",
         "title": "%command.refresh.title%",
-        "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
         "command": "f5xc.create",
         "title": "%command.create.title%",
-        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.get",
         "title": "%command.get.title%",
-        "category": "xcsh",
         "icon": "$(eye)"
       },
       {
         "command": "f5xc.describe",
         "title": "%command.describe.title%",
-        "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.edit",
         "title": "%command.edit.title%",
-        "category": "xcsh",
         "icon": "$(edit)"
       },
       {
         "command": "f5xc.delete",
         "title": "%command.delete.title%",
-        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.deleteNamespace",
         "title": "%command.deleteNamespace.title%",
-        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.describeNamespace",
         "title": "%command.describeNamespace.title%",
-        "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.apply",
         "title": "%command.apply.title%",
-        "category": "xcsh",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "f5xc.diff",
         "title": "%command.diff.title%",
-        "category": "xcsh",
         "icon": "$(diff)"
       },
       {
         "command": "f5xc.copyName",
-        "title": "%command.copyName.title%",
-        "category": "xcsh"
+        "title": "%command.copyName.title%"
       },
       {
         "command": "f5xc.copyAsJson",
-        "title": "%command.copyAsJson.title%",
-        "category": "xcsh"
+        "title": "%command.copyAsJson.title%"
       },
       {
         "command": "f5xc.viewLogs",
         "title": "%command.viewLogs.title%",
-        "category": "xcsh",
         "icon": "$(output)"
       },
       {
         "command": "f5xc.viewMetrics",
         "title": "%command.viewMetrics.title%",
-        "category": "xcsh",
         "icon": "$(graph)"
       },
       {
         "command": "f5xc.diagram",
         "title": "%command.diagram.title%",
-        "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
         "command": "f5xc.createFromTemplate",
         "title": "%command.createFromTemplate.title%",
-        "category": "xcsh",
         "icon": "$(file-add)"
       },
       {
         "command": "f5xc.openInBrowser",
         "title": "%command.openInBrowser.title%",
-        "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
         "command": "f5xc.exportJson",
         "title": "%command.exportJson.title%",
-        "category": "xcsh",
         "icon": "$(file-code)"
       },
       {
         "command": "f5xc.exportYaml",
         "title": "%command.exportYaml.title%",
-        "category": "xcsh",
         "icon": "$(file-code)"
       },
       {
         "command": "f5xc.exportAllJson",
         "title": "%command.exportAllJson.title%",
-        "category": "xcsh",
         "icon": "$(files)"
       },
       {
         "command": "f5xc.exportAllYaml",
         "title": "%command.exportAllYaml.title%",
-        "category": "xcsh",
         "icon": "$(files)"
       },
       {
         "command": "f5xc.fileApply",
         "title": "%command.fileApply.title%",
-        "category": "xcsh",
         "icon": "$(cloud-upload)"
       },
       {
         "command": "f5xc.fileCreate",
         "title": "%command.fileCreate.title%",
-        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.fileDiff",
         "title": "%command.fileDiff.title%",
-        "category": "xcsh",
         "icon": "$(diff)"
       },
       {
         "command": "f5xc.fileDelete",
         "title": "%command.fileDelete.title%",
-        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
         "command": "f5xc.toggleViewMode",
         "title": "%command.toggleViewMode.title%",
-        "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
         "command": "f5xc.cloudStatus.refresh",
         "title": "%command.cloudStatus.refresh.title%",
-        "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
         "command": "f5xc.cloudStatus.openDashboard",
         "title": "%command.cloudStatus.openDashboard.title%",
-        "category": "xcsh",
         "icon": "$(dashboard)"
       },
       {
         "command": "f5xc.showOnboarding",
         "title": "%command.showOnboarding.title%",
-        "category": "xcsh",
         "icon": "$(checklist)"
       },
       {
         "command": "f5xc.cloudStatus.openExternal",
         "title": "%command.cloudStatus.openExternal.title%",
-        "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
         "command": "f5xc.cloudStatus.viewMaintenance",
         "title": "%command.cloudStatus.viewMaintenance.title%",
-        "category": "xcsh",
         "icon": "$(info)"
       },
       {
         "command": "f5xc.cloudStatus.viewIncident",
         "title": "%command.cloudStatus.viewIncident.title%",
-        "category": "xcsh",
         "icon": "$(warning)"
       },
       {
         "command": "f5xc.cloudStatus.viewComponent",
         "title": "%command.cloudStatus.viewComponent.title%",
-        "category": "xcsh",
         "icon": "$(server)"
       },
       {
         "command": "f5xc.cloudStatus.viewPoP",
         "title": "%command.cloudStatus.viewPoP.title%",
-        "category": "xcsh",
         "icon": "$(globe)"
       },
       {
         "command": "f5xc.showPlan",
         "title": "%command.showPlan.title%",
-        "category": "xcsh",
         "icon": "$(file-text)"
       },
       {
         "command": "f5xc.showQuotas",
         "title": "%command.showQuotas.title%",
-        "category": "xcsh",
         "icon": "$(graph)"
       },
       {
         "command": "f5xc.activateAddon",
         "title": "%command.activateAddon.title%",
-        "category": "xcsh",
         "icon": "$(rocket)"
       },
       {
         "command": "f5xc.createHealthcheckForm",
         "title": "%command.createHealthcheckForm.title%",
-        "category": "xcsh",
         "icon": "$(add)"
       },
       {
         "command": "f5xc.xcsh.openTerminal",
         "title": "%command.xcsh.openTerminal.title%",
-        "category": "xcsh",
         "icon": "$(terminal)"
       },
       {
         "command": "f5xc.xcsh.restart",
         "title": "%command.xcsh.restart.title%",
-        "category": "xcsh",
         "icon": "$(debug-restart)"
       },
       {
         "command": "f5xc.xcsh.openPanel",
         "title": "%command.xcsh.openPanel.title%",
-        "category": "xcsh",
         "icon": "$(comment-discussion)"
       },
       {
         "command": "f5xc.xcsh.newSession",
         "title": "%command.xcsh.newSession.title%",
-        "category": "xcsh",
         "icon": "$(add)"
       }
     ],
