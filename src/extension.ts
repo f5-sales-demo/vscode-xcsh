@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import * as fs from 'node:fs';
 import * as vscode from 'vscode';
 import { registerCloudStatusCommands } from './commands/cloudStatus';
 import { registerContextCommands } from './commands/context';
@@ -10,6 +11,7 @@ import { registerFileOperationCommands } from './commands/fileOperations';
 import { registerObservabilityCommands } from './commands/observability';
 import { ContextManager } from './config/contextManager';
 import { migrateProfilesToContexts } from './config/contextMigration';
+import { getLocalContextsDir } from './config/contextPaths';
 import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
 import { F5XCCodeActionProvider } from './providers/f5xcCodeActionProvider';
 import { F5XCCompletionProvider } from './providers/f5xcCompletionProvider';
@@ -50,6 +52,9 @@ export function activate(context: vscode.ExtensionContext): void {
   contextManager.initFileWatcher();
   context.subscriptions.push(contextManager);
 
+  // Set workspace folder for local context resolution
+  const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
   // Client factory for creating API clients
   const clientFactory = (ctx: { apiUrl: string; name: string }) => {
     return contextManager.getClient(ctx.name);
@@ -58,6 +63,17 @@ export function activate(context: vscode.ExtensionContext): void {
   // Initialize tree view providers
   const explorerProvider = new F5XCExplorerProvider(contextManager, clientFactory);
   const contextProvider = new ContextProvider(contextManager);
+
+  // Configure local context support when a workspace is open
+  if (wsFolder) {
+    contextProvider.setWorkspaceFolder(wsFolder);
+    contextManager.initFileWatcher(wsFolder); // watch local contexts too
+  }
+
+  // Set context variable for local-context view visibility
+  const localCtxDir = wsFolder ? getLocalContextsDir(wsFolder) : undefined;
+  const hasLocal = localCtxDir ? fs.existsSync(localCtxDir) : false;
+  void vscode.commands.executeCommand('setContext', 'f5xc.hasLocalContext', hasLocal);
   const cloudStatusProvider = new CloudStatusProvider();
   const subscriptionProvider = new SubscriptionProvider(contextManager);
   const cloudStatusDashboardProvider = new CloudStatusDashboardProvider(contextManager);
