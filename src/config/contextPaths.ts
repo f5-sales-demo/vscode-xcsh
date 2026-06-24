@@ -35,3 +35,15 @@ export function getProfilesDir(): string {
 export function getActiveProfilePath(): string {
   return path.join(getConfigDir(), 'active_profile');
 }
+
+export function getLocalContextsDir(workspaceFolder: string): string {
+  return path.join(workspaceFolder, '.xcsh', 'contexts');
+}
+
+export function getLocalActiveContextPath(workspaceFolder: string): string {
+  return path.join(getLocalContextsDir(workspaceFolder), 'active_context');
+}
+
+export function getLocalContextPath(name: string, workspaceFolder: string): string {
+  return path.join(getLocalContextsDir(workspaceFolder), `${name}.json`);
+}

@@ -1,5 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import type { F5XCContext } from '../config/contextTypes';
@@ -104,8 +106,40 @@ export function registerContextCommands(
           defaultNamespace: defaultNamespace.trim() || 'system',
         };
 
-        // Add context
-        await contextManager.addContext(newContext);
+        // Check if workspace has .xcsh/ directory — offer local vs global choice
+        const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const hasXcshDir = wsFolder ? fs.existsSync(path.join(wsFolder, '.xcsh')) : false;
+
+        let createLocal = false;
+        if (hasXcshDir && wsFolder) {
+          const scope = await vscode.window.showQuickPick(
+            [
+              {
+                label: vscode.l10n.t('Create for this project only'),
+                description: vscode.l10n.t('Stored in .xcsh/contexts/'),
+                value: 'local' as const,
+              },
+              {
+                label: vscode.l10n.t('Create globally'),
+                description: vscode.l10n.t('Stored in ~/.config/f5xc/contexts/'),
+                value: 'global' as const,
+              },
+            ],
+            { placeHolder: vscode.l10n.t('Where should this context be stored?'), ignoreFocusOut: true },
+          );
+
+          if (!scope) {
+            return;
+          }
+          createLocal = scope.value === 'local';
+        }
+
+        // Add context to the chosen location
+        if (createLocal && wsFolder) {
+          await contextManager.addLocalContext(newContext, wsFolder);
+        } else {
+          await contextManager.addContext(newContext);
+        }
 
         // Validate credentials
         const validating = await vscode.window.withProgress(
@@ -356,6 +390,89 @@ export function registerContextCommands(
         explorerProvider.refresh();
         return Promise.resolve();
       }, 'Clear auth cache');
+    }),
+  );
+
+  // LINK GLOBAL CONTEXT (create a local pointer to a global context)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('f5xc.linkGlobalContext', async () => {
+      await withErrorHandling(async () => {
+        const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!wsFolder) {
+          showWarning(vscode.l10n.t('No workspace folder open'));
+          return;
+        }
+
+        const contexts = await contextManager.getContexts();
+        if (contexts.length === 0) {
+          showWarning(vscode.l10n.t('No global contexts configured'));
+          return;
+        }
+
+        const selected = await vscode.window.showQuickPick(
+          contexts.map((c) => ({
+            label: c.name,
+            description: c.apiUrl,
+          })),
+          { placeHolder: vscode.l10n.t('Select a global context to link to this project'), ignoreFocusOut: true },
+        );
+
+        if (!selected) {
+          return;
+        }
+
+        await contextManager.linkGlobalContext(selected.label, wsFolder);
+        showInfo(vscode.l10n.t('Global context "{0}" linked to this project', selected.label));
+        contextProvider.refresh();
+        explorerProvider.refresh();
+      }, 'Link global context');
+    }),
+  );
+
+  // UNLINK LOCAL CONTEXT (delete a local context from the workspace)
+  context.subscriptions.push(
+    vscode.commands.registerCommand('f5xc.unlinkLocalContext', async () => {
+      await withErrorHandling(async () => {
+        const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!wsFolder) {
+          showWarning(vscode.l10n.t('No workspace folder open'));
+          return;
+        }
+
+        const localContexts = await contextManager.getLocalContexts(wsFolder);
+        if (localContexts.length === 0) {
+          showWarning(vscode.l10n.t('No local contexts in this project'));
+          return;
+        }
+
+        const selected = await vscode.window.showQuickPick(
+          localContexts.map((c) => ({
+            label: c.name,
+            description: c.apiUrl,
+          })),
+          { placeHolder: vscode.l10n.t('Select a local context to remove'), ignoreFocusOut: true },
+        );
+
+        if (!selected) {
+          return;
+        }
+
+        // Confirm deletion
+        const confirm = await vscode.window.showWarningMessage(
+          vscode.l10n.t('Remove local context "{0}" from this project? This cannot be undone.', selected.label),
+          { modal: true },
+          vscode.l10n.t('Remove'),
+        );
+
+        if (confirm !== vscode.l10n.t('Remove')) {
+          return;
+        }
+
+        await contextManager.deleteLocalContext(selected.label, wsFolder);
+        showInfo(vscode.l10n.t('Local context "{0}" removed', selected.label));
+        contextProvider.refresh();
+        explorerProvider.refresh();
+      }, 'Unlink local context');
     }),
   );
 }

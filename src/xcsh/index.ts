@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
+import { resolveContext } from '../config/contextResolver';
 import type { ContextManagerInterface } from '../config/contextTypes';
 import { deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
@@ -82,14 +83,16 @@ export async function activateXcsh(
   extensionContext.subscriptions.push(processManager);
 
   const setEnvFromContext = async (): Promise<void> => {
-    const activeCtx = await contextManager.getActiveContext();
-    if (activeCtx) {
-      const tenant = deriveTenantFromUrl(activeCtx.apiUrl);
+    // Use three-tier context resolution (env > local > global)
+    const resolved = await resolveContext(getWorkspaceCwd());
+    if (resolved) {
+      const ctx = resolved.context;
+      const tenant = deriveTenantFromUrl(ctx.apiUrl);
       const env: Record<string, string> = {
-        F5XC_API_URL: activeCtx.apiUrl,
-        F5XC_API_TOKEN: activeCtx.apiToken,
-        F5XC_NAMESPACE: activeCtx.defaultNamespace,
-        F5XC_CONTEXT_NAME: activeCtx.name,
+        F5XC_API_URL: ctx.apiUrl,
+        F5XC_API_TOKEN: ctx.apiToken,
+        F5XC_NAMESPACE: ctx.defaultNamespace,
+        F5XC_CONTEXT_NAME: ctx.name,
       };
       if (tenant) {
         env.F5XC_TENANT = tenant;

@@ -249,6 +249,18 @@
         "icon": "$(check)"
       },
       {
+        "command": "f5xc.linkGlobalContext",
+        "title": "Link Global Context to Project",
+        "category": "xcsh",
+        "icon": "$(link)"
+      },
+      {
+        "command": "f5xc.unlinkLocalContext",
+        "title": "Unlink Local Context",
+        "category": "xcsh",
+        "icon": "$(unlink)"
+      },
+      {
         "command": "f5xc.clearAuthCache",
         "title": "%command.clearAuthCache.title%",
         "category": "xcsh",
