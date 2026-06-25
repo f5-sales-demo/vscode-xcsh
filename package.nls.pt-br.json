@@ -23,6 +23,7 @@
   "command.addContext.title": "xcsh: Adicionar Contexto",
   "command.editContext.title": "xcsh: Editar Contexto",
   "command.manageContextEnv.title": "xcsh: Gerenciar variáveis de ambiente do contexto",
+  "command.switchNamespace.title": "xcsh: Alternar namespace",
   "command.deleteContext.title": "xcsh: Excluir Contexto",
   "command.setActiveContext.title": "xcsh: Definir como Contexto Ativo",
   "command.clearAuthCache.title": "xcsh: Limpar Cache de Autenticação",

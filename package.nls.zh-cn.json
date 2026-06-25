@@ -35,6 +35,7 @@
   "command.addContext.title": "xcsh: 添加上下文",
   "command.editContext.title": "xcsh: 编辑上下文",
   "command.manageContextEnv.title": "xcsh: 管理上下文环境变量",
+  "command.switchNamespace.title": "xcsh: 切换命名空间",
   "command.deleteContext.title": "xcsh: 删除上下文",
   "command.setActiveContext.title": "xcsh: 设为活动上下文",
   "command.clearAuthCache.title": "xcsh: 清除身份验证缓存",

@@ -401,6 +401,43 @@ export function registerContextCommands(
     }),
   );
 
+  // SWITCH NAMESPACE
+  context.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.switchNamespace', async (node?: ContextTreeItem) => {
+      await withErrorHandling(async () => {
+        const contextName = await selectContextName(
+          contextManager,
+          node,
+          vscode.l10n.t('Select context to switch namespace'),
+        );
+        if (!contextName) {
+          return;
+        }
+
+        const ctx = await contextManager.getContext(contextName);
+        if (!ctx) {
+          showWarning(vscode.l10n.t('Context "{0}" not found', contextName));
+          return;
+        }
+
+        const namespace = await vscode.window.showInputBox({
+          prompt: vscode.l10n.t('Default namespace for context "{0}"', contextName),
+          value: ctx.defaultNamespace || '',
+          ignoreFocusOut: true,
+          validateInput: (value) => (value.trim() ? null : vscode.l10n.t('Namespace must not be empty')),
+        });
+        if (namespace === undefined) {
+          return;
+        }
+
+        await contextManager.setContextNamespace(contextName, namespace);
+        showInfo(vscode.l10n.t('Namespace for "{0}" set to {1}', contextName, namespace.trim()));
+        contextProvider.refresh();
+        explorerProvider.refresh();
+      }, 'Switch namespace');
+    }),
+  );
+
   // DELETE CONTEXT
   context.subscriptions.push(
     vscode.commands.registerCommand('xcsh.deleteContext', async (node?: ContextTreeItem) => {

@@ -35,6 +35,7 @@
   "command.addContext.title": "xcsh: إضافة سياق",
   "command.editContext.title": "xcsh: تعديل السياق",
   "command.manageContextEnv.title": "xcsh: إدارة متغيرات بيئة السياق",
+  "command.switchNamespace.title": "xcsh: تبديل مساحة الاسم",
   "command.deleteContext.title": "xcsh: حذف السياق",
   "command.setActiveContext.title": "xcsh: تعيين كسياق نشط",
   "command.clearAuthCache.title": "xcsh: مسح ذاكرة التخزين المؤقت للمصادقة",

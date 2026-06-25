@@ -243,6 +243,12 @@
         "icon": "$(symbol-variable)"
       },
       {
+        "command": "xcsh.switchNamespace",
+        "title": "%command.switchNamespace.title%",
+        "category": "xcsh",
+        "icon": "$(symbol-namespace)"
+      },
+      {
         "command": "xcsh.deleteContext",
         "title": "%command.deleteContext.title%",
         "category": "xcsh",
@@ -556,9 +562,14 @@
           "group": "1_profile@2"
         },
         {
-          "command": "xcsh.deleteContext",
+          "command": "xcsh.switchNamespace",
           "when": "view == xcsh.profiles && viewItem == profile",
           "group": "1_profile@3"
+        },
+        {
+          "command": "xcsh.deleteContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
+          "group": "1_profile@4"
         },
         {
           "command": "xcsh.refresh",
