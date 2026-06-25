@@ -31,7 +31,7 @@ import {
   getLocalContextPath,
   getLocalContextsDir,
 } from './contextPaths';
-import { normalizeApiUrl, type XCSHContext } from './contextTypes';
+import type { XCSHContext } from './contextTypes';
 
 // ───────── public types (mirror @f5xc-salesdemos/pi-utils/xcsh-context-resolver) ─────────
 
@@ -107,15 +107,12 @@ const resolver = new shared.ContextResolver({ paths: vscodePaths });
 /**
  * Resolve the active context using the shared three-tier algorithm. When no
  * workspace folder is open the local tier finds nothing and resolution falls
- * through to env/global. The resolved `apiUrl` is normalized to its origin (the
- * extension's canonical stored form) regardless of source.
+ * through to env/global. The shared resolver already normalizes the resolved
+ * `apiUrl` to its origin (pi-utils >= 19.46.0), so there is no host-level
+ * post-process here — normalization has a single source.
  */
 export async function resolveContext(workspaceFolder: string | undefined): Promise<ResolvedContext | null> {
-  const resolved = await resolver.resolve(workspaceFolder ?? '');
-  if (resolved && typeof resolved.context.apiUrl === 'string') {
-    resolved.context = { ...resolved.context, apiUrl: normalizeApiUrl(resolved.context.apiUrl) };
-  }
-  return resolved;
+  return resolver.resolve(workspaceFolder ?? '');
 }
 
 /**

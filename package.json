@@ -1052,7 +1052,7 @@
   },
   "dependencies": {
     "@f5xc-salesdemos/pi-resource-management": "^19.38.1",
-    "@f5xc-salesdemos/pi-utils": "^19.45.0",
+    "@f5xc-salesdemos/pi-utils": "^19.46.0",
     "@vscode/l10n": "^0.0.18",
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "dompurify": "^3.4.11",

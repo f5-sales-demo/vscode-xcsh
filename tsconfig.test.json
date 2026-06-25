@@ -5,7 +5,8 @@
     "noEmit": true,
     "lib": ["ES2022", "DOM"],
     "module": "CommonJS",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "isolatedModules": true
   },
   "include": ["src/**/*", "scripts/**/*", "webview/src/**/*"],
   "exclude": ["node_modules", "dist", "out", ".vscode-test"]
