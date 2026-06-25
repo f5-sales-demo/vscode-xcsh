@@ -1,5 +1,6 @@
 import type { XCSHClient } from '../api/client';
 import type { ContextManager } from '../config/contextManager';
+import { normalizeApiUrl } from '../config/contextTypes';
 import { XCSHApiError } from '../utils/errors';
 import { getKindResolver } from '../xcsh/specBridge';
 
@@ -145,7 +146,11 @@ class XCSHTransport implements HttpTransport {
   }
 
   async request(req: HttpTransportRequest): Promise<HttpTransportResponse> {
-    const path = req.url.startsWith(this.#baseUrl) ? req.url.slice(this.#baseUrl.length) : req.url;
+    const stripped = req.url.startsWith(this.#baseUrl) ? req.url.slice(this.#baseUrl.length) : req.url;
+    // Collapse the leading `//` artifact a trailing-slash apiUrl leaves after base-URL
+    // stripping; otherwise the client's `new URL()` reads `//api/...` as a host. Never
+    // rewrite an absolute URL (the fall-through branch where stripping did not apply).
+    const path = /^https?:\/\//i.test(stripped) ? stripped : stripped.replace(/^\/{2,}/, '/');
 
     try {
       const result = await this.#client.customRequest<Record<string, unknown>>(path, {
@@ -207,10 +212,13 @@ export class ResourceService {
     }
 
     const client = await this.#contextManager.getClient(contextName);
-    const transport = new XCSHTransport(client, ctx.apiUrl);
+    // Strip trailing slash(es) so the shared lib's `${apiUrl}${path}` concat cannot emit
+    // `//` (which collapses the request host to a bare label — see normalizeApiUrl).
+    const apiUrl = normalizeApiUrl(ctx.apiUrl);
+    const transport = new XCSHTransport(client, apiUrl);
 
     return new piResourceManagement.ResourceClient({
-      apiUrl: ctx.apiUrl,
+      apiUrl,
       apiToken: ctx.apiToken,
       namespace: ctx.defaultNamespace,
       transport,

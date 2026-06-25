@@ -70,6 +70,33 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
+  it('strips a trailing slash from apiUrl on save', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'trailing', apiUrl: 'https://host.example.com/api/' }));
+
+    const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'trailing.json'), 'utf-8')) as XCSHContext;
+    expect(onDisk.apiUrl).toBe('https://host.example.com/api');
+    mgr.dispose();
+  });
+
+  it('heals a pre-existing trailing-slash apiUrl on read', async () => {
+    // Simulate a context file written before normalization existed.
+    fs.mkdirSync(contextsDir, { recursive: true });
+    const legacy: XCSHContext = {
+      name: 'legacy',
+      apiUrl: 'https://host.example.com/api/',
+      apiToken: 'tok-abc123',
+      defaultNamespace: 'default',
+      version: 1,
+    };
+    fs.writeFileSync(path.join(contextsDir, 'legacy.json'), JSON.stringify(legacy, null, 2));
+
+    const mgr = new ContextManager();
+    const retrieved = await mgr.getContext('legacy');
+    expect(retrieved?.apiUrl).toBe('https://host.example.com/api');
+    mgr.dispose();
+  });
+
   it('writes context file with 0o600 permissions', async () => {
     const mgr = new ContextManager();
     await mgr.addContext(makeContext({ name: 'secure' }));

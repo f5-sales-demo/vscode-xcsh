@@ -5,6 +5,7 @@ import {
   deriveTenantFromUrl,
   isValidContextName,
   maskToken,
+  normalizeApiUrl,
   RESERVED_CONTEXT_NAMES,
 } from '../../config/contextTypes';
 
@@ -96,5 +97,34 @@ describe('deriveTenantFromUrl', () => {
 
   it('returns null for an invalid URL', () => {
     expect(deriveTenantFromUrl('not-a-url')).toBeNull();
+  });
+});
+
+describe('normalizeApiUrl', () => {
+  it('strips a single trailing slash', () => {
+    expect(normalizeApiUrl('https://api.example.com/api/')).toBe('https://api.example.com/api');
+  });
+
+  it('strips multiple trailing slashes', () => {
+    expect(normalizeApiUrl('https://host/api///')).toBe('https://host/api');
+  });
+
+  it('leaves a URL without a trailing slash unchanged', () => {
+    expect(normalizeApiUrl('https://host/api')).toBe('https://host/api');
+  });
+
+  it('does not touch slashes that are not trailing', () => {
+    expect(normalizeApiUrl('https://host/api/config')).toBe('https://host/api/config');
+  });
+
+  // Regression: a trailing slash is what makes the shared lib emit `//api/...`, which
+  // `new URL()` parses as a protocol-relative authority -> host collapses to `api`.
+  it('prevents the protocol-relative host collapse', () => {
+    const apiUrl = normalizeApiUrl('https://api.example.com/api/');
+    // Mirrors XCSHTransport stripping the base URL: with a trailing slash the remainder
+    // would begin with `//`; after normalization it is a clean single-slash path.
+    const remainder = `${apiUrl}/api/config/x`.slice(apiUrl.length);
+    expect(remainder.startsWith('//')).toBe(false);
+    expect(new URL(remainder, apiUrl).host).toBe('api.example.com');
   });
 });

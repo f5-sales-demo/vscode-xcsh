@@ -538,7 +538,12 @@ export class XCSHClient {
       fullPath = `${path}?${params.toString()}`;
     }
 
-    const url = new URL(fullPath, this.baseUrl);
+    // A root-relative path beginning with `//` is parsed by the URL constructor as a
+    // protocol-relative authority and hijacks the host (`//api/...` -> host `api`).
+    // Collapse leading slashes for relative paths only; leave absolute URLs (and their
+    // query strings) untouched.
+    const safePath = /^[a-z][a-z0-9+.-]*:\/\//i.test(fullPath) ? fullPath : fullPath.replace(/^\/{2,}/, '/');
+    const url = new URL(safePath, this.baseUrl);
     const headers = this.authProvider.getHeaders();
     const agent = this.authProvider.getHttpsAgent();
 

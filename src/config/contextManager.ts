@@ -23,6 +23,7 @@ import {
   CURRENT_SCHEMA_VERSION,
   computeTokenHealth,
   isValidContextName,
+  normalizeApiUrl,
   type TokenHealth,
   type XCSHContext,
 } from './contextTypes';
@@ -89,6 +90,17 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     this.chmodSafe(filePath, mode);
   }
 
+  /**
+   * Strip trailing slash(es) from a context's apiUrl. Applied on both read and write
+   * so freshly saved files are clean and pre-existing files self-heal in memory; a
+   * trailing slash otherwise collapses the request host to a bare label. See
+   * `normalizeApiUrl`.
+   */
+  private normalizeContext(ctx: XCSHContext): XCSHContext {
+    const normalized = normalizeApiUrl(ctx.apiUrl);
+    return normalized === ctx.apiUrl ? ctx : { ...ctx, apiUrl: normalized };
+  }
+
   // ───────── read operations ─────────
 
   getContexts(): Promise<XCSHContext[]> {
@@ -104,7 +116,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       try {
         const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
         const ctx = JSON.parse(raw) as XCSHContext;
-        contexts.push(ctx);
+        contexts.push(this.normalizeContext(ctx));
       } catch (err) {
         this.logger.warn(`Skipping unreadable context file: ${file}`, err);
       }
@@ -121,7 +133,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
-      return Promise.resolve(JSON.parse(raw) as XCSHContext);
+      return Promise.resolve(this.normalizeContext(JSON.parse(raw) as XCSHContext));
     } catch {
       return Promise.resolve(null);
     }
@@ -163,7 +175,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
 
     const toWrite: XCSHContext = {
-      ...ctx,
+      ...this.normalizeContext(ctx),
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
     };
 
@@ -184,7 +196,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${name}" not found`);
     }
 
-    const merged: XCSHContext = { ...existing, ...updates, name };
+    const merged: XCSHContext = this.normalizeContext({ ...existing, ...updates, name });
 
     this.ensureContextsDir();
     this.atomicWrite(getContextPath(name), `${JSON.stringify(merged, null, 2)}\n`, FILE_MODE);
@@ -263,7 +275,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       try {
         const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
         const ctx = JSON.parse(raw) as XCSHContext;
-        contexts.push(ctx);
+        contexts.push(this.normalizeContext(ctx));
       } catch (err) {
         this.logger.warn(`Skipping unreadable local context file: ${file}`, err);
       }
@@ -303,7 +315,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
 
     const toWrite: XCSHContext = {
-      ...ctx,
+      ...this.normalizeContext(ctx),
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
     };
 
