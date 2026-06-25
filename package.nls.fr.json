@@ -38,6 +38,8 @@
   "command.switchNamespace.title": "xcsh: Changer d'espace de noms",
   "command.exportContexts.title": "xcsh: Exporter les contextes",
   "command.importContexts.title": "xcsh: Importer des contextes",
+  "command.renameContext.title": "xcsh: Renommer le contexte",
+  "command.validateContext.title": "xcsh: Valider le contexte",
   "command.deleteContext.title": "xcsh: Supprimer le contexte",
   "command.setActiveContext.title": "xcsh: Définir comme contexte actif",
   "command.clearAuthCache.title": "xcsh: Vider le cache d'authentification",
