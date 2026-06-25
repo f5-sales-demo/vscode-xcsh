@@ -73,6 +73,31 @@ export function isValidContextName(name: string): boolean {
   return !RESERVED_CONTEXT_NAMES.has(name.toLowerCase());
 }
 
+/**
+ * Control env vars owned by the context itself (apiUrl/apiToken/defaultNamespace)
+ * or injected at activation. A context's custom `env` map must never set these —
+ * they would be ignored or clobbered by the resolver. Mirrors xcsh's
+ * RESERVED_ENV_KEYS so both hosts reject the same keys.
+ */
+export const RESERVED_ENV_KEYS: ReadonlySet<string> = new Set([
+  'XCSH_NAMESPACE',
+  'XCSH_API_URL',
+  'XCSH_API_TOKEN',
+  'XCSH_TENANT',
+  'XCSH_CONTEXT_NAME',
+]);
+
+const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/** A syntactically valid POSIX-style environment variable name. */
+export function isValidEnvKey(key: string): boolean {
+  return ENV_KEY_PATTERN.test(key);
+}
+
+export function isReservedEnvKey(key: string): boolean {
+  return RESERVED_ENV_KEYS.has(key);
+}
+
 export function maskToken(token: string): string {
   if (token.length <= 4) {
     return '****';

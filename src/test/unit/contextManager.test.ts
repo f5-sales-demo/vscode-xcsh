@@ -347,4 +347,67 @@ describe('ContextManager', () => {
     await expect(mgr.setActiveContext('nope')).rejects.toThrow(/not found/i);
     mgr.dispose();
   });
+
+  // --------------- env var management ---------------
+
+  it('sets a new env var on a context', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'env-ctx' }));
+    await mgr.setContextEnv('env-ctx', 'XCSH_LB_NAME', 'my-lb');
+
+    const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'env-ctx.json'), 'utf-8')) as XCSHContext;
+    expect(onDisk.env).toEqual({ XCSH_LB_NAME: 'my-lb' });
+    mgr.dispose();
+  });
+
+  it('overwrites an existing env var and preserves the others', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'env-ctx', env: { A: '1', B: '2' } }));
+    await mgr.setContextEnv('env-ctx', 'A', '99');
+
+    const ctx = await mgr.getContext('env-ctx');
+    expect(ctx?.env).toEqual({ A: '99', B: '2' });
+    mgr.dispose();
+  });
+
+  it('unsets an env var without touching the rest', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'env-ctx', env: { A: '1', B: '2' } }));
+    await mgr.unsetContextEnv('env-ctx', 'A');
+
+    const ctx = await mgr.getContext('env-ctx');
+    expect(ctx?.env).toEqual({ B: '2' });
+    mgr.dispose();
+  });
+
+  it('unset is a no-op for an absent key', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'env-ctx', env: { A: '1' } }));
+    await mgr.unsetContextEnv('env-ctx', 'MISSING');
+
+    const ctx = await mgr.getContext('env-ctx');
+    expect(ctx?.env).toEqual({ A: '1' });
+    mgr.dispose();
+  });
+
+  it('rejects reserved env keys', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'env-ctx' }));
+    await expect(mgr.setContextEnv('env-ctx', 'XCSH_API_TOKEN', 'x')).rejects.toThrow(/reserved/i);
+    mgr.dispose();
+  });
+
+  it('rejects malformed env keys', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'env-ctx' }));
+    await expect(mgr.setContextEnv('env-ctx', '1BAD', 'x')).rejects.toThrow(/invalid/i);
+    await expect(mgr.setContextEnv('env-ctx', 'has space', 'x')).rejects.toThrow(/invalid/i);
+    mgr.dispose();
+  });
+
+  it('throws when setting env on a nonexistent context', async () => {
+    const mgr = new ContextManager();
+    await expect(mgr.setContextEnv('nope', 'A', '1')).rejects.toThrow(/not found/i);
+    mgr.dispose();
+  });
 });

@@ -34,6 +34,7 @@
 
   "command.addContext.title": "xcsh: 新增內容",
   "command.editContext.title": "xcsh: 編輯內容",
+  "command.manageContextEnv.title": "xcsh: 管理內容環境變數",
   "command.deleteContext.title": "xcsh: 刪除內容",
   "command.setActiveContext.title": "xcsh: 設為使用中的內容",
   "command.clearAuthCache.title": "xcsh: 清除驗證快取",

@@ -106,11 +106,7 @@ describe('i18n locale coverage', () => {
       const localeKeys = Object.keys(JSON.parse(fs.readFileSync(file, 'utf-8')));
       const missing = baseKeys.filter((k) => !localeKeys.includes(k));
 
-      if (missing.length > 0) {
-        fail(
-          `package.nls.${slug}.json is missing ${missing.length} keys: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '...' : ''}`,
-        );
-      }
+      expect({ locale: slug, missing }).toEqual({ locale: slug, missing: [] });
     }
   });
 });
