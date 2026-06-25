@@ -22,7 +22,7 @@ import {
   type ContextManagerInterface,
   CURRENT_SCHEMA_VERSION,
   computeTokenHealth,
-  type F5XCContext,
+  type XCShContext,
   isValidContextName,
   type TokenHealth,
 } from './contextTypes';
@@ -91,19 +91,19 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   // ───────── read operations ─────────
 
-  getContexts(): Promise<F5XCContext[]> {
+  getContexts(): Promise<XCShContext[]> {
     const dir = getContextsDir();
     if (!fs.existsSync(dir)) {
       return Promise.resolve([]);
     }
 
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-    const contexts: F5XCContext[] = [];
+    const contexts: XCShContext[] = [];
 
     for (const file of files) {
       try {
         const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
-        const ctx = JSON.parse(raw) as F5XCContext;
+        const ctx = JSON.parse(raw) as XCShContext;
         contexts.push(ctx);
       } catch (err) {
         this.logger.warn(`Skipping unreadable context file: ${file}`, err);
@@ -114,14 +114,14 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     return Promise.resolve(contexts);
   }
 
-  getContext(name: string): Promise<F5XCContext | null> {
+  getContext(name: string): Promise<XCShContext | null> {
     const filePath = getContextPath(name);
     if (!fs.existsSync(filePath)) {
       return Promise.resolve(null);
     }
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
-      return Promise.resolve(JSON.parse(raw) as F5XCContext);
+      return Promise.resolve(JSON.parse(raw) as XCShContext);
     } catch {
       return Promise.resolve(null);
     }
@@ -140,7 +140,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
   }
 
-  async getActiveContext(): Promise<F5XCContext | null> {
+  async getActiveContext(): Promise<XCShContext | null> {
     const name = await this.getActiveContextName();
     if (!name) {
       return null;
@@ -150,7 +150,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   // ───────── write operations ─────────
 
-  async addContext(ctx: F5XCContext): Promise<void> {
+  async addContext(ctx: XCShContext): Promise<void> {
     if (!isValidContextName(ctx.name)) {
       throw new Error(`Invalid context name: "${ctx.name}"`);
     }
@@ -162,7 +162,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${ctx.name}" already exists`);
     }
 
-    const toWrite: F5XCContext = {
+    const toWrite: XCShContext = {
       ...ctx,
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
     };
@@ -178,13 +178,13 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     this._onDidChangeContext.fire();
   }
 
-  async updateContext(name: string, updates: Partial<F5XCContext>): Promise<void> {
+  async updateContext(name: string, updates: Partial<XCShContext>): Promise<void> {
     const existing = await this.getContext(name);
     if (!existing) {
       throw new Error(`Context "${name}" not found`);
     }
 
-    const merged: F5XCContext = { ...existing, ...updates, name };
+    const merged: XCShContext = { ...existing, ...updates, name };
 
     this.ensureContextsDir();
     this.atomicWrite(getContextPath(name), `${JSON.stringify(merged, null, 2)}\n`, FILE_MODE);
@@ -250,19 +250,19 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   // ───────── local read operations ─────────
 
   /** List all context JSON files under the workspace's `.xcsh/contexts/`. */
-  getLocalContexts(workspaceFolder: string): Promise<F5XCContext[]> {
+  getLocalContexts(workspaceFolder: string): Promise<XCShContext[]> {
     const dir = getLocalContextsDir(workspaceFolder);
     if (!fs.existsSync(dir)) {
       return Promise.resolve([]);
     }
 
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
-    const contexts: F5XCContext[] = [];
+    const contexts: XCShContext[] = [];
 
     for (const file of files) {
       try {
         const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
-        const ctx = JSON.parse(raw) as F5XCContext;
+        const ctx = JSON.parse(raw) as XCShContext;
         contexts.push(ctx);
       } catch (err) {
         this.logger.warn(`Skipping unreadable local context file: ${file}`, err);
@@ -290,7 +290,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   // ───────── local write operations ─────────
 
   /** Add an inline context JSON to the workspace's `.xcsh/contexts/`. */
-  async addLocalContext(ctx: F5XCContext, workspaceFolder: string): Promise<void> {
+  async addLocalContext(ctx: XCShContext, workspaceFolder: string): Promise<void> {
     if (!isValidContextName(ctx.name)) {
       throw new Error(`Invalid context name: "${ctx.name}"`);
     }
@@ -302,7 +302,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Local context "${ctx.name}" already exists`);
     }
 
-    const toWrite: F5XCContext = {
+    const toWrite: XCShContext = {
       ...ctx,
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
     };
@@ -466,7 +466,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   // ───────── token health ─────────
 
-  getTokenHealth(ctx: F5XCContext): TokenHealth {
+  getTokenHealth(ctx: XCShContext): TokenHealth {
     return computeTokenHealth(ctx.metadata?.expiresAt);
   }
 

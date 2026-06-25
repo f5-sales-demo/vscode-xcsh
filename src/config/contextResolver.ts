@@ -4,12 +4,12 @@
  * Three-tier context resolution for the VS Code extension.
  *
  * Priority:
- *   1. Environment variables  (F5XC_API_URL + F5XC_API_TOKEN)
+ *   1. Environment variables  (XCSH_API_URL + XCSH_API_TOKEN)
  *   2. Local workspace dir    ({workspaceFolder}/.xcsh/contexts/)
  *   3. Global config dir      (~/.config/xcsh/contexts/)
  *
  * A local context file may be:
- *   - **inline** — a full F5XCContext JSON (`{ apiUrl, … }`)
+ *   - **inline** — a full XCShContext JSON (`{ apiUrl, … }`)
  *   - **pointer** — `{ context: "<globalName>", overrides?: … }` that
  *     references a global context and optionally merges overrides.
  *
@@ -27,7 +27,7 @@ import {
   getLocalContextPath,
   getLocalContextsDir,
 } from './contextPaths';
-import { type F5XCContext, isValidContextName } from './contextTypes';
+import { type XCShContext, isValidContextName } from './contextTypes';
 
 // ───────── public types ─────────
 
@@ -48,7 +48,7 @@ export interface PointerContext {
 export type ContextSource = 'env' | 'local' | 'global';
 
 export interface ResolvedContext {
-  context: F5XCContext;
+  context: XCShContext;
   source: ContextSource;
   sourcePath: string;
 }
@@ -73,7 +73,7 @@ export function isInlineContext(data: unknown): boolean {
 
 // ───────── merge ─────────
 
-export function mergePointerOverrides(base: F5XCContext, overrides: ContextOverrides): F5XCContext {
+export function mergePointerOverrides(base: XCShContext, overrides: ContextOverrides): XCShContext {
   const merged = { ...base };
 
   if (overrides.defaultNamespace !== undefined) {
@@ -83,7 +83,7 @@ export function mergePointerOverrides(base: F5XCContext, overrides: ContextOverr
     merged.sensitiveKeys = overrides.sensitiveKeys;
   }
   if (overrides.knowledgeSources !== undefined) {
-    merged.knowledgeSources = overrides.knowledgeSources as F5XCContext['knowledgeSources'];
+    merged.knowledgeSources = overrides.knowledgeSources as XCShContext['knowledgeSources'];
   }
   if (overrides.includeSkills !== undefined) {
     merged.includeSkills = overrides.includeSkills;
@@ -150,7 +150,7 @@ function resolveFromLocal(workspaceFolder: string): ResolvedContext | null {
 
   if (isInlineContext(data)) {
     return {
-      context: data as unknown as F5XCContext,
+      context: data as unknown as XCShContext,
       source: 'local',
       sourcePath: contextPath,
     };
@@ -183,7 +183,7 @@ function resolveFromGlobal(): ResolvedContext | null {
 
   if (isInlineContext(data)) {
     return {
-      context: data as unknown as F5XCContext,
+      context: data as unknown as XCShContext,
       source: 'global',
       sourcePath: contextPath,
     };
@@ -202,7 +202,7 @@ function resolvePointer(pointer: PointerContext, pointerPath: string): ResolvedC
     return null;
   }
 
-  let resolved = globalData as unknown as F5XCContext;
+  let resolved = globalData as unknown as XCShContext;
   if (pointer.overrides) {
     resolved = mergePointerOverrides(resolved, pointer.overrides);
   }
@@ -218,21 +218,21 @@ function resolvePointer(pointer: PointerContext, pointerPath: string): ResolvedC
 
 /**
  * Resolve the active F5 XC context using three-tier precedence:
- *   1. Environment variables (F5XC_API_URL + F5XC_API_TOKEN)
+ *   1. Environment variables (XCSH_API_URL + XCSH_API_TOKEN)
  *   2. Local workspace `.xcsh/contexts/`
  *   3. Global `~/.config/xcsh/contexts/`
  */
 export function resolveContext(workspaceFolder: string | undefined): Promise<ResolvedContext | null> {
   // Priority 1: environment variables
-  const envUrl = process.env.F5XC_API_URL;
-  const envToken = process.env.F5XC_API_TOKEN;
+  const envUrl = process.env.XCSH_API_URL;
+  const envToken = process.env.XCSH_API_TOKEN;
   if (envUrl && envToken) {
     return Promise.resolve({
       context: {
         name: '(env)',
         apiUrl: envUrl,
         apiToken: envToken,
-        defaultNamespace: process.env.F5XC_NAMESPACE ?? 'system',
+        defaultNamespace: process.env.XCSH_NAMESPACE ?? 'system',
       },
       source: 'env',
       sourcePath: 'environment variables',

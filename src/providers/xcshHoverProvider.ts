@@ -3,11 +3,11 @@
 import * as vscode from 'vscode';
 import type { SchemaProperty } from '../schema/schemaGenerator';
 import { getSchemaRegistry } from '../schema/schemaRegistry';
-import { detectResourceType, isF5XCJsonFile, navigateSchemaPath } from '../utils/completionHelper';
+import { detectResourceType, isXCShJsonFile, navigateSchemaPath } from '../utils/completionHelper';
 
 export class XCShHoverProvider implements vscode.HoverProvider {
   provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.Hover | undefined {
-    if (!isF5XCJsonFile(document)) {
+    if (!isXCShJsonFile(document)) {
       return undefined;
     }
 

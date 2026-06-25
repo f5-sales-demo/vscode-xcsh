@@ -4,7 +4,7 @@
  * Schema module exports for F5 XC JSON IntelliSense.
  */
 
-export type { F5XCJsonSchema, SchemaProperty } from './schemaGenerator';
+export type { XCShJsonSchema, SchemaProperty } from './schemaGenerator';
 export {
   generateGenericSchema,
   generateSchemaForResourceType,

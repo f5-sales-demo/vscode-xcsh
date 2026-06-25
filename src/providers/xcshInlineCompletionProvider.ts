@@ -28,7 +28,7 @@ export class XCShInlineCompletionProvider implements vscode.InlineCompletionItem
     _token: vscode.CancellationToken,
   ): vscode.ProviderResult<vscode.InlineCompletionItem[] | vscode.InlineCompletionList> {
     // Check if this is an F5 XC JSON file
-    if (!CompletionHelper.isF5XCJsonFile(document)) {
+    if (!CompletionHelper.isXCShJsonFile(document)) {
       return undefined;
     }
 

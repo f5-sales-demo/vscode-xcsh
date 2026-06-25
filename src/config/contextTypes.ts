@@ -3,7 +3,7 @@
 import type * as vscode from 'vscode';
 import type { XCShClient } from '../api/client';
 
-export interface F5XCContext {
+export interface XCShContext {
   name: string;
   apiUrl: string;
   apiToken: string;
@@ -34,8 +34,8 @@ export type TokenHealth = 'ok' | 'expiring' | 'expired';
 export type AuthStatus = 'connected' | 'auth_error' | 'offline' | 'unknown';
 
 export interface ContextManagerInterface {
-  getActiveContext(): Promise<F5XCContext | null>;
-  getContexts(): Promise<F5XCContext[]>;
+  getActiveContext(): Promise<XCShContext | null>;
+  getContexts(): Promise<XCShContext[]>;
   getClient(contextName: string): Promise<XCShClient>;
   onDidChangeContext: vscode.Event<void>;
 }

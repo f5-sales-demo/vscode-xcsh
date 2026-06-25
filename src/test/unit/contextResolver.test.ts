@@ -25,8 +25,8 @@ describe('contextResolver', () => {
     fs.mkdirSync(path.join(globalConfigDir, 'xcsh','contexts'), { recursive: true, mode: 0o700 });
 
     process.env.XDG_CONFIG_HOME = globalConfigDir;
-    delete process.env.F5XC_API_URL;
-    delete process.env.F5XC_API_TOKEN;
+    delete process.env.XCSH_API_URL;
+    delete process.env.XCSH_API_TOKEN;
   });
 
   afterEach(() => {
@@ -87,9 +87,9 @@ describe('contextResolver', () => {
     expect(result!.context.env).toEqual({ G: 'val', L: 'local' });
   });
 
-  it('returns env source when F5XC_API_URL and F5XC_API_TOKEN are set', async () => {
-    process.env.F5XC_API_URL = 'https://env.example.com';
-    process.env.F5XC_API_TOKEN = 'env-token';
+  it('returns env source when XCSH_API_URL and XCSH_API_TOKEN are set', async () => {
+    process.env.XCSH_API_URL = 'https://env.example.com';
+    process.env.XCSH_API_TOKEN = 'env-token';
     jest.resetModules();
     const { resolveContext } = require('../../config/contextResolver');
 

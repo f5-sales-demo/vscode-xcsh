@@ -20,7 +20,7 @@ import {
   type ResourceTypeInfo,
 } from '../api/resourceTypes';
 import type { ContextManager } from '../config/contextManager';
-import type { F5XCContext } from '../config/contextTypes';
+import type { XCShContext } from '../config/contextTypes';
 import {
   getDomainComplexity,
   getDomainMetadata,
@@ -32,7 +32,7 @@ import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import {
   type CategoryNodeData,
-  type F5XCTreeItem,
+  type XCShTreeItem,
   type NamespaceNodeData,
   type ResourceNodeData,
   type ResourceTypeNodeData,
@@ -42,24 +42,24 @@ import {
 /**
  * Tree data provider for the F5 XC Explorer view
  */
-export class XCShExplorerProvider implements vscode.TreeDataProvider<F5XCTreeItem> {
-  private readonly _onDidChangeTreeData = new vscode.EventEmitter<F5XCTreeItem | undefined>();
+export class XCShExplorerProvider implements vscode.TreeDataProvider<XCShTreeItem> {
+  private readonly _onDidChangeTreeData = new vscode.EventEmitter<XCShTreeItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   private readonly contextManager: ContextManager;
-  private readonly clientFactory: (ctx: F5XCContext) => Promise<XCShClient>;
+  private readonly clientFactory: (ctx: XCShContext) => Promise<XCShClient>;
   private readonly logger = getLogger();
 
-  constructor(contextManager: ContextManager, clientFactory: (ctx: F5XCContext) => Promise<XCShClient>) {
+  constructor(contextManager: ContextManager, clientFactory: (ctx: XCShContext) => Promise<XCShClient>) {
     this.contextManager = contextManager;
     this.clientFactory = clientFactory;
   }
 
-  getTreeItem(element: F5XCTreeItem): vscode.TreeItem {
+  getTreeItem(element: XCShTreeItem): vscode.TreeItem {
     return element.getTreeItem();
   }
 
-  async getChildren(element?: F5XCTreeItem): Promise<F5XCTreeItem[]> {
+  async getChildren(element?: XCShTreeItem): Promise<XCShTreeItem[]> {
     if (!element) {
       return this.getRootItems();
     }
@@ -95,7 +95,7 @@ export class XCShExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
     return error.message || 'An unknown error occurred';
   }
 
-  private async getRootItems(): Promise<F5XCTreeItem[]> {
+  private async getRootItems(): Promise<XCShTreeItem[]> {
     const activeContext = await this.contextManager.getActiveContext();
 
     if (!activeContext) {
@@ -117,7 +117,7 @@ export class XCShExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
       // Sort custom namespaces alphabetically
       customNamespaces.sort((a, b) => a.name.localeCompare(b.name));
 
-      const groups: F5XCTreeItem[] = [];
+      const groups: XCShTreeItem[] = [];
 
       // Add built-in namespaces group if any exist
       if (builtInNs.length > 0) {
@@ -161,12 +161,12 @@ export class XCShExplorerProvider implements vscode.TreeDataProvider<F5XCTreeIte
 /**
  * Namespace group node (Built-in Namespaces, Custom Namespaces)
  */
-class NamespaceGroupNode implements F5XCTreeItem {
+class NamespaceGroupNode implements XCShTreeItem {
   constructor(
     private readonly groupName: string,
     private readonly namespaceNames: string[],
     private readonly profileName: string,
-    private readonly clientFactory: (ctx: F5XCContext) => Promise<XCShClient>,
+    private readonly clientFactory: (ctx: XCShContext) => Promise<XCShClient>,
     private readonly contextManager: ContextManager,
     private readonly icon: string,
     private readonly isBuiltIn: boolean,
@@ -180,7 +180,7 @@ class NamespaceGroupNode implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     return Promise.resolve(
       this.namespaceNames.map(
         (name) =>
@@ -197,10 +197,10 @@ class NamespaceGroupNode implements F5XCTreeItem {
 /**
  * Namespace node in the tree
  */
-export class NamespaceNode implements F5XCTreeItem {
+export class NamespaceNode implements XCShTreeItem {
   constructor(
     private readonly data: NamespaceNodeData,
-    private readonly clientFactory: (ctx: F5XCContext) => Promise<XCShClient>,
+    private readonly clientFactory: (ctx: XCShContext) => Promise<XCShClient>,
     private readonly contextManager: ContextManager,
   ) {}
 
@@ -213,10 +213,10 @@ export class NamespaceNode implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     // Get categories filtered by namespace scope
     const categories = getCategorizedResourceTypesForNamespace(this.data.name);
-    const nodes: F5XCTreeItem[] = [];
+    const nodes: XCShTreeItem[] = [];
 
     for (const [category] of categories) {
       nodes.push(
@@ -246,10 +246,10 @@ export class NamespaceNode implements F5XCTreeItem {
 /**
  * Category node (Load Balancing, Security, etc.)
  */
-class CategoryNode implements F5XCTreeItem {
+class CategoryNode implements XCShTreeItem {
   constructor(
     private readonly data: CategoryNodeData,
-    private readonly clientFactory: (ctx: F5XCContext) => Promise<XCShClient>,
+    private readonly clientFactory: (ctx: XCShContext) => Promise<XCShClient>,
     private readonly contextManager: ContextManager,
   ) {}
 
@@ -284,7 +284,7 @@ class CategoryNode implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     // Filter by category AND namespace scope
     const types = Object.entries(RESOURCE_TYPES).filter(
       ([, info]) =>
@@ -312,12 +312,12 @@ class CategoryNode implements F5XCTreeItem {
 /**
  * Resource type node (HTTP Load Balancers, Origin Pools, etc.)
  */
-class ResourceTypeNode implements F5XCTreeItem {
+class ResourceTypeNode implements XCShTreeItem {
   private readonly logger = getLogger();
 
   constructor(
     private readonly data: ResourceTypeNodeData,
-    private readonly clientFactory: (ctx: F5XCContext) => Promise<XCShClient>,
+    private readonly clientFactory: (ctx: XCShContext) => Promise<XCShClient>,
     private readonly contextManager: ContextManager,
   ) {}
 
@@ -435,7 +435,7 @@ class ResourceTypeNode implements F5XCTreeItem {
     return item;
   }
 
-  async getChildren(): Promise<F5XCTreeItem[]> {
+  async getChildren(): Promise<XCShTreeItem[]> {
     try {
       const ctx = await this.contextManager.getContext(this.data.profileName);
       if (!ctx) {
@@ -530,7 +530,7 @@ class ResourceTypeNode implements F5XCTreeItem {
 /**
  * Individual resource node
  */
-export class ResourceNode implements F5XCTreeItem {
+export class ResourceNode implements XCShTreeItem {
   constructor(private readonly data: ResourceNodeData) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -593,7 +593,7 @@ export class ResourceNode implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     return Promise.resolve([]); // Resources are leaf nodes
   }
 
@@ -625,7 +625,7 @@ export class ResourceNode implements F5XCTreeItem {
 /**
  * Error node for displaying connection/API errors in the tree
  */
-class ErrorNode implements F5XCTreeItem {
+class ErrorNode implements XCShTreeItem {
   constructor(
     private readonly title: string,
     private readonly message: string,
@@ -645,7 +645,7 @@ class ErrorNode implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     return Promise.resolve([]);
   }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import type { ContextManagerInterface, F5XCContext } from '../config/contextTypes';
+import type { ContextManagerInterface, XCShContext } from '../config/contextTypes';
 import { deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { findXcshBinary } from './processManager';
@@ -29,7 +29,7 @@ async function showXcshNotFoundPrompt(): Promise<void> {
  * Build environment variables from an F5 XC context for use in
  * terminal sessions. Derives tenant from the API URL hostname.
  */
-export function buildTerminalEnv(ctx: F5XCContext): Record<string, string | undefined> {
+export function buildTerminalEnv(ctx: XCShContext): Record<string, string | undefined> {
   const tenant = deriveTenantFromUrl(ctx.apiUrl);
   const env: Record<string, string | undefined> = {
     XCSH_API_URL: ctx.apiUrl,

@@ -42,7 +42,7 @@ describe('geocodeLocation', () => {
       expect.stringContaining('https://nominatim.openstreetmap.org/search'),
       expect.objectContaining({
         headers: {
-          'User-Agent': 'VSCode-F5XC-Tools/1.0',
+          'User-Agent': 'VSCode-XCSh/1.0',
         },
       }),
     );

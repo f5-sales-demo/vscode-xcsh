@@ -10,7 +10,6 @@ import { registerFileOperationCommands } from './commands/fileOperations';
 import { registerObservabilityCommands } from './commands/observability';
 import { ContextManager } from './config/contextManager';
 import { migrateProfilesToContexts } from './config/contextMigration';
-import { migrateSettings } from './config/settingsMigration';
 import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
 import { XCShCodeActionProvider } from './providers/xcshCodeActionProvider';
 import { XCShCompletionProvider } from './providers/xcshCompletionProvider';
@@ -39,9 +38,6 @@ let logger: Logger;
 export function activate(context: vscode.ExtensionContext): void {
   logger = getLogger();
   logger.info('xcsh extension is activating...');
-
-  // Run one-time settings migration (f5xc.* → xcsh.* namespace)
-  void migrateSettings(context);
 
   // Run one-time profile-to-context migration
   const migrationResult = migrateProfilesToContexts();

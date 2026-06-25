@@ -4,7 +4,7 @@ import {
   clearDetectionCache,
   detectResourceType,
   extractResourceTypeFromFilename,
-  isF5XCJsonFile,
+  isXCShJsonFile,
 } from '../../utils/completionHelper';
 
 function createMockDocument(options: {
@@ -150,15 +150,15 @@ describe('completionHelper', () => {
     });
   });
 
-  describe('isF5XCJsonFile', () => {
+  describe('isXCShJsonFile', () => {
     it('returns true for xcsh:// scheme', () => {
       const doc = createMockDocument({ scheme: 'xcsh', languageId: 'json' });
-      expect(isF5XCJsonFile(doc)).toBe(true);
+      expect(isXCShJsonFile(doc)).toBe(true);
     });
 
     it('returns true for filename match', () => {
       const doc = createMockDocument({ filename: 'my.http_loadbalancer.json', languageId: 'json' });
-      expect(isF5XCJsonFile(doc)).toBe(true);
+      expect(isXCShJsonFile(doc)).toBe(true);
     });
 
     it('returns true for content-detected XC manifest', () => {
@@ -168,18 +168,18 @@ describe('completionHelper', () => {
         spec: {},
       });
       const doc = createMockDocument({ filename: 'waf.json', content, languageId: 'json' });
-      expect(isF5XCJsonFile(doc)).toBe(true);
+      expect(isXCShJsonFile(doc)).toBe(true);
     });
 
     it('returns false for non-JSON language', () => {
       const doc = createMockDocument({ languageId: 'typescript' });
-      expect(isF5XCJsonFile(doc)).toBe(false);
+      expect(isXCShJsonFile(doc)).toBe(false);
     });
 
     it('returns false for generic JSON files', () => {
       const content = JSON.stringify({ name: 'test' });
       const doc = createMockDocument({ filename: 'config.json', content, languageId: 'json' });
-      expect(isF5XCJsonFile(doc)).toBe(false);
+      expect(isXCShJsonFile(doc)).toBe(false);
     });
   });
 

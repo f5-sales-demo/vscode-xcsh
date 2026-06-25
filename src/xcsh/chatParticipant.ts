@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import type { ContextManagerInterface, F5XCContext } from '../config/contextTypes';
+import type { ContextManagerInterface, XCShContext } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { IntegrationsResponse, ToolExecutionEnd, ToolExecutionStart } from './types';
@@ -20,7 +20,7 @@ interface FileContext {
  * namespace, and optional file/selection info so xcsh can give
  * context-aware responses.
  */
-export function buildPromptWithContext(userPrompt: string, ctx: F5XCContext | null, fileContext?: FileContext): string {
+export function buildPromptWithContext(userPrompt: string, ctx: XCShContext | null, fileContext?: FileContext): string {
   const parts: string[] = [];
 
   if (ctx) {
@@ -62,7 +62,7 @@ export function formatStatusResponse(integrations: IntegrationsResponse): string
   return lines.join('\n');
 }
 
-export function formatContextResponse(ctx: F5XCContext | null): string {
+export function formatContextResponse(ctx: XCShContext | null): string {
   if (!ctx) {
     return vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
   }

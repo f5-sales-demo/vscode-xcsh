@@ -44,7 +44,7 @@ export interface SchemaProperty {
 /**
  * Complete JSON Schema for an F5 XC resource type
  */
-export interface F5XCJsonSchema {
+export interface XCShJsonSchema {
   $schema: string;
   $id: string;
   title: string;
@@ -362,13 +362,13 @@ function inferJsonType(value: unknown): string | string[] {
  * @param resourceTypeKey - The key of the resource type (e.g., 'http_loadbalancer')
  * @returns The generated JSON Schema or null if resource type not found
  */
-export function generateSchemaForResourceType(resourceTypeKey: string): F5XCJsonSchema | null {
+export function generateSchemaForResourceType(resourceTypeKey: string): XCShJsonSchema | null {
   const resourceType = GENERATED_RESOURCE_TYPES[resourceTypeKey];
   if (!resourceType) {
     return null;
   }
 
-  const schema: F5XCJsonSchema = {
+  const schema: XCShJsonSchema = {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: `xcsh-schema://schemas/${resourceTypeKey}.json`,
     title: `xcsh ${resourceType.displayName}`,
@@ -387,7 +387,7 @@ export function generateSchemaForResourceType(resourceTypeKey: string): F5XCJson
 /**
  * Generate a combined schema that can match any F5 XC resource type
  */
-export function generateGenericSchema(): F5XCJsonSchema {
+export function generateGenericSchema(): XCShJsonSchema {
   return {
     $schema: 'http://json-schema.org/draft-07/schema#',
     $id: 'xcsh-schema://schemas/generic.json',

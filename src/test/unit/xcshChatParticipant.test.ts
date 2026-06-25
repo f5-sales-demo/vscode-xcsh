@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import type { F5XCContext } from '../../config/contextTypes';
+import type { XCShContext } from '../../config/contextTypes';
 import {
   buildFollowups,
   buildPromptWithContext,
@@ -9,7 +9,7 @@ import {
 } from '../../xcsh/chatParticipant';
 
 describe('buildPromptWithContext', () => {
-  const baseContext: F5XCContext = {
+  const baseContext: XCShContext = {
     name: 'prod-tenant',
     apiUrl: 'https://acme.console.ves.volterra.io/api',
     apiToken: 'secret-token',
@@ -114,7 +114,7 @@ describe('formatStatusResponse', () => {
 
 describe('formatContextResponse', () => {
   it('formats context as markdown', () => {
-    const ctx: F5XCContext = {
+    const ctx: XCShContext = {
       name: 'prod-acme',
       apiUrl: 'https://acme.console.ves.volterra.io/api',
       apiToken: 'secret',

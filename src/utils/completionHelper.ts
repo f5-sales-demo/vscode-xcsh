@@ -536,7 +536,7 @@ export function generateObjectTemplate(
 /**
  * Check if a document is an F5 XC JSON file
  */
-export function isF5XCJsonFile(document: vscode.TextDocument): boolean {
+export function isXCShJsonFile(document: vscode.TextDocument): boolean {
   if (document.languageId !== 'json') {
     return false;
   }

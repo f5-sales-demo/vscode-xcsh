@@ -18,7 +18,7 @@ function getViewMode(): ViewMode {
 /**
  * Parsed F5 XC View URI components
  */
-interface F5XCViewUri {
+interface XCShViewUri {
   profileName: string;
   namespace: string;
   resourceType: string;
@@ -43,7 +43,7 @@ export class XCShViewProvider implements vscode.TextDocumentContentProvider {
   /**
    * Parse an F5 XC View URI into its components
    */
-  private parseUri(uri: vscode.Uri): F5XCViewUri {
+  private parseUri(uri: vscode.Uri): XCShViewUri {
     // URI format: xcsh-view://profile/namespace/resourceType/resourceName.json
     const profileName = uri.authority;
     const parts = uri.path.split('/').filter((p) => p.length > 0);

@@ -7,8 +7,8 @@
  * against the real F5 XC API using XCShClient directly.
  *
  * Required env vars:
- *   F5XC_API_URL  — e.g. https://tenant.console.ves.volterra.io
- *   F5XC_API_TOKEN — a valid API token
+ *   XCSH_API_URL  — e.g. https://tenant.console.ves.volterra.io
+ *   XCSH_API_TOKEN — a valid API token
  *
  * When the env vars are absent the file is excluded via jest.config.js
  * testMatch gating, so the suite is never discovered.
@@ -18,8 +18,8 @@ import { TokenAuthProvider } from '../../api/auth/tokenAuth';
 import { XCShClient, type Resource } from '../../api/client';
 import { XCShApiError } from '../../utils/errors';
 
-const API_URL = process.env.F5XC_API_URL ?? '';
-const API_TOKEN = process.env.F5XC_API_TOKEN ?? '';
+const API_URL = process.env.XCSH_API_URL ?? '';
+const API_TOKEN = process.env.XCSH_API_TOKEN ?? '';
 const NAMESPACE = 'default';
 const PREFIX = `test-sp3-${Date.now()}`;
 

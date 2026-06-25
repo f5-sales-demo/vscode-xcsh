@@ -5,8 +5,8 @@
  *
  * These tests make real HTTPS requests to the staging API.
  * They require:
- *   F5XC_API_URL  — e.g. https://tenant.console.ves.volterra.io
- *   F5XC_API_TOKEN — a valid API token
+ *   XCSH_API_URL  — e.g. https://tenant.console.ves.volterra.io
+ *   XCSH_API_TOKEN — a valid API token
  *
  * When the env vars are absent the file is excluded via jest.config.js
  * testMatch gating, so the suite is never discovered.
@@ -15,8 +15,8 @@
 import * as https from 'node:https';
 import * as url from 'node:url';
 
-const API_URL = process.env.F5XC_API_URL ?? '';
-const API_TOKEN = process.env.F5XC_API_TOKEN ?? '';
+const API_URL = process.env.XCSH_API_URL ?? '';
+const API_TOKEN = process.env.XCSH_API_TOKEN ?? '';
 
 /**
  * Minimal HTTPS GET/POST helper — returns { statusCode, body }.
@@ -64,11 +64,11 @@ describe('Live API smoke tests', () => {
   // -----------------------------------------------------------------------
   // Env-var guards
   // -----------------------------------------------------------------------
-  it('F5XC_API_URL is set', () => {
+  it('XCSH_API_URL is set', () => {
     expect(API_URL.length).toBeGreaterThan(0);
   }, 15000);
 
-  it('F5XC_API_TOKEN is set', () => {
+  it('XCSH_API_TOKEN is set', () => {
     expect(API_TOKEN.length).toBeGreaterThan(0);
   }, 15000);
 

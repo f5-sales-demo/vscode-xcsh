@@ -6,9 +6,9 @@ import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { getLocalContextsDir } from '../config/contextPaths';
 import { isPointerContext, mergePointerOverrides } from '../config/contextResolver';
-import type { F5XCContext, TokenHealth } from '../config/contextTypes';
+import type { XCShContext, TokenHealth } from '../config/contextTypes';
 import { maskToken } from '../config/contextTypes';
-import type { F5XCTreeItem } from './treeTypes';
+import type { XCShTreeItem } from './treeTypes';
 
 /** Union type for tree nodes returned by this provider. */
 type ContextNode = ContextTreeItem | ContextGroupItem;
@@ -17,7 +17,7 @@ type ContextNode = ContextTreeItem | ContextGroupItem;
  * Collapsible parent node that groups contexts under
  * "Project Contexts" or "Global Contexts".
  */
-export class ContextGroupItem implements F5XCTreeItem {
+export class ContextGroupItem implements XCShTreeItem {
   constructor(
     private readonly label: string,
     private readonly children: ContextTreeItem[],
@@ -30,7 +30,7 @@ export class ContextGroupItem implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     return Promise.resolve(this.children);
   }
 }
@@ -122,7 +122,7 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
    * Sort and map contexts to ContextTreeItem instances.
    * Used for global contexts and the flat (ungrouped) view.
    */
-  private buildContextItems(contexts: F5XCContext[], activeName: string | null): ContextTreeItem[] {
+  private buildContextItems(contexts: XCShContext[], activeName: string | null): ContextTreeItem[] {
     const sorted = [...contexts].sort((a, b) => {
       if (a.name === activeName) {
         return -1;
@@ -148,7 +148,7 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
   private buildLocalContextItems(
     workspaceFolder: string,
     activeName: string | null,
-    globalContexts: F5XCContext[],
+    globalContexts: XCShContext[],
   ): ContextTreeItem[] {
     const localDir = getLocalContextsDir(workspaceFolder);
     if (!fs.existsSync(localDir)) {
@@ -159,7 +159,7 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
     const files = fs.readdirSync(localDir).filter((f) => f.endsWith('.json'));
 
     interface LocalEntry {
-      ctx: F5XCContext;
+      ctx: XCShContext;
       pointerTarget?: string;
     }
 
@@ -178,7 +178,7 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
           const resolved = data.overrides ? mergePointerOverrides(globalCtx, data.overrides) : globalCtx;
           entries.push({ ctx: { ...resolved, name: data.context }, pointerTarget: data.context });
         } else {
-          entries.push({ ctx: data as F5XCContext });
+          entries.push({ ctx: data as XCShContext });
         }
       } catch {
         /* skip unreadable files */
@@ -206,9 +206,9 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
 /**
  * Context tree item
  */
-export class ContextTreeItem implements F5XCTreeItem {
+export class ContextTreeItem implements XCShTreeItem {
   constructor(
-    private readonly context: F5XCContext,
+    private readonly context: XCShContext,
     private readonly isActive: boolean,
     private readonly health: TokenHealth,
     private readonly pointerTarget?: string,
@@ -236,11 +236,11 @@ export class ContextTreeItem implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCShTreeItem[]> {
     return Promise.resolve([]);
   }
 
-  getContext(): F5XCContext {
+  getContext(): XCShContext {
     return this.context;
   }
 

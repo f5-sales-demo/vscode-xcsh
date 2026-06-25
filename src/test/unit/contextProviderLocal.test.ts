@@ -3,7 +3,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { F5XCContext } from '../../config/contextTypes';
+import type { XCShContext } from '../../config/contextTypes';
 
 // Lazy imports — re-imported after jest.resetModules() so contextPaths
 // picks up the XDG_CONFIG_HOME env var we set in beforeEach.
@@ -16,7 +16,7 @@ describe('ContextProvider with local contexts', () => {
   let tmpDir: string;
   const originalEnv = process.env;
 
-  function makeContext(name: string, url = 'https://test.console.ves.volterra.io'): F5XCContext {
+  function makeContext(name: string, url = 'https://test.console.ves.volterra.io'): XCShContext {
     return {
       name,
       apiUrl: url,

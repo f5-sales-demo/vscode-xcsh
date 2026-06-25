@@ -8,7 +8,7 @@
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
 import {
-  type F5XCJsonSchema,
+  type XCShJsonSchema,
   generateGenericSchema,
   generateSchemaForResourceType,
   getSchemaResourceTypes,
@@ -21,8 +21,8 @@ const logger = getLogger();
  * Implements lazy loading - schemas are generated on first access.
  */
 export class SchemaRegistry {
-  private schemas = new Map<string, F5XCJsonSchema>();
-  private genericSchema: F5XCJsonSchema | null = null;
+  private schemas = new Map<string, XCShJsonSchema>();
+  private genericSchema: XCShJsonSchema | null = null;
 
   /**
    * Get the schema URI for a resource type.
@@ -46,7 +46,7 @@ export class SchemaRegistry {
    * @param resourceType - The resource type key (e.g., 'http_loadbalancer')
    * @returns The JSON Schema or null if resource type is unknown
    */
-  getOrGenerateSchema(resourceType: string): F5XCJsonSchema | null {
+  getOrGenerateSchema(resourceType: string): XCShJsonSchema | null {
     // Check cache first
     if (this.schemas.has(resourceType)) {
       return this.schemas.get(resourceType) ?? null;
@@ -66,7 +66,7 @@ export class SchemaRegistry {
    * Get the generic schema for any F5 XC resource.
    * Useful as a fallback when the specific resource type is unknown.
    */
-  getGenericSchema(): F5XCJsonSchema {
+  getGenericSchema(): XCShJsonSchema {
     if (!this.genericSchema) {
       this.genericSchema = generateGenericSchema();
       logger.debug('Generated generic F5 XC resource schema');

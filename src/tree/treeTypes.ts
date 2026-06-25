@@ -6,12 +6,12 @@ import type { ResourceCategory, ResourceTypeInfo } from '../api/resourceTypes';
 /**
  * Base interface for all tree items
  */
-export interface F5XCTreeItem {
+export interface XCShTreeItem {
   /** Get the VSCode TreeItem representation */
   getTreeItem(): vscode.TreeItem;
 
   /** Get child items */
-  getChildren(): Promise<F5XCTreeItem[]>;
+  getChildren(): Promise<XCShTreeItem[]>;
 }
 
 /**

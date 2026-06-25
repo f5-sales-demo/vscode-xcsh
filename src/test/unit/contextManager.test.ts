@@ -3,7 +3,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { F5XCContext } from '../../config/contextTypes';
+import type { XCShContext } from '../../config/contextTypes';
 
 // We will import ContextManager after setting XDG_CONFIG_HOME in beforeEach
 let ContextManager: typeof import('../../config/contextManager').ContextManager;
@@ -37,7 +37,7 @@ describe('ContextManager', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function makeContext(overrides: Partial<F5XCContext> = {}): F5XCContext {
+  function makeContext(overrides: Partial<XCShContext> = {}): XCShContext {
     return {
       name: 'test-ctx',
       apiUrl: 'https://test.console.ves.volterra.io',
@@ -177,7 +177,7 @@ describe('ContextManager', () => {
     await mgr.addContext(makeContext({ name: 'bravo' }));
 
     const list = await mgr.getContexts();
-    expect(list.map((c: F5XCContext) => c.name)).toEqual(['alpha', 'bravo', 'charlie']);
+    expect(list.map((c: XCShContext) => c.name)).toEqual(['alpha', 'bravo', 'charlie']);
     mgr.dispose();
   });
 

@@ -34,8 +34,8 @@ export class XCShCompletionProvider implements vscode.CompletionItemProvider {
     });
 
     // Check if this is an F5 XC JSON file
-    const isF5XCFile = CompletionHelper.isF5XCJsonFile(document);
-    if (!isF5XCFile) {
+    const isXCShFile = CompletionHelper.isXCShJsonFile(document);
+    if (!isXCShFile) {
       return undefined;
     }
 

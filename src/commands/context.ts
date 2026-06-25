@@ -4,7 +4,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
-import type { F5XCContext } from '../config/contextTypes';
+import type { XCShContext } from '../config/contextTypes';
 import { isValidContextName } from '../config/contextTypes';
 import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
 import type { XCShExplorerProvider } from '../tree/xcshExplorer';
@@ -99,7 +99,7 @@ export function registerContextCommands(
         }
 
         // Build context
-        const newContext: F5XCContext = {
+        const newContext: XCShContext = {
           name,
           apiUrl,
           apiToken,
@@ -223,7 +223,7 @@ export function registerContextCommands(
           return;
         }
 
-        const updates: Partial<F5XCContext> = {};
+        const updates: Partial<XCShContext> = {};
 
         switch (editOption.label) {
           case vscode.l10n.t('API URL'): {

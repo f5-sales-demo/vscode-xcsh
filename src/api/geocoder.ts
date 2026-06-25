@@ -27,7 +27,7 @@ export async function geocodeLocation(query: string): Promise<Coordinates | null
 
     const response = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
       headers: {
-        'User-Agent': 'VSCode-F5XC-Tools/1.0',
+        'User-Agent': 'VSCode-XCSh/1.0',
       },
     });
 
