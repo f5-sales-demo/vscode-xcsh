@@ -96,6 +96,20 @@ export function computeTokenHealth(expiresAt: string | undefined): TokenHealth {
   return 'ok';
 }
 
+/**
+ * Normalize an API URL for safe path joining by stripping trailing slash(es).
+ *
+ * A trailing slash is dangerous: the shared resource library joins URLs by raw
+ * concatenation (`${apiUrl}${path}`) where path templates begin with `/api/...`.
+ * A trailing slash produces `https://host/api//api/...`; after the transport
+ * strips the base URL the remainder begins with `//`, which `new URL()` parses as
+ * a protocol-relative authority — collapsing the host to a bare label (e.g. `api`)
+ * and breaking TLS altname verification. Stripping trailing slashes prevents this.
+ */
+export function normalizeApiUrl(apiUrl: string): string {
+  return typeof apiUrl === 'string' ? apiUrl.replace(/\/+$/, '') : apiUrl;
+}
+
 export function deriveTenantFromUrl(apiUrl: string): string | null {
   try {
     const hostname = new URL(apiUrl).hostname;
