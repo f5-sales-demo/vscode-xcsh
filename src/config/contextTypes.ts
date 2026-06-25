@@ -97,17 +97,33 @@ export function computeTokenHealth(expiresAt: string | undefined): TokenHealth {
 }
 
 /**
- * Normalize an API URL for safe path joining by stripping trailing slash(es).
+ * Normalize an API URL to its origin (`https://host[:port]`) — the canonical
+ * stored form for a context endpoint.
  *
- * A trailing slash is dangerous: the shared resource library joins URLs by raw
- * concatenation (`${apiUrl}${path}`) where path templates begin with `/api/...`.
- * A trailing slash produces `https://host/api//api/...`; after the transport
- * strips the base URL the remainder begins with `//`, which `new URL()` parses as
- * a protocol-relative authority — collapsing the host to a bare label (e.g. `api`)
- * and breaking TLS altname verification. Stripping trailing slashes prevents this.
+ * The stored value must be the bare origin only: no path, query, fragment, or
+ * trailing slash. Callers append `/api/...` (and any other path patterns)
+ * themselves when making requests, so the endpoint stays a single consistent
+ * value that other tooling (e.g. the xcsh CLI, or a browser-automation login
+ * URL that cannot carry a suffix) can reuse.
+ *
+ * This also defuses the protocol-relative host collapse: a pasted browser URL
+ * (e.g. `https://host/web/home?iss=...`) or a trailing slash would otherwise
+ * survive and corrupt the shared library's `${apiUrl}${path}` join, where a
+ * leading `//` in the result is parsed by `new URL()` as an authority and
+ * collapses the request host to a bare label (e.g. `api`).
  */
 export function normalizeApiUrl(apiUrl: string): string {
-  return typeof apiUrl === 'string' ? apiUrl.replace(/\/+$/, '') : apiUrl;
+  if (typeof apiUrl !== 'string') {
+    return apiUrl;
+  }
+  const trimmed = apiUrl.trim();
+  try {
+    return new URL(trimmed).origin;
+  } catch {
+    // Not a parseable absolute URL (input validation should prevent this);
+    // fall back to stripping trailing slashes so we never worsen a bad value.
+    return trimmed.replace(/\/+$/, '');
+  }
 }
 
 export function deriveTenantFromUrl(apiUrl: string): string | null {

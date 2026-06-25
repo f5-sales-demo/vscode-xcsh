@@ -101,30 +101,43 @@ describe('deriveTenantFromUrl', () => {
 });
 
 describe('normalizeApiUrl', () => {
-  it('strips a single trailing slash', () => {
-    expect(normalizeApiUrl('https://api.example.com/api/')).toBe('https://api.example.com/api');
+  it('reduces an origin-only URL to itself (idempotent)', () => {
+    expect(normalizeApiUrl('https://tenant.console.ves.volterra.io')).toBe('https://tenant.console.ves.volterra.io');
   });
 
-  it('strips multiple trailing slashes', () => {
-    expect(normalizeApiUrl('https://host/api///')).toBe('https://host/api');
+  it('strips a trailing slash', () => {
+    expect(normalizeApiUrl('https://host.example.com/')).toBe('https://host.example.com');
   });
 
-  it('leaves a URL without a trailing slash unchanged', () => {
-    expect(normalizeApiUrl('https://host/api')).toBe('https://host/api');
+  it('strips an /api path suffix to the origin', () => {
+    expect(normalizeApiUrl('https://host.example.com/api')).toBe('https://host.example.com');
+    expect(normalizeApiUrl('https://host.example.com/api/')).toBe('https://host.example.com');
   });
 
-  it('does not touch slashes that are not trailing', () => {
-    expect(normalizeApiUrl('https://host/api/config')).toBe('https://host/api/config');
+  it('strips an arbitrary path, query, and fragment to the origin', () => {
+    expect(normalizeApiUrl('https://host.example.com/web/home?iss=x#frag')).toBe('https://host.example.com');
   });
 
-  // Regression: a trailing slash is what makes the shared lib emit `//api/...`, which
-  // `new URL()` parses as a protocol-relative authority -> host collapses to `api`.
-  it('prevents the protocol-relative host collapse', () => {
-    const apiUrl = normalizeApiUrl('https://api.example.com/api/');
-    // Mirrors XCSHTransport stripping the base URL: with a trailing slash the remainder
-    // would begin with `//`; after normalization it is a clean single-slash path.
-    const remainder = `${apiUrl}/api/config/x`.slice(apiUrl.length);
-    expect(remainder.startsWith('//')).toBe(false);
-    expect(new URL(remainder, apiUrl).host).toBe('api.example.com');
+  // The real-world report: a full console/browser URL pasted into the API URL field.
+  it('reduces a pasted full browser URL to its origin', () => {
+    const pasted =
+      'https://f5-amer-ent.console.ves.volterra.io/web/home?iss=https%3A%2F%2Flogin.ves.volterra.io%2Fauth%2Frealms%2Ff5-amer-ent-x';
+    expect(normalizeApiUrl(pasted)).toBe('https://f5-amer-ent.console.ves.volterra.io');
+  });
+
+  it('preserves a non-default port', () => {
+    expect(normalizeApiUrl('https://host.example.com:9443/api')).toBe('https://host.example.com:9443');
+  });
+
+  it('falls back to trailing-slash stripping for an unparseable value', () => {
+    expect(normalizeApiUrl('not-a-url/')).toBe('not-a-url');
+  });
+
+  // With an origin-only result there is no path that can produce a `//`, so the
+  // protocol-relative host collapse is structurally impossible.
+  it('yields an origin that cannot collapse the request host', () => {
+    const apiUrl = normalizeApiUrl('https://api.example.com/web/home?iss=x');
+    const url = new URL(`${apiUrl}/api/config/namespaces/system/x`.slice(apiUrl.length), apiUrl);
+    expect(url.host).toBe('api.example.com');
   });
 });
