@@ -250,6 +250,16 @@ async function syncSpecs(): Promise<void> {
     console.log('📋 Copying specs...');
     copySpecs(extractDir);
 
+    // Enforce presence of the authoritative namespace profiles map. It is the
+    // single source of truth for which resource types may exist in which
+    // namespaces; a release without it cannot build a correct resource tree.
+    const namespaceProfilesPath = path.join(SPECS_DIR, 'domains', 'namespace_profiles.json');
+    if (!fs.existsSync(namespaceProfilesPath)) {
+      throw new Error(
+        'Synced release is missing required domains/namespace_profiles.json — upstream release is invalid.',
+      );
+    }
+
     // Generate YAML
     generateYaml();
 

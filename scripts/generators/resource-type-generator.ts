@@ -14,13 +14,14 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import {
+  loadNamespaceProfiles,
   loadValidationData,
   type NamespaceProfile,
   type ParsedSpecInfo,
   parseAllDomainFiles,
-  parseAllSpecs,
   type ResourceFieldMetadata,
   type ResourceOperationMetadata,
+  resolveNamespaceProfile,
 } from './spec-parser';
 
 // Re-export types that are used in generated output
@@ -179,6 +180,13 @@ export interface GeneratedResourceTypeInfo {
  * Convert parsed spec info to generated resource type info
  */
 function toGeneratedTypeInfo(info: ParsedSpecInfo): GeneratedResourceTypeInfo {
+  if (!info.namespaceProfile) {
+    // The generator must assign an authoritative profile from the map before
+    // serialization. A missing profile here is a programming error, not a
+    // fallback condition.
+    throw new Error(`Resource '${info.resourceKey}' has no namespaceProfile assigned before generation`);
+  }
+
   const result: GeneratedResourceTypeInfo = {
     apiPath: info.apiPath,
     displayName: info.displayName,
@@ -614,58 +622,28 @@ export function getAllGeneratedResourceKeys(): string[] {
 }
 
 /**
- * Generate resource types from spec files and write to output file
- * @param specDir - Directory containing OpenAPI spec files
- * @param outputPath - Path for generated TypeScript file
- * @param displayNameOverridesPath - Optional path to display name overrides JSON file
- */
-export function generateResourceTypesFile(
-  specDir: string,
-  outputPath: string,
-  displayNameOverridesPath?: string,
-): ParsedSpecInfo[] {
-  const specs = parseAllSpecs(specDir);
-
-  if (specs.length === 0) {
-    console.error('No specs parsed successfully');
-    return [];
-  }
-
-  // Apply display name overrides if provided
-  if (displayNameOverridesPath) {
-    const overrides = loadDisplayNameOverrides(displayNameOverridesPath);
-    if (overrides) {
-      const overrideCount = applyDisplayNameOverrides(specs, overrides);
-      console.log(`Applied ${overrideCount} display name overrides`);
-    }
-  }
-
-  const content = generateResourceTypesContent(specs);
-  const outputDir = path.dirname(outputPath);
-
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  fs.writeFileSync(outputPath, content, 'utf-8');
-  console.log(`Generated: ${outputPath} with ${specs.length} resource types`);
-
-  return specs;
-}
-
-/**
  * Generate resource types from domain files and write to output file.
  * Domain files are merged OpenAPI specs organized by x-f5xc-cli-domain.
  *
+ * Namespace profiles are assigned authoritatively from the namespace_profiles.json
+ * map (the single source of truth). The map is REQUIRED — generation fails if it is
+ * missing or empty; there is no path/schema-based fallback.
+ *
  * @param domainDir - Directory containing domain-based OpenAPI spec files
  * @param outputPath - Path for generated TypeScript file
+ * @param namespaceProfilesPath - Path to the authoritative namespace_profiles.json map
  * @param displayNameOverridesPath - Optional path to display name overrides JSON file
  */
 export function generateResourceTypesFromDomainFiles(
   domainDir: string,
   outputPath: string,
+  namespaceProfilesPath: string,
   displayNameOverridesPath?: string,
 ): ParsedSpecInfo[] {
+  // Load the authoritative namespace profile map first — without it we cannot
+  // assign correct namespace scopes, so fail fast (no fallback).
+  const profilesMap = loadNamespaceProfiles(namespaceProfilesPath);
+
   const allParsed = parseAllDomainFiles(domainDir);
 
   if (allParsed.length === 0) {
@@ -674,6 +652,20 @@ export function generateResourceTypesFromDomainFiles(
   }
 
   console.log(`Parsed ${allParsed.length} resource types from domain files`);
+
+  // Assign authoritative namespace profiles from the map. Every resource
+  // resolves: explicit override if present, otherwise the map default.
+  let mappedOverrideCount = 0;
+  for (const spec of allParsed) {
+    spec.namespaceProfile = resolveNamespaceProfile(profilesMap, spec.resourceKey);
+    if (profilesMap.resources[spec.resourceKey]) {
+      mappedOverrideCount++;
+    }
+  }
+  console.log(
+    `  Assigned namespace profiles: ${mappedOverrideCount} via explicit override, ` +
+      `${allParsed.length - mappedOverrideCount} via default`,
+  );
 
   // Merge validation.json data into fieldMetadata
   const validationPath = path.join(domainDir, 'validation.json');
