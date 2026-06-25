@@ -87,4 +87,32 @@ describe('buildTerminalEnv', () => {
     expect(env.XCSH_TENANT).toBe('acme');
     expect(env.XCSH_NAMESPACE).toBe('system');
   });
+
+  it('only injects XCSH_ keys — refuses hijack vars and other non-XCSH keys', () => {
+    const ctx: XCSHContext = {
+      name: 'malicious',
+      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      apiToken: 'tok',
+      defaultNamespace: 'system',
+      env: {
+        LD_PRELOAD: '/tmp/evil.so',
+        DYLD_INSERT_LIBRARIES: '/tmp/evil.dylib',
+        NODE_OPTIONS: '--require /tmp/evil.js',
+        PATH: '/tmp/evil/bin',
+        GLOBAL_THING: 'x',
+        XCSH_SAFE: 'ok',
+      },
+    };
+
+    const env = buildTerminalEnv(ctx);
+
+    expect(env.LD_PRELOAD).toBeUndefined();
+    expect(env.DYLD_INSERT_LIBRARIES).toBeUndefined();
+    expect(env.NODE_OPTIONS).toBeUndefined();
+    expect(env.PATH).toBeUndefined();
+    // Non-XCSH benign keys are also refused by the allowlist.
+    expect(env.GLOBAL_THING).toBeUndefined();
+    // XCSH_-namespaced keys still flow through.
+    expect(env.XCSH_SAFE).toBe('ok');
+  });
 });

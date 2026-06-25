@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { ContextManagerInterface, XCSHContext } from '../config/contextTypes';
-import { deriveTenantFromUrl, RESERVED_ENV_KEYS } from '../config/contextTypes';
+import { deriveTenantFromUrl, isInjectableContextEnvKey } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { findXcshBinary } from './processManager';
 
@@ -42,11 +42,13 @@ export function buildTerminalEnv(ctx: XCSHContext): Record<string, string | unde
     env.XCSH_TENANT = tenant;
   }
 
-  // Inject the context's generic env map (auth credentials + user-defined vars),
-  // skipping reserved control keys so they can't shadow the core vars above.
+  // Inject the context's generic env map. Allowlist: only XCSH_-namespaced,
+  // non-reserved keys reach the terminal — a project-local context is untrusted
+  // input, so anything outside the XCSH_ namespace (LD_PRELOAD, NODE_OPTIONS,
+  // PATH, …) is refused and can never run code.
   if (ctx.env) {
     for (const [key, value] of Object.entries(ctx.env)) {
-      if (!RESERVED_ENV_KEYS.has(key)) {
+      if (isInjectableContextEnvKey(key)) {
         env[key] = value;
       }
     }

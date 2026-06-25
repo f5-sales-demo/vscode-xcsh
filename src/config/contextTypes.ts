@@ -88,6 +88,7 @@ interface SharedEnvNamesModule {
   readonly AUTH_ENV_KEYS: readonly string[];
   readonly RESERVED_ENV_KEYS: ReadonlySet<string>;
   isSensitiveEnvKey(key: string): boolean;
+  isInjectableContextEnvKey(key: string): boolean;
 }
 
 const sharedEnvNames = require('@f5xc-salesdemos/pi-utils/xcsh-env-names') as SharedEnvNamesModule;
@@ -109,6 +110,14 @@ export const RESERVED_ENV_KEYS = sharedEnvNames.RESERVED_ENV_KEYS;
 
 /** True iff an env var NAME looks like it holds a secret (e.g. XCSH_CONSOLE_PASSWORD). */
 export const isSensitiveEnvKey = (key: string): boolean => sharedEnvNames.isSensitiveEnvKey(key);
+
+/**
+ * True iff a context's `env` entry may be injected into a spawned subprocess.
+ * Allowlist (default-deny): only XCSH_-namespaced, non-reserved keys. Project-local
+ * context files are untrusted input, so anything outside the XCSH_ namespace
+ * (LD_PRELOAD, NODE_OPTIONS, PATH, …) is refused and can never run code.
+ */
+export const isInjectableContextEnvKey = (key: string): boolean => sharedEnvNames.isInjectableContextEnvKey(key);
 
 const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 

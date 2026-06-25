@@ -3,7 +3,7 @@
 import * as vscode from 'vscode';
 import { checkGitTracking, resolveContext } from '../config/contextResolver';
 import type { ContextManagerInterface } from '../config/contextTypes';
-import { CURRENT_SCHEMA_VERSION, deriveTenantFromUrl, RESERVED_ENV_KEYS } from '../config/contextTypes';
+import { CURRENT_SCHEMA_VERSION, deriveTenantFromUrl, isInjectableContextEnvKey } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { registerChatParticipant } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
@@ -111,12 +111,14 @@ export async function activateXcsh(
       env.XCSH_TENANT = tenant;
     }
     // Inject the context's generic env map (auth credentials like XCSH_USERNAME /
-    // XCSH_CONSOLE_PASSWORD, plus any user-defined vars). Reserved control keys are
-    // skipped so a custom env can never shadow the core variables set above.
-    // Mirrors the shell's #applyToSettings.
+    // XCSH_CONSOLE_PASSWORD, plus other XCSH_ demo vars). Allowlist: only
+    // XCSH_-namespaced, non-reserved keys reach the subprocess — a project-local
+    // context is untrusted input, so anything outside the XCSH_ namespace
+    // (LD_PRELOAD, NODE_OPTIONS, PATH, …) is refused. Mirrors the shell's
+    // #applyToSettings.
     if (ctx.env) {
       for (const [key, value] of Object.entries(ctx.env)) {
-        if (!RESERVED_ENV_KEYS.has(key)) {
+        if (isInjectableContextEnvKey(key)) {
           env[key] = value;
         }
       }
