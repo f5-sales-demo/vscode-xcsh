@@ -51,11 +51,11 @@ and documentation for F5 XC resource editing in VSCode.
 
 ---
 
-### TC-003: IntelliSense for Virtual Documents (f5xc://)
+### TC-003: IntelliSense for Virtual Documents (xcsh://)
 
 | ID                  | TC-003                                                                                                                                                                       |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Title**           | IntelliSense works when editing resources via f5xc://                                                                                                                        |
+| **Title**           | IntelliSense works when editing resources via xcsh://                                                                                                                        |
 | **Priority**        | Critical                                                                                                                                                                     |
 | **Preconditions**   | Active profile, existing http_loadbalancer resource                                                                                                                          |
 | **Steps**           | 1. Expand namespace in F5 XC Explorer<br>2. Right-click http_loadbalancer → Edit Resource<br>3. In opened document, position cursor inside `spec: {}`<br>4. Press Ctrl+Space |
@@ -107,10 +107,10 @@ and documentation for F5 XC resource editing in VSCode.
 
 | ID                  | TC-007                                                                                               |
 | ------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Title**           | Generic schema used for \*.f5xc.json files                                                           |
+| **Title**           | Generic schema used for \*.xcsh.json files                                                           |
 | **Priority**        | Medium                                                                                               |
 | **Preconditions**   | Extension activated                                                                                  |
-| **Steps**           | 1. Create `test.f5xc.json`<br>2. Type `{` and trigger autocomplete<br>3. Check available suggestions |
+| **Steps**           | 1. Create `test.xcsh.json`<br>2. Type `{` and trigger autocomplete<br>3. Check available suggestions |
 | **Expected Result** | Generic F5 XC schema provides basic metadata/spec structure                                          |
 | **Pass Criteria**   | `metadata` and `spec` appear as suggestions                                                          |
 
@@ -214,10 +214,10 @@ and documentation for F5 XC resource editing in VSCode.
 
 | ID           | RT-004                                          |
 | ------------ | ----------------------------------------------- |
-| **Title**    | f5xc:// URIs still resolve correctly            |
+| **Title**    | xcsh:// URIs still resolve correctly            |
 | **Scope**    | Regression                                      |
 | **Steps**    | 1. Edit a resource<br>2. Check URI in tab title |
-| **Expected** | URI format: f5xc://profile/ns/type/name.json    |
+| **Expected** | URI format: xcsh://profile/ns/type/name.json    |
 
 ### RT-005: Profile Switching
 
@@ -236,7 +236,7 @@ and documentation for F5 XC resource editing in VSCode.
 | --------------------------- | ---------- | ----------------- | -------------- |
 | schemaGenerator.ts          | PASS       | N/A               | TC-002, TC-007 |
 | schemaRegistry.ts           | PASS       | N/A               | TC-008         |
-| f5xcSchemaProvider.ts       | PASS       | N/A               | TC-001, TC-003 |
+| xcshSchemaProvider.ts       | PASS       | N/A               | TC-001, TC-003 |
 | extension.ts changes        | PASS       | PASS              | TC-001, RT-\*  |
 | package.json jsonValidation | N/A        | PASS              | TC-002         |
 

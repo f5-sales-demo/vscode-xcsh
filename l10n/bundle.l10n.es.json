@@ -283,7 +283,7 @@
   "No active editor": "No hay editor activo",
   "Invalid JSON in editor": "JSON inválido en el editor",
   "Resource must have metadata.namespace and metadata.name": "El recurso debe tener metadata.namespace y metadata.name",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "No se pudo determinar el tipo de recurso. Use la convención de nombres: *.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "No se pudo determinar el tipo de recurso. Use la convención de nombres: *.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\n¿Desea continuar de todos modos?",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "{0} {1} \"{2}\" en el espacio de nombres \"{3}\"?",
   "Updating {0}...": "Actualizando {0}...",

@@ -283,7 +283,7 @@
   "No active editor": "لا يوجد محرر نشط",
   "Invalid JSON in editor": "JSON غير صالح في المحرر",
   "Resource must have metadata.namespace and metadata.name": "يجب أن يحتوي المورد على metadata.namespace وmetadata.name",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "تعذر تحديد نوع المورد. استخدم اصطلاح التسمية: *.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "تعذر تحديد نوع المورد. استخدم اصطلاح التسمية: *.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\nهل تريد المتابعة على أي حال؟",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "{0} {1} \"{2}\" في مساحة الاسم \"{3}\"؟",
   "Updating {0}...": "جارٍ تحديث {0}...",

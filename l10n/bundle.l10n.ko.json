@@ -283,7 +283,7 @@
   "No active editor": "활성 편집기가 없습니다",
   "Invalid JSON in editor": "편집기의 JSON이 유효하지 않습니다",
   "Resource must have metadata.namespace and metadata.name": "리소스에는 metadata.namespace와 metadata.name이 필요합니다",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "리소스 유형을 확인할 수 없습니다. 명명 규칙을 사용하세요: *.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "리소스 유형을 확인할 수 없습니다. 명명 규칙을 사용하세요: *.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\n그래도 계속하시겠습니까?",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "네임스페이스 \"{3}\"에서 {0} {1} \"{2}\"을(를) 수행하시겠습니까?",
   "Updating {0}...": "{0} 업데이트 중...",

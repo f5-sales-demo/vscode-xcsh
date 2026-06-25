@@ -283,7 +283,7 @@
   "No active editor": "沒有使用中的編輯器",
   "Invalid JSON in editor": "編輯器中的 JSON 無效",
   "Resource must have metadata.namespace and metadata.name": "資源必須包含 metadata.namespace 和 metadata.name",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "無法判斷資源類型。請使用命名慣例：*.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "無法判斷資源類型。請使用命名慣例：*.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\n是否仍要繼續？",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "{0} 命名空間 \"{3}\" 中的 {1} \"{2}\"？",
   "Updating {0}...": "正在更新 {0}...",
