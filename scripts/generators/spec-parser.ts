@@ -1148,7 +1148,10 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
   // Pattern for list endpoints (plural resource path)
   // Matches: /api/config/namespaces/{metadata.namespace}/http_loadbalancers
   // Also matches extended paths: /api/config/dns/namespaces/{ns}/dns_zones
-  const listEndpointPattern = /^\/api\/([a-z_-]+)(?:\/([a-z_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z_]+)$/;
+  // Character classes include digits so versioned resources (e.g. v1_dns_monitors,
+  // securemesh_site_v2s) parse correctly instead of being silently skipped.
+  const listEndpointPattern =
+    /^\/api\/([a-z0-9_-]+)(?:\/([a-z0-9_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z0-9_]+)$/;
 
   const seen = new Set<string>();
 

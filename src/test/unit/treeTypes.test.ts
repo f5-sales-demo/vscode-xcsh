@@ -60,7 +60,11 @@ describe('TreeItemContext', () => {
     expect(keys).toContain('SUBSCRIPTION_GROUP');
     expect(keys).toContain('SUBSCRIPTION_PLAN');
     expect(keys).toContain('SUBSCRIPTION_QUOTAS');
+    expect(keys).toContain('ADDONS_GROUP');
+    expect(keys).toContain('ADDON_SUBSCRIBED');
+    expect(keys).toContain('ADDON_UNSUBSCRIBED');
+    expect(keys).toContain('ADDON_PENDING');
     expect(keys).toContain('ERROR');
-    expect(keys).toHaveLength(11);
+    expect(keys).toHaveLength(15);
   });
 });

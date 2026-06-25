@@ -584,3 +584,30 @@ export async function createAddonSubscription(
 
   return response;
 }
+
+/**
+ * Derive the addon_subscription object name for an addon service.
+ * Mirrors the naming used by createAddonSubscription so subscribe/unsubscribe are symmetric.
+ */
+export function addonSubscriptionName(addonServiceName: string): string {
+  return `${addonServiceName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}-subscription`;
+}
+
+/**
+ * Delete an addon subscription (request deactivation).
+ * Symmetric counterpart to createAddonSubscription — deletes the addon_subscription object.
+ */
+export async function deleteAddonSubscription(
+  client: XCSHClient,
+  addonServiceName: string,
+  namespace: string = 'system',
+): Promise<void> {
+  const subscriptionName = addonSubscriptionName(addonServiceName);
+  logger.info(`Deleting addon subscription for: ${addonServiceName} (${subscriptionName})`);
+
+  await client.customRequest<unknown>(`/api/web/namespaces/${namespace}/addon_subscriptions/${subscriptionName}`, {
+    method: 'DELETE',
+  });
+
+  logger.info(`Addon subscription deleted: ${subscriptionName}`);
+}

@@ -20,7 +20,6 @@
   "config.xcsh.panelMode.description": "xcsh 面板体验：富文本 Webview 或经典 CLI 终端",
   "config.xcsh.panelMode.webview": "富集成聊天面板（推荐）",
   "config.xcsh.panelMode.terminal": "经典 CLI 终端体验",
-
   "view.profiles.name": "上下文",
   "view.profiles.contextualTitle": "xcsh 上下文",
   "view.subscription.name": "订阅",
@@ -29,9 +28,7 @@
   "view.explorer.contextualTitle": "xcsh 资源",
   "view.cloudStatus.name": "云状态",
   "view.cloudStatus.contextualTitle": "xcsh 云状态",
-
   "viewsWelcome.explorer": "未配置 xcsh 上下文。\n[添加上下文](command:xcsh.addContext)\n了解更多关于 [F5 Distributed Cloud](https://www.f5.com/cloud) 的信息。",
-
   "command.addContext.title": "xcsh: 添加上下文",
   "command.editContext.title": "xcsh: 编辑上下文",
   "command.manageContextEnv.title": "xcsh: 管理上下文环境变量",
@@ -85,7 +82,6 @@
   "command.xcsh.restart.title": "xcsh: 重启",
   "command.xcsh.openPanel.title": "xcsh: 打开面板",
   "command.xcsh.newSession.title": "xcsh: 新建会话",
-
   "tool.readFile.displayName": "读取文件",
   "tool.readFile.userDescription": "从工作区读取文件",
   "tool.getSelection.displayName": "获取编辑器选中内容",
@@ -94,12 +90,13 @@
   "tool.getDiagnostics.userDescription": "获取文件的错误和警告",
   "tool.openFile.displayName": "在编辑器中打开文件",
   "tool.openFile.userDescription": "在编辑器中打开文件",
-
   "chat.xcsh.description": "通过 xcsh 询问 F5 Distributed Cloud 资源、配置和故障排除相关问题",
   "chat.xcsh.command.status": "显示 xcsh 集成健康状态和连接状态",
   "chat.xcsh.command.context": "显示活动 xcsh 上下文详情（租户、命名空间、API URL）",
   "chat.xcsh.command.resources": "列出当前命名空间中的资源",
   "chat.xcsh.disambiguation.networking": "关于 F5 Distributed Cloud 网络、负载均衡器、源池、路由、DNS、CDN、虚拟主机和 HTTP 负载均衡器配置的问题",
   "chat.xcsh.disambiguation.security": "关于 F5 Distributed Cloud 安全、WAF 策略、服务策略、DDoS 防护、机器人防御、API 安全和应用防火墙配置的问题",
-  "chat.xcsh.disambiguation.infrastructure": "关于 F5 Distributed Cloud 站点、站点健康状况、云连接器、网络连接器、集群管理和基础设施状态的问题"
+  "chat.xcsh.disambiguation.infrastructure": "关于 F5 Distributed Cloud 站点、站点健康状况、云连接器、网络连接器、集群管理和基础设施状态的问题",
+  "command.subscribeAddon.title": "Subscribe to Add-on",
+  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
 }

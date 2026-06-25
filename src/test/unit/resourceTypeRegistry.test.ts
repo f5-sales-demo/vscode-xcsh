@@ -38,7 +38,7 @@ describe('Resource Type Registry (comprehensive)', () => {
       // RESOURCE_TYPES only includes types with manual overrides (~110).
       // GENERATED_RESOURCE_TYPES (the full OpenAPI set) has ~234.
       const keys = Object.keys(RESOURCE_TYPES);
-      expect(keys.length).toBeGreaterThanOrEqual(100);
+      expect(keys.length).toBeGreaterThanOrEqual(90); // curated set after removing phantom/orphaned resources
     });
 
     const knownTypes = ['http_loadbalancer', 'origin_pool', 'app_firewall', 'healthcheck'];

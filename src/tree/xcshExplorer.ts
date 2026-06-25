@@ -19,6 +19,7 @@ import {
   RESOURCE_TYPES,
   type ResourceTypeInfo,
 } from '../api/resourceTypes';
+import { type AddonService, getAddonActivationStatus, getCurrentPlan } from '../api/subscription';
 import type { ContextManager } from '../config/contextManager';
 import type { XCSHContext } from '../config/contextTypes';
 import {
@@ -31,6 +32,7 @@ import {
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import {
+  type AddonNodeData,
   type CategoryNodeData,
   type NamespaceNodeData,
   type ResourceNodeData,
@@ -149,6 +151,9 @@ export class XCSHExplorerProvider implements vscode.TreeDataProvider<XCSHTreeIte
         );
       }
 
+      // Add the Platform & Add-ons group (non-namespace, tenant-level add-on infrastructure)
+      groups.push(new AddonsGroupNode(activeContext.name, this.clientFactory, this.contextManager));
+
       return groups;
     } catch (error) {
       this.logger.error('Failed to load namespaces', error as Error);
@@ -191,6 +196,105 @@ class NamespaceGroupNode implements XCSHTreeItem {
           ),
       ),
     );
+  }
+}
+
+/**
+ * Platform & Add-ons group node — non-namespace, tenant-level add-on infrastructure
+ * (DNS, Bot Defense Advanced, CSD, NGINX One, ...). Reuses the subscription/add-on API.
+ */
+class AddonsGroupNode implements XCSHTreeItem {
+  private readonly logger = getLogger();
+
+  constructor(
+    private readonly profileName: string,
+    private readonly clientFactory: (ctx: XCSHContext) => Promise<XCSHClient>,
+    private readonly contextManager: ContextManager,
+  ) {}
+
+  getTreeItem(): vscode.TreeItem {
+    const item = new vscode.TreeItem(vscode.l10n.t('Platform & Add-ons'), vscode.TreeItemCollapsibleState.Collapsed);
+    item.contextValue = TreeItemContext.ADDONS_GROUP;
+    item.iconPath = new vscode.ThemeIcon('extensions');
+    item.tooltip = vscode.l10n.t('Tenant-level add-on infrastructure (DNS, Bot Defense, NGINX One, ...)');
+    return item;
+  }
+
+  async getChildren(): Promise<XCSHTreeItem[]> {
+    try {
+      const activeContext = await this.contextManager.getActiveContext();
+      if (!activeContext) {
+        return [];
+      }
+      const client = await this.clientFactory(activeContext);
+      const plan = await getCurrentPlan(client);
+
+      // Catalog = included ∪ allowed add-on services, de-duplicated by name.
+      const catalog = new Map<string, AddonService>();
+      for (const addon of [...plan.includedAddonServices, ...plan.allowedAddonServices]) {
+        catalog.set(addon.name, addon);
+      }
+      const addons = [...catalog.values()].sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+      // Resolve activation status for each add-on in parallel (reuses getAddonActivationStatus).
+      return await Promise.all(
+        addons.map(async (addon) => {
+          let subscribed = false;
+          let pending = false;
+          try {
+            const status = await getAddonActivationStatus(client, addon.name);
+            subscribed = status.state === 'AS_SUBSCRIBED';
+            pending = status.state === 'AS_PENDING';
+          } catch (e) {
+            this.logger.warn(`Failed to get status for addon ${addon.name}`, e);
+          }
+          return new AddonNode({
+            name: addon.name,
+            displayName: addon.displayName,
+            subscribed,
+            pending,
+            profileName: this.profileName,
+          });
+        }),
+      );
+    } catch (error) {
+      this.logger.error('Failed to load add-ons', error as Error);
+      return [new ErrorNode(vscode.l10n.t('Failed to load add-ons'), (error as Error).message)];
+    }
+  }
+}
+
+/**
+ * Add-on node — one tenant-level add-on service with its activation state.
+ */
+class AddonNode implements XCSHTreeItem {
+  constructor(private readonly data: AddonNodeData) {}
+
+  getTreeItem(): vscode.TreeItem {
+    const item = new vscode.TreeItem(this.data.displayName, vscode.TreeItemCollapsibleState.None);
+    if (this.data.subscribed) {
+      item.contextValue = TreeItemContext.ADDON_SUBSCRIBED;
+      item.iconPath = new vscode.ThemeIcon('pass-filled', new vscode.ThemeColor('charts.green'));
+      item.description = vscode.l10n.t('Subscribed');
+    } else if (this.data.pending) {
+      item.contextValue = TreeItemContext.ADDON_PENDING;
+      item.iconPath = new vscode.ThemeIcon('clock');
+      item.description = vscode.l10n.t('Pending');
+    } else {
+      item.contextValue = TreeItemContext.ADDON_UNSUBSCRIBED;
+      item.iconPath = new vscode.ThemeIcon('circle-outline');
+      item.description = vscode.l10n.t('Not subscribed');
+    }
+    item.tooltip = `${this.data.displayName} (${this.data.name})`;
+    return item;
+  }
+
+  getData(): AddonNodeData {
+    return this.data;
+  }
+
+  getChildren(): Promise<XCSHTreeItem[]> {
+    return Promise.resolve([]);
   }
 }
 

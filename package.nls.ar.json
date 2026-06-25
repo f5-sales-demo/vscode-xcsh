@@ -20,7 +20,6 @@
   "config.xcsh.panelMode.description": "تجربة لوحة xcsh: واجهة ويب غنية أو محطة CLI كلاسيكية",
   "config.xcsh.panelMode.webview": "لوحة دردشة متكاملة غنية (موصى بها)",
   "config.xcsh.panelMode.terminal": "تجربة محطة CLI الكلاسيكية",
-
   "view.profiles.name": "السياقات",
   "view.profiles.contextualTitle": "سياقات xcsh",
   "view.subscription.name": "الاشتراك",
@@ -29,9 +28,7 @@
   "view.explorer.contextualTitle": "موارد xcsh",
   "view.cloudStatus.name": "حالة السحابة",
   "view.cloudStatus.contextualTitle": "حالة سحابة xcsh",
-
   "viewsWelcome.explorer": "لم يتم تهيئة سياق xcsh.\n[إضافة سياق](command:xcsh.addContext)\nتعرف على المزيد حول [F5 Distributed Cloud](https://www.f5.com/cloud).",
-
   "command.addContext.title": "xcsh: إضافة سياق",
   "command.editContext.title": "xcsh: تعديل السياق",
   "command.manageContextEnv.title": "xcsh: إدارة متغيرات بيئة السياق",
@@ -85,7 +82,6 @@
   "command.xcsh.restart.title": "xcsh: إعادة تشغيل",
   "command.xcsh.openPanel.title": "xcsh: فتح لوحة",
   "command.xcsh.newSession.title": "xcsh: جلسة جديدة",
-
   "tool.readFile.displayName": "قراءة ملف",
   "tool.readFile.userDescription": "قراءة ملف من مساحة العمل",
   "tool.getSelection.displayName": "الحصول على تحديد المحرر",
@@ -94,12 +90,13 @@
   "tool.getDiagnostics.userDescription": "الحصول على الأخطاء والتحذيرات لملف",
   "tool.openFile.displayName": "فتح ملف في المحرر",
   "tool.openFile.userDescription": "فتح ملف في المحرر",
-
   "chat.xcsh.description": "اسأل عن موارد F5 Distributed Cloud والتهيئة واستكشاف الأخطاء وإصلاحها عبر xcsh",
   "chat.xcsh.command.status": "عرض حالة سلامة واتصال تكامل xcsh",
   "chat.xcsh.command.context": "عرض تفاصيل سياق xcsh النشط (المستأجر، مساحة الاسم، عنوان URL لـ API)",
   "chat.xcsh.command.resources": "سرد الموارد في مساحة الاسم الحالية",
   "chat.xcsh.disambiguation.networking": "أسئلة حول شبكات F5 Distributed Cloud، وموازنات الحمل، ومجمعات الأصل، والمسارات، وDNS، وCDN، والمضيفات الافتراضية، وتهيئة موازن حمل HTTP",
   "chat.xcsh.disambiguation.security": "أسئلة حول أمان F5 Distributed Cloud، وسياسات WAF، وسياسات الخدمة، والحماية من DDoS، والدفاع ضد الروبوتات، وأمان API، وتهيئة جدار حماية التطبيقات",
-  "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية"
+  "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية",
+  "command.subscribeAddon.title": "Subscribe to Add-on",
+  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
 }

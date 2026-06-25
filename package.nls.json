@@ -20,7 +20,6 @@
   "config.xcsh.panelMode.description": "xcsh panel experience: rich webview or classic CLI terminal",
   "config.xcsh.panelMode.webview": "Rich integrated chat panel (recommended)",
   "config.xcsh.panelMode.terminal": "Classic CLI terminal experience",
-
   "view.profiles.name": "Contexts",
   "view.profiles.contextualTitle": "xcsh Contexts",
   "view.subscription.name": "Subscription",
@@ -29,9 +28,7 @@
   "view.explorer.contextualTitle": "xcsh Resources",
   "view.cloudStatus.name": "Cloud Status",
   "view.cloudStatus.contextualTitle": "xcsh Cloud Status",
-
   "viewsWelcome.explorer": "No xcsh context configured.\n[Add Context](command:xcsh.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
-
   "command.addContext.title": "xcsh: Add Context",
   "command.editContext.title": "xcsh: Edit Context",
   "command.manageContextEnv.title": "xcsh: Manage Context Environment Variables",
@@ -85,7 +82,6 @@
   "command.xcsh.restart.title": "xcsh: Restart",
   "command.xcsh.openPanel.title": "xcsh: Open Panel",
   "command.xcsh.newSession.title": "xcsh: New Session",
-
   "tool.readFile.displayName": "Read File",
   "tool.readFile.userDescription": "Read a file from the workspace",
   "tool.getSelection.displayName": "Get Editor Selection",
@@ -94,12 +90,13 @@
   "tool.getDiagnostics.userDescription": "Get errors and warnings for a file",
   "tool.openFile.displayName": "Open File in Editor",
   "tool.openFile.userDescription": "Open a file in the editor",
-
   "chat.xcsh.description": "Ask about F5 Distributed Cloud resources, configuration, and troubleshooting via xcsh",
   "chat.xcsh.command.status": "Show xcsh integration health and connection status",
   "chat.xcsh.command.context": "Show active xcsh context details (tenant, namespace, API URL)",
   "chat.xcsh.command.resources": "List resources in the current namespace",
   "chat.xcsh.disambiguation.networking": "Questions about F5 Distributed Cloud networking, load balancers, origin pools, routes, DNS, CDN, virtual hosts, and HTTP load balancer configuration",
   "chat.xcsh.disambiguation.security": "Questions about F5 Distributed Cloud security, WAF policies, service policies, DDoS protection, bot defense, API security, and application firewall configuration",
-  "chat.xcsh.disambiguation.infrastructure": "Questions about F5 Distributed Cloud sites, site health, cloud connectors, network connectors, fleet management, and infrastructure status"
+  "chat.xcsh.disambiguation.infrastructure": "Questions about F5 Distributed Cloud sites, site health, cloud connectors, network connectors, fleet management, and infrastructure status",
+  "command.subscribeAddon.title": "Subscribe to Add-on",
+  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
 }
