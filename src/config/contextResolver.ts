@@ -117,3 +117,11 @@ export async function resolveContext(workspaceFolder: string | undefined): Promi
   }
   return resolved;
 }
+
+/**
+ * Report whether a context file is tracked by git (it may then contain
+ * credentials). Delegates to the shared resolver's `node:child_process` check.
+ */
+export function checkGitTracking(filePath: string): Promise<boolean> {
+  return resolver.checkGitTracking(filePath);
+}
