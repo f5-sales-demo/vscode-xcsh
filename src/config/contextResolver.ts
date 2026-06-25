@@ -6,14 +6,14 @@
  * Priority:
  *   1. Environment variables  (F5XC_API_URL + F5XC_API_TOKEN)
  *   2. Local workspace dir    ({workspaceFolder}/.xcsh/contexts/)
- *   3. Global config dir      (~/.config/f5xc/contexts/)
+ *   3. Global config dir      (~/.config/xcsh/contexts/)
  *
  * A local context file may be:
  *   - **inline** — a full F5XCContext JSON (`{ apiUrl, … }`)
  *   - **pointer** — `{ context: "<globalName>", overrides?: … }` that
  *     references a global context and optionally merges overrides.
  *
- * This duplicates the algorithm from `packages/utils/src/f5xc-context-resolver.ts`
+ * This duplicates the algorithm from `packages/utils/src/xcsh-context-resolver.ts`
  * because the VS Code extension is a separate repo and cannot import from
  * packages/utils.  Uses Node.js APIs (not Bun).
  */
@@ -220,7 +220,7 @@ function resolvePointer(pointer: PointerContext, pointerPath: string): ResolvedC
  * Resolve the active F5 XC context using three-tier precedence:
  *   1. Environment variables (F5XC_API_URL + F5XC_API_TOKEN)
  *   2. Local workspace `.xcsh/contexts/`
- *   3. Global `~/.config/f5xc/contexts/`
+ *   3. Global `~/.config/xcsh/contexts/`
  */
 export function resolveContext(workspaceFolder: string | undefined): Promise<ResolvedContext | null> {
   // Priority 1: environment variables

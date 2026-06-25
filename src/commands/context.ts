@@ -121,7 +121,7 @@ export function registerContextCommands(
               },
               {
                 label: vscode.l10n.t('Create globally'),
-                description: vscode.l10n.t('Stored in ~/.config/f5xc/contexts/'),
+                description: vscode.l10n.t('Stored in ~/.config/xcsh/contexts/'),
                 value: 'global' as const,
               },
             ],
@@ -395,7 +395,7 @@ export function registerContextCommands(
 
   // LINK GLOBAL CONTEXT (create a local pointer to a global context)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.linkGlobalContext', async () => {
+    vscode.commands.registerCommand('xcsh.linkGlobalContext', async () => {
       await withErrorHandling(async () => {
         const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!wsFolder) {
@@ -431,7 +431,7 @@ export function registerContextCommands(
 
   // UNLINK LOCAL CONTEXT (delete a local context from the workspace)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.unlinkLocalContext', async () => {
+    vscode.commands.registerCommand('xcsh.unlinkLocalContext', async () => {
       await withErrorHandling(async () => {
         const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
         if (!wsFolder) {

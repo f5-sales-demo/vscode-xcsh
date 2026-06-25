@@ -17,12 +17,12 @@ describe('contextResolver', () => {
   const originalEnv = { ...process.env };
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'f5xc-vsc-resolver-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xcsh-vsc-resolver-'));
     projectDir = path.join(tmpDir, 'project');
     globalConfigDir = path.join(tmpDir, 'global-config');
 
     fs.mkdirSync(path.join(projectDir, '.xcsh', 'contexts'), { recursive: true, mode: 0o700 });
-    fs.mkdirSync(path.join(globalConfigDir, 'f5xc', 'contexts'), { recursive: true, mode: 0o700 });
+    fs.mkdirSync(path.join(globalConfigDir, 'xcsh','contexts'), { recursive: true, mode: 0o700 });
 
     process.env.XDG_CONFIG_HOME = globalConfigDir;
     delete process.env.F5XC_API_URL;
@@ -67,7 +67,7 @@ describe('contextResolver', () => {
       defaultNamespace: 'system',
       env: { G: 'val' },
     };
-    fs.writeFileSync(path.join(globalConfigDir, 'f5xc', 'contexts', 'prod-tenant.json'), JSON.stringify(globalCtx), {
+    fs.writeFileSync(path.join(globalConfigDir, 'xcsh','contexts', 'prod-tenant.json'), JSON.stringify(globalCtx), {
       mode: 0o600,
     });
 
@@ -110,10 +110,10 @@ describe('contextResolver', () => {
       apiToken: 'gtok',
       defaultNamespace: 'default',
     };
-    fs.writeFileSync(path.join(globalConfigDir, 'f5xc', 'contexts', 'global-ctx.json'), JSON.stringify(globalCtx), {
+    fs.writeFileSync(path.join(globalConfigDir, 'xcsh','contexts', 'global-ctx.json'), JSON.stringify(globalCtx), {
       mode: 0o600,
     });
-    fs.writeFileSync(path.join(globalConfigDir, 'f5xc', 'active_context'), 'global-ctx', { mode: 0o600 });
+    fs.writeFileSync(path.join(globalConfigDir, 'xcsh','active_context'), 'global-ctx', { mode: 0o600 });
 
     const result = await resolveContext(projectDir);
     expect(result).not.toBeNull();

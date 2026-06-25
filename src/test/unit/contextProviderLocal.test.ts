@@ -27,11 +27,11 @@ describe('ContextProvider with local contexts', () => {
   }
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'f5xc-tree-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xcsh-tree-'));
     process.env = { ...originalEnv, XDG_CONFIG_HOME: path.join(tmpDir, 'global') };
 
     // Ensure global contexts directory exists
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.mkdirSync(globalCtxDir, { recursive: true, mode: 0o700 });
 
     jest.resetModules();
@@ -54,7 +54,7 @@ describe('ContextProvider with local contexts', () => {
 
   it('returns flat ContextTreeItem list when no workspaceFolder is set', async () => {
     // Write a global context
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(makeContext('prod')), { mode: 0o600 });
 
     const mgr = new ContextManager();
@@ -71,7 +71,7 @@ describe('ContextProvider with local contexts', () => {
 
   it('returns two ContextGroupItem nodes when workspaceFolder has local contexts', async () => {
     // Create a global context
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'global-prod.json'), JSON.stringify(makeContext('global-prod')), {
       mode: 0o600,
     });
@@ -109,7 +109,7 @@ describe('ContextProvider with local contexts', () => {
   });
 
   it('returns project contexts as children of the project group', async () => {
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'global-prod.json'), JSON.stringify(makeContext('global-prod')), {
       mode: 0o600,
     });
@@ -139,7 +139,7 @@ describe('ContextProvider with local contexts', () => {
   });
 
   it('returns global contexts as children of the global group', async () => {
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'g1.json'), JSON.stringify(makeContext('g1')), { mode: 0o600 });
     fs.writeFileSync(path.join(globalCtxDir, 'g2.json'), JSON.stringify(makeContext('g2')), { mode: 0o600 });
 
@@ -167,7 +167,7 @@ describe('ContextProvider with local contexts', () => {
   // ───────── pointer contexts ─────────
 
   it('shows pointer description for pointer contexts', async () => {
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'shared-prod.json'), JSON.stringify(makeContext('shared-prod')), {
       mode: 0o600,
     });
@@ -199,7 +199,7 @@ describe('ContextProvider with local contexts', () => {
   // ───────── ContextTreeItem returns empty children ─────────
 
   it('returns empty array for ContextTreeItem children', async () => {
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(makeContext('prod')), { mode: 0o600 });
 
     const mgr = new ContextManager();
@@ -217,7 +217,7 @@ describe('ContextProvider with local contexts', () => {
   // ───────── falls back to flat when no local dir ─────────
 
   it('falls back to flat list when workspaceFolder is set but .xcsh/contexts does not exist', async () => {
-    const globalCtxDir = path.join(tmpDir, 'global', 'f5xc', 'contexts');
+    const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
     fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(makeContext('prod')), { mode: 0o600 });
 
     const projDir = path.join(tmpDir, 'project');
