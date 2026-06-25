@@ -112,7 +112,7 @@ function makeMockContextManager(): ContextManager {
   return {
     getContext: jest.fn().mockResolvedValue({
       name: 'test-ctx',
-      apiUrl: 'https://test.f5xc.com/api',
+      apiUrl: 'https://test.xcsh.dev/api',
       apiToken: 'test-token',
       defaultNamespace: 'default',
     }),
@@ -121,7 +121,7 @@ function makeMockContextManager(): ContextManager {
     }),
     getActiveContext: jest.fn().mockResolvedValue({
       name: 'test-ctx',
-      apiUrl: 'https://test.f5xc.com/api',
+      apiUrl: 'https://test.xcsh.dev/api',
       apiToken: 'test-token',
       defaultNamespace: 'default',
     }),
