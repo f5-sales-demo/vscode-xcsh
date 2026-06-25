@@ -336,6 +336,29 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     return { imported, skipped };
   }
 
+  /**
+   * Rename a context, preserving all its fields and its active status. Mirrors
+   * xcsh `/context rename <old> <new>`. Reuses add/setActive/delete so name
+   * validation, duplicate checks, and the active pointer stay consistent.
+   */
+  async renameContext(oldName: string, newName: string): Promise<void> {
+    const existing = await this.getContext(oldName);
+    if (!existing) {
+      throw new Error(`Context "${oldName}" not found`);
+    }
+    if (oldName === newName) {
+      return;
+    }
+    const wasActive = (await this.getActiveContextName()) === oldName;
+    // addContext validates the new name and rejects duplicates; old still exists
+    // here so it never auto-activates as "first context".
+    await this.addContext({ ...existing, name: newName });
+    if (wasActive) {
+      await this.setActiveContext(newName);
+    }
+    await this.deleteContext(oldName);
+  }
+
   async deleteContext(name: string): Promise<void> {
     const filePath = getContextPath(name);
     if (!fs.existsSync(filePath)) {

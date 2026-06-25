@@ -38,6 +38,8 @@
   "command.switchNamespace.title": "xcsh: 名前空間を切り替え",
   "command.exportContexts.title": "xcsh: コンテキストをエクスポート",
   "command.importContexts.title": "xcsh: コンテキストをインポート",
+  "command.renameContext.title": "xcsh: コンテキストの名前を変更",
+  "command.validateContext.title": "xcsh: コンテキストを検証",
   "command.deleteContext.title": "xcsh: コンテキストを削除",
   "command.setActiveContext.title": "xcsh: アクティブなコンテキストとして設定",
   "command.clearAuthCache.title": "xcsh: 認証キャッシュをクリア",

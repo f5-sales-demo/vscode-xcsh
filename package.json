@@ -261,6 +261,18 @@
         "icon": "$(folder-opened)"
       },
       {
+        "command": "xcsh.renameContext",
+        "title": "%command.renameContext.title%",
+        "category": "xcsh",
+        "icon": "$(replace)"
+      },
+      {
+        "command": "xcsh.validateContext",
+        "title": "%command.validateContext.title%",
+        "category": "xcsh",
+        "icon": "$(verified)"
+      },
+      {
         "command": "xcsh.deleteContext",
         "title": "%command.deleteContext.title%",
         "category": "xcsh",
@@ -589,9 +601,19 @@
           "group": "1_profile@3"
         },
         {
-          "command": "xcsh.deleteContext",
+          "command": "xcsh.renameContext",
           "when": "view == xcsh.profiles && viewItem == profile",
           "group": "1_profile@4"
+        },
+        {
+          "command": "xcsh.validateContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
+          "group": "1_profile@5"
+        },
+        {
+          "command": "xcsh.deleteContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
+          "group": "1_profile@6"
         },
         {
           "command": "xcsh.refresh",

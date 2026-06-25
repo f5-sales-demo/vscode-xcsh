@@ -535,4 +535,59 @@ describe('ContextManager', () => {
     expect(result.skipped).toEqual(['../evil']);
     mgr.dispose();
   });
+
+  // --------------- rename ---------------
+
+  it('renames a context, preserving fields and removing the old name', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'old', defaultNamespace: 'keep-ns', env: { A: '1' } }));
+    await mgr.renameContext('old', 'fresh');
+
+    expect(await mgr.getContext('old')).toBeNull();
+    const renamed = await mgr.getContext('fresh');
+    expect(renamed?.name).toBe('fresh');
+    expect(renamed?.defaultNamespace).toBe('keep-ns');
+    expect(renamed?.env).toEqual({ A: '1' });
+    mgr.dispose();
+  });
+
+  it('moves the active pointer when renaming the active context', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'active1' }));
+    await mgr.addContext(makeContext({ name: 'other' }));
+    await mgr.setActiveContext('active1');
+
+    await mgr.renameContext('active1', 'active2');
+    expect(await mgr.getActiveContextName()).toBe('active2');
+    mgr.dispose();
+  });
+
+  it('leaves the active pointer alone when renaming a non-active context', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'act' }));
+    await mgr.addContext(makeContext({ name: 'idle' }));
+    await mgr.setActiveContext('act');
+
+    await mgr.renameContext('idle', 'idle2');
+    expect(await mgr.getActiveContextName()).toBe('act');
+    mgr.dispose();
+  });
+
+  it('rejects an invalid or duplicate new name', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'src' }));
+    await mgr.addContext(makeContext({ name: 'taken' }));
+
+    await expect(mgr.renameContext('src', '../evil')).rejects.toThrow(/invalid/i);
+    await expect(mgr.renameContext('src', 'taken')).rejects.toThrow(/already exists/i);
+    // src is untouched after failed renames
+    expect(await mgr.getContext('src')).not.toBeNull();
+    mgr.dispose();
+  });
+
+  it('throws when renaming a nonexistent context', async () => {
+    const mgr = new ContextManager();
+    await expect(mgr.renameContext('nope', 'whatever')).rejects.toThrow(/not found/i);
+    mgr.dispose();
+  });
 });

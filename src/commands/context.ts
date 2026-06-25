@@ -539,6 +539,65 @@ export function registerContextCommands(
     }),
   );
 
+  // RENAME CONTEXT
+  context.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.renameContext', async (node?: ContextTreeItem) => {
+      await withErrorHandling(async () => {
+        const oldName = await selectContextName(contextManager, node, vscode.l10n.t('Select context to rename'));
+        if (!oldName) {
+          return;
+        }
+
+        const newName = await vscode.window.showInputBox({
+          prompt: vscode.l10n.t('New name for context "{0}"', oldName),
+          value: oldName,
+          ignoreFocusOut: true,
+          validateInput: (value) => {
+            const v = value.trim();
+            if (!v) {
+              return vscode.l10n.t('Name is required');
+            }
+            if (!isValidContextName(v)) {
+              return vscode.l10n.t('Use 1-64 letters, digits, hyphen or underscore; not a reserved word');
+            }
+            return null;
+          },
+        });
+        if (!newName || newName.trim() === oldName) {
+          return;
+        }
+
+        await contextManager.renameContext(oldName, newName.trim());
+        showInfo(vscode.l10n.t('Renamed context "{0}" to "{1}"', oldName, newName.trim()));
+        contextProvider.refresh();
+        explorerProvider.refresh();
+      }, 'Rename context');
+    }),
+  );
+
+  // VALIDATE CONTEXT
+  context.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.validateContext', async (node?: ContextTreeItem) => {
+      await withErrorHandling(async () => {
+        const contextName = await selectContextName(contextManager, node, vscode.l10n.t('Select context to validate'));
+        if (!contextName) {
+          return;
+        }
+
+        const valid = await vscode.window.withProgress(
+          { location: vscode.ProgressLocation.Notification, title: vscode.l10n.t('Validating "{0}"…', contextName) },
+          () => contextManager.validateContext(contextName),
+        );
+
+        if (valid) {
+          showInfo(vscode.l10n.t('Context "{0}" is valid — the API token authenticated', contextName));
+        } else {
+          showWarning(vscode.l10n.t('Context "{0}" failed validation — the API token was rejected', contextName));
+        }
+      }, 'Validate context');
+    }),
+  );
+
   // DELETE CONTEXT
   context.subscriptions.push(
     vscode.commands.registerCommand('xcsh.deleteContext', async (node?: ContextTreeItem) => {
