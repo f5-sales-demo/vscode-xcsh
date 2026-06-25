@@ -5,10 +5,35 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import type { XCSHContext } from '../config/contextTypes';
-import { isValidContextName } from '../config/contextTypes';
+import { isReservedEnvKey, isValidContextName, isValidEnvKey } from '../config/contextTypes';
 import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
 import type { XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
+
+/**
+ * Resolve the target context name: use the tree node if invoked from the view,
+ * otherwise prompt with a quick pick. Returns undefined if the user cancels or
+ * no contexts exist.
+ */
+async function selectContextName(
+  contextManager: ContextManager,
+  node: ContextTreeItem | undefined,
+  placeHolder: string,
+): Promise<string | undefined> {
+  if (node) {
+    return node.getContext().name;
+  }
+  const contexts = await contextManager.getContexts();
+  if (contexts.length === 0) {
+    showWarning(vscode.l10n.t('No contexts configured'));
+    return undefined;
+  }
+  const selected = await vscode.window.showQuickPick(
+    contexts.map((c) => ({ label: c.name, description: c.apiUrl })),
+    { placeHolder, ignoreFocusOut: true },
+  );
+  return selected?.label;
+}
 
 /**
  * Register context management commands
@@ -286,6 +311,93 @@ export function registerContextCommands(
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Edit context');
+    }),
+  );
+
+  // MANAGE CONTEXT ENV VARS
+  context.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.manageContextEnv', async (node?: ContextTreeItem) => {
+      await withErrorHandling(async () => {
+        const contextName = await selectContextName(
+          contextManager,
+          node,
+          vscode.l10n.t('Select context to manage env vars'),
+        );
+        if (!contextName) {
+          return;
+        }
+
+        const ctx = await contextManager.getContext(contextName);
+        if (!ctx) {
+          showWarning(vscode.l10n.t('Context "{0}" not found', contextName));
+          return;
+        }
+
+        const envKeys = Object.keys(ctx.env ?? {}).sort();
+        const setLabel = vscode.l10n.t('$(add) Add or update a variable');
+        const removeLabel = vscode.l10n.t('$(trash) Remove a variable');
+
+        const action = await vscode.window.showQuickPick(
+          envKeys.length > 0 ? [{ label: setLabel }, { label: removeLabel }] : [{ label: setLabel }],
+          {
+            placeHolder:
+              envKeys.length > 0
+                ? vscode.l10n.t('{0} variable(s) set: {1}', envKeys.length, envKeys.join(', '))
+                : vscode.l10n.t('No environment variables set'),
+            ignoreFocusOut: true,
+          },
+        );
+        if (!action) {
+          return;
+        }
+
+        if (action.label === setLabel) {
+          const rawKey = await vscode.window.showInputBox({
+            prompt: vscode.l10n.t('Environment variable name'),
+            ignoreFocusOut: true,
+            validateInput: (value) => {
+              const v = value.trim();
+              if (!v) {
+                return vscode.l10n.t('Name is required');
+              }
+              if (!isValidEnvKey(v)) {
+                return vscode.l10n.t('Use letters, digits and underscore; must not start with a digit');
+              }
+              if (isReservedEnvKey(v)) {
+                return vscode.l10n.t('"{0}" is reserved and cannot be set on a context', v);
+              }
+              return null;
+            },
+          });
+          if (!rawKey) {
+            return;
+          }
+          const key = rawKey.trim();
+          const value = await vscode.window.showInputBox({
+            prompt: vscode.l10n.t('Value for {0}', key),
+            value: ctx.env?.[key] ?? '',
+            ignoreFocusOut: true,
+          });
+          if (value === undefined) {
+            return;
+          }
+          await contextManager.setContextEnv(contextName, key, value);
+          showInfo(vscode.l10n.t('Set {0} on context "{1}"', key, contextName));
+        } else {
+          const key = await vscode.window.showQuickPick(envKeys, {
+            placeHolder: vscode.l10n.t('Select a variable to remove'),
+            ignoreFocusOut: true,
+          });
+          if (!key) {
+            return;
+          }
+          await contextManager.unsetContextEnv(contextName, key);
+          showInfo(vscode.l10n.t('Removed {0} from context "{1}"', key, contextName));
+        }
+
+        contextProvider.refresh();
+        explorerProvider.refresh();
+      }, 'Manage context env vars');
     }),
   );
 

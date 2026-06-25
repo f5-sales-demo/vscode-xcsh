@@ -34,6 +34,7 @@
 
   "command.addContext.title": "xcsh: コンテキストを追加",
   "command.editContext.title": "xcsh: コンテキストを編集",
+  "command.manageContextEnv.title": "xcsh: コンテキストの環境変数を管理",
   "command.deleteContext.title": "xcsh: コンテキストを削除",
   "command.setActiveContext.title": "xcsh: アクティブなコンテキストとして設定",
   "command.clearAuthCache.title": "xcsh: 認証キャッシュをクリア",

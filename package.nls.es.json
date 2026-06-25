@@ -22,6 +22,7 @@
   "config.xcsh.panelMode.terminal": "Experiencia de terminal CLI clásica",
   "command.addContext.title": "xcsh: Añadir Contexto",
   "command.editContext.title": "xcsh: Editar Contexto",
+  "command.manageContextEnv.title": "xcsh: Administrar variables de entorno del contexto",
   "command.deleteContext.title": "xcsh: Eliminar Contexto",
   "command.setActiveContext.title": "xcsh: Establecer como Contexto Activo",
   "command.clearAuthCache.title": "xcsh: Borrar Caché de Autenticación",

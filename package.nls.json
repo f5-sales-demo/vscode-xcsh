@@ -34,6 +34,7 @@
 
   "command.addContext.title": "xcsh: Add Context",
   "command.editContext.title": "xcsh: Edit Context",
+  "command.manageContextEnv.title": "xcsh: Manage Context Environment Variables",
   "command.deleteContext.title": "xcsh: Delete Context",
   "command.setActiveContext.title": "xcsh: Set as Active Context",
   "command.clearAuthCache.title": "xcsh: Clear Authentication Cache",

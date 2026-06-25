@@ -22,7 +22,9 @@ import {
   type ContextManagerInterface,
   CURRENT_SCHEMA_VERSION,
   computeTokenHealth,
+  isReservedEnvKey,
   isValidContextName,
+  isValidEnvKey,
   normalizeApiUrl,
   type TokenHealth,
   type XCSHContext,
@@ -204,6 +206,40 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     // Clear caches for this context
     this.clearCacheFor(name);
     this._onDidChangeContext.fire();
+  }
+
+  /**
+   * Set (or overwrite) one custom env var on a context. Rejects reserved control
+   * keys and malformed names so the stored `env` map stays valid and never
+   * shadows resolver-managed variables.
+   */
+  async setContextEnv(name: string, key: string, value: string): Promise<void> {
+    if (!isValidEnvKey(key)) {
+      throw new Error(`Invalid environment variable name: "${key}"`);
+    }
+    if (isReservedEnvKey(key)) {
+      throw new Error(`"${key}" is a reserved variable and cannot be set on a context`);
+    }
+    const existing = await this.getContext(name);
+    if (!existing) {
+      throw new Error(`Context "${name}" not found`);
+    }
+    const env = { ...(existing.env ?? {}), [key]: value };
+    await this.updateContext(name, { env });
+  }
+
+  /** Remove one custom env var from a context. No-op if the key is absent. */
+  async unsetContextEnv(name: string, key: string): Promise<void> {
+    const existing = await this.getContext(name);
+    if (!existing) {
+      throw new Error(`Context "${name}" not found`);
+    }
+    if (!existing.env || !(key in existing.env)) {
+      return;
+    }
+    const env = { ...existing.env };
+    delete env[key];
+    await this.updateContext(name, { env });
   }
 
   async deleteContext(name: string): Promise<void> {

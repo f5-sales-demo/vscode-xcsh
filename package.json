@@ -237,6 +237,12 @@
         "icon": "$(edit)"
       },
       {
+        "command": "xcsh.manageContextEnv",
+        "title": "%command.manageContextEnv.title%",
+        "category": "xcsh",
+        "icon": "$(symbol-variable)"
+      },
+      {
         "command": "xcsh.deleteContext",
         "title": "%command.deleteContext.title%",
         "category": "xcsh",
@@ -545,9 +551,14 @@
           "group": "1_profile@1"
         },
         {
-          "command": "xcsh.deleteContext",
+          "command": "xcsh.manageContextEnv",
           "when": "view == xcsh.profiles && viewItem == profile",
           "group": "1_profile@2"
+        },
+        {
+          "command": "xcsh.deleteContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
+          "group": "1_profile@3"
         },
         {
           "command": "xcsh.refresh",
