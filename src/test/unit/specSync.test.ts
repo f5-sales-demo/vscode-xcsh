@@ -35,9 +35,11 @@ describe('Spec Directory Structure', () => {
       expect(fs.existsSync(DOMAINS_DIR)).toBe(true);
     });
 
-    it('should contain exactly 39 JSON files', () => {
+    it('should contain exactly 40 JSON files', () => {
+      // OpenAPI domain files plus the two non-OpenAPI artifacts that ride along:
+      // validation.json and namespace_profiles.json.
       const files = fs.readdirSync(DOMAINS_DIR).filter((f) => f.endsWith('.json'));
-      expect(files.length).toBe(39);
+      expect(files.length).toBe(40);
     });
   });
 
@@ -58,8 +60,8 @@ describe('Spec Directory Structure', () => {
     });
 
     it('OpenAPI domain files should have required keys (openapi, info, paths, components)', () => {
-      // validation.json is a special non-OpenAPI file, so we skip it
-      const openApiFiles = domainFiles.filter((f) => f !== 'validation.json');
+      // validation.json and namespace_profiles.json are non-OpenAPI artifacts, so we skip them
+      const openApiFiles = domainFiles.filter((f) => f !== 'validation.json' && f !== 'namespace_profiles.json');
 
       for (const filename of openApiFiles) {
         const filePath = path.join(DOMAINS_DIR, filename);
@@ -74,8 +76,8 @@ describe('Spec Directory Structure', () => {
     });
 
     it('OpenAPI domain files should have x-f5xc-cli-domain in info', () => {
-      // validation.json is a special non-OpenAPI file, so we skip it
-      const openApiFiles = domainFiles.filter((f) => f !== 'validation.json');
+      // validation.json and namespace_profiles.json are non-OpenAPI artifacts, so we skip them
+      const openApiFiles = domainFiles.filter((f) => f !== 'validation.json' && f !== 'namespace_profiles.json');
 
       for (const filename of openApiFiles) {
         const filePath = path.join(DOMAINS_DIR, filename);

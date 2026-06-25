@@ -36,6 +36,112 @@ export interface NamespaceProfile {
 }
 
 /**
+ * Authoritative resource→namespace-profile map, loaded from the upstream
+ * namespace_profiles.json artifact. This is the SINGLE SOURCE OF TRUTH for which
+ * namespaces a resource type may live in. A resource resolves to
+ * `resources[resourceKey]`, falling back to `default` when not explicitly listed.
+ */
+export interface NamespaceProfilesMap {
+  default: NamespaceProfile;
+  resources: Record<string, NamespaceProfile>;
+}
+
+/**
+ * Raw namespace profile shape as authored in YAML/JSON (snake_case keys).
+ */
+interface RawNamespaceProfile {
+  constraint?: { allowed?: string[]; enforced?: boolean };
+  recommendation?: {
+    primary?: string;
+    alternatives?: Array<{ namespace_type?: string; use_case?: string }>;
+    rationale?: string;
+  };
+  classification?: { category?: string; multi_tenant_pattern?: string; multiTenantPattern?: string };
+}
+
+const VALID_NAMESPACE_TYPES: ReadonlySet<NamespaceType> = new Set<NamespaceType>([
+  'system',
+  'shared',
+  'default',
+  'custom',
+]);
+
+const VALID_MULTI_TENANT_PATTERNS = ['none', 'shared-ref', 'per-tenant', 'hybrid'] as const;
+
+/**
+ * Normalize a raw profile (snake_case, loosely typed) into the strict
+ * NamespaceProfile shape used throughout the extension.
+ */
+export function normalizeProfile(raw: RawNamespaceProfile): NamespaceProfile {
+  const allowed = (raw.constraint?.allowed ?? []).filter((v): v is NamespaceType =>
+    VALID_NAMESPACE_TYPES.has(v as NamespaceType),
+  );
+
+  const rawPattern = raw.classification?.multi_tenant_pattern ?? raw.classification?.multiTenantPattern ?? 'per-tenant';
+  const multiTenantPattern = (VALID_MULTI_TENANT_PATTERNS as readonly string[]).includes(rawPattern)
+    ? (rawPattern as (typeof VALID_MULTI_TENANT_PATTERNS)[number])
+    : 'per-tenant';
+
+  const primary = raw.recommendation?.primary;
+  return {
+    constraint: {
+      allowed,
+      enforced: raw.constraint?.enforced ?? true,
+    },
+    recommendation: {
+      primary: primary && VALID_NAMESPACE_TYPES.has(primary as NamespaceType) ? (primary as NamespaceType) : 'custom',
+      alternatives: raw.recommendation?.alternatives
+        ?.filter((a): a is { namespace_type: string; use_case?: string } => typeof a?.namespace_type === 'string')
+        .map((a) => ({ namespace_type: a.namespace_type as NamespaceType, use_case: a.use_case ?? '' })),
+      rationale: raw.recommendation?.rationale ?? '',
+    },
+    classification: {
+      category: raw.classification?.category ?? 'application',
+      multiTenantPattern,
+    },
+  };
+}
+
+/**
+ * Load the authoritative namespace_profiles.json map. Throws if the file is
+ * missing, unparseable, or lacks a `default` profile — there is no fallback.
+ */
+export function loadNamespaceProfiles(jsonPath: string): NamespaceProfilesMap {
+  if (!fs.existsSync(jsonPath)) {
+    throw new Error(`Required namespace_profiles.json not found at: ${jsonPath}`);
+  }
+
+  let raw: { default?: RawNamespaceProfile; resources?: Record<string, RawNamespaceProfile> };
+  try {
+    raw = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) as {
+      default?: RawNamespaceProfile;
+      resources?: Record<string, RawNamespaceProfile>;
+    };
+  } catch (e) {
+    throw new Error(`Failed to parse namespace_profiles.json at ${jsonPath}`, { cause: e });
+  }
+
+  if (!raw.default) {
+    throw new Error(`namespace_profiles.json at ${jsonPath} is missing the required "default" profile`);
+  }
+
+  const resources: Record<string, NamespaceProfile> = {};
+  for (const [key, profile] of Object.entries(raw.resources ?? {})) {
+    resources[key] = normalizeProfile(profile);
+  }
+
+  return { default: normalizeProfile(raw.default), resources };
+}
+
+/**
+ * Resolve the authoritative profile for a resource key: explicit override if
+ * present, otherwise the map's default profile.
+ */
+export function resolveNamespaceProfile(map: NamespaceProfilesMap, resourceKey: string): NamespaceProfile {
+  return map.resources[resourceKey] ?? map.default;
+}
+
+/**
  * Danger level for operations - indicates risk level and affects UI behavior
  */
 export type DangerLevel = 'low' | 'medium' | 'high';
@@ -135,8 +241,12 @@ export interface ParsedSpecInfo {
   schemaId: string;
   /** Whether resource is namespace-scoped */
   namespaceScoped: boolean;
-  /** Namespace profile - derived from API path patterns */
-  namespaceProfile: NamespaceProfile;
+  /**
+   * Namespace profile - the authoritative resource→namespace scope.
+   * Assigned by the generator from the namespace_profiles.json map (single
+   * source of truth); not derived during parsing.
+   */
+  namespaceProfile?: NamespaceProfile;
   /** Documentation URL if available */
   documentationUrl?: string;
   /** Domain from x-f5xc-cli-domain extension (e.g., 'waf', 'virtual', 'dns') */
@@ -318,7 +428,6 @@ interface OpenAPISpec {
       performance_tips?: string[];
     };
     'x-f5xc-guided-workflows'?: unknown[];
-    'x-f5xc-namespace-profile'?: NamespaceProfile;
   };
   paths?: Record<string, PathItem>;
   externalDocs?: {
@@ -378,437 +487,6 @@ interface Operation {
   'x-f5xc-discovered-response-time'?: string | Record<string, unknown>;
   'x-f5xc-required-fields'?: string[];
   'x-f5xc-requires'?: string[];
-}
-
-/**
- * Extract schema identifier from spec filename.
- * Example: "docs-cloud-f5-com.0073.public.ves.io.schema.views.http_loadbalancer.ves-swagger.json"
- * Returns: "ves.io.schema.views.http_loadbalancer"
- */
-export function extractSchemaId(filename: string): string | null {
-  const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
-  return match?.[1] ? match[1] : null;
-}
-
-/**
- * Derive the resource key from schema ID.
- * Example: "ves.io.schema.views.http_loadbalancer" -> "http_loadbalancer"
- * Example: "ves.io.schema.app_firewall" -> "app_firewall"
- */
-export function deriveResourceKey(schemaId: string): string | null {
-  const parts = schemaId.split('.');
-  const schemaIndex = parts.indexOf('schema');
-  if (schemaIndex === -1 || schemaIndex >= parts.length - 1) {
-    return null;
-  }
-
-  // Get everything after 'schema'
-  const afterSchema = parts.slice(schemaIndex + 1);
-
-  // Skip 'views.' prefix if present
-  if (afterSchema[0] === 'views' && afterSchema.length > 1) {
-    return afterSchema.slice(1).join('_');
-  }
-
-  // Handle nested schemas like 'api_sec.api_crawler'
-  return afterSchema.join('_');
-}
-
-/**
- * Derive the API path suffix from schema ID (pluralized form).
- * Example: "http_loadbalancer" -> "http_loadbalancers"
- */
-export function deriveApiPathSuffix(resourceKey: string): string {
-  // Most resources just add 's' for plural
-  // Special case: already ends in 's' (rare)
-  if (resourceKey.endsWith('s')) {
-    return `${resourceKey}es`;
-  }
-  // Handle 'y' ending -> 'ies' (e.g., 'policy' -> 'policies')
-  // But F5 XC uses non-standard plural (e.g., 'service_policys')
-  return `${resourceKey}s`;
-}
-
-/**
- * Derive a NamespaceProfile from API path patterns.
- *
- * Key insight: The {namespace} placeholder is a variable that can be substituted
- * with ANY namespace name (system, shared, or custom). It does NOT mean
- * "custom namespaces only".
- *
- * - Literal /namespaces/system/ = system-only resources (e.g., Sites, IAM)
- * - Literal /namespaces/shared/ = shared-only resources (rare, ~3 paths)
- * - Parameterized {namespace} or {metadata.namespace} = user namespaces
- * - No namespace pattern = tenant-level, available in user namespaces
- */
-export function deriveNamespaceProfile(fullPath: string | null): NamespaceProfile {
-  if (!fullPath) {
-    return {
-      constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
-      recommendation: { primary: 'custom', rationale: 'No namespace path - user namespace resource' },
-      classification: { category: 'general', multiTenantPattern: 'per-tenant' },
-    };
-  }
-
-  // Check for literal /namespaces/system/ - system-only resources
-  if (fullPath.includes('/namespaces/system/')) {
-    return {
-      constraint: { allowed: ['system'], enforced: true },
-      recommendation: { primary: 'system', rationale: 'System-scoped resource' },
-      classification: { category: 'infrastructure', multiTenantPattern: 'none' },
-    };
-  }
-
-  // Check for literal /namespaces/shared/ - shared-only resources
-  if (fullPath.includes('/namespaces/shared/')) {
-    return {
-      constraint: { allowed: ['shared'], enforced: true },
-      recommendation: { primary: 'shared', rationale: 'Shared-scoped resource' },
-      classification: { category: 'shared', multiTenantPattern: 'shared-ref' },
-    };
-  }
-
-  // Parameterized namespace placeholders ({namespace}, {metadata.namespace}, {ns})
-  // work with user namespaces - shared, default, or custom (but NOT system)
-  return {
-    constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
-    recommendation: { primary: 'custom', rationale: 'Parameterized namespace - user namespace resource' },
-    classification: { category: 'general', multiTenantPattern: 'per-tenant' },
-  };
-}
-
-/**
- * Extract a NamespaceProfile from spec extension data, falling back to path-based derivation.
- * Normalizes snake_case keys from enriched JSON to camelCase TypeScript interface.
- */
-export function extractNamespaceProfile(
-  spec: {
-    info?: {
-      'x-f5xc-namespace-profile'?: NamespaceProfile & {
-        classification?: { multi_tenant_pattern?: string; multiTenantPattern?: string; category?: string };
-      };
-    };
-  },
-  fullPath: string | null,
-  resourceKey?: string,
-): NamespaceProfile {
-  // Priority: per-schema profile > domain-level profile > path-based derivation
-  let specProfile = spec?.info?.['x-f5xc-namespace-profile'];
-
-  // Check per-schema profiles for resource-specific overrides
-  if (resourceKey) {
-    const schemas = (spec as Record<string, unknown>)?.components as Record<string, unknown> | undefined;
-    const schemaMap = schemas?.schemas as Record<string, Record<string, unknown>> | undefined;
-    if (schemaMap) {
-      for (const [schemaName, schema] of Object.entries(schemaMap)) {
-        const schemaProfile = schema?.['x-f5xc-namespace-profile'] as typeof specProfile | undefined;
-        if (!schemaProfile) {
-          continue;
-        }
-        const lower = schemaName.toLowerCase();
-        if (lower.startsWith(resourceKey.toLowerCase()) && lower.includes('createspec')) {
-          specProfile = schemaProfile;
-          break;
-        }
-      }
-    }
-  }
-
-  if (specProfile) {
-    // Normalize snake_case keys from enriched JSON (Python/YAML) to camelCase (TypeScript)
-    const rawPattern =
-      specProfile.classification?.multi_tenant_pattern ??
-      specProfile.classification?.multiTenantPattern ??
-      'per-tenant';
-    const validPatterns = ['none', 'shared-ref', 'per-tenant', 'hybrid'] as const;
-    const multiTenantPattern = validPatterns.includes(rawPattern as (typeof validPatterns)[number])
-      ? (rawPattern as 'none' | 'shared-ref' | 'per-tenant' | 'hybrid')
-      : 'per-tenant';
-
-    return {
-      constraint: specProfile.constraint ?? { allowed: ['shared', 'default', 'custom'], enforced: false },
-      recommendation: specProfile.recommendation ?? { primary: 'custom', rationale: 'No recommendation available' },
-      classification: {
-        category: specProfile.classification?.category ?? 'application',
-        multiTenantPattern,
-      },
-    };
-  }
-  return deriveNamespaceProfile(fullPath);
-}
-
-/**
- * Extract the primary API path and base from OpenAPI paths object.
- * Supports all F5 XC API bases including: config, web, gen-ai, ai_data, data,
- * bigipconnector, discovery, gia, infraprotect, nginx, observability, operate,
- * shape, terraform, scim, secret_management, and others.
- */
-export function extractApiInfo(paths: Record<string, PathItem> | undefined): {
-  fullPath: string | null;
-  apiBase: string;
-  serviceSegment?: string;
-  apiPathSuffix: string | null;
-  namespaceScoped: boolean;
-  namespaceProfile: NamespaceProfile;
-} {
-  if (!paths) {
-    return {
-      fullPath: null,
-      apiBase: 'config',
-      apiPathSuffix: null,
-      namespaceScoped: false,
-      namespaceProfile: deriveNamespaceProfile(null),
-    };
-  }
-
-  const pathKeys = Object.keys(paths);
-
-  // Universal pattern for extended paths with service segment
-  // Matches: /api/{base}/{service}/namespaces/{ns}/resource_types
-  // Example: /api/config/dns/namespaces/{ns}/dns_zones
-  const extendedPattern = /^\/api\/([a-z_-]+)\/([a-z_]+)\/namespaces\/(?:\{[^}]+\}|[a-z]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
-
-  // Universal pattern for standard namespace-scoped paths
-  // Matches: /api/{base}/namespaces/{ns}/resource_types
-  // Example: /api/infraprotect/namespaces/{ns}/infraprotect_asns
-  const namespacePattern = /^\/api\/([a-z_-]+)\/namespaces\/(?:\{[^}]+\}|[a-z]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
-
-  // Universal pattern for tenant-level resources (no namespace)
-  // Matches: /api/{base}/resource_types
-  const tenantPattern = /^\/api\/([a-z_-]+)\/([a-z_]+)(?:\/\{[^}]+\})?$/;
-
-  // First priority: Look for extended paths with service segments
-  for (const pathKey of pathKeys) {
-    const match = pathKey.match(extendedPattern);
-    if (match?.[1] && match[2] && match[3]) {
-      return {
-        fullPath: pathKey,
-        apiBase: match[1],
-        serviceSegment: match[2],
-        apiPathSuffix: match[3],
-        namespaceScoped: true,
-        namespaceProfile: deriveNamespaceProfile(pathKey),
-      };
-    }
-  }
-
-  // Second priority: Standard namespace-scoped paths
-  for (const pathKey of pathKeys) {
-    const match = pathKey.match(namespacePattern);
-    if (match?.[1] && match[2]) {
-      return {
-        fullPath: pathKey,
-        apiBase: match[1],
-        apiPathSuffix: match[2],
-        namespaceScoped: true,
-        namespaceProfile: deriveNamespaceProfile(pathKey),
-      };
-    }
-  }
-
-  // Third priority: Check tenant-level paths (no namespace)
-  for (const pathKey of pathKeys) {
-    const match = pathKey.match(tenantPattern);
-    if (match?.[1] && match[2]) {
-      // Skip if it matches a namespace pattern (would have matched above)
-      if (pathKey.includes('/namespaces/')) {
-        continue;
-      }
-      return {
-        fullPath: pathKey,
-        apiBase: match[1],
-        apiPathSuffix: match[2],
-        namespaceScoped: false,
-        namespaceProfile: deriveNamespaceProfile(null),
-      };
-    }
-  }
-
-  // Fallback: try to find any path that looks like a resource collection
-  for (const pathKey of pathKeys) {
-    if (pathKey.startsWith('/api/')) {
-      const parts = pathKey.split('/');
-      const lastPart = parts[parts.length - 1];
-      // Skip if it's a path parameter or undefined
-      if (lastPart && !lastPart.startsWith('{')) {
-        // Extract API base from path (second segment after /api/)
-        const apiBaseMatch = pathKey.match(/^\/api\/([a-z_-]+)\//);
-        const apiBase = apiBaseMatch?.[1] || 'config';
-        // Check for extended paths in fallback
-        const extendedMatch = pathKey.match(/^\/api\/([a-z_-]+)\/([a-z_]+)\/namespaces\//);
-        return {
-          fullPath: pathKey,
-          apiBase,
-          serviceSegment: extendedMatch?.[2],
-          apiPathSuffix: lastPart,
-          namespaceScoped: pathKey.includes('/namespaces/'),
-          namespaceProfile: deriveNamespaceProfile(pathKey),
-        };
-      }
-    }
-  }
-
-  return {
-    fullPath: null,
-    apiBase: 'config',
-    apiPathSuffix: null,
-    namespaceScoped: false,
-    namespaceProfile: deriveNamespaceProfile(null),
-  };
-}
-
-/**
- * Format a display name from schema title or resource key.
- * Cleans up the F5 XC API title format to user-friendly names.
- */
-export function formatDisplayName(title: string | undefined, resourceKey: string): string {
-  if (title) {
-    // Remove "F5 Distributed Cloud Services API for " prefix
-    let cleaned = title.replace(/^F5 Distributed Cloud Services API for\s+/i, '');
-
-    // Remove schema path prefix (e.g., "ves.io.schema.views.")
-    cleaned = cleaned.replace(/^ves\.io\.schema\.(views\.)?/, '');
-
-    // Convert underscores to spaces and title case
-    cleaned = cleaned
-      .split(/[._]/)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-
-    // Pluralize if it looks like a singular resource name
-    if (!cleaned.endsWith('s') && !cleaned.endsWith('ing')) {
-      cleaned += 's';
-    }
-
-    return cleaned;
-  }
-
-  // Fallback: format from resource key
-  return `${resourceKey
-    .split('_')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')}s`;
-}
-
-/**
- * Extract documentation URL from spec.
- *
- * Priority:
- * 1. info['x-f5xc-api-reference-url'] — explicit enriched field (single source of truth)
- * 2. First operation's externalDocs.url — fallback for specs without the extension field
- */
-export function extractDocUrl(spec: OpenAPISpec): string | undefined {
-  // Priority 1: Explicit API reference URL from enrichment
-  if (spec.info?.['x-f5xc-api-reference-url']) {
-    return spec.info['x-f5xc-api-reference-url'];
-  }
-
-  // Priority 2: First operation's externalDocs URL (already rewritten by enricher)
-  if (spec.paths) {
-    for (const pathObj of Object.values(spec.paths)) {
-      for (const method of ['get', 'post', 'put', 'delete'] as const) {
-        const operation = pathObj[method];
-        if (operation?.externalDocs?.url) {
-          return operation.externalDocs.url;
-        }
-      }
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Parse a single OpenAPI spec file and return structured resource info.
- */
-export function parseSpecFile(filePath: string): ParsedSpecInfo | null {
-  const filename = path.basename(filePath);
-  const schemaId = extractSchemaId(filename);
-
-  if (!schemaId) {
-    return null;
-  }
-
-  const resourceKey = deriveResourceKey(schemaId);
-  if (!resourceKey) {
-    return null;
-  }
-
-  let spec: OpenAPISpec;
-  try {
-    const content = fs.readFileSync(filePath, 'utf-8');
-    spec = JSON.parse(content) as OpenAPISpec;
-  } catch (e) {
-    console.error(`Error parsing spec file ${filename}:`, e);
-    return null;
-  }
-
-  const apiInfo = extractApiInfo(spec.paths);
-  const apiPath = apiInfo.apiPathSuffix || deriveApiPathSuffix(resourceKey);
-  const displayName = formatDisplayName(spec.info?.title, resourceKey);
-
-  // Get documentation URL directly from enriched spec
-  const documentationUrl = extractDocUrl(spec);
-
-  // Build the fullApiPath with service segment if present
-  let fullApiPath: string;
-  if (apiInfo.fullPath) {
-    fullApiPath = apiInfo.fullPath;
-  } else if (apiInfo.serviceSegment) {
-    fullApiPath = `/api/${apiInfo.apiBase}/${apiInfo.serviceSegment}/namespaces/{ns}/${apiPath}`;
-  } else {
-    fullApiPath = `/api/${apiInfo.apiBase}/namespaces/{ns}/${apiPath}`;
-  }
-
-  return {
-    resourceKey,
-    apiPath,
-    displayName,
-    description: normalizeDescription(spec.info?.description || ''),
-    apiBase: apiInfo.apiBase,
-    serviceSegment: apiInfo.serviceSegment,
-    fullApiPath,
-    schemaFile: filename,
-    schemaId,
-    namespaceScoped: apiInfo.namespaceScoped,
-    namespaceProfile: apiInfo.namespaceProfile,
-    documentationUrl,
-  };
-}
-
-/**
- * Parse all OpenAPI spec files in a directory.
- * Files are sorted alphabetically for deterministic processing order.
- * @deprecated Use parseAllDomainFiles for new domain-based format
- */
-export function parseAllSpecs(specDir: string): ParsedSpecInfo[] {
-  if (!fs.existsSync(specDir)) {
-    console.error(`Spec directory not found: ${specDir}`);
-    return [];
-  }
-
-  // Sort spec files alphabetically for deterministic processing order
-  const specFiles = fs
-    .readdirSync(specDir)
-    .filter((f) => f.endsWith('.json'))
-    .sort();
-  console.log(`Found ${specFiles.length} spec files`);
-
-  const results: ParsedSpecInfo[] = [];
-  const seen = new Set<string>();
-
-  for (const filename of specFiles) {
-    const filePath = path.join(specDir, filename);
-    const info = parseSpecFile(filePath);
-
-    if (info && !seen.has(info.resourceKey)) {
-      seen.add(info.resourceKey);
-      results.push(info);
-    }
-  }
-
-  console.log(`Successfully parsed ${results.length} unique resource types`);
-  return results;
 }
 
 // ============================================================================
@@ -1530,9 +1208,6 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       }
     }
 
-    // Derive namespace profile from spec extension or path
-    const namespaceProfile = extractNamespaceProfile(spec, pathKey, resourceKey);
-
     // Build full API path
     const fullApiPath = pathKey;
 
@@ -1588,7 +1263,6 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       schemaFile: filename,
       schemaId,
       namespaceScoped: true,
-      namespaceProfile,
       domain,
     };
 

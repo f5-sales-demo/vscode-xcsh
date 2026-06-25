@@ -11,9 +11,15 @@
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 import { generateResourceTypesContent } from '../../../scripts/generators/resource-type-generator';
-import { type ParsedSpecInfo, parseAllDomainFiles } from '../../../scripts/generators/spec-parser';
+import {
+  loadNamespaceProfiles,
+  type ParsedSpecInfo,
+  parseAllDomainFiles,
+  resolveNamespaceProfile,
+} from '../../../scripts/generators/spec-parser';
 
 const DOMAINS_DIR = path.resolve(__dirname, '../../../docs/specifications/api/domains');
+const NAMESPACE_PROFILES_PATH = path.join(DOMAINS_DIR, 'namespace_profiles.json');
 
 describe('Generation Determinism', () => {
   describe('parseAllDomainFiles determinism', () => {
@@ -52,6 +58,12 @@ describe('Generation Determinism', () => {
 
     beforeAll(() => {
       parsedSpecs = parseAllDomainFiles(DOMAINS_DIR);
+      // Profiles are assigned authoritatively from the map (as the generator does)
+      // before content generation; the parser no longer derives them.
+      const profilesMap = loadNamespaceProfiles(NAMESPACE_PROFILES_PATH);
+      for (const spec of parsedSpecs) {
+        spec.namespaceProfile = resolveNamespaceProfile(profilesMap, spec.resourceKey);
+      }
       firstContent = generateResourceTypesContent(parsedSpecs);
       secondContent = generateResourceTypesContent(parsedSpecs);
     });

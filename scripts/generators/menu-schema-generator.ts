@@ -17,7 +17,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
-import type { NamespaceType } from './spec-parser';
+import {
+  loadNamespaceProfiles,
+  type NamespaceProfilesMap,
+  type NamespaceType,
+  resolveNamespaceProfile,
+} from './spec-parser';
 
 /**
  * API path analysis result
@@ -156,57 +161,6 @@ function analyzePath(apiPath: string): PathAnalysis {
 }
 
 /**
- * Derive allowed namespaces from x-f5xc-namespace-profile constraint.allowed.
- * Returns the constraint.allowed array directly as NamespaceType[].
- */
-function deriveNamespacesFromProfile(
-  profile: NonNullable<OpenAPISpec['info']>['x-f5xc-namespace-profile'],
-): NamespaceType[] | null {
-  if (!profile?.constraint?.allowed || !Array.isArray(profile.constraint.allowed)) {
-    return null;
-  }
-  const valid: NamespaceType[] = ['system', 'shared', 'default', 'custom'];
-  const allowed = profile.constraint.allowed.filter((v: string): v is NamespaceType =>
-    valid.includes(v as NamespaceType),
-  );
-  return allowed.length > 0 ? allowed : null;
-}
-
-/**
- * Derive allowed namespaces from analyzed API paths.
- * Returns a NamespaceType[] array.
- */
-function deriveNamespacesFromPaths(paths: PathAnalysis[]): NamespaceType[] {
-  const hasSystemLiteral = paths.some((p) => p.hasSystemLiteral);
-  const hasSharedLiteral = paths.some((p) => p.hasSharedLiteral);
-  const hasNamespaceParam = paths.some((p) => p.hasNamespaceParam || p.hasMetadataNamespaceParam);
-  const isNamespaceScoped = paths.some((p) => p.isNamespaceScoped);
-
-  // If has parameterized namespace path, it's available in user namespaces
-  if (hasNamespaceParam) {
-    return ['custom', 'default', 'shared'];
-  }
-
-  // If only has literal /namespaces/system/ path
-  if (hasSystemLiteral && !hasSharedLiteral && !hasNamespaceParam) {
-    return ['system'];
-  }
-
-  // If only has literal /namespaces/shared/ path
-  if (hasSharedLiteral && !hasSystemLiteral && !hasNamespaceParam) {
-    return ['shared'];
-  }
-
-  // If not namespace scoped at all (tenant-level)
-  if (!isNamespaceScoped) {
-    return ['system'];
-  }
-
-  // Default: available in user namespaces
-  return ['custom', 'default', 'shared'];
-}
-
-/**
  * Determine category for a resource
  */
 function getCategory(resourceKey: string, displayName: string): { category: string; icon: string } {
@@ -240,11 +194,6 @@ interface OpenAPISpec {
     title?: string;
     description?: string;
     'x-f5xc-cli-domain'?: string;
-    'x-f5xc-namespace-profile'?: {
-      constraint?: { allowed?: string[] };
-      recommendation?: { primary?: string };
-      classification?: { category?: string; multi_tenant_pattern?: string };
-    };
   };
   paths?: Record<string, MenuPathItem>;
 }
@@ -270,7 +219,7 @@ function deriveResourceKeyFromApiPath(apiPathSuffix: string): string {
  * Parse a domain-format OpenAPI spec file and extract all resource types.
  * Domain files contain multiple resources (e.g., virtual.json has http_loadbalancers, origin_pools, etc.)
  */
-function parseDomainSpec(filePath: string): ResourceAnalysis[] {
+function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): ResourceAnalysis[] {
   const results: ResourceAnalysis[] = [];
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -295,7 +244,6 @@ function parseDomainSpec(filePath: string): ResourceAnalysis[] {
       /^\/api\/([a-z_-]+)(?:\/([a-z_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z_]+)$/;
 
     const seen = new Set<string>();
-    const namespaceProfile = spec.info?.['x-f5xc-namespace-profile'];
 
     for (const [pathKey, pathItem] of Object.entries(paths)) {
       const match = pathKey.match(listEndpointPattern);
@@ -340,18 +288,16 @@ function parseDomainSpec(filePath: string): ResourceAnalysis[] {
         }
       }
 
-      // Analyze the path for namespace scope derivation
+      // Record path analysis (informational only) for the output schema.
       const analyzedPaths = [analyzePath(pathKey)];
-
-      // Also check the item endpoint for additional path analysis
       const itemPathKey = `${pathKey}/{name}`;
       if (paths[itemPathKey]) {
         analyzedPaths.push(analyzePath(itemPathKey));
       }
 
-      // Derive allowed namespaces: prefer namespace profile, fall back to path-based derivation
-      const profileNamespaces = deriveNamespacesFromProfile(namespaceProfile);
-      const allowedNamespaces = profileNamespaces ?? deriveNamespacesFromPaths(analyzedPaths);
+      // Allowed namespaces come authoritatively from the namespace profiles map,
+      // keyed by resource (single source of truth — no path/profile derivation).
+      const allowedNamespaces = resolveNamespaceProfile(profilesMap, resourceKey).constraint.allowed;
 
       results.push({
         resourceKey,
@@ -437,6 +383,10 @@ function buildNamespaceSchema(
 function generateMenuSchema(specsDir: string, outputPath: string): void {
   console.log('Generating menu schema from OpenAPI specs...\n');
 
+  // The namespace profiles map is the authoritative source of namespace scope.
+  // It ships alongside the domain specs (in domains/) and is required.
+  const profilesMap = loadNamespaceProfiles(path.join(specsDir, 'namespace_profiles.json'));
+
   // Find all spec files (domain JSON files in new structure)
   const specFiles = fs
     .readdirSync(specsDir)
@@ -449,7 +399,7 @@ function generateMenuSchema(specsDir: string, outputPath: string): void {
   const resources: ResourceAnalysis[] = [];
   const seenKeys = new Set<string>();
   for (const file of specFiles) {
-    const analyses = parseDomainSpec(file);
+    const analyses = parseDomainSpec(file, profilesMap);
     for (const analysis of analyses) {
       // Deduplicate across files (prefer first occurrence)
       if (!seenKeys.has(analysis.resourceKey)) {

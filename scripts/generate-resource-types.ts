@@ -18,6 +18,8 @@ import { generateResourceTypesFromDomainFiles, type ParsedSpecInfo } from './gen
 // Use domain-based specs (new upstream format with x-f5xc-cli-domain)
 const DOMAIN_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api', 'domains');
 const SPECS_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api');
+// Authoritative resource→namespace scope map (ships in domains/, like validation.json).
+const NAMESPACE_PROFILES_PATH = path.join(DOMAIN_DIR, 'namespace_profiles.json');
 const GENERATED_DIR = path.join(__dirname, '..', 'src', 'generated');
 const RESOURCE_TYPES_OUTPUT = path.join(GENERATED_DIR, 'resourceTypesBase.ts');
 const CONSTANTS_OUTPUT = path.join(GENERATED_DIR, 'constants.ts');
@@ -119,9 +121,22 @@ function main(): void {
     process.exit(1);
   }
 
+  // The namespace profiles map is the single source of truth for namespace scope.
+  // It is required — fail loudly rather than silently producing a wrong tree.
+  if (!fs.existsSync(NAMESPACE_PROFILES_PATH)) {
+    console.error(`Error: Required namespace profiles map not found: ${NAMESPACE_PROFILES_PATH}`);
+    console.error('Run "npm run specs:ensure" to sync specs (the map ships in domains/).');
+    process.exit(1);
+  }
+
   // Generate resource types from domain files (enriched specs are single source of truth)
   console.log('Phase 1: Generating resource types from domain files...');
-  const specs = generateResourceTypesFromDomainFiles(DOMAIN_DIR, RESOURCE_TYPES_OUTPUT, DISPLAY_NAME_OVERRIDES_PATH);
+  const specs = generateResourceTypesFromDomainFiles(
+    DOMAIN_DIR,
+    RESOURCE_TYPES_OUTPUT,
+    NAMESPACE_PROFILES_PATH,
+    DISPLAY_NAME_OVERRIDES_PATH,
+  );
 
   if (specs.length === 0) {
     console.error('Error: No resource types were generated');

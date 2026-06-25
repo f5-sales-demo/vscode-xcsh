@@ -10,14 +10,18 @@
 import * as path from 'node:path';
 import {
   type DangerLevel,
+  loadNamespaceProfiles,
+  type NamespaceProfilesMap,
   type NamespaceType,
   type ParsedSpecInfo,
   parseAllDomainFiles,
   type ResourceFieldMetadata,
   type ResourceOperationMetadata,
+  resolveNamespaceProfile,
 } from '../../../scripts/generators/spec-parser';
 
 const DOMAINS_DIR = path.resolve(__dirname, '../../../docs/specifications/api/domains');
+const NAMESPACE_PROFILES_PATH = path.join(DOMAINS_DIR, 'namespace_profiles.json');
 
 describe('Spec Parser - parseAllDomainFiles', () => {
   let parsedResources: ParsedSpecInfo[];
@@ -70,40 +74,46 @@ describe('Spec Parser - parseAllDomainFiles', () => {
     });
   });
 
-  describe('namespace profile', () => {
+  describe('namespace profile (authoritative map)', () => {
     const VALID_NAMESPACE_TYPES: NamespaceType[] = ['system', 'shared', 'default', 'custom'];
+    let profilesMap: NamespaceProfilesMap;
 
-    it('every resource should have a valid namespaceProfile', () => {
+    beforeAll(() => {
+      // Profiles are resolved from the authoritative map, not derived at parse time.
+      profilesMap = loadNamespaceProfiles(NAMESPACE_PROFILES_PATH);
+    });
+
+    it('parsed resources should not carry a parse-time namespaceProfile', () => {
+      // The parser deliberately leaves namespaceProfile unset; the generator
+      // assigns it from the map. This guards against re-introducing derivation.
       for (const resource of parsedResources) {
-        expect(resource.namespaceProfile).toBeDefined();
-        expect(resource.namespaceProfile.constraint).toBeDefined();
-        expect(resource.namespaceProfile.constraint.allowed.length).toBeGreaterThan(0);
-        for (const nsType of resource.namespaceProfile.constraint.allowed) {
+        expect(resource.namespaceProfile).toBeUndefined();
+      }
+    });
+
+    it('every resource should resolve to a valid namespace profile from the map', () => {
+      for (const resource of parsedResources) {
+        const profile = resolveNamespaceProfile(profilesMap, resource.resourceKey);
+        expect(profile.constraint.allowed.length).toBeGreaterThan(0);
+        for (const nsType of profile.constraint.allowed) {
           expect(VALID_NAMESPACE_TYPES).toContain(nsType);
         }
       }
     });
 
-    it('should have resources with system-only profile', () => {
-      const systemResources = parsedResources.filter(
-        (r) =>
-          r.namespaceProfile.constraint.allowed.length === 1 && r.namespaceProfile.constraint.allowed[0] === 'system',
-      );
+    it('should have resources with system-only profile (excluded from custom namespaces)', () => {
+      const systemResources = parsedResources.filter((r) => {
+        const allowed = resolveNamespaceProfile(profilesMap, r.resourceKey).constraint.allowed;
+        return allowed.length === 1 && allowed[0] === 'system';
+      });
       expect(systemResources.length).toBeGreaterThan(0);
     });
 
-    it('should have resources with user namespace profile', () => {
-      const userResources = parsedResources.filter((r) => r.namespaceProfile.constraint.allowed.includes('custom'));
+    it('should have resources available in custom namespaces', () => {
+      const userResources = parsedResources.filter((r) =>
+        resolveNamespaceProfile(profilesMap, r.resourceKey).constraint.allowed.includes('custom'),
+      );
       expect(userResources.length).toBeGreaterThan(0);
-    });
-
-    it('should have no resources with invalid namespace types', () => {
-      const validTypes = new Set(['system', 'shared', 'default', 'custom']);
-      for (const r of parsedResources) {
-        for (const ns of r.namespaceProfile.constraint.allowed) {
-          expect(validTypes.has(ns)).toBe(true);
-        }
-      }
     });
   });
 
