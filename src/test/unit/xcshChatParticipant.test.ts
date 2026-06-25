@@ -127,6 +127,27 @@ describe('formatContextResponse', () => {
     expect(result).not.toContain('secret');
   });
 
+  it('shows web-console username in the clear and masks the password', () => {
+    const ctx: XCSHContext = {
+      name: 'prod-example-corp',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
+      apiToken: 'secret',
+      defaultNamespace: 'app-ns',
+      env: {
+        XCSH_USERNAME: 'console-user@example.com',
+        XCSH_CONSOLE_PASSWORD: 'supersecretpass',
+        XCSH_EMAIL: 'user@example.com',
+      },
+    };
+    const result = formatContextResponse(ctx);
+    expect(result).toContain('console-user@example.com');
+    // Password value must never appear verbatim.
+    expect(result).not.toContain('supersecretpass');
+    expect(result).toContain('XCSH_CONSOLE_PASSWORD');
+    // Only recognized auth keys are surfaced here, not arbitrary env like email.
+    expect(result).not.toContain('XCSH_EMAIL');
+  });
+
   it('returns message when no context active', () => {
     const result = formatContextResponse(null);
     expect(result).toContain('No active');

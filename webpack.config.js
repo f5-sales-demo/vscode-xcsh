@@ -31,6 +31,10 @@ const extensionConfig = {
         __dirname,
         'node_modules/@f5xc-salesdemos/pi-utils/src/xcsh-context-resolver.ts',
       ),
+      '@f5xc-salesdemos/pi-utils/xcsh-env-names$': path.resolve(
+        __dirname,
+        'node_modules/@f5xc-salesdemos/pi-utils/src/xcsh-env-names.ts',
+      ),
     },
   },
   module: {

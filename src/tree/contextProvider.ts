@@ -7,7 +7,7 @@ import type { ContextManager } from '../config/contextManager';
 import { getLocalContextsDir } from '../config/contextPaths';
 import { isPointerContext, mergePointerOverrides } from '../config/contextResolver';
 import type { TokenHealth, XCSHContext } from '../config/contextTypes';
-import { maskToken } from '../config/contextTypes';
+import { AUTH_ENV_KEYS, isSensitiveEnvKey, maskToken } from '../config/contextTypes';
 import type { XCSHTreeItem } from './treeTypes';
 
 /** Union type for tree nodes returned by this provider. */
@@ -266,6 +266,18 @@ export class ContextTreeItem implements XCSHTreeItem {
       `${vscode.l10n.t('Token')}: ${maskToken(this.context.apiToken)}`,
       `${vscode.l10n.t('Namespace')}: ${this.context.defaultNamespace}`,
     ];
+
+    // Auth section: recognized web-console credentials from the generic env map,
+    // with secret-looking values (the console password) masked.
+    const env = this.context.env;
+    if (env) {
+      for (const key of AUTH_ENV_KEYS) {
+        const value = env[key];
+        if (value) {
+          lines.push(`${key}: ${isSensitiveEnvKey(key) ? maskToken(value) : value}`);
+        }
+      }
+    }
 
     if (this.pointerTarget) {
       lines.push(`${vscode.l10n.t('Points to')}: global:${this.pointerTarget}`);

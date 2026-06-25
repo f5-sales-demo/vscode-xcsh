@@ -411,6 +411,39 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
+  it('auto-marks a secret-looking env var (console password) as sensitive', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'auth-ctx' }));
+    await mgr.setContextEnv('auth-ctx', 'XCSH_CONSOLE_PASSWORD', 's3cret');
+
+    const ctx = await mgr.getContext('auth-ctx');
+    expect(ctx?.env).toEqual({ XCSH_CONSOLE_PASSWORD: 's3cret' });
+    expect(ctx?.sensitiveKeys).toEqual(['XCSH_CONSOLE_PASSWORD']);
+    mgr.dispose();
+  });
+
+  it('does not mark a non-secret env var (username) as sensitive', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'auth-ctx' }));
+    await mgr.setContextEnv('auth-ctx', 'XCSH_USERNAME', 'console-user@example.com');
+
+    const ctx = await mgr.getContext('auth-ctx');
+    expect(ctx?.sensitiveKeys).toBeUndefined();
+    mgr.dispose();
+  });
+
+  it('prunes a removed key from sensitiveKeys on unset', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'auth-ctx' }));
+    await mgr.setContextEnv('auth-ctx', 'XCSH_CONSOLE_PASSWORD', 's3cret');
+    await mgr.unsetContextEnv('auth-ctx', 'XCSH_CONSOLE_PASSWORD');
+
+    const ctx = await mgr.getContext('auth-ctx');
+    expect(ctx?.sensitiveKeys).toEqual([]);
+    expect(ctx?.env ?? {}).toEqual({});
+    mgr.dispose();
+  });
+
   // --------------- namespace switch ---------------
 
   it('switches the default namespace', async () => {
@@ -468,6 +501,32 @@ describe('ContextManager', () => {
 
     expect(bundle.tokensMasked).toBe(false);
     expect(bundle.contexts[0]?.apiToken).toBe('supersecrettoken');
+    mgr.dispose();
+  });
+
+  it('masks secret-looking env values (console password) on masked export, keeps username', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(
+      makeContext({
+        name: 'exp',
+        env: { XCSH_USERNAME: 'console-user@example.com', XCSH_CONSOLE_PASSWORD: 'supersecretpass' },
+      }),
+    );
+    const bundle = await mgr.exportContexts({ includeTokens: false });
+
+    const exported = bundle.contexts[0];
+    expect(exported?.env?.XCSH_CONSOLE_PASSWORD).not.toBe('supersecretpass');
+    // Username is not secret-looking, so it round-trips in the clear.
+    expect(exported?.env?.XCSH_USERNAME).toBe('console-user@example.com');
+    mgr.dispose();
+  });
+
+  it('exports real env secrets when includeTokens is set', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'exp', env: { XCSH_CONSOLE_PASSWORD: 'supersecretpass' } }));
+    const bundle = await mgr.exportContexts({ includeTokens: true });
+
+    expect(bundle.contexts[0]?.env?.XCSH_CONSOLE_PASSWORD).toBe('supersecretpass');
     mgr.dispose();
   });
 

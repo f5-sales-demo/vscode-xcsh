@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { ContextManagerInterface, XCSHContext } from '../config/contextTypes';
+import { AUTH_ENV_KEYS, isSensitiveEnvKey, maskToken } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { IntegrationsResponse, ToolExecutionEnd, ToolExecutionStart } from './types';
@@ -67,11 +68,22 @@ export function formatContextResponse(ctx: XCSHContext | null): string {
     return vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
   }
   const maskedUrl = ctx.apiUrl.replace(/\/api$/, '');
-  return [
+  const lines = [
     `**${vscode.l10n.t('Active Context')}:** ${ctx.name}`,
     `**${vscode.l10n.t('Console')}:** ${maskedUrl}`,
     `**${vscode.l10n.t('Namespace')}:** ${ctx.defaultNamespace}`,
-  ].join('\n\n');
+  ];
+  // Auth section: recognized web-console credentials, console password masked.
+  const env = ctx.env;
+  if (env) {
+    for (const key of AUTH_ENV_KEYS) {
+      const value = env[key];
+      if (value) {
+        lines.push(`**${key}:** ${isSensitiveEnvKey(key) ? maskToken(value) : value}`);
+      }
+    }
+  }
+  return lines.join('\n\n');
 }
 
 interface ChatFollowup {

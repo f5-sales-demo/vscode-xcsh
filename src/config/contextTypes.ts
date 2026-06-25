@@ -74,18 +74,50 @@ export function isValidContextName(name: string): boolean {
 }
 
 /**
+ * Auth-env recognition shared with the xcsh shell via
+ * `@f5xc-salesdemos/pi-utils/xcsh-env-names` — the single source of truth for
+ * reserved control keys, the recognized web-console login credentials, and the
+ * secret-detection rule. pi-utils ships ESM TypeScript; the extension compiles to
+ * CommonJS and bundles it through the webpack `@f5xc-salesdemos` vendor rule, so
+ * it is loaded with `require()` and described by local type shapes — the same
+ * pattern `contextResolver.ts` uses.
+ */
+interface SharedEnvNamesModule {
+  readonly XCSH_USERNAME: string;
+  readonly XCSH_CONSOLE_PASSWORD: string;
+  readonly AUTH_ENV_KEYS: readonly string[];
+  readonly RESERVED_ENV_KEYS: ReadonlySet<string>;
+  isSensitiveEnvKey(key: string): boolean;
+  isInjectableContextEnvKey(key: string): boolean;
+}
+
+const sharedEnvNames = require('@f5xc-salesdemos/pi-utils/xcsh-env-names') as SharedEnvNamesModule;
+
+/** Web-console login username key — a generic (non-reserved) env credential. */
+export const XCSH_USERNAME = sharedEnvNames.XCSH_USERNAME;
+/** Web-console login password key — a generic (non-reserved), sensitive env credential. */
+export const XCSH_CONSOLE_PASSWORD = sharedEnvNames.XCSH_CONSOLE_PASSWORD;
+/** Recognized web-console credentials, in display order (username, then password). */
+export const AUTH_ENV_KEYS = sharedEnvNames.AUTH_ENV_KEYS;
+
+/**
  * Control env vars owned by the context itself (apiUrl/apiToken/defaultNamespace)
  * or injected at activation. A context's custom `env` map must never set these —
- * they would be ignored or clobbered by the resolver. Mirrors xcsh's
- * RESERVED_ENV_KEYS so both hosts reject the same keys.
+ * they would be ignored or clobbered by the resolver. Shared with xcsh so both
+ * hosts reject the same keys.
  */
-export const RESERVED_ENV_KEYS: ReadonlySet<string> = new Set([
-  'XCSH_NAMESPACE',
-  'XCSH_API_URL',
-  'XCSH_API_TOKEN',
-  'XCSH_TENANT',
-  'XCSH_CONTEXT_NAME',
-]);
+export const RESERVED_ENV_KEYS = sharedEnvNames.RESERVED_ENV_KEYS;
+
+/** True iff an env var NAME looks like it holds a secret (e.g. XCSH_CONSOLE_PASSWORD). */
+export const isSensitiveEnvKey = (key: string): boolean => sharedEnvNames.isSensitiveEnvKey(key);
+
+/**
+ * True iff a context's `env` entry may be injected into a spawned subprocess.
+ * Allowlist (default-deny): only XCSH_-namespaced, non-reserved keys. Project-local
+ * context files are untrusted input, so anything outside the XCSH_ namespace
+ * (LD_PRELOAD, NODE_OPTIONS, PATH, …) is refused and can never run code.
+ */
+export const isInjectableContextEnvKey = (key: string): boolean => sharedEnvNames.isInjectableContextEnvKey(key);
 
 const ENV_KEY_PATTERN = /^[A-Za-z_][A-Za-z0-9_]*$/;
 

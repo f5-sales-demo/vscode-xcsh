@@ -25,6 +25,7 @@ import {
   computeTokenHealth,
   type ExportBundle,
   isReservedEnvKey,
+  isSensitiveEnvKey,
   isValidContextName,
   isValidEnvKey,
   maskToken,
@@ -228,7 +229,16 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${name}" not found`);
     }
     const env = { ...(existing.env ?? {}), [key]: value };
-    await this.updateContext(name, { env });
+    const updates: Partial<XCSHContext> = { env };
+    // Auto-mark secret-looking keys (e.g. XCSH_CONSOLE_PASSWORD) sensitive so they
+    // are masked in display/export without manual flagging — mirrors the shell's
+    // setEnvVars. Keep only keys still present in env.
+    if (isSensitiveEnvKey(key)) {
+      const sensitive = new Set(existing.sensitiveKeys ?? []);
+      sensitive.add(key);
+      updates.sensitiveKeys = [...sensitive].filter((k) => k in env);
+    }
+    await this.updateContext(name, updates);
   }
 
   /** Remove one custom env var from a context. No-op if the key is absent. */
@@ -242,7 +252,13 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
     const env = { ...existing.env };
     delete env[key];
-    await this.updateContext(name, { env });
+    const updates: Partial<XCSHContext> = { env };
+    // Drop the removed key from sensitiveKeys so the marker set never references
+    // an absent variable.
+    if (existing.sensitiveKeys?.includes(key)) {
+      updates.sensitiveKeys = existing.sensitiveKeys.filter((k) => k !== key);
+    }
+    await this.updateContext(name, updates);
   }
 
   /**
@@ -273,10 +289,13 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       if (!opts.includeTokens) {
         clone.apiToken = maskToken(clone.apiToken);
         const env = clone.env;
-        if (env && clone.sensitiveKeys) {
-          for (const key of clone.sensitiveKeys) {
-            const value = env[key];
-            if (value !== undefined) {
+        if (env) {
+          // Mask env values whose key is explicitly marked sensitive OR looks like
+          // a secret (e.g. XCSH_CONSOLE_PASSWORD) — mirrors the shell's export so a
+          // masked bundle never leaks a console password.
+          const sensitive = new Set(clone.sensitiveKeys ?? []);
+          for (const [key, value] of Object.entries(env)) {
+            if (sensitive.has(key) || isSensitiveEnvKey(key)) {
               env[key] = maskToken(value);
             }
           }

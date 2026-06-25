@@ -5,7 +5,26 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import type { XCSHContext } from '../config/contextTypes';
-import { isReservedEnvKey, isValidContextName, isValidEnvKey } from '../config/contextTypes';
+import {
+  isReservedEnvKey,
+  isSensitiveEnvKey,
+  isValidContextName,
+  isValidEnvKey,
+  XCSH_CONSOLE_PASSWORD,
+  XCSH_USERNAME,
+} from '../config/contextTypes';
+
+/** Set (non-empty) or clear (empty) one env key, returning a fresh env map. */
+function setOrClearEnv(env: Record<string, string> | undefined, key: string, value: string): Record<string, string> {
+  const next = { ...(env ?? {}) };
+  if (value) {
+    next[key] = value;
+  } else {
+    delete next[key];
+  }
+  return next;
+}
+
 import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
 import type { XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
@@ -123,6 +142,27 @@ export function registerContextCommands(
           return;
         }
 
+        // Step 5: Web-console username (optional — generic env credential)
+        const username = await vscode.window.showInputBox({
+          prompt: vscode.l10n.t('Enter web-console login username (optional)'),
+          placeHolder: vscode.l10n.t('Leave empty to skip'),
+          ignoreFocusOut: true,
+        });
+        if (username === undefined) {
+          return;
+        }
+
+        // Step 6: Web-console password (optional, masked — auto-marked sensitive)
+        const consolePassword = await vscode.window.showInputBox({
+          prompt: vscode.l10n.t('Enter web-console login password (optional)'),
+          password: true,
+          placeHolder: vscode.l10n.t('Leave empty to skip'),
+          ignoreFocusOut: true,
+        });
+        if (consolePassword === undefined) {
+          return;
+        }
+
         // Build context
         const newContext: XCSHContext = {
           name,
@@ -130,6 +170,23 @@ export function registerContextCommands(
           apiToken,
           defaultNamespace: defaultNamespace.trim() || 'system',
         };
+
+        // Stash the web-console credentials as generic env vars; auto-mark any
+        // secret-looking key (the password) sensitive so it is masked everywhere.
+        const env: Record<string, string> = {};
+        if (username.trim()) {
+          env[XCSH_USERNAME] = username.trim();
+        }
+        if (consolePassword) {
+          env[XCSH_CONSOLE_PASSWORD] = consolePassword;
+        }
+        if (Object.keys(env).length > 0) {
+          newContext.env = env;
+          const sensitiveKeys = Object.keys(env).filter(isSensitiveEnvKey);
+          if (sensitiveKeys.length > 0) {
+            newContext.sensitiveKeys = sensitiveKeys;
+          }
+        }
 
         // Check if workspace has .xcsh/ directory — offer local vs global choice
         const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -237,6 +294,16 @@ export function registerContextCommands(
             label: vscode.l10n.t('Default Namespace'),
             description: vscode.l10n.t('Current: {0}', ctx.defaultNamespace || vscode.l10n.t('Not set')),
           },
+          {
+            label: vscode.l10n.t('Username'),
+            description: vscode.l10n.t('Current: {0}', ctx.env?.[XCSH_USERNAME] || vscode.l10n.t('Not set')),
+          },
+          {
+            label: vscode.l10n.t('Console Password'),
+            description: ctx.env?.[XCSH_CONSOLE_PASSWORD]
+              ? vscode.l10n.t('Set — update web-console password')
+              : vscode.l10n.t('Set web-console password'),
+          },
         ];
 
         const editOption = await vscode.window.showQuickPick(editOptions, {
@@ -300,6 +367,45 @@ export function registerContextCommands(
             }
 
             updates.defaultNamespace = newNamespace.trim() || undefined;
+            break;
+          }
+
+          case vscode.l10n.t('Username'): {
+            const newUsername = await vscode.window.showInputBox({
+              prompt: vscode.l10n.t('Enter web-console login username (leave empty to clear)'),
+              value: ctx.env?.[XCSH_USERNAME] ?? '',
+              ignoreFocusOut: true,
+            });
+
+            if (newUsername === undefined) {
+              return;
+            }
+
+            updates.env = setOrClearEnv(ctx.env, XCSH_USERNAME, newUsername.trim());
+            break;
+          }
+
+          case vscode.l10n.t('Console Password'): {
+            const newPassword = await vscode.window.showInputBox({
+              prompt: vscode.l10n.t('Enter web-console login password (leave empty to clear)'),
+              password: true,
+              ignoreFocusOut: true,
+            });
+
+            if (newPassword === undefined) {
+              return;
+            }
+
+            const nextEnv = setOrClearEnv(ctx.env, XCSH_CONSOLE_PASSWORD, newPassword);
+            updates.env = nextEnv;
+            // Keep sensitiveKeys in sync: mark the password when set, drop when cleared.
+            const sensitive = new Set(ctx.sensitiveKeys ?? []);
+            if (nextEnv[XCSH_CONSOLE_PASSWORD]) {
+              sensitive.add(XCSH_CONSOLE_PASSWORD);
+            } else {
+              sensitive.delete(XCSH_CONSOLE_PASSWORD);
+            }
+            updates.sensitiveKeys = [...sensitive].filter((k) => k in nextEnv);
             break;
           }
         }
