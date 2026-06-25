@@ -20,11 +20,14 @@ import {
 import type { ContextOverrides, PointerContext } from './contextResolver';
 import {
   type ContextManagerInterface,
+  CURRENT_EXPORT_VERSION,
   CURRENT_SCHEMA_VERSION,
   computeTokenHealth,
+  type ExportBundle,
   isReservedEnvKey,
   isValidContextName,
   isValidEnvKey,
+  maskToken,
   normalizeApiUrl,
   type TokenHealth,
   type XCSHContext,
@@ -256,6 +259,81 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${name}" not found`);
     }
     await this.updateContext(name, { defaultNamespace: ns });
+  }
+
+  /**
+   * Build a portable bundle of all global contexts. Tokens (and sensitive env
+   * values) are masked unless `includeTokens` is set; a masked bundle is flagged
+   * `tokensMasked` so {@link importContexts} refuses it.
+   */
+  async exportContexts(opts: { includeTokens: boolean }): Promise<ExportBundle> {
+    const all = await this.getContexts();
+    const contexts = all.map((c) => {
+      const clone = structuredClone(c);
+      if (!opts.includeTokens) {
+        clone.apiToken = maskToken(clone.apiToken);
+        const env = clone.env;
+        if (env && clone.sensitiveKeys) {
+          for (const key of clone.sensitiveKeys) {
+            const value = env[key];
+            if (value !== undefined) {
+              env[key] = maskToken(value);
+            }
+          }
+        }
+      }
+      return clone;
+    });
+    return {
+      version: CURRENT_EXPORT_VERSION,
+      exportedAt: new Date().toISOString(),
+      tokensMasked: !opts.includeTokens,
+      contexts,
+    };
+  }
+
+  /**
+   * Import contexts from an {@link ExportBundle}. Rejects token-masked bundles.
+   * Existing contexts are skipped unless `overwrite` is set. Returns the names
+   * imported and skipped (already-present or invalid).
+   */
+  async importContexts(
+    bundle: unknown,
+    opts: { overwrite: boolean },
+  ): Promise<{ imported: string[]; skipped: string[] }> {
+    if (!bundle || typeof bundle !== 'object') {
+      throw new Error('Invalid export bundle: not a JSON object');
+    }
+    const b = bundle as Partial<ExportBundle>;
+    if (typeof b.version !== 'number' || !Array.isArray(b.contexts)) {
+      throw new Error('Invalid export bundle: missing version or contexts');
+    }
+    if (b.tokensMasked) {
+      throw new Error(
+        'This bundle was exported with masked tokens and cannot be imported — re-export with tokens included',
+      );
+    }
+
+    const imported: string[] = [];
+    const skipped: string[] = [];
+    for (const ctx of b.contexts) {
+      if (!ctx || typeof ctx.name !== 'string' || !isValidContextName(ctx.name)) {
+        skipped.push(ctx && typeof ctx.name === 'string' ? ctx.name : '(invalid)');
+        continue;
+      }
+      const exists = (await this.getContext(ctx.name)) !== null;
+      if (exists && !opts.overwrite) {
+        skipped.push(ctx.name);
+        continue;
+      }
+      if (exists) {
+        await this.updateContext(ctx.name, ctx);
+      } else {
+        await this.addContext(ctx);
+      }
+      imported.push(ctx.name);
+    }
+    return { imported, skipped };
   }
 
   async deleteContext(name: string): Promise<void> {

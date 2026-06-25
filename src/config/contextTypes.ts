@@ -98,6 +98,21 @@ export function isReservedEnvKey(key: string): boolean {
   return RESERVED_ENV_KEYS.has(key);
 }
 
+/** Export-bundle format version — distinct from per-context XCSHContext.version. */
+export const CURRENT_EXPORT_VERSION = 1;
+
+/**
+ * Portable bundle of contexts, byte-compatible with the xcsh shell's
+ * `/context export|import`. When `tokensMasked` is true the bundle is for
+ * sharing structure only and import must reject it (tokens are unusable).
+ */
+export interface ExportBundle {
+  version: number;
+  exportedAt: string;
+  tokensMasked: boolean;
+  contexts: XCSHContext[];
+}
+
 export function maskToken(token: string): string {
   if (token.length <= 4) {
     return '****';
