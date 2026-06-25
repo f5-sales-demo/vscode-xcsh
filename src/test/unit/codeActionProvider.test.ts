@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { F5XCCodeActionProvider } from '../../providers/f5xcCodeActionProvider';
+import { XCSHCodeActionProvider } from '../../providers/xcshCodeActionProvider';
 
 function createMockDocument(content: string) {
   const lines = content.split('\n');
@@ -24,8 +24,8 @@ function createMockDocument(content: string) {
   } as unknown as vscode.TextDocument;
 }
 
-describe('F5XCCodeActionProvider', () => {
-  const provider = new F5XCCodeActionProvider();
+describe('XCSHCodeActionProvider', () => {
+  const provider = new XCSHCodeActionProvider();
 
   it('provides quick fixes for conflict diagnostics', () => {
     const content = `{

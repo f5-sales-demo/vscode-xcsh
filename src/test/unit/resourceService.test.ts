@@ -84,20 +84,20 @@ jest.mock('../../xcsh/specBridge', () => ({
   getKindResolver: jest.fn().mockReturnValue(mockKindResolver),
 }));
 
-// Mock F5XCApiError
+// Mock XCSHApiError
 jest.mock('../../utils/errors', () => {
-  class F5XCApiError extends Error {
+  class XCSHApiError extends Error {
     public readonly statusCode: number;
     public readonly body: string;
     constructor(statusCode: number, body: string) {
       super(`API Error ${statusCode}: ${body}`);
-      this.name = 'F5XCApiError';
+      this.name = 'XCSHApiError';
       this.statusCode = statusCode;
       this.body = body;
     }
   }
   return {
-    F5XCApiError,
+    XCSHApiError,
     showError: jest.fn(),
     showWarning: jest.fn(),
     showInfo: jest.fn(),
@@ -112,7 +112,7 @@ function makeMockContextManager(): ContextManager {
   return {
     getContext: jest.fn().mockResolvedValue({
       name: 'test-ctx',
-      apiUrl: 'https://test.f5xc.com/api',
+      apiUrl: 'https://test.xcsh.dev/api',
       apiToken: 'test-token',
       defaultNamespace: 'default',
     }),
@@ -121,7 +121,7 @@ function makeMockContextManager(): ContextManager {
     }),
     getActiveContext: jest.fn().mockResolvedValue({
       name: 'test-ctx',
-      apiUrl: 'https://test.f5xc.com/api',
+      apiUrl: 'https://test.xcsh.dev/api',
       apiToken: 'test-token',
       defaultNamespace: 'default',
     }),

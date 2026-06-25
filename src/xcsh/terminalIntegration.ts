@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import type { ContextManagerInterface, F5XCContext } from '../config/contextTypes';
+import type { ContextManagerInterface, XCSHContext } from '../config/contextTypes';
 import { deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { findXcshBinary } from './processManager';
@@ -21,7 +21,7 @@ async function showXcshNotFoundPrompt(): Promise<void> {
       vscode.l10n.t('Install command copied to clipboard. Paste it in your terminal.'),
     );
   } else if (action === vscode.l10n.t('Open Settings')) {
-    void vscode.commands.executeCommand('workbench.action.openSettings', 'f5xc.xcsh.path');
+    void vscode.commands.executeCommand('workbench.action.openSettings', 'xcsh.xcsh.path');
   }
 }
 
@@ -29,17 +29,17 @@ async function showXcshNotFoundPrompt(): Promise<void> {
  * Build environment variables from an F5 XC context for use in
  * terminal sessions. Derives tenant from the API URL hostname.
  */
-export function buildTerminalEnv(ctx: F5XCContext): Record<string, string | undefined> {
+export function buildTerminalEnv(ctx: XCSHContext): Record<string, string | undefined> {
   const tenant = deriveTenantFromUrl(ctx.apiUrl);
   const env: Record<string, string | undefined> = {
-    F5XC_API_URL: ctx.apiUrl,
-    F5XC_API_TOKEN: ctx.apiToken,
-    F5XC_NAMESPACE: ctx.defaultNamespace,
-    F5XC_CONTEXT_NAME: ctx.name,
+    XCSH_API_URL: ctx.apiUrl,
+    XCSH_API_TOKEN: ctx.apiToken,
+    XCSH_NAMESPACE: ctx.defaultNamespace,
+    XCSH_CONTEXT_NAME: ctx.name,
   };
 
   if (tenant) {
-    env.F5XC_TENANT = tenant;
+    env.XCSH_TENANT = tenant;
   }
 
   return env;
@@ -47,7 +47,7 @@ export function buildTerminalEnv(ctx: F5XCContext): Record<string, string | unde
 
 /**
  * Register a terminal profile provider for xcsh and the
- * `f5xc.xcsh.openTerminal` command.
+ * `xcsh.openTerminal` command.
  *
  * The terminal profile appears in the terminal dropdown and spawns
  * an xcsh interactive session pre-configured with the active
@@ -62,7 +62,7 @@ export function registerTerminalIntegration(
   // Register terminal profile provider
   const profileProvider: vscode.TerminalProfileProvider = {
     async provideTerminalProfile(_token: vscode.CancellationToken): Promise<vscode.TerminalProfile | undefined> {
-      const userPath = vscode.workspace.getConfiguration('f5xc').get<string>('xcsh.path');
+      const userPath = vscode.workspace.getConfiguration('xcsh').get<string>('xcsh.path');
       const binary = findXcshBinary(userPath);
 
       if (!binary) {
@@ -93,13 +93,13 @@ export function registerTerminalIntegration(
   };
 
   extensionContext.subscriptions.push(
-    vscode.window.registerTerminalProfileProvider('f5xc.xcsh.terminal', profileProvider),
+    vscode.window.registerTerminalProfileProvider('xcsh.xcsh.terminal', profileProvider),
   );
 
   // Register the openTerminal command
   extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.xcsh.openTerminal', async () => {
-      const userPath = vscode.workspace.getConfiguration('f5xc').get<string>('xcsh.path');
+    vscode.commands.registerCommand('xcsh.xcsh.openTerminal', async () => {
+      const userPath = vscode.workspace.getConfiguration('xcsh').get<string>('xcsh.path');
       const binary = findXcshBinary(userPath);
 
       if (!binary) {

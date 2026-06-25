@@ -30,7 +30,7 @@
   "view.cloudStatus.name": "حالة السحابة",
   "view.cloudStatus.contextualTitle": "حالة سحابة xcsh",
 
-  "viewsWelcome.explorer": "لم يتم تهيئة سياق xcsh.\n[إضافة سياق](command:f5xc.addContext)\nتعرف على المزيد حول [F5 Distributed Cloud](https://www.f5.com/cloud).",
+  "viewsWelcome.explorer": "لم يتم تهيئة سياق xcsh.\n[إضافة سياق](command:xcsh.addContext)\nتعرف على المزيد حول [F5 Distributed Cloud](https://www.f5.com/cloud).",
 
   "command.addContext.title": "xcsh: إضافة سياق",
   "command.editContext.title": "xcsh: تعديل السياق",

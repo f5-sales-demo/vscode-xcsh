@@ -10,7 +10,7 @@
  */
 
 import { getLogger } from '../utils/logger';
-import type { F5XCClient } from './client';
+import type { XCSHClient } from './client';
 
 const logger = getLogger();
 
@@ -163,7 +163,7 @@ function parseAddonService(service: ApiAddonService): AddonService {
   } else {
     // Format unknown names nicely
     derivedDisplayName = name
-      .replace(/^f5xc_/, '')
+      .replace(/^xcsh_/, '')
       .replace(/_/g, ' ')
       .replace(/\b\w/g, (c) => c.toUpperCase());
   }
@@ -212,7 +212,7 @@ function parseQuotaItems(items: Record<string, QuotaUsageItem>): QuotaItem[] {
 /**
  * Get current subscription plan information
  */
-export async function getCurrentPlan(client: F5XCClient): Promise<PlanInfo> {
+export async function getCurrentPlan(client: XCSHClient): Promise<PlanInfo> {
   logger.debug('Fetching current usage plan');
 
   const response = await client.customRequest<UsagePlanResponse>('/api/web/namespaces/system/usage_plans/current');
@@ -251,7 +251,7 @@ export async function getCurrentPlan(client: F5XCClient): Promise<PlanInfo> {
 /**
  * Get quota usage for a namespace
  */
-export async function getQuotaUsage(client: F5XCClient, namespace: string = 'system'): Promise<QuotaUsage> {
+export async function getQuotaUsage(client: XCSHClient, namespace: string = 'system'): Promise<QuotaUsage> {
   logger.debug(`Fetching quota usage for namespace: ${namespace}`);
 
   const response = await client.customRequest<QuotaUsageResponse>(`/api/web/namespaces/${namespace}/quota/usage`);
@@ -322,7 +322,7 @@ const QUOTA_KEY_MAPPINGS: Record<string, string[]> = {
  * RESOURCE_TYPES keys (e.g., 'http_loadbalancers') and API quota keys (e.g., 'HTTP Load Balancer')
  */
 export async function getQuotaForResourceType(
-  client: F5XCClient,
+  client: XCSHClient,
   resourceTypeKey: string,
   namespace: string = 'system',
 ): Promise<QuotaItem | undefined> {
@@ -500,7 +500,7 @@ interface CreateAddonSubscriptionRequest {
  * Returns state (AS_NONE, AS_PENDING, AS_SUBSCRIBED, AS_ERROR)
  */
 export async function getAddonActivationStatus(
-  client: F5XCClient,
+  client: XCSHClient,
   addonServiceName: string,
 ): Promise<ActivationStatus> {
   logger.debug(`Fetching activation status for addon: ${addonServiceName}`);
@@ -550,7 +550,7 @@ export async function getAddonActivationStatus(
  * Creates a subscription in SUBSCRIPTION_PENDING state
  */
 export async function createAddonSubscription(
-  client: F5XCClient,
+  client: XCSHClient,
   addonServiceName: string,
   namespace: string = 'system',
 ): Promise<SubscriptionResponse> {

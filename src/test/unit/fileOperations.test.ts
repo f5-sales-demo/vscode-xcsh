@@ -75,7 +75,7 @@ jest.mock('../../services/resourceService', () => ({
 }));
 
 jest.mock('../../utils/errors', () => ({
-  F5XCApiError: class extends Error {
+  XCSHApiError: class extends Error {
     statusCode: number;
     body: string;
     constructor(statusCode: number, body: string) {
@@ -114,7 +114,7 @@ jest.mock('../../utils/manifestDetector', () => ({
 import * as vscode from 'vscode';
 import { registerFileOperationCommands } from '../../commands/fileOperations';
 import type { ContextManager } from '../../config/contextManager';
-import type { F5XCExplorerProvider } from '../../tree/f5xcExplorer';
+import type { XCSHExplorerProvider } from '../../tree/xcshExplorer';
 
 const validManifestContent = JSON.stringify({
   kind: 'http_loadbalancer',
@@ -126,7 +126,7 @@ function makeMockContextManager(): ContextManager {
   return {
     getActiveContext: jest.fn().mockResolvedValue({
       name: 'test-ctx',
-      apiUrl: 'https://test.f5xc.com/api',
+      apiUrl: 'https://test.xcsh.dev/api',
       defaultNamespace: 'default',
     }),
     getContext: jest.fn().mockResolvedValue({
@@ -138,7 +138,7 @@ function makeMockContextManager(): ContextManager {
 
 describe('registerFileOperationCommands', () => {
   let registeredCommands: Map<string, (...args: unknown[]) => Promise<void>>;
-  let mockExplorer: F5XCExplorerProvider;
+  let mockExplorer: XCSHExplorerProvider;
   let mockContextManager: ContextManager;
 
   beforeEach(() => {
@@ -149,7 +149,7 @@ describe('registerFileOperationCommands', () => {
       return { dispose: jest.fn() };
     });
 
-    mockExplorer = { refresh: jest.fn() } as unknown as F5XCExplorerProvider;
+    mockExplorer = { refresh: jest.fn() } as unknown as XCSHExplorerProvider;
     mockContextManager = makeMockContextManager();
 
     const context = {
@@ -160,16 +160,16 @@ describe('registerFileOperationCommands', () => {
   });
 
   it('registers all four file operation commands', () => {
-    expect(registeredCommands.has('f5xc.fileApply')).toBe(true);
-    expect(registeredCommands.has('f5xc.fileCreate')).toBe(true);
-    expect(registeredCommands.has('f5xc.fileDiff')).toBe(true);
-    expect(registeredCommands.has('f5xc.fileDelete')).toBe(true);
+    expect(registeredCommands.has('xcsh.fileApply')).toBe(true);
+    expect(registeredCommands.has('xcsh.fileCreate')).toBe(true);
+    expect(registeredCommands.has('xcsh.fileDiff')).toBe(true);
+    expect(registeredCommands.has('xcsh.fileDelete')).toBe(true);
   });
 
-  describe('f5xc.fileApply', () => {
+  describe('xcsh.fileApply', () => {
     it('warns when no file is selected or open', async () => {
       const { showWarning } = require('../../utils/errors');
-      const handler = registeredCommands.get('f5xc.fileApply')!;
+      const handler = registeredCommands.get('xcsh.fileApply')!;
       // No URI arg, no active editor
       (vscode.window as Record<string, unknown>).activeTextEditor = undefined;
       await handler(undefined);
@@ -194,7 +194,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileApply')!;
+      const handler = registeredCommands.get('xcsh.fileApply')!;
       await handler(undefined);
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('not a valid XC manifest'));
@@ -211,7 +211,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileApply')!;
+      const handler = registeredCommands.get('xcsh.fileApply')!;
       await handler(undefined);
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('No active context'));
@@ -232,7 +232,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileApply')!;
+      const handler = registeredCommands.get('xcsh.fileApply')!;
       await handler(undefined);
 
       expect(mockResourceService.applyManifest).toHaveBeenCalledWith('test-ctx', validManifestContent);
@@ -255,14 +255,14 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileApply')!;
+      const handler = registeredCommands.get('xcsh.fileApply')!;
       await handler(undefined);
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('Server error'));
     });
   });
 
-  describe('f5xc.fileDiff', () => {
+  describe('xcsh.fileDiff', () => {
     it('shows message when resource is new', async () => {
       mockShowInformationMessage.mockResolvedValue(undefined);
       mockResourceService.diffManifest.mockResolvedValue({ isNew: true });
@@ -274,14 +274,14 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileDiff')!;
+      const handler = registeredCommands.get('xcsh.fileDiff')!;
       await handler(undefined);
 
       expect(mockShowInformationMessage).toHaveBeenCalledWith(expect.stringContaining('not found remotely'));
     });
   });
 
-  describe('f5xc.fileDelete', () => {
+  describe('xcsh.fileDelete', () => {
     it('deletes resource and refreshes explorer', async () => {
       mockShowWarningMessage.mockResolvedValue('Delete');
       mockResourceService.deleteFromManifest.mockResolvedValue({
@@ -298,7 +298,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileDelete')!;
+      const handler = registeredCommands.get('xcsh.fileDelete')!;
       await handler(undefined);
 
       expect(mockResourceService.deleteFromManifest).toHaveBeenCalled();
@@ -316,7 +316,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('f5xc.fileDelete')!;
+      const handler = registeredCommands.get('xcsh.fileDelete')!;
       await handler(undefined);
 
       expect(mockResourceService.deleteFromManifest).not.toHaveBeenCalled();

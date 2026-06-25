@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { getSchemaForDocument, isF5XCJsonFile } from '../utils/completionHelper';
+import { getSchemaForDocument, isXCSHJsonFile } from '../utils/completionHelper';
 
 export interface ConflictEntry {
   field: string;
@@ -32,11 +32,11 @@ export function findConflicts(specProperties: Record<string, unknown>, setFields
 }
 
 export function registerConflictDiagnostics(context: vscode.ExtensionContext): vscode.DiagnosticCollection {
-  const diagnosticCollection = vscode.languages.createDiagnosticCollection('f5xc-conflicts');
+  const diagnosticCollection = vscode.languages.createDiagnosticCollection('xcsh-conflicts');
   context.subscriptions.push(diagnosticCollection);
 
   const checkDocument = (document: vscode.TextDocument) => {
-    if (!isF5XCJsonFile(document)) {
+    if (!isXCSHJsonFile(document)) {
       return;
     }
 

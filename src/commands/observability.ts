@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
-import type { ResourceNode } from '../tree/f5xcExplorer';
+import type { ResourceNode } from '../tree/xcshExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 
@@ -59,7 +59,7 @@ interface MetricsResponse {
 export function registerObservabilityCommands(context: vscode.ExtensionContext, contextManager: ContextManager): void {
   // VIEW LOGS - View access logs for load balancer
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.viewLogs', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.viewLogs', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
         const ctx = await contextManager.getContext(data.profileName);
@@ -136,7 +136,7 @@ export function registerObservabilityCommands(context: vscode.ExtensionContext, 
 
   // VIEW METRICS - View metrics for load balancer or origin pool
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.viewMetrics', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.viewMetrics', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
         const ctx = await contextManager.getContext(data.profileName);

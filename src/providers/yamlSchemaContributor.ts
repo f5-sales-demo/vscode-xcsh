@@ -5,7 +5,7 @@ import { getSchemaRegistry } from '../schema/schemaRegistry';
 import { getLogger } from '../utils/logger';
 import { getManifestKind } from '../utils/manifestDetector';
 
-const SCHEMA_PREFIX = 'f5xc';
+const SCHEMA_PREFIX = 'xcsh';
 const YAML_EXTENSION_ID = 'redhat.vscode-yaml';
 
 interface YamlExtensionApi {
@@ -72,7 +72,7 @@ function requestSchemaUri(resource: string): string {
 
 function requestSchemaContent(uri: string): string {
   try {
-    const match = uri.match(/f5xc:\/\/schemas\/(.+)\.json/);
+    const match = uri.match(/xcsh:\/\/schemas\/(.+)\.json/);
     if (!match?.[1]) {
       return '';
     }
@@ -93,7 +93,7 @@ function showInstallSuggestion(context: vscode.ExtensionContext): void {
     return;
   }
 
-  const suppressKey = 'f5xc.yamlSuggestionDismissed';
+  const suppressKey = 'xcsh.yamlSuggestionDismissed';
   if (context.globalState.get<boolean>(suppressKey)) {
     return;
   }

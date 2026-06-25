@@ -5,12 +5,12 @@ import type { Resource } from '../api/client';
 import { getFieldConstraints, getMinimumConfigFields } from '../api/resourceTypes';
 import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
 import type { ContextManager } from '../config/contextManager';
-import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
+import type { XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showError, showInfo } from '../utils/errors';
-import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
-import type { F5XCDescribeProvider } from './f5xcDescribeProvider';
+import { getToolbarIconSvg } from '../utils/xcshIcons';
+import type { XCSHDescribeProvider } from './xcshDescribeProvider';
 
 const logger = getLogger();
 
@@ -72,8 +72,8 @@ export class HealthcheckFormProvider {
 
   constructor(
     private readonly contextManager: ContextManager,
-    private readonly explorer: F5XCExplorerProvider,
-    private readonly describeProvider: F5XCDescribeProvider,
+    private readonly explorer: XCSHExplorerProvider,
+    private readonly describeProvider: XCSHDescribeProvider,
   ) {}
 
   /**
@@ -88,7 +88,7 @@ export class HealthcheckFormProvider {
     }
 
     this.panel = vscode.window.createWebviewPanel(
-      'f5xcHealthcheckForm',
+      'xcshHealthcheckForm',
       vscode.l10n.t('Create Healthcheck'),
       vscode.ViewColumn.One,
       {

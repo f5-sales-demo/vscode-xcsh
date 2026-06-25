@@ -41,17 +41,17 @@ suite('Extension Test Suite', () => {
 
     // Check for core commands
     const expectedCommands = [
-      'f5xc.refresh',
-      'f5xc.addContext',
-      'f5xc.editContext',
-      'f5xc.deleteContext',
-      'f5xc.setActiveContext',
-      'f5xc.create',
-      'f5xc.get',
-      'f5xc.edit',
-      'f5xc.delete',
-      'f5xc.apply',
-      'f5xc.diff',
+      'xcsh.refresh',
+      'xcsh.addContext',
+      'xcsh.editContext',
+      'xcsh.deleteContext',
+      'xcsh.setActiveContext',
+      'xcsh.create',
+      'xcsh.get',
+      'xcsh.edit',
+      'xcsh.delete',
+      'xcsh.apply',
+      'xcsh.diff',
     ];
 
     for (const cmd of expectedCommands) {
@@ -68,7 +68,7 @@ suite('Extension Test Suite', () => {
   });
 
   test('Configuration should have expected properties', () => {
-    const config = vscode.workspace.getConfiguration('f5xc');
+    const config = vscode.workspace.getConfiguration('xcsh');
 
     // Test that configuration keys exist
     const logLevel = config.get<string>('logLevel');
@@ -89,13 +89,13 @@ suite('Context Management Test Suite', () => {
     // We can't fully test add context without mocking the input boxes
     // but we can verify the command exists and doesn't throw synchronously
     const commands = await vscode.commands.getCommands(true);
-    assert.ok(commands.includes('f5xc.addContext'), 'addContext command should exist');
+    assert.ok(commands.includes('xcsh.addContext'), 'addContext command should exist');
   });
 
   test('Refresh command should execute without error', async () => {
     // The refresh command should work even with no contexts
     try {
-      await vscode.commands.executeCommand('f5xc.refresh');
+      await vscode.commands.executeCommand('xcsh.refresh');
       assert.ok(true, 'Refresh command executed successfully');
     } catch (error) {
       assert.fail(`Refresh command should not throw: ${error}`);
@@ -107,7 +107,7 @@ suite('Tree View Test Suite', () => {
   test('Explorer tree view should be registered', async () => {
     // Verify the tree view command context
     const commands = await vscode.commands.getCommands(true);
-    const explorerCommands = commands.filter((cmd) => cmd.startsWith('f5xc.'));
+    const explorerCommands = commands.filter((cmd) => cmd.startsWith('xcsh.'));
     assert.ok(explorerCommands.length > 0, 'xcsh commands should be registered');
   });
 });

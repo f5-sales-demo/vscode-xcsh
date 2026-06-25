@@ -42,11 +42,11 @@ function createMockWebviewView() {
 
 describe('XcshPanelProvider', () => {
   it('has correct view type', () => {
-    expect(XcshPanelProvider.viewType).toBe('f5xc.xcshPanel');
+    expect(XcshPanelProvider.viewType).toBe('xcsh.xcshPanel');
   });
 
   it('has correct secondary view type', () => {
-    expect(XcshPanelProvider.viewTypeSecondary).toBe('f5xc.xcshPanelSecondary');
+    expect(XcshPanelProvider.viewTypeSecondary).toBe('xcsh.xcshPanelSecondary');
   });
 
   it('constructs without error', () => {

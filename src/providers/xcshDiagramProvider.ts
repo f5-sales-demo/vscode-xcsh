@@ -2,9 +2,9 @@
 
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
-import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { getToolbarIconSvg } from '../utils/xcshIcons';
 
 const logger = getLogger();
 
@@ -179,7 +179,7 @@ interface OriginServerInfo {
  * WebView provider for displaying F5 XC HTTP Load Balancer diagrams.
  * Generates Mermaid flowcharts showing the complete request path.
  */
-export class F5XCDiagramProvider {
+export class XCSHDiagramProvider {
   private panel: vscode.WebviewPanel | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
@@ -223,7 +223,7 @@ export class F5XCDiagramProvider {
         this.panel.reveal(vscode.ViewColumn.Beside);
       } else {
         this.panel = vscode.window.createWebviewPanel(
-          'f5xcDiagram',
+          'xcshDiagram',
           `Diagram: ${resourceName}`,
           vscode.ViewColumn.Beside,
           {

@@ -1,5 +1,5 @@
 ---
-name: f5xc-configuration-authoring
+name: xcsh-configuration-authoring
 description:
   Guide for writing xcsh configuration files in JSON or YAML, understanding
   field relationships, resolving oneOf conflicts, and building minimum viable

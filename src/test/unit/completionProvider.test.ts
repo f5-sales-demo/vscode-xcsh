@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import { CompletionList } from 'vscode';
-import { F5XCCompletionProvider } from '../../providers/f5xcCompletionProvider';
+import { XCSHCompletionProvider } from '../../providers/xcshCompletionProvider';
 import { clearDetectionCache } from '../../utils/completionHelper';
 
 function createMockDocument(content: string, filename = 'test.http_loadbalancer.json') {
@@ -64,8 +64,8 @@ const specContent = `{
   }
 }`;
 
-describe('F5XCCompletionProvider', () => {
-  const provider = new F5XCCompletionProvider();
+describe('XCSHCompletionProvider', () => {
+  const provider = new XCSHCompletionProvider();
 
   beforeEach(() => {
     clearDetectionCache();

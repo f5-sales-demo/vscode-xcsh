@@ -8,12 +8,12 @@ export const DIR_MODE = 0o700;
 
 export function getConfigDir(): string {
   if (process.env.XDG_CONFIG_HOME) {
-    return path.join(process.env.XDG_CONFIG_HOME, 'f5xc');
+    return path.join(process.env.XDG_CONFIG_HOME, 'xcsh');
   }
   if (os.platform() === 'win32' && process.env.APPDATA) {
-    return path.join(process.env.APPDATA, 'f5xc');
+    return path.join(process.env.APPDATA, 'xcsh');
   }
-  return path.join(os.homedir(), '.config', 'f5xc');
+  return path.join(os.homedir(), '.config', 'xcsh');
 }
 
 export function getContextsDir(): string {

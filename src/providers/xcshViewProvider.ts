@@ -12,13 +12,13 @@ const logger = getLogger();
  * Get the current view mode from settings
  */
 function getViewMode(): ViewMode {
-  return vscode.workspace.getConfiguration('f5xc').get<ViewMode>('viewMode', 'console');
+  return vscode.workspace.getConfiguration('xcsh').get<ViewMode>('viewMode', 'console');
 }
 
 /**
  * Parsed F5 XC View URI components
  */
-interface F5XCViewUri {
+interface XCSHViewUri {
   profileName: string;
   namespace: string;
   resourceType: string;
@@ -27,11 +27,11 @@ interface F5XCViewUri {
 
 /**
  * Read-only TextDocumentContentProvider for viewing F5 XC resources.
- * Uses f5xc-view:// scheme to display resources without edit capability.
+ * Uses xcsh-view:// scheme to display resources without edit capability.
  *
- * URI format: f5xc-view://profile/namespace/resourceType/resourceName.json
+ * URI format: xcsh-view://profile/namespace/resourceType/resourceName.json
  */
-export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
+export class XCSHViewProvider implements vscode.TextDocumentContentProvider {
   private readonly _onDidChange = new vscode.EventEmitter<vscode.Uri>();
   readonly onDidChange = this._onDidChange.event;
 
@@ -43,14 +43,14 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
   /**
    * Parse an F5 XC View URI into its components
    */
-  private parseUri(uri: vscode.Uri): F5XCViewUri {
-    // URI format: f5xc-view://profile/namespace/resourceType/resourceName.json
+  private parseUri(uri: vscode.Uri): XCSHViewUri {
+    // URI format: xcsh-view://profile/namespace/resourceType/resourceName.json
     const profileName = uri.authority;
     const parts = uri.path.split('/').filter((p) => p.length > 0);
 
     if (!profileName || parts.length !== 3) {
       throw new Error(
-        `Invalid F5 XC View URI format: ${uri.toString()}. Expected: f5xc-view://profile/namespace/resourceType/resourceName.json`,
+        `Invalid F5 XC View URI format: ${uri.toString()}. Expected: xcsh-view://profile/namespace/resourceType/resourceName.json`,
       );
     }
 
@@ -66,7 +66,7 @@ export class F5XCViewProvider implements vscode.TextDocumentContentProvider {
    * Create an F5 XC View URI from components
    */
   static createUri(profileName: string, namespace: string, resourceType: string, resourceName: string): vscode.Uri {
-    return vscode.Uri.parse(`f5xc-view://${profileName}/${namespace}/${resourceType}/${resourceName}.json`);
+    return vscode.Uri.parse(`xcsh-view://${profileName}/${namespace}/${resourceType}/${resourceName}.json`);
   }
 
   /**

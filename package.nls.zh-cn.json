@@ -30,7 +30,7 @@
   "view.cloudStatus.name": "云状态",
   "view.cloudStatus.contextualTitle": "xcsh 云状态",
 
-  "viewsWelcome.explorer": "未配置 xcsh 上下文。\n[添加上下文](command:f5xc.addContext)\n了解更多关于 [F5 Distributed Cloud](https://www.f5.com/cloud) 的信息。",
+  "viewsWelcome.explorer": "未配置 xcsh 上下文。\n[添加上下文](command:xcsh.addContext)\n了解更多关于 [F5 Distributed Cloud](https://www.f5.com/cloud) 的信息。",
 
   "command.addContext.title": "xcsh: 添加上下文",
   "command.editContext.title": "xcsh: 编辑上下文",

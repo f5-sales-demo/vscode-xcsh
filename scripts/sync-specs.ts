@@ -33,7 +33,7 @@ interface GitHubRelease {
 async function fetchLatestRelease(): Promise<GitHubRelease> {
   return new Promise((resolve, reject) => {
     const headers: Record<string, string> = {
-      'User-Agent': 'vscode-f5xc-tools',
+      'User-Agent': 'vscode-xcsh',
       Accept: 'application/vnd.github.v3+json',
     };
 

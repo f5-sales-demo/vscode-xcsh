@@ -30,7 +30,7 @@
   "view.cloudStatus.name": "Cloud Status",
   "view.cloudStatus.contextualTitle": "xcsh Cloud Status",
 
-  "viewsWelcome.explorer": "No xcsh context configured.\n[Add Context](command:f5xc.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
+  "viewsWelcome.explorer": "No xcsh context configured.\n[Add Context](command:xcsh.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud).",
 
   "command.addContext.title": "xcsh: Add Context",
   "command.editContext.title": "xcsh: Edit Context",

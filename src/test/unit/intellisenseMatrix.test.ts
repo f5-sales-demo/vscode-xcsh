@@ -9,8 +9,8 @@
 
 import { CompletionList } from 'vscode';
 import { getAllGeneratedResourceKeys } from '../../generated/resourceTypesBase';
-import { F5XCCompletionProvider } from '../../providers/f5xcCompletionProvider';
-import { F5XCHoverProvider } from '../../providers/f5xcHoverProvider';
+import { XCSHCompletionProvider } from '../../providers/xcshCompletionProvider';
+import { XCSHHoverProvider } from '../../providers/xcshHoverProvider';
 import { getSchemaRegistry } from '../../schema/schemaRegistry';
 import { clearDetectionCache, parseJsonPath } from '../../utils/completionHelper';
 
@@ -72,7 +72,7 @@ ${specFields}
 }`;
 }
 
-const provider = new F5XCCompletionProvider();
+const provider = new XCSHCompletionProvider();
 
 beforeEach(() => clearDetectionCache());
 
@@ -349,7 +349,7 @@ describe('snippet insertions produce valid JSON structure', () => {
 // ─── SECTION 8: Hover Provider ──────────────────────────────
 
 describe('hover provider', () => {
-  const hoverProvider = new F5XCHoverProvider();
+  const hoverProvider = new XCSHHoverProvider();
 
   it('returns hover for known field', () => {
     const content = `{

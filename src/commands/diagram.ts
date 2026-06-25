@@ -2,8 +2,8 @@
 
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
-import { F5XCDiagramProvider } from '../providers/f5xcDiagramProvider';
-import type { ResourceNode } from '../tree/f5xcExplorer';
+import { XCSHDiagramProvider } from '../providers/xcshDiagramProvider';
+import type { ResourceNode } from '../tree/xcshExplorer';
 import { showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 
@@ -14,7 +14,7 @@ const logger = getLogger();
  */
 export function registerDiagramCommands(context: vscode.ExtensionContext, contextManager: ContextManager): void {
   // Create diagram provider instance
-  const diagramProvider = new F5XCDiagramProvider(contextManager);
+  const diagramProvider = new XCSHDiagramProvider(contextManager);
 
   // Register dispose handler
   context.subscriptions.push({
@@ -23,7 +23,7 @@ export function registerDiagramCommands(context: vscode.ExtensionContext, contex
 
   // DIAGRAM - Generate Mermaid diagram for HTTP Load Balancer
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.diagram', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.diagram', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
         const ctx = await contextManager.getContext(data.profileName);

@@ -283,7 +283,7 @@
   "No active editor": "ไม่มีตัวแก้ไขที่ใช้งานอยู่",
   "Invalid JSON in editor": "JSON ไม่ถูกต้องในตัวแก้ไข",
   "Resource must have metadata.namespace and metadata.name": "ทรัพยากรต้องมี metadata.namespace และ metadata.name",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "ไม่สามารถระบุชนิดทรัพยากร ใช้หลักการตั้งชื่อ: *.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "ไม่สามารถระบุชนิดทรัพยากร ใช้หลักการตั้งชื่อ: *.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\nคุณต้องการดำเนินการต่อหรือไม่?",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "{0} {1} \"{2}\" ในเนมสเปซ \"{3}\"?",
   "Updating {0}...": "กำลังอัปเดต {0}...",

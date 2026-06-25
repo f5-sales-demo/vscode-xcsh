@@ -8,23 +8,23 @@
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { PlanNode, QuotasNode } from './subscriptionNodes';
-import type { F5XCTreeItem } from './treeTypes';
+import type { XCSHTreeItem } from './treeTypes';
 
 /**
  * Tree data provider for the Subscription view
  * Shows Plan and Quotas as top-level items
  */
-export class SubscriptionProvider implements vscode.TreeDataProvider<F5XCTreeItem> {
-  private readonly _onDidChangeTreeData = new vscode.EventEmitter<F5XCTreeItem | undefined>();
+export class SubscriptionProvider implements vscode.TreeDataProvider<XCSHTreeItem> {
+  private readonly _onDidChangeTreeData = new vscode.EventEmitter<XCSHTreeItem | undefined>();
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
 
   constructor(private readonly contextManager: ContextManager) {}
 
-  getTreeItem(element: F5XCTreeItem): vscode.TreeItem {
+  getTreeItem(element: XCSHTreeItem): vscode.TreeItem {
     return element.getTreeItem();
   }
 
-  async getChildren(element?: F5XCTreeItem): Promise<F5XCTreeItem[]> {
+  async getChildren(element?: XCSHTreeItem): Promise<XCSHTreeItem[]> {
     if (element) {
       return element.getChildren();
     }

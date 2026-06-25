@@ -16,11 +16,11 @@ import {
   requiresConfirmation,
 } from '../api/resourceTypes';
 import type { ContextManager } from '../config/contextManager';
-import type { F5XCDescribeProvider } from '../providers/f5xcDescribeProvider';
-import { F5XCFileSystemProvider } from '../providers/f5xcFileSystemProvider';
-import { F5XCViewProvider } from '../providers/f5xcViewProvider';
-import type { F5XCExplorerProvider, NamespaceNode, ResourceNode } from '../tree/f5xcExplorer';
+import type { XCSHDescribeProvider } from '../providers/xcshDescribeProvider';
+import { XCSHFileSystemProvider } from '../providers/xcshFileSystemProvider';
+import { XCSHViewProvider } from '../providers/xcshViewProvider';
 import type { ResourceNodeData } from '../tree/treeTypes';
+import type { NamespaceNode, ResourceNode, XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
@@ -52,7 +52,7 @@ function isResourceNode(arg: unknown): arg is ResourceNode {
  * Get the current view mode from settings
  */
 function getViewMode(): ViewMode {
-  return vscode.workspace.getConfiguration('f5xc').get<ViewMode>('viewMode', 'console');
+  return vscode.workspace.getConfiguration('xcsh').get<ViewMode>('viewMode', 'console');
 }
 
 /**
@@ -60,15 +60,15 @@ function getViewMode(): ViewMode {
  */
 export function registerCrudCommands(
   context: vscode.ExtensionContext,
-  explorer: F5XCExplorerProvider,
+  explorer: XCSHExplorerProvider,
   contextManager: ContextManager,
-  fsProvider: F5XCFileSystemProvider,
-  viewProvider: F5XCViewProvider,
-  describeProvider: F5XCDescribeProvider,
+  fsProvider: XCSHFileSystemProvider,
+  viewProvider: XCSHViewProvider,
+  describeProvider: XCSHDescribeProvider,
 ): void {
   // GET - View resource as JSON (read-only)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.get', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.get', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
         const profile = await contextManager.getContext(data.profileName);
@@ -78,13 +78,13 @@ export function registerCrudCommands(
           return;
         }
 
-        // Create f5xc-view:// URI for read-only viewing
-        const uri = F5XCViewProvider.createUri(data.profileName, data.namespace, data.resourceType.apiPath, data.name);
+        // Create xcsh-view:// URI for read-only viewing
+        const uri = XCSHViewProvider.createUri(data.profileName, data.namespace, data.resourceType.apiPath, data.name);
 
         // Refresh the content to ensure fresh data
         viewProvider.refresh(uri);
 
-        // Open the document using the f5xc-view:// content provider
+        // Open the document using the xcsh-view:// content provider
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc, { preview: false });
 
@@ -96,7 +96,7 @@ export function registerCrudCommands(
 
   // DESCRIBE - Show formatted resource description in WebView
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.describe', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.describe', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
 
@@ -113,10 +113,10 @@ export function registerCrudCommands(
     }),
   );
 
-  // EDIT - Open resource for editing using f5xc:// virtual file system
+  // EDIT - Open resource for editing using xcsh:// virtual file system
   // Supports both ResourceNode (from tree view) and WebviewResourceData (from describe webview)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.edit', async (arg: ResourceNode | WebviewResourceData) => {
+    vscode.commands.registerCommand('xcsh.edit', async (arg: ResourceNode | WebviewResourceData) => {
       await withErrorHandling(async () => {
         let data: ResourceNodeData;
 
@@ -157,13 +157,13 @@ export function registerCrudCommands(
           return;
         }
 
-        // Create f5xc:// URI for the resource
-        const uri = F5XCFileSystemProvider.createUri(data.profileName, data.namespace, data.resourceTypeKey, data.name);
+        // Create xcsh:// URI for the resource
+        const uri = XCSHFileSystemProvider.createUri(data.profileName, data.namespace, data.resourceTypeKey, data.name);
 
         // Clear any cached content to ensure fresh data
         fsProvider.clearCache(uri);
 
-        // Open the document using the f5xc:// file system
+        // Open the document using the xcsh:// file system
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc, { preview: false });
 
@@ -175,7 +175,7 @@ export function registerCrudCommands(
 
   // CREATE - Create new resource from template
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.create', async (arg?: unknown) => {
+    vscode.commands.registerCommand('xcsh.create', async (arg?: unknown) => {
       await withErrorHandling(async () => {
         // Determine resource type from context or prompt user
         let resourceTypeKey: string | undefined;
@@ -269,7 +269,7 @@ export function registerCrudCommands(
 
   // APPLY - Create or update resource from current editor
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.apply', async () => {
+    vscode.commands.registerCommand('xcsh.apply', async () => {
       await withErrorHandling(async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
@@ -299,7 +299,7 @@ export function registerCrudCommands(
         // Detect resource type from file name or content
         const resourceTypeKey = detectResourceType(document.fileName, resource);
         if (!resourceTypeKey) {
-          showWarning(vscode.l10n.t('Could not determine resource type. Use naming convention: *.{type}.f5xc.json'));
+          showWarning(vscode.l10n.t('Could not determine resource type. Use naming convention: *.{type}.xcsh.json'));
           return;
         }
 
@@ -424,7 +424,7 @@ export function registerCrudCommands(
 
   // DELETE - Delete resource with RBAC pre-check
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.delete', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.delete', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
         const client = await contextManager.getClient(data.profileName);
@@ -467,7 +467,7 @@ export function registerCrudCommands(
         const metadataRequiresConfirm = requiresConfirmation(data.resourceTypeKey, 'delete');
 
         // Determine whether to show confirmation based on settings
-        const config = vscode.workspace.getConfiguration('f5xc');
+        const config = vscode.workspace.getConfiguration('xcsh');
         const confirmDelete = config.get<boolean>('confirmDelete', true);
         const confirmationLevel = config.get<'always' | 'high-only' | 'never'>('deleteConfirmationLevel', 'always');
 
@@ -575,7 +575,7 @@ export function registerCrudCommands(
 
   // DELETE NAMESPACE - Delete namespace and all resources (cascade delete)
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.deleteNamespace', async (node: NamespaceNode) => {
+    vscode.commands.registerCommand('xcsh.deleteNamespace', async (node: NamespaceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
 
@@ -642,7 +642,7 @@ export function registerCrudCommands(
 
   // DESCRIBE NAMESPACE - Show namespace details in describe view
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.describeNamespace', async (node: NamespaceNode) => {
+    vscode.commands.registerCommand('xcsh.describeNamespace', async (node: NamespaceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
 
@@ -655,7 +655,7 @@ export function registerCrudCommands(
 
   // DIFF - Compare local with remote
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.diff', async (node?: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.diff', async (node?: ResourceNode) => {
       await withErrorHandling(async () => {
         let remoteContent: string;
         let localUri: vscode.Uri;
@@ -746,7 +746,7 @@ export function registerCrudCommands(
         }
 
         // Create virtual document for remote content
-        const remoteUri = vscode.Uri.parse(`f5xc-remote:${name}.json`);
+        const remoteUri = vscode.Uri.parse(`xcsh-remote:${name}.json`);
 
         // Register content provider if not already registered
         const provider = new (class implements vscode.TextDocumentContentProvider {
@@ -755,7 +755,7 @@ export function registerCrudCommands(
           }
         })();
 
-        context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('f5xc-remote', provider));
+        context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('xcsh-remote', provider));
 
         // Show diff
         await vscode.commands.executeCommand('vscode.diff', remoteUri, localUri, `${name} (Remote ↔ Local)`);
@@ -765,7 +765,7 @@ export function registerCrudCommands(
 
   // COPY NAME - Copy resource name to clipboard
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.copyName', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.copyName', async (node: ResourceNode) => {
       const data = node.getData();
       await vscode.env.clipboard.writeText(data.name);
       showInfo(vscode.l10n.t('Copied: {0}', data.name));
@@ -774,7 +774,7 @@ export function registerCrudCommands(
 
   // COPY AS JSON - Copy resource JSON to clipboard
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.copyAsJson', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.copyAsJson', async (node: ResourceNode) => {
       await withErrorHandling(async () => {
         const data = node.getData();
         const client = await contextManager.getClient(data.profileName);
@@ -795,7 +795,7 @@ export function registerCrudCommands(
 
   // OPEN IN BROWSER - Open resource in F5 XC console
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.openInBrowser', async (node: ResourceNode) => {
+    vscode.commands.registerCommand('xcsh.openInBrowser', async (node: ResourceNode) => {
       const data = node.getData();
       const profile = await contextManager.getContext(data.profileName);
 
@@ -814,8 +814,8 @@ export function registerCrudCommands(
 
   // TOGGLE VIEW MODE - Switch between console and full API views
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.toggleViewMode', async () => {
-      const config = vscode.workspace.getConfiguration('f5xc');
+    vscode.commands.registerCommand('xcsh.toggleViewMode', async () => {
+      const config = vscode.workspace.getConfiguration('xcsh');
       const currentMode = config.get<ViewMode>('viewMode', 'console');
       const newMode: ViewMode = currentMode === 'console' ? 'full' : 'console';
 

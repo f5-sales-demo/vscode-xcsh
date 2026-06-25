@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as https from 'node:https';
-import { F5XCApiError } from '../utils/errors';
+import { XCSHApiError } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 import type { AuthProvider } from './auth';
 import { API_ENDPOINTS, type ApiBase, type ResourceTypeInfo } from './resourceTypes';
@@ -151,7 +151,7 @@ export interface Site extends Resource<SiteSpec> {
 /**
  * F5 Distributed Cloud API Client
  */
-export class F5XCClient {
+export class XCSHClient {
   private readonly baseUrl: string;
   private readonly authProvider: AuthProvider;
   private readonly logger = getLogger();
@@ -573,7 +573,7 @@ export class F5XCClient {
       this.logger.error(`Authentication failed (401) for ${method} ${fullPath} [${authContext}]`);
     }
 
-    throw new F5XCApiError(response.statusCode, response.body, fullPath);
+    throw new XCSHApiError(response.statusCode, response.body, fullPath);
   }
 
   /**

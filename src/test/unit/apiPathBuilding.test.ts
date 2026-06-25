@@ -1,24 +1,24 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 /**
- * Unit tests for API path construction via F5XCClient.buildListOptions.
+ * Unit tests for API path construction via XCSHClient.buildListOptions.
  *
  * buildListOptions is a static helper that converts a ResourceTypeInfo
  * into the ListOptions used by listWithOptions(). These tests verify
  * every resource type in the registry produces valid, non-throwing output.
  */
 
-import { F5XCClient } from '../../api/client';
+import { XCSHClient } from '../../api/client';
 import { RESOURCE_TYPES } from '../../api/resourceTypes';
 
-describe('API path building — F5XCClient.buildListOptions', () => {
+describe('API path building — XCSHClient.buildListOptions', () => {
   it('returns apiBase "config" for http_loadbalancer (default)', () => {
     const info = RESOURCE_TYPES.http_loadbalancer;
     expect(info).toBeDefined();
     if (!info) {
       return;
     }
-    const opts = F5XCClient.buildListOptions(info);
+    const opts = XCSHClient.buildListOptions(info);
     expect(opts.apiBase === undefined || opts.apiBase === 'config').toBe(true);
   });
 
@@ -26,20 +26,20 @@ describe('API path building — F5XCClient.buildListOptions', () => {
     // Find a resource that has a serviceSegment (if any)
     const withSegment = Object.values(RESOURCE_TYPES).find((r) => r.serviceSegment);
     if (withSegment) {
-      const opts = F5XCClient.buildListOptions(withSegment);
+      const opts = XCSHClient.buildListOptions(withSegment);
       expect(opts.serviceSegment).toBe(withSegment.serviceSegment);
     }
   });
 
   it('does NOT throw for any resource type in RESOURCE_TYPES', () => {
     for (const [_key, info] of Object.entries(RESOURCE_TYPES)) {
-      expect(() => F5XCClient.buildListOptions(info)).not.toThrow();
+      expect(() => XCSHClient.buildListOptions(info)).not.toThrow();
     }
   });
 
   it('all resource types resolve to a non-empty apiBase or default (config)', () => {
     for (const [_key, info] of Object.entries(RESOURCE_TYPES)) {
-      const opts = F5XCClient.buildListOptions(info);
+      const opts = XCSHClient.buildListOptions(info);
       // apiBase is either undefined (→ default "config") or a non-empty string
       if (opts.apiBase !== undefined) {
         expect(typeof opts.apiBase).toBe('string');
@@ -70,7 +70,7 @@ describe('API path building — F5XCClient.buildListOptions', () => {
   it('preserves customListPath when present', () => {
     const withCustom = Object.values(RESOURCE_TYPES).find((r) => r.customListPath);
     if (withCustom) {
-      const opts = F5XCClient.buildListOptions(withCustom);
+      const opts = XCSHClient.buildListOptions(withCustom);
       expect(opts.customListPath).toBe(withCustom.customListPath);
     }
   });
@@ -78,7 +78,7 @@ describe('API path building — F5XCClient.buildListOptions', () => {
   it('preserves listMethod when present', () => {
     const withMethod = Object.values(RESOURCE_TYPES).find((r) => r.listMethod);
     if (withMethod) {
-      const opts = F5XCClient.buildListOptions(withMethod);
+      const opts = XCSHClient.buildListOptions(withMethod);
       expect(opts.listMethod).toBe(withMethod.listMethod);
     }
   });
@@ -89,7 +89,7 @@ describe('API path building — F5XCClient.buildListOptions', () => {
     if (!info) {
       return;
     }
-    const opts = F5XCClient.buildListOptions(info, 'env=prod');
+    const opts = XCSHClient.buildListOptions(info, 'env=prod');
     expect(opts.labelFilter).toBe('env=prod');
   });
 });

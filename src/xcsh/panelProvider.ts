@@ -9,8 +9,8 @@ import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './types';
 
 export class XcshPanelProvider implements vscode.WebviewViewProvider {
-  static readonly viewType = 'f5xc.xcshPanel';
-  static readonly viewTypeSecondary = 'f5xc.xcshPanelSecondary';
+  static readonly viewType = 'xcsh.xcshPanel';
+  static readonly viewTypeSecondary = 'xcsh.xcshPanelSecondary';
 
   private readonly logger = getLogger();
   private readonly disposables: vscode.Disposable[] = [];

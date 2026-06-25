@@ -283,7 +283,7 @@
   "No active editor": "アクティブなエディターがありません",
   "Invalid JSON in editor": "エディター内の JSON が無効です",
   "Resource must have metadata.namespace and metadata.name": "リソースには metadata.namespace と metadata.name が必要です",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "リソースタイプを特定できませんでした。命名規則を使用してください: *.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "リソースタイプを特定できませんでした。命名規則を使用してください: *.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\nそれでも続行しますか？",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "名前空間 \"{3}\" の {0} {1} \"{2}\" を実行しますか？",
   "Updating {0}...": "{0} を更新中...",

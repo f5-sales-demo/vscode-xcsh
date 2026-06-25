@@ -5,13 +5,13 @@
  */
 
 import * as vscode from 'vscode';
-import { type F5XCTreeItem, TreeItemContext } from './treeTypes';
+import { TreeItemContext, type XCSHTreeItem } from './treeTypes';
 
 /**
  * Top-level Subscription group node
  * Contains Plan and Quotas sub-nodes
  */
-export class SubscriptionGroupNode implements F5XCTreeItem {
+export class SubscriptionGroupNode implements XCSHTreeItem {
   constructor(private readonly profileName: string) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -22,7 +22,7 @@ export class SubscriptionGroupNode implements F5XCTreeItem {
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCSHTreeItem[]> {
     return Promise.resolve([new PlanNode(this.profileName), new QuotasNode(this.profileName)]);
   }
 }
@@ -31,7 +31,7 @@ export class SubscriptionGroupNode implements F5XCTreeItem {
  * Plan node - displays current subscription tier and addons
  * Opens Plan dashboard webview on click
  */
-export class PlanNode implements F5XCTreeItem {
+export class PlanNode implements XCSHTreeItem {
   constructor(private readonly profileName: string) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -40,14 +40,14 @@ export class PlanNode implements F5XCTreeItem {
     item.iconPath = new vscode.ThemeIcon('file-text');
     item.tooltip = vscode.l10n.t('View subscription plan details and addon services');
     item.command = {
-      command: 'f5xc.showPlan',
+      command: 'xcsh.showPlan',
       title: 'Show Subscription Plan',
       arguments: [this.profileName],
     };
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCSHTreeItem[]> {
     // Leaf node - no children
     return Promise.resolve([]);
   }
@@ -61,7 +61,7 @@ export class PlanNode implements F5XCTreeItem {
  * Quotas node - displays resource usage vs limits
  * Opens Quotas dashboard webview on click
  */
-export class QuotasNode implements F5XCTreeItem {
+export class QuotasNode implements XCSHTreeItem {
   constructor(private readonly profileName: string) {}
 
   getTreeItem(): vscode.TreeItem {
@@ -70,14 +70,14 @@ export class QuotasNode implements F5XCTreeItem {
     item.iconPath = new vscode.ThemeIcon('graph');
     item.tooltip = vscode.l10n.t('View resource quota usage and limits');
     item.command = {
-      command: 'f5xc.showQuotas',
+      command: 'xcsh.showQuotas',
       title: 'Show Quota Usage',
       arguments: [this.profileName],
     };
     return item;
   }
 
-  getChildren(): Promise<F5XCTreeItem[]> {
+  getChildren(): Promise<XCSHTreeItem[]> {
     // Leaf node - no children
     return Promise.resolve([]);
   }

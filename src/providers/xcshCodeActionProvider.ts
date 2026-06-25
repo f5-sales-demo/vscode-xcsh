@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 
-export class F5XCCodeActionProvider implements vscode.CodeActionProvider {
+export class XCSHCodeActionProvider implements vscode.CodeActionProvider {
   static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
 
   provideCodeActions(

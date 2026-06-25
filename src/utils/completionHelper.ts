@@ -53,15 +53,15 @@ export interface PropertyInfo {
  * Detect resource type from document URI or filename.
  *
  * Supports patterns:
- * - f5xc://profile/namespace/resourceType/resourceName.json
+ * - xcsh://profile/namespace/resourceType/resourceName.json
  * - file:///path/to/file.resourceType.json
  * - file:///path/to/resourceType.json
  */
 export function detectResourceType(document: vscode.TextDocument): string | undefined {
   const uri = document.uri;
 
-  // Check f5xc:// scheme
-  if (uri.scheme === 'f5xc') {
+  // Check xcsh:// scheme
+  if (uri.scheme === 'xcsh') {
     const parts = uri.path.split('/').filter((p) => p.length > 0);
     if (parts.length >= 2) {
       return parts[1];
@@ -536,12 +536,12 @@ export function generateObjectTemplate(
 /**
  * Check if a document is an F5 XC JSON file
  */
-export function isF5XCJsonFile(document: vscode.TextDocument): boolean {
+export function isXCSHJsonFile(document: vscode.TextDocument): boolean {
   if (document.languageId !== 'json') {
     return false;
   }
 
-  if (document.uri.scheme === 'f5xc') {
+  if (document.uri.scheme === 'xcsh') {
     return true;
   }
 

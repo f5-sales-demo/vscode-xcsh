@@ -17,7 +17,7 @@ const logger = getLogger();
  * Provides intelligent completions for F5 XC JSON files.
  * Shows full object templates with tab stops for easy navigation.
  */
-export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
+export class XCSHCompletionProvider implements vscode.CompletionItemProvider {
   /**
    * Provide completion items for the current position
    */
@@ -34,8 +34,8 @@ export class F5XCCompletionProvider implements vscode.CompletionItemProvider {
     });
 
     // Check if this is an F5 XC JSON file
-    const isF5XCFile = CompletionHelper.isF5XCJsonFile(document);
-    if (!isF5XCFile) {
+    const isXCSHFile = CompletionHelper.isXCSHJsonFile(document);
+    if (!isXCSHFile) {
       return undefined;
     }
 

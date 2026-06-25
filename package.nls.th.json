@@ -30,7 +30,7 @@
   "view.cloudStatus.name": "สถานะคลาวด์",
   "view.cloudStatus.contextualTitle": "สถานะคลาวด์ xcsh",
 
-  "viewsWelcome.explorer": "ไม่มีบริบท xcsh ที่กำหนดค่า\n[เพิ่มบริบท](command:f5xc.addContext)\nเรียนรู้เพิ่มเติมเกี่ยวกับ [F5 Distributed Cloud](https://www.f5.com/cloud)",
+  "viewsWelcome.explorer": "ไม่มีบริบท xcsh ที่กำหนดค่า\n[เพิ่มบริบท](command:xcsh.addContext)\nเรียนรู้เพิ่มเติมเกี่ยวกับ [F5 Distributed Cloud](https://www.f5.com/cloud)",
 
   "command.addContext.title": "xcsh: เพิ่มบริบท",
   "command.editContext.title": "xcsh: แก้ไขบริบท",

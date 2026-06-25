@@ -57,7 +57,7 @@ export async function activateXcsh(
   contextManager: ContextManagerInterface,
 ): Promise<void> {
   const logger = getLogger();
-  const config = vscode.workspace.getConfiguration('f5xc');
+  const config = vscode.workspace.getConfiguration('xcsh');
 
   // Check if xcsh is enabled
   if (!config.get<boolean>('xcsh.enabled', true)) {
@@ -73,7 +73,7 @@ export async function activateXcsh(
   const minor = versionParts[1] ?? 0;
   const supportsSecondarySidebar = major > 1 || (major === 1 && minor >= 106);
   if (!supportsSecondarySidebar) {
-    void vscode.commands.executeCommand('setContext', 'f5xc:doesNotSupportSecondarySidebar', true);
+    void vscode.commands.executeCommand('setContext', 'xcsh:doesNotSupportSecondarySidebar', true);
   }
 
   const getWorkspaceCwd = (): string | undefined => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -89,13 +89,13 @@ export async function activateXcsh(
       const ctx = resolved.context;
       const tenant = deriveTenantFromUrl(ctx.apiUrl);
       const env: Record<string, string> = {
-        F5XC_API_URL: ctx.apiUrl,
-        F5XC_API_TOKEN: ctx.apiToken,
-        F5XC_NAMESPACE: ctx.defaultNamespace,
-        F5XC_CONTEXT_NAME: ctx.name,
+        XCSH_API_URL: ctx.apiUrl,
+        XCSH_API_TOKEN: ctx.apiToken,
+        XCSH_NAMESPACE: ctx.defaultNamespace,
+        XCSH_CONTEXT_NAME: ctx.name,
       };
       if (tenant) {
-        env.F5XC_TENANT = tenant;
+        env.XCSH_TENANT = tenant;
       }
       processManager.setEnvVars(env);
     }
@@ -195,13 +195,13 @@ export async function activateXcsh(
     vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewTypeSecondary, panelProvider),
   );
 
-  const focusPanelCommand = supportsSecondarySidebar ? 'f5xc.xcshPanelSecondary.focus' : 'f5xc.xcshPanel.focus';
+  const focusPanelCommand = supportsSecondarySidebar ? 'xcsh.xcshPanelSecondary.focus' : 'xcsh.xcshPanel.focus';
 
   extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.xcsh.openPanel', () => {
-      const panelMode = vscode.workspace.getConfiguration('f5xc').get<string>('xcsh.panelMode', 'webview');
+    vscode.commands.registerCommand('xcsh.xcsh.openPanel', () => {
+      const panelMode = vscode.workspace.getConfiguration('xcsh').get<string>('xcsh.panelMode', 'webview');
       if (panelMode === 'terminal') {
-        void vscode.commands.executeCommand('f5xc.xcsh.openTerminal');
+        void vscode.commands.executeCommand('xcsh.xcsh.openTerminal');
       } else {
         void vscode.commands.executeCommand(focusPanelCommand);
       }
@@ -209,7 +209,7 @@ export async function activateXcsh(
   );
 
   extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.xcsh.newSession', () => {
+    vscode.commands.registerCommand('xcsh.xcsh.newSession', () => {
       void vscode.commands.executeCommand(focusPanelCommand);
     }),
   );
@@ -220,7 +220,7 @@ export async function activateXcsh(
 
   // Register restart command
   extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.xcsh.restart', async () => {
+    vscode.commands.registerCommand('xcsh.xcsh.restart', async () => {
       await setEnvFromContext();
       processManager.setCwd(getWorkspaceCwd());
       processManager.restart();

@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type * as vscode from 'vscode';
-import type { F5XCClient } from '../api/client';
+import type { XCSHClient } from '../api/client';
 
-export interface F5XCContext {
+export interface XCSHContext {
   name: string;
   apiUrl: string;
   apiToken: string;
@@ -34,9 +34,9 @@ export type TokenHealth = 'ok' | 'expiring' | 'expired';
 export type AuthStatus = 'connected' | 'auth_error' | 'offline' | 'unknown';
 
 export interface ContextManagerInterface {
-  getActiveContext(): Promise<F5XCContext | null>;
-  getContexts(): Promise<F5XCContext[]>;
-  getClient(contextName: string): Promise<F5XCClient>;
+  getActiveContext(): Promise<XCSHContext | null>;
+  getContexts(): Promise<XCSHContext[]>;
+  getClient(contextName: string): Promise<XCSHClient>;
   onDidChangeContext: vscode.Event<void>;
 }
 

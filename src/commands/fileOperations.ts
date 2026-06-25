@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { ResourceService } from '../services/resourceService';
-import type { F5XCExplorerProvider } from '../tree/f5xcExplorer';
+import type { XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showWarning, withErrorHandling } from '../utils/errors';
 import { getLogger } from '../utils/logger';
 import { getManifestKind, isXCManifest } from '../utils/manifestDetector';
@@ -94,13 +94,13 @@ async function getActiveContextName(contextManager: ContextManager): Promise<str
 
 export function registerFileOperationCommands(
   context: vscode.ExtensionContext,
-  explorer: F5XCExplorerProvider,
+  explorer: XCSHExplorerProvider,
   contextManager: ContextManager,
 ): void {
   const resourceService = new ResourceService(contextManager);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.fileApply', async (arg: unknown) => {
+    vscode.commands.registerCommand('xcsh.fileApply', async (arg: unknown) => {
       await withErrorHandling(async () => {
         const doc = await getDocumentContent(arg);
         if (!doc) {
@@ -158,7 +158,7 @@ export function registerFileOperationCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.fileCreate', async (arg: unknown) => {
+    vscode.commands.registerCommand('xcsh.fileCreate', async (arg: unknown) => {
       await withErrorHandling(async () => {
         const doc = await getDocumentContent(arg);
         if (!doc) {
@@ -213,7 +213,7 @@ export function registerFileOperationCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.fileDiff', async (arg: unknown) => {
+    vscode.commands.registerCommand('xcsh.fileDiff', async (arg: unknown) => {
       await withErrorHandling(async () => {
         const doc = await getDocumentContent(arg);
         if (!doc) {
@@ -278,7 +278,7 @@ export function registerFileOperationCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.fileDelete', async (arg: unknown) => {
+    vscode.commands.registerCommand('xcsh.fileDelete', async (arg: unknown) => {
       await withErrorHandling(async () => {
         const doc = await getDocumentContent(arg);
         if (!doc) {

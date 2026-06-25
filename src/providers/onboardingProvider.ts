@@ -27,7 +27,7 @@ export class OnboardingProvider {
     }
 
     this.panel = vscode.window.createWebviewPanel(
-      'f5xcOnboarding',
+      'xcshOnboarding',
       vscode.l10n.t('xcsh Platform Readiness'),
       vscode.ViewColumn.One,
       {
@@ -60,7 +60,7 @@ export class OnboardingProvider {
           }
           break;
         case 'addContext':
-          void vscode.commands.executeCommand('f5xc.addContext');
+          void vscode.commands.executeCommand('xcsh.addContext');
           break;
       }
     });
@@ -200,7 +200,7 @@ export class OnboardingProvider {
       return '';
     }
 
-    if (def.id === 'f5xc' && status.state === 'unauthenticated') {
+    if (def.id === 'xcsh' && status.state === 'unauthenticated') {
       return `<div class="card-action">
         <code>${vscode.l10n.t('Add F5 XC Context')}</code>
         <button class="btn-run" data-action="addContext">${vscode.l10n.t('Configure')}</button>

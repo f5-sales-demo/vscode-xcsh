@@ -3,7 +3,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
-import type { F5XCContext } from '../../config/contextTypes';
+import type { XCSHContext } from '../../config/contextTypes';
 
 // We will import ContextManager after setting XDG_CONFIG_HOME in beforeEach
 let ContextManager: typeof import('../../config/contextManager').ContextManager;
@@ -16,8 +16,8 @@ describe('ContextManager', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'f5xc-ctx-test-'));
-    configDir = path.join(tmpDir, 'f5xc');
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xcsh-ctx-test-'));
+    configDir = path.join(tmpDir, 'xcsh');
     contextsDir = path.join(configDir, 'contexts');
     process.env = { ...originalEnv, XDG_CONFIG_HOME: tmpDir };
 
@@ -37,7 +37,7 @@ describe('ContextManager', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  function makeContext(overrides: Partial<F5XCContext> = {}): F5XCContext {
+  function makeContext(overrides: Partial<XCSHContext> = {}): XCSHContext {
     return {
       name: 'test-ctx',
       apiUrl: 'https://test.console.ves.volterra.io',
@@ -177,7 +177,7 @@ describe('ContextManager', () => {
     await mgr.addContext(makeContext({ name: 'bravo' }));
 
     const list = await mgr.getContexts();
-    expect(list.map((c: F5XCContext) => c.name)).toEqual(['alpha', 'bravo', 'charlie']);
+    expect(list.map((c: XCSHContext) => c.name)).toEqual(['alpha', 'bravo', 'charlie']);
     mgr.dispose();
   });
 
@@ -243,7 +243,7 @@ describe('ContextManager', () => {
   // --------------- getClient ---------------
 
   it('getClient returns the same cached instance on repeated calls', async () => {
-    // TokenAuthProvider and F5XCClient constructors do not make network calls,
+    // TokenAuthProvider and XCSHClient constructors do not make network calls,
     // so no https stubbing is needed — only getClient caching behaviour is tested.
     const mgr = new ContextManager();
     await mgr.addContext(makeContext({ name: 'test-ctx' }));

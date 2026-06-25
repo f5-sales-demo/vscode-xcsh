@@ -18,7 +18,7 @@ describe('Schema Generator', () => {
 
       expect(schema).not.toBeNull();
       expect(schema?.$schema).toBe('http://json-schema.org/draft-07/schema#');
-      expect(schema?.$id).toBe('f5xc-schema://schemas/http_loadbalancer.json');
+      expect(schema?.$id).toBe('xcsh-schema://schemas/http_loadbalancer.json');
       expect(schema?.title).toContain('xcsh');
       expect(schema?.type).toBe('object');
     });
@@ -95,7 +95,7 @@ describe('Schema Generator', () => {
       const schema = generateSchemaForResourceType('origin_pool');
 
       expect(schema).not.toBeNull();
-      expect(schema?.$id).toBe('f5xc-schema://schemas/origin_pool.json');
+      expect(schema?.$id).toBe('xcsh-schema://schemas/origin_pool.json');
       expect(schema?.properties.metadata).toBeDefined();
       expect(schema?.properties.spec).toBeDefined();
     });
@@ -104,7 +104,7 @@ describe('Schema Generator', () => {
       const schema = generateSchemaForResourceType('app_firewall');
 
       expect(schema).not.toBeNull();
-      expect(schema?.$id).toBe('f5xc-schema://schemas/app_firewall.json');
+      expect(schema?.$id).toBe('xcsh-schema://schemas/app_firewall.json');
     });
 
     it('should handle resource types without field metadata', () => {
@@ -126,7 +126,7 @@ describe('Schema Generator', () => {
       const schema = generateGenericSchema();
 
       expect(schema.$schema).toBe('http://json-schema.org/draft-07/schema#');
-      expect(schema.$id).toBe('f5xc-schema://schemas/generic.json');
+      expect(schema.$id).toBe('xcsh-schema://schemas/generic.json');
       expect(schema.title).toBe('xcsh Resource');
       expect(schema.type).toBe('object');
     });
@@ -225,7 +225,7 @@ describe('Schema Generator', () => {
 
         // Validate required JSON Schema properties
         expect(schema?.$schema).toBe('http://json-schema.org/draft-07/schema#');
-        expect(schema?.$id).toMatch(/^f5xc-schema:\/\/schemas\/[a-z_]+\.json$/);
+        expect(schema?.$id).toMatch(/^xcsh-schema:\/\/schemas\/[a-z_]+\.json$/);
         expect(schema?.type).toBe('object');
         expect(schema?.properties).toBeDefined();
         expect(typeof schema?.properties).toBe('object');

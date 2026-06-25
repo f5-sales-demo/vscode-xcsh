@@ -15,8 +15,8 @@ describe('contextMigration', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'f5xc-migration-test-'));
-    configDir = path.join(tmpDir, 'f5xc');
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xcsh-migration-test-'));
+    configDir = path.join(tmpDir, 'xcsh');
     profilesDir = path.join(configDir, 'profiles');
     contextsDir = path.join(configDir, 'contexts');
     process.env = { ...originalEnv, XDG_CONFIG_HOME: tmpDir };

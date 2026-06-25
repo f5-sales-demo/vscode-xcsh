@@ -30,7 +30,7 @@
   "view.cloudStatus.name": "클라우드 상태",
   "view.cloudStatus.contextualTitle": "xcsh 클라우드 상태",
 
-  "viewsWelcome.explorer": "xcsh 컨텍스트가 구성되지 않았습니다.\n[컨텍스트 추가](command:f5xc.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud)에 대해 자세히 알아보세요.",
+  "viewsWelcome.explorer": "xcsh 컨텍스트가 구성되지 않았습니다.\n[컨텍스트 추가](command:xcsh.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud)에 대해 자세히 알아보세요.",
 
   "command.addContext.title": "xcsh: 컨텍스트 추가",
   "command.editContext.title": "xcsh: 컨텍스트 편집",

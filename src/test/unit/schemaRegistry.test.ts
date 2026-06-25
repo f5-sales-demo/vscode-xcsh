@@ -58,13 +58,13 @@ describe('Schema Registry', () => {
     it('should return URI for resource type', () => {
       const uri = registry.getSchemaUri('http_loadbalancer');
 
-      expect(uri.toString()).toBe('f5xc-schema://schemas/http_loadbalancer.json');
+      expect(uri.toString()).toBe('xcsh-schema://schemas/http_loadbalancer.json');
     });
 
     it('should return URI for any resource type string', () => {
       const uri = registry.getSchemaUri('custom_type');
 
-      expect(uri.toString()).toBe('f5xc-schema://schemas/custom_type.json');
+      expect(uri.toString()).toBe('xcsh-schema://schemas/custom_type.json');
     });
   });
 
@@ -72,7 +72,7 @@ describe('Schema Registry', () => {
     it('should return generic schema URI', () => {
       const uri = registry.getGenericSchemaUri();
 
-      expect(uri.toString()).toBe('f5xc-schema://schemas/generic.json');
+      expect(uri.toString()).toBe('xcsh-schema://schemas/generic.json');
     });
   });
 

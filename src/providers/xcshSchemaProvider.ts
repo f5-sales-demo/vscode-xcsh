@@ -2,7 +2,7 @@
 
 /**
  * Schema Provider for F5 XC resource types.
- * Provides JSON Schemas via the f5xc-schema:// URI scheme for VSCode's JSON IntelliSense.
+ * Provides JSON Schemas via the xcsh-schema:// URI scheme for VSCode's JSON IntelliSense.
  */
 
 import * as vscode from 'vscode';
@@ -15,13 +15,13 @@ const logger = getLogger();
  * TextDocumentContentProvider for F5 XC JSON Schemas.
  * Enables VSCode's JSON language service to fetch schemas for IntelliSense.
  *
- * URI format: f5xc-schema://schemas/{resourceType}.json
+ * URI format: xcsh-schema://schemas/{resourceType}.json
  * Examples:
- *   - f5xc-schema://schemas/http_loadbalancer.json
- *   - f5xc-schema://schemas/origin_pool.json
- *   - f5xc-schema://schemas/generic.json
+ *   - xcsh-schema://schemas/http_loadbalancer.json
+ *   - xcsh-schema://schemas/origin_pool.json
+ *   - xcsh-schema://schemas/generic.json
  */
-export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
+export class XCSHSchemaProvider implements vscode.TextDocumentContentProvider {
   private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
   readonly onDidChange = this._onDidChange.event;
 
@@ -31,9 +31,9 @@ export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
    */
   provideTextDocumentContent(uri: vscode.Uri): string {
     // Parse the URI to extract resource type
-    // URI format: f5xc-schema://schemas/{resourceType}.json
+    // URI format: xcsh-schema://schemas/{resourceType}.json
     // VSCode parses this as:
-    //   - scheme: "f5xc-schema"
+    //   - scheme: "xcsh-schema"
     //   - authority: "schemas"
     //   - path: "/{resourceType}.json"
 
@@ -85,7 +85,7 @@ export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
    * Notify that a schema has changed (e.g., after regeneration).
    */
   notifySchemaChanged(resourceType: string): void {
-    const uri = vscode.Uri.parse(`f5xc-schema://schemas/${resourceType}.json`);
+    const uri = vscode.Uri.parse(`xcsh-schema://schemas/${resourceType}.json`);
     this._onDidChange.fire(uri);
     logger.debug(`Schema change notified for: ${resourceType}`);
   }
@@ -104,7 +104,7 @@ export class F5XCSchemaProvider implements vscode.TextDocumentContentProvider {
 }
 
 /**
- * Configure JSON schema associations for the f5xc:// file system.
+ * Configure JSON schema associations for the xcsh:// file system.
  * This function sets up VSCode's JSON language service to use our schemas.
  */
 export function configureJsonSchemaAssociations(): void {
@@ -114,7 +114,7 @@ export function configureJsonSchemaAssociations(): void {
   // Get existing schema associations
   const existingSchemas = jsonConfig.get<Record<string, string | string[]>>('schemas') || {};
 
-  // Build schema associations for f5xc:// URIs
+  // Build schema associations for xcsh:// URIs
   const registry = getSchemaRegistry();
   const resourceTypes = registry.getAvailableResourceTypes();
 
@@ -122,9 +122,9 @@ export function configureJsonSchemaAssociations(): void {
   const schemaAssociations: Record<string, string[]> = { ...existingSchemas } as Record<string, string[]>;
 
   for (const resourceType of resourceTypes) {
-    const schemaUri = `f5xc-schema://schemas/${resourceType}.json`;
-    // Match pattern: f5xc://*/{namespace}/{resourceType}/*.json
-    const fileMatch = `f5xc://*/*/${resourceType}/*.json`;
+    const schemaUri = `xcsh-schema://schemas/${resourceType}.json`;
+    // Match pattern: xcsh://*/{namespace}/{resourceType}/*.json
+    const fileMatch = `xcsh://*/*/${resourceType}/*.json`;
 
     if (!schemaAssociations[schemaUri]) {
       schemaAssociations[schemaUri] = [];
@@ -135,9 +135,9 @@ export function configureJsonSchemaAssociations(): void {
   }
 
   // Add generic schema for unrecognized resource types
-  const genericSchemaUri = 'f5xc-schema://schemas/generic.json';
+  const genericSchemaUri = 'xcsh-schema://schemas/generic.json';
   if (!schemaAssociations[genericSchemaUri]) {
-    schemaAssociations[genericSchemaUri] = ['f5xc://**/*.json'];
+    schemaAssociations[genericSchemaUri] = ['xcsh://**/*.json'];
   }
 
   // Note: VSCode's json.schemas setting is workspace-specific and read-only
@@ -146,18 +146,18 @@ export function configureJsonSchemaAssociations(): void {
 }
 
 /**
- * Get the schema URI for a specific f5xc:// document URI.
+ * Get the schema URI for a specific xcsh:// document URI.
  * Extracts the resource type from the document URI and returns the schema URI.
  *
- * @param documentUri - The f5xc:// URI of the document
- * @returns The f5xc-schema:// URI for the schema, or null if not applicable
+ * @param documentUri - The xcsh:// URI of the document
+ * @returns The xcsh-schema:// URI for the schema, or null if not applicable
  */
 export function getSchemaUriForDocument(documentUri: vscode.Uri): vscode.Uri | null {
-  if (documentUri.scheme !== 'f5xc') {
+  if (documentUri.scheme !== 'xcsh') {
     return null;
   }
 
-  // Parse the URI: f5xc://profile/namespace/resourceType/resourceName.json
+  // Parse the URI: xcsh://profile/namespace/resourceType/resourceName.json
   const parts = documentUri.path.split('/').filter((p) => p.length > 0);
 
   if (parts.length < 3) {
@@ -173,9 +173,9 @@ export function getSchemaUriForDocument(documentUri: vscode.Uri): vscode.Uri | n
 
   const registry = getSchemaRegistry();
   if (registry.hasSchema(resourceType)) {
-    return vscode.Uri.parse(`f5xc-schema://schemas/${resourceType}.json`);
+    return vscode.Uri.parse(`xcsh-schema://schemas/${resourceType}.json`);
   }
 
   // Fall back to generic schema
-  return vscode.Uri.parse('f5xc-schema://schemas/generic.json');
+  return vscode.Uri.parse('xcsh-schema://schemas/generic.json');
 }

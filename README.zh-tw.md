@@ -1,16 +1,16 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/) |
-[日本語](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ja/) |
-[한국어](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ko/) |
-[简体中文](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/zh-cn/) |
+🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) |
+[日本語](https://f5xc-salesdemos.github.io/vscode-xcsh/ja/) |
+[한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) |
+[简体中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-cn/) |
 **繁體中文** |
-[Español](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/es/) |
-[Português](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/pt-br/) |
-[Français](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/it/) |
-[العربية](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/ar/) |
-[हिन्दी](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/hi/) |
-[ไทย](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/th/)
+[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
+[Português](https://f5xc-salesdemos.github.io/vscode-xcsh/pt-br/) |
+[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
+[العربية](https://f5xc-salesdemos.github.io/vscode-xcsh/ar/) |
+[हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/) |
+[ไทย](https://f5xc-salesdemos.github.io/vscode-xcsh/th/)
 
 # VS Code 擴充功能
 
@@ -54,7 +54,7 @@ Code 擴充功能
 ## 文件
 
 完整文件請參閱
-**[https://f5xc-salesdemos.github.io/vscode-f5xc-tools/](https://f5xc-salesdemos.github.io/vscode-f5xc-tools/)**。
+**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**。
 
 ## 貢獻
 

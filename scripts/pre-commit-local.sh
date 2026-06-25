@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Repository-specific pre-commit hooks for vscode-f5xc-tools
+# Repository-specific pre-commit hooks for vscode-xcsh
 # Called by the universal .pre-commit-config.yaml local-hooks entry
 set -euo pipefail
 

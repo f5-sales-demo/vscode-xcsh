@@ -79,7 +79,7 @@ const mockResourceService = {
 
 import { registerExportCommands } from '../../commands/exportResource';
 import type { ContextManager } from '../../config/contextManager';
-import type { F5XCExplorerProvider } from '../../tree/f5xcExplorer';
+import type { XCSHExplorerProvider } from '../../tree/xcshExplorer';
 
 describe('registerExportCommands', () => {
   let registeredCommands: Map<string, (...args: unknown[]) => Promise<void>>;
@@ -96,23 +96,23 @@ describe('registerExportCommands', () => {
       subscriptions: { push: jest.fn() },
     } as unknown as import('vscode').ExtensionContext;
 
-    const explorer = {} as F5XCExplorerProvider;
+    const explorer = {} as XCSHExplorerProvider;
     const contextManager = {} as ContextManager;
 
     registerExportCommands(context, explorer, contextManager);
   });
 
   it('registers all four export commands', () => {
-    expect(registeredCommands.has('f5xc.exportJson')).toBe(true);
-    expect(registeredCommands.has('f5xc.exportYaml')).toBe(true);
-    expect(registeredCommands.has('f5xc.exportAllJson')).toBe(true);
-    expect(registeredCommands.has('f5xc.exportAllYaml')).toBe(true);
+    expect(registeredCommands.has('xcsh.exportJson')).toBe(true);
+    expect(registeredCommands.has('xcsh.exportYaml')).toBe(true);
+    expect(registeredCommands.has('xcsh.exportAllJson')).toBe(true);
+    expect(registeredCommands.has('xcsh.exportAllYaml')).toBe(true);
   });
 
-  describe('f5xc.exportJson', () => {
+  describe('xcsh.exportJson', () => {
     it('warns when argument is not a resource node', async () => {
       const { showWarning } = require('../../utils/errors');
-      const handler = registeredCommands.get('f5xc.exportJson')!;
+      const handler = registeredCommands.get('xcsh.exportJson')!;
       await handler('not a node');
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('Select a resource'));
@@ -137,7 +137,7 @@ describe('registerExportCommands', () => {
         }),
       };
 
-      const handler = registeredCommands.get('f5xc.exportJson')!;
+      const handler = registeredCommands.get('xcsh.exportJson')!;
       await handler(node);
 
       expect(mockWriteFile).toHaveBeenCalled();
@@ -158,7 +158,7 @@ describe('registerExportCommands', () => {
         }),
       };
 
-      const handler = registeredCommands.get('f5xc.exportJson')!;
+      const handler = registeredCommands.get('xcsh.exportJson')!;
       await handler(node);
 
       expect(mockShowWarningMessage).toHaveBeenCalledWith(
@@ -170,10 +170,10 @@ describe('registerExportCommands', () => {
     });
   });
 
-  describe('f5xc.exportAllJson', () => {
+  describe('xcsh.exportAllJson', () => {
     it('warns when argument is not a resource type node', async () => {
       const { showWarning } = require('../../utils/errors');
-      const handler = registeredCommands.get('f5xc.exportAllJson')!;
+      const handler = registeredCommands.get('xcsh.exportAllJson')!;
       await handler('not a node');
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('Select a resource type'));
@@ -195,7 +195,7 @@ describe('registerExportCommands', () => {
         }),
       };
 
-      const handler = registeredCommands.get('f5xc.exportAllJson')!;
+      const handler = registeredCommands.get('xcsh.exportAllJson')!;
       await handler(node);
 
       expect(mockWriteFile).toHaveBeenCalled();

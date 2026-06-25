@@ -43,7 +43,7 @@ import * as path from 'node:path';
 
 describe('Agent Skills validation', () => {
   const skillsDir = path.resolve(__dirname, '../../../skills');
-  const expectedSkills = ['f5xc-resource-management', 'f5xc-troubleshooting', 'f5xc-configuration-authoring'];
+  const expectedSkills = ['xcsh-resource-management', 'xcsh-troubleshooting', 'xcsh-configuration-authoring'];
 
   for (const skillName of expectedSkills) {
     it(`${skillName}/SKILL.md exists and has valid frontmatter`, () => {
@@ -67,7 +67,7 @@ describe('Agent Skills validation', () => {
   }
 
   it('resource-management has example files', () => {
-    const examplesDir = path.join(skillsDir, 'f5xc-resource-management', 'examples');
+    const examplesDir = path.join(skillsDir, 'xcsh-resource-management', 'examples');
     expect(fs.existsSync(path.join(examplesDir, 'http-load-balancer.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(examplesDir, 'origin-pool.yaml'))).toBe(true);
     expect(fs.existsSync(path.join(examplesDir, 'health-check.yaml'))).toBe(true);

@@ -1,5 +1,5 @@
 ---
-name: f5xc-resource-management
+name: xcsh-resource-management
 description:
   Guide for creating, updating, listing, and deleting xcsh resources including
   HTTP load balancers, origin pools, health checks, WAF policies, and service

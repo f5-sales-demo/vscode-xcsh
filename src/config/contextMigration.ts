@@ -22,8 +22,8 @@ export interface MigrationResult {
 }
 
 /**
- * One-time migration: converts old profile files (~/.config/f5xc/profiles/)
- * to the new context format (~/.config/f5xc/contexts/).
+ * One-time migration: converts old profile files (~/.config/xcsh/profiles/)
+ * to the new context format (~/.config/xcsh/contexts/).
  *
  * Rules:
  *  - If the contexts dir already contains .json files → skip (xcsh is configured).

@@ -211,13 +211,13 @@ class ComponentNode implements CloudStatusTreeItem {
     // Use PoP-specific command for Regional Edge PoPs
     if (isPoPResult) {
       item.command = {
-        command: 'f5xc.cloudStatus.viewPoP',
+        command: 'xcsh.cloudStatus.viewPoP',
         title: 'View PoP Details',
         arguments: [this.component],
       };
     } else {
       item.command = {
-        command: 'f5xc.cloudStatus.viewComponent',
+        command: 'xcsh.cloudStatus.viewComponent',
         title: 'View Component Details',
         arguments: [this.component],
       };
@@ -279,7 +279,7 @@ class IncidentNode implements CloudStatusTreeItem {
 
     item.tooltip = new vscode.MarkdownString(tooltipContent);
     item.command = {
-      command: 'f5xc.cloudStatus.viewIncident',
+      command: 'xcsh.cloudStatus.viewIncident',
       title: 'View Incident Details',
       arguments: [this.incident],
     };
@@ -336,7 +336,7 @@ class MaintenanceNode implements CloudStatusTreeItem {
 
     item.tooltip = new vscode.MarkdownString(tooltipContent);
     item.command = {
-      command: 'f5xc.cloudStatus.viewMaintenance',
+      command: 'xcsh.cloudStatus.viewMaintenance',
       title: 'View Maintenance Details',
       arguments: [this.maintenance],
     };
@@ -361,7 +361,7 @@ class ErrorNode implements CloudStatusTreeItem {
     item.description = vscode.l10n.t('Click to retry');
     item.tooltip = this.message;
     item.command = {
-      command: 'f5xc.cloudStatus.refresh',
+      command: 'xcsh.cloudStatus.refresh',
       title: 'Retry',
     };
     return item;

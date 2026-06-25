@@ -4,33 +4,33 @@
  * Live CRUD integration tests for F5 Distributed Cloud.
  *
  * These tests exercise the full create/read/update/delete lifecycle
- * against the real F5 XC API using F5XCClient directly.
+ * against the real F5 XC API using XCSHClient directly.
  *
  * Required env vars:
- *   F5XC_API_URL  — e.g. https://tenant.console.ves.volterra.io
- *   F5XC_API_TOKEN — a valid API token
+ *   XCSH_API_URL  — e.g. https://tenant.console.ves.volterra.io
+ *   XCSH_API_TOKEN — a valid API token
  *
  * When the env vars are absent the file is excluded via jest.config.js
  * testMatch gating, so the suite is never discovered.
  */
 
 import { TokenAuthProvider } from '../../api/auth/tokenAuth';
-import { F5XCClient, type Resource } from '../../api/client';
-import { F5XCApiError } from '../../utils/errors';
+import { type Resource, XCSHClient } from '../../api/client';
+import { XCSHApiError } from '../../utils/errors';
 
-const API_URL = process.env.F5XC_API_URL ?? '';
-const API_TOKEN = process.env.F5XC_API_TOKEN ?? '';
+const API_URL = process.env.XCSH_API_URL ?? '';
+const API_TOKEN = process.env.XCSH_API_TOKEN ?? '';
 const NAMESPACE = 'default';
 const PREFIX = `test-sp3-${Date.now()}`;
 
 // Track created resources for cleanup
 const createdResources: Array<{ apiPath: string; name: string }> = [];
 
-let client: F5XCClient;
+let client: XCSHClient;
 
 beforeAll(() => {
   const auth = new TokenAuthProvider({ apiUrl: API_URL, apiToken: API_TOKEN });
-  client = new F5XCClient(API_URL, auth);
+  client = new XCSHClient(API_URL, auth);
 });
 
 afterAll(async () => {
@@ -119,14 +119,14 @@ describe('Healthcheck CRUD lifecycle', () => {
     }
   }, 30000);
 
-  it('get deleted healthcheck — expect F5XCApiError with isNotFound', async () => {
+  it('get deleted healthcheck — expect XCSHApiError with isNotFound', async () => {
     try {
       await client.get(NAMESPACE, apiPath, hcName);
       // Should not reach here
-      fail('Expected F5XCApiError to be thrown');
+      fail('Expected XCSHApiError to be thrown');
     } catch (error) {
-      expect(error).toBeInstanceOf(F5XCApiError);
-      expect((error as F5XCApiError).isNotFound).toBe(true);
+      expect(error).toBeInstanceOf(XCSHApiError);
+      expect((error as XCSHApiError).isNotFound).toBe(true);
     }
   }, 30000);
 });
@@ -182,13 +182,13 @@ describe('Origin pool CRUD lifecycle', () => {
 // Error handling
 // ---------------------------------------------------------------------------
 describe('Error handling', () => {
-  it('get nonexistent resource — F5XCApiError with isNotFound', async () => {
+  it('get nonexistent resource — XCSHApiError with isNotFound', async () => {
     try {
       await client.get(NAMESPACE, 'healthchecks', `${PREFIX}-does-not-exist`);
-      fail('Expected F5XCApiError to be thrown');
+      fail('Expected XCSHApiError to be thrown');
     } catch (error) {
-      expect(error).toBeInstanceOf(F5XCApiError);
-      expect((error as F5XCApiError).isNotFound).toBe(true);
+      expect(error).toBeInstanceOf(XCSHApiError);
+      expect((error as XCSHApiError).isNotFound).toBe(true);
     }
   }, 30000);
 
@@ -216,10 +216,10 @@ describe('Error handling', () => {
     // Attempt to create a duplicate
     try {
       await client.create(NAMESPACE, apiPath, body);
-      fail('Expected F5XCApiError to be thrown for duplicate creation');
+      fail('Expected XCSHApiError to be thrown for duplicate creation');
     } catch (error) {
-      expect(error).toBeInstanceOf(F5XCApiError);
-      const apiError = error as F5XCApiError;
+      expect(error).toBeInstanceOf(XCSHApiError);
+      const apiError = error as XCSHApiError;
       expect(apiError.statusCode).toBeGreaterThanOrEqual(400);
       expect(apiError.statusCode).toBeLessThan(500);
     }

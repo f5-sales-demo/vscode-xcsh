@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { ResourceService } from '../services/resourceService';
-import type { F5XCExplorerProvider, ResourceNode } from '../tree/f5xcExplorer';
 import type { ResourceTypeNodeData } from '../tree/treeTypes';
+import type { ResourceNode, XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showWarning, withErrorHandling } from '../utils/errors';
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
@@ -157,13 +157,13 @@ async function exportAllResources(
 
 export function registerExportCommands(
   context: vscode.ExtensionContext,
-  _explorer: F5XCExplorerProvider,
+  _explorer: XCSHExplorerProvider,
   contextManager: ContextManager,
 ): void {
   const resourceService = new ResourceService(contextManager);
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.exportJson', async (node: unknown) => {
+    vscode.commands.registerCommand('xcsh.exportJson', async (node: unknown) => {
       await withErrorHandling(async () => {
         if (!isResourceNode(node)) {
           showWarning(vscode.l10n.t('Select a resource in the explorer to export'));
@@ -175,7 +175,7 @@ export function registerExportCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.exportYaml', async (node: unknown) => {
+    vscode.commands.registerCommand('xcsh.exportYaml', async (node: unknown) => {
       await withErrorHandling(async () => {
         if (!isResourceNode(node)) {
           showWarning(vscode.l10n.t('Select a resource in the explorer to export'));
@@ -187,7 +187,7 @@ export function registerExportCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.exportAllJson', async (node: unknown) => {
+    vscode.commands.registerCommand('xcsh.exportAllJson', async (node: unknown) => {
       await withErrorHandling(async () => {
         if (!isResourceTypeNode(node)) {
           showWarning(vscode.l10n.t('Select a resource type in the explorer to export all'));
@@ -199,7 +199,7 @@ export function registerExportCommands(
   );
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('f5xc.exportAllYaml', async (node: unknown) => {
+    vscode.commands.registerCommand('xcsh.exportAllYaml', async (node: unknown) => {
       await withErrorHandling(async () => {
         if (!isResourceTypeNode(node)) {
           showWarning(vscode.l10n.t('Select a resource type in the explorer to export all'));

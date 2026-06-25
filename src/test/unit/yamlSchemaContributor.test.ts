@@ -40,7 +40,7 @@ describe('yamlSchemaContributor', () => {
 
     await registerYamlSchemaContributor(mockContext);
 
-    expect(mockRegister).toHaveBeenCalledWith('f5xc', expect.any(Function), expect.any(Function));
+    expect(mockRegister).toHaveBeenCalledWith('xcsh', expect.any(Function), expect.any(Function));
   });
 
   it('handles YAML extension without registerContributor API', async () => {

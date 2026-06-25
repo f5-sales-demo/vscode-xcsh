@@ -2,7 +2,7 @@
   "name": "xcsh",
   "displayName": "xcsh",
   "description": "Agentic Platform Shell",
-  "version": "2.2606.242241",
+  "version": "2.2606.230957",
   "publisher": "f5xc-salesdemos",
   "license": "Apache-2.0",
   "repository": {
@@ -10,7 +10,7 @@
     "url": "https://github.com/f5xc-salesdemos/vscode-f5xc-tools"
   },
   "engines": {
-    "vscode": "^1.125.0"
+    "vscode": "^1.120.0"
   },
   "categories": [
     "Other"
@@ -18,7 +18,7 @@
   "keywords": [
     "f5",
     "distributed cloud",
-    "f5xc",
+    "xcsh",
     "xc",
     "kubernetes",
     "load balancer",
@@ -39,7 +39,7 @@
     "configuration": {
       "title": "%config.title%",
       "properties": {
-        "f5xc.logLevel": {
+        "xcsh.logLevel": {
           "type": "string",
           "enum": [
             "debug",
@@ -50,17 +50,17 @@
           "default": "info",
           "description": "%config.logLevel.description%"
         },
-        "f5xc.defaultNamespace": {
+        "xcsh.defaultNamespace": {
           "type": "string",
           "default": "default",
           "description": "%config.defaultNamespace.description%"
         },
-        "f5xc.confirmDelete": {
+        "xcsh.confirmDelete": {
           "type": "boolean",
           "default": true,
           "description": "%config.confirmDelete.description%"
         },
-        "f5xc.deleteConfirmationLevel": {
+        "xcsh.deleteConfirmationLevel": {
           "type": "string",
           "enum": [
             "always",
@@ -75,12 +75,12 @@
           ],
           "description": "%config.deleteConfirmationLevel.description%"
         },
-        "f5xc.autoRefreshInterval": {
+        "xcsh.autoRefreshInterval": {
           "type": "number",
           "default": 0,
           "description": "%config.autoRefreshInterval.description%"
         },
-        "f5xc.viewMode": {
+        "xcsh.viewMode": {
           "type": "string",
           "enum": [
             "console",
@@ -89,42 +89,42 @@
           "default": "console",
           "description": "%config.viewMode.description%"
         },
-        "f5xc.showPreviewApis": {
+        "xcsh.showPreviewApis": {
           "type": "boolean",
           "default": true,
           "description": "%config.showPreviewApis.description%"
         },
-        "f5xc.xcsh.enabled": {
+        "xcsh.xcsh.enabled": {
           "type": "boolean",
           "default": true,
           "description": "%config.xcsh.enabled.description%"
         },
-        "f5xc.xcsh.path": {
+        "xcsh.xcsh.path": {
           "type": "string",
           "default": "",
           "description": "%config.xcsh.path.description%"
         },
-        "f5xc.xcsh.chatParticipantEnabled": {
+        "xcsh.xcsh.chatParticipantEnabled": {
           "type": "boolean",
           "default": true,
           "description": "%config.xcsh.chatParticipant.description%"
         },
-        "f5xc.xcsh.languageModelEnabled": {
+        "xcsh.xcsh.languageModelEnabled": {
           "type": "boolean",
           "default": true,
           "description": "%config.xcsh.languageModel.description%"
         },
-        "f5xc.xcsh.autoStart": {
+        "xcsh.xcsh.autoStart": {
           "type": "boolean",
           "default": true,
           "description": "%config.xcsh.autoStart.description%"
         },
-        "f5xc.xcsh.defaultModel": {
+        "xcsh.xcsh.defaultModel": {
           "type": "string",
           "default": "",
           "description": "%config.xcsh.defaultModel.description%"
         },
-        "f5xc.xcsh.thinkingLevel": {
+        "xcsh.xcsh.thinkingLevel": {
           "type": "string",
           "enum": [
             "off",
@@ -137,7 +137,7 @@
           "default": "medium",
           "description": "%config.xcsh.thinkingLevel.description%"
         },
-        "f5xc.xcsh.panelMode": {
+        "xcsh.xcsh.panelMode": {
           "type": "string",
           "enum": [
             "webview",
@@ -155,7 +155,7 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "f5xc-explorer",
+          "id": "xcsh-explorer",
           "title": "xcsh",
           "icon": "resources/f5-activitybar.svg"
         },
@@ -163,7 +163,7 @@
           "id": "xcsh-panel",
           "title": "xcsh",
           "icon": "resources/f5-activitybar.svg",
-          "when": "f5xc:doesNotSupportSecondarySidebar"
+          "when": "xcsh:doesNotSupportSecondarySidebar"
         }
       ],
       "secondarySidebar": [
@@ -171,46 +171,46 @@
           "id": "xcsh-panel-secondary",
           "title": "xcsh",
           "icon": "resources/f5-activitybar.svg",
-          "when": "!f5xc:doesNotSupportSecondarySidebar"
+          "when": "!xcsh:doesNotSupportSecondarySidebar"
         }
       ]
     },
     "views": {
       "xcsh-panel": [
         {
-          "id": "f5xc.xcshPanel",
+          "id": "xcsh.xcshPanel",
           "name": "xcsh",
           "type": "webview",
-          "when": "f5xc:doesNotSupportSecondarySidebar"
+          "when": "xcsh:doesNotSupportSecondarySidebar"
         }
       ],
       "xcsh-panel-secondary": [
         {
-          "id": "f5xc.xcshPanelSecondary",
+          "id": "xcsh.xcshPanelSecondary",
           "name": "xcsh",
           "type": "webview",
-          "when": "!f5xc:doesNotSupportSecondarySidebar"
+          "when": "!xcsh:doesNotSupportSecondarySidebar"
         }
       ],
-      "f5xc-explorer": [
+      "xcsh-explorer": [
         {
-          "id": "f5xc.profiles",
+          "id": "xcsh.profiles",
           "name": "%view.profiles.name%",
           "contextualTitle": "%view.profiles.contextualTitle%"
         },
         {
-          "id": "f5xc.subscription",
+          "id": "xcsh.subscription",
           "name": "%view.subscription.name%",
           "contextualTitle": "%view.subscription.contextualTitle%",
-          "when": "f5xc.hasActiveContext"
+          "when": "xcsh.hasActiveContext"
         },
         {
-          "id": "f5xc.explorer",
+          "id": "xcsh.explorer",
           "name": "%view.explorer.name%",
           "contextualTitle": "%view.explorer.contextualTitle%"
         },
         {
-          "id": "f5xc.cloudStatus",
+          "id": "xcsh.cloudStatus",
           "name": "%view.cloudStatus.name%",
           "contextualTitle": "%view.cloudStatus.contextualTitle%"
         }
@@ -218,508 +218,545 @@
     },
     "viewsWelcome": [
       {
-        "view": "f5xc.explorer",
+        "view": "xcsh.explorer",
         "contents": "%viewsWelcome.explorer%",
-        "when": "!f5xc.hasActiveContext"
+        "when": "!xcsh.hasActiveContext"
       }
     ],
     "commands": [
       {
-        "command": "f5xc.addContext",
+        "command": "xcsh.addContext",
         "title": "%command.addContext.title%",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
-        "command": "f5xc.editContext",
+        "command": "xcsh.editContext",
         "title": "%command.editContext.title%",
+        "category": "xcsh",
         "icon": "$(edit)"
       },
       {
-        "command": "f5xc.deleteContext",
+        "command": "xcsh.deleteContext",
         "title": "%command.deleteContext.title%",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
-        "command": "f5xc.setActiveContext",
+        "command": "xcsh.setActiveContext",
         "title": "%command.setActiveContext.title%",
+        "category": "xcsh",
         "icon": "$(check)"
       },
       {
-        "command": "f5xc.linkGlobalContext",
-        "title": "xcsh: Link Global Context to Project",
-        "icon": "$(link)"
-      },
-      {
-        "command": "f5xc.unlinkLocalContext",
-        "title": "xcsh: Unlink Local Context",
-        "icon": "$(unlink)"
-      },
-      {
-        "command": "f5xc.clearAuthCache",
+        "command": "xcsh.clearAuthCache",
         "title": "%command.clearAuthCache.title%",
+        "category": "xcsh",
         "icon": "$(clear-all)"
       },
       {
-        "command": "f5xc.refresh",
+        "command": "xcsh.refresh",
         "title": "%command.refresh.title%",
+        "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
-        "command": "f5xc.create",
+        "command": "xcsh.create",
         "title": "%command.create.title%",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
-        "command": "f5xc.get",
+        "command": "xcsh.get",
         "title": "%command.get.title%",
+        "category": "xcsh",
         "icon": "$(eye)"
       },
       {
-        "command": "f5xc.describe",
+        "command": "xcsh.describe",
         "title": "%command.describe.title%",
+        "category": "xcsh",
         "icon": "$(info)"
       },
       {
-        "command": "f5xc.edit",
+        "command": "xcsh.edit",
         "title": "%command.edit.title%",
+        "category": "xcsh",
         "icon": "$(edit)"
       },
       {
-        "command": "f5xc.delete",
+        "command": "xcsh.delete",
         "title": "%command.delete.title%",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
-        "command": "f5xc.deleteNamespace",
+        "command": "xcsh.deleteNamespace",
         "title": "%command.deleteNamespace.title%",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
-        "command": "f5xc.describeNamespace",
+        "command": "xcsh.describeNamespace",
         "title": "%command.describeNamespace.title%",
+        "category": "xcsh",
         "icon": "$(info)"
       },
       {
-        "command": "f5xc.apply",
+        "command": "xcsh.apply",
         "title": "%command.apply.title%",
+        "category": "xcsh",
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "f5xc.diff",
+        "command": "xcsh.diff",
         "title": "%command.diff.title%",
+        "category": "xcsh",
         "icon": "$(diff)"
       },
       {
-        "command": "f5xc.copyName",
-        "title": "%command.copyName.title%"
+        "command": "xcsh.copyName",
+        "title": "%command.copyName.title%",
+        "category": "xcsh"
       },
       {
-        "command": "f5xc.copyAsJson",
-        "title": "%command.copyAsJson.title%"
+        "command": "xcsh.copyAsJson",
+        "title": "%command.copyAsJson.title%",
+        "category": "xcsh"
       },
       {
-        "command": "f5xc.viewLogs",
+        "command": "xcsh.viewLogs",
         "title": "%command.viewLogs.title%",
+        "category": "xcsh",
         "icon": "$(output)"
       },
       {
-        "command": "f5xc.viewMetrics",
+        "command": "xcsh.viewMetrics",
         "title": "%command.viewMetrics.title%",
+        "category": "xcsh",
         "icon": "$(graph)"
       },
       {
-        "command": "f5xc.diagram",
+        "command": "xcsh.diagram",
         "title": "%command.diagram.title%",
+        "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
-        "command": "f5xc.createFromTemplate",
+        "command": "xcsh.createFromTemplate",
         "title": "%command.createFromTemplate.title%",
+        "category": "xcsh",
         "icon": "$(file-add)"
       },
       {
-        "command": "f5xc.openInBrowser",
+        "command": "xcsh.openInBrowser",
         "title": "%command.openInBrowser.title%",
+        "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
-        "command": "f5xc.exportJson",
+        "command": "xcsh.exportJson",
         "title": "%command.exportJson.title%",
+        "category": "xcsh",
         "icon": "$(file-code)"
       },
       {
-        "command": "f5xc.exportYaml",
+        "command": "xcsh.exportYaml",
         "title": "%command.exportYaml.title%",
+        "category": "xcsh",
         "icon": "$(file-code)"
       },
       {
-        "command": "f5xc.exportAllJson",
+        "command": "xcsh.exportAllJson",
         "title": "%command.exportAllJson.title%",
+        "category": "xcsh",
         "icon": "$(files)"
       },
       {
-        "command": "f5xc.exportAllYaml",
+        "command": "xcsh.exportAllYaml",
         "title": "%command.exportAllYaml.title%",
+        "category": "xcsh",
         "icon": "$(files)"
       },
       {
-        "command": "f5xc.fileApply",
+        "command": "xcsh.fileApply",
         "title": "%command.fileApply.title%",
+        "category": "xcsh",
         "icon": "$(cloud-upload)"
       },
       {
-        "command": "f5xc.fileCreate",
+        "command": "xcsh.fileCreate",
         "title": "%command.fileCreate.title%",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
-        "command": "f5xc.fileDiff",
+        "command": "xcsh.fileDiff",
         "title": "%command.fileDiff.title%",
+        "category": "xcsh",
         "icon": "$(diff)"
       },
       {
-        "command": "f5xc.fileDelete",
+        "command": "xcsh.fileDelete",
         "title": "%command.fileDelete.title%",
+        "category": "xcsh",
         "icon": "$(trash)"
       },
       {
-        "command": "f5xc.toggleViewMode",
+        "command": "xcsh.toggleViewMode",
         "title": "%command.toggleViewMode.title%",
+        "category": "xcsh",
         "icon": "$(symbol-structure)"
       },
       {
-        "command": "f5xc.cloudStatus.refresh",
+        "command": "xcsh.cloudStatus.refresh",
         "title": "%command.cloudStatus.refresh.title%",
+        "category": "xcsh",
         "icon": "$(refresh)"
       },
       {
-        "command": "f5xc.cloudStatus.openDashboard",
+        "command": "xcsh.cloudStatus.openDashboard",
         "title": "%command.cloudStatus.openDashboard.title%",
+        "category": "xcsh",
         "icon": "$(dashboard)"
       },
       {
-        "command": "f5xc.showOnboarding",
+        "command": "xcsh.showOnboarding",
         "title": "%command.showOnboarding.title%",
+        "category": "xcsh",
         "icon": "$(checklist)"
       },
       {
-        "command": "f5xc.cloudStatus.openExternal",
+        "command": "xcsh.cloudStatus.openExternal",
         "title": "%command.cloudStatus.openExternal.title%",
+        "category": "xcsh",
         "icon": "$(link-external)"
       },
       {
-        "command": "f5xc.cloudStatus.viewMaintenance",
+        "command": "xcsh.cloudStatus.viewMaintenance",
         "title": "%command.cloudStatus.viewMaintenance.title%",
+        "category": "xcsh",
         "icon": "$(info)"
       },
       {
-        "command": "f5xc.cloudStatus.viewIncident",
+        "command": "xcsh.cloudStatus.viewIncident",
         "title": "%command.cloudStatus.viewIncident.title%",
+        "category": "xcsh",
         "icon": "$(warning)"
       },
       {
-        "command": "f5xc.cloudStatus.viewComponent",
+        "command": "xcsh.cloudStatus.viewComponent",
         "title": "%command.cloudStatus.viewComponent.title%",
+        "category": "xcsh",
         "icon": "$(server)"
       },
       {
-        "command": "f5xc.cloudStatus.viewPoP",
+        "command": "xcsh.cloudStatus.viewPoP",
         "title": "%command.cloudStatus.viewPoP.title%",
+        "category": "xcsh",
         "icon": "$(globe)"
       },
       {
-        "command": "f5xc.showPlan",
+        "command": "xcsh.showPlan",
         "title": "%command.showPlan.title%",
+        "category": "xcsh",
         "icon": "$(file-text)"
       },
       {
-        "command": "f5xc.showQuotas",
+        "command": "xcsh.showQuotas",
         "title": "%command.showQuotas.title%",
+        "category": "xcsh",
         "icon": "$(graph)"
       },
       {
-        "command": "f5xc.activateAddon",
+        "command": "xcsh.activateAddon",
         "title": "%command.activateAddon.title%",
+        "category": "xcsh",
         "icon": "$(rocket)"
       },
       {
-        "command": "f5xc.createHealthcheckForm",
+        "command": "xcsh.createHealthcheckForm",
         "title": "%command.createHealthcheckForm.title%",
+        "category": "xcsh",
         "icon": "$(add)"
       },
       {
-        "command": "f5xc.xcsh.openTerminal",
+        "command": "xcsh.xcsh.openTerminal",
         "title": "%command.xcsh.openTerminal.title%",
+        "category": "xcsh",
         "icon": "$(terminal)"
       },
       {
-        "command": "f5xc.xcsh.restart",
+        "command": "xcsh.xcsh.restart",
         "title": "%command.xcsh.restart.title%",
+        "category": "xcsh",
         "icon": "$(debug-restart)"
       },
       {
-        "command": "f5xc.xcsh.openPanel",
+        "command": "xcsh.xcsh.openPanel",
         "title": "%command.xcsh.openPanel.title%",
+        "category": "xcsh",
         "icon": "$(comment-discussion)"
       },
       {
-        "command": "f5xc.xcsh.newSession",
+        "command": "xcsh.xcsh.newSession",
         "title": "%command.xcsh.newSession.title%",
+        "category": "xcsh",
         "icon": "$(add)"
       }
     ],
     "menus": {
       "view/title": [
         {
-          "command": "f5xc.refresh",
-          "when": "view == f5xc.explorer",
+          "command": "xcsh.refresh",
+          "when": "view == xcsh.explorer",
           "group": "navigation@1"
         },
         {
-          "command": "f5xc.addContext",
-          "when": "view == f5xc.profiles",
+          "command": "xcsh.addContext",
+          "when": "view == xcsh.profiles",
           "group": "navigation"
         },
         {
-          "command": "f5xc.cloudStatus.refresh",
-          "when": "view == f5xc.cloudStatus",
+          "command": "xcsh.cloudStatus.refresh",
+          "when": "view == xcsh.cloudStatus",
           "group": "navigation@1"
         },
         {
-          "command": "f5xc.cloudStatus.openDashboard",
-          "when": "view == f5xc.cloudStatus",
+          "command": "xcsh.cloudStatus.openDashboard",
+          "when": "view == xcsh.cloudStatus",
           "group": "navigation@2"
         },
         {
-          "command": "f5xc.cloudStatus.openExternal",
-          "when": "view == f5xc.cloudStatus",
+          "command": "xcsh.cloudStatus.openExternal",
+          "when": "view == xcsh.cloudStatus",
           "group": "navigation@3"
         }
       ],
       "view/item/context": [
         {
-          "command": "f5xc.setActiveContext",
-          "when": "view == f5xc.profiles && viewItem == profile",
+          "command": "xcsh.setActiveContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
           "group": "inline"
         },
         {
-          "command": "f5xc.editContext",
-          "when": "view == f5xc.profiles && viewItem == profile",
+          "command": "xcsh.editContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
           "group": "1_profile@1"
         },
         {
-          "command": "f5xc.deleteContext",
-          "when": "view == f5xc.profiles && viewItem == profile",
+          "command": "xcsh.deleteContext",
+          "when": "view == xcsh.profiles && viewItem == profile",
           "group": "1_profile@2"
         },
         {
-          "command": "f5xc.refresh",
-          "when": "view == f5xc.explorer && viewItem =~ /namespace|category/",
+          "command": "xcsh.refresh",
+          "when": "view == xcsh.explorer && viewItem =~ /namespace|category/",
           "group": "inline"
         },
         {
-          "command": "f5xc.create",
-          "when": "view == f5xc.explorer && viewItem =~ /resourceType/ && viewItem != resourceType:healthcheck",
+          "command": "xcsh.create",
+          "when": "view == xcsh.explorer && viewItem =~ /resourceType/ && viewItem != resourceType:healthcheck",
           "group": "inline"
         },
         {
-          "command": "f5xc.createHealthcheckForm",
-          "when": "view == f5xc.explorer && viewItem == resourceType:healthcheck",
+          "command": "xcsh.createHealthcheckForm",
+          "when": "view == xcsh.explorer && viewItem == resourceType:healthcheck",
           "group": "inline"
         },
         {
-          "command": "f5xc.createHealthcheckForm",
-          "when": "view == f5xc.explorer && viewItem == resourceType:healthcheck",
+          "command": "xcsh.createHealthcheckForm",
+          "when": "view == xcsh.explorer && viewItem == resourceType:healthcheck",
           "group": "1_create@1"
         },
         {
-          "command": "f5xc.describe",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.describe",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "1_resource@1"
         },
         {
-          "command": "f5xc.get",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.get",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "1_resource@2"
         },
         {
-          "command": "f5xc.edit",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.edit",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "1_resource@3"
         },
         {
-          "command": "f5xc.delete",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.delete",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "1_resource@4"
         },
         {
-          "command": "f5xc.deleteNamespace",
-          "when": "view == f5xc.explorer && viewItem == namespace:custom",
+          "command": "xcsh.deleteNamespace",
+          "when": "view == xcsh.explorer && viewItem == namespace:custom",
           "group": "1_namespace@1"
         },
         {
-          "command": "f5xc.describeNamespace",
-          "when": "view == f5xc.explorer && viewItem =~ /namespace:/",
+          "command": "xcsh.describeNamespace",
+          "when": "view == xcsh.explorer && viewItem =~ /namespace:/",
           "group": "1_namespace@2"
         },
         {
-          "command": "f5xc.diff",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.diff",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "2_compare@1"
         },
         {
-          "command": "f5xc.copyName",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.copyName",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "3_copy@1"
         },
         {
-          "command": "f5xc.copyAsJson",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.copyAsJson",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "3_copy@2"
         },
         {
-          "command": "f5xc.viewLogs",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:http_loadbalancer|resource:tcp_loadbalancer/",
+          "command": "xcsh.viewLogs",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:http_loadbalancer|resource:tcp_loadbalancer/",
           "group": "4_observe@1"
         },
         {
-          "command": "f5xc.viewMetrics",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:http_loadbalancer|resource:tcp_loadbalancer|resource:origin_pool/",
+          "command": "xcsh.viewMetrics",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:http_loadbalancer|resource:tcp_loadbalancer|resource:origin_pool/",
           "group": "4_observe@2"
         },
         {
-          "command": "f5xc.diagram",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:http_loadbalancer/",
+          "command": "xcsh.diagram",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:http_loadbalancer/",
           "group": "4_observe@3"
         },
         {
-          "command": "f5xc.openInBrowser",
-          "when": "view == f5xc.explorer && viewItem =~ /resource:/",
+          "command": "xcsh.openInBrowser",
+          "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "5_external@1"
         },
         {
-          "command": "f5xc.exportJson",
-          "when": "view == f5xc.explorer && viewItem =~ /^resource:/",
+          "command": "xcsh.exportJson",
+          "when": "view == xcsh.explorer && viewItem =~ /^resource:/",
           "group": "6_export@1"
         },
         {
-          "command": "f5xc.exportYaml",
-          "when": "view == f5xc.explorer && viewItem =~ /^resource:/",
+          "command": "xcsh.exportYaml",
+          "when": "view == xcsh.explorer && viewItem =~ /^resource:/",
           "group": "6_export@2"
         },
         {
-          "command": "f5xc.exportAllJson",
-          "when": "view == f5xc.explorer && viewItem =~ /^resourceType:/",
+          "command": "xcsh.exportAllJson",
+          "when": "view == xcsh.explorer && viewItem =~ /^resourceType:/",
           "group": "6_export@1"
         },
         {
-          "command": "f5xc.exportAllYaml",
-          "when": "view == f5xc.explorer && viewItem =~ /^resourceType:/",
+          "command": "xcsh.exportAllYaml",
+          "when": "view == xcsh.explorer && viewItem =~ /^resourceType:/",
           "group": "6_export@2"
         },
         {
-          "command": "f5xc.showPlan",
-          "when": "view == f5xc.subscription && viewItem == subscriptionPlan",
+          "command": "xcsh.showPlan",
+          "when": "view == xcsh.subscription && viewItem == subscriptionPlan",
           "group": "inline"
         },
         {
-          "command": "f5xc.showQuotas",
-          "when": "view == f5xc.subscription && viewItem == subscriptionQuotas",
+          "command": "xcsh.showQuotas",
+          "when": "view == xcsh.subscription && viewItem == subscriptionQuotas",
           "group": "inline"
         }
       ],
       "explorer/context": [
         {
-          "command": "f5xc.fileApply",
+          "command": "xcsh.fileApply",
           "when": "resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml",
-          "group": "f5xc@1"
+          "group": "xcsh@1"
         },
         {
-          "command": "f5xc.fileCreate",
+          "command": "xcsh.fileCreate",
           "when": "resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml",
-          "group": "f5xc@2"
+          "group": "xcsh@2"
         },
         {
-          "command": "f5xc.fileDiff",
+          "command": "xcsh.fileDiff",
           "when": "resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml",
-          "group": "f5xc@3"
+          "group": "xcsh@3"
         },
         {
-          "command": "f5xc.fileDelete",
+          "command": "xcsh.fileDelete",
           "when": "resourceExtname == .json || resourceExtname == .yaml || resourceExtname == .yml",
-          "group": "f5xc@4"
+          "group": "xcsh@4"
         }
       ],
       "editor/title": [
         {
-          "command": "f5xc.apply",
-          "when": "resourceExtname == .f5xc.json || resourceFilename =~ /.*\\.(http_loadbalancer|origin_pool|app_firewall)\\.json$/",
+          "command": "xcsh.apply",
+          "when": "resourceExtname == .xcsh.json || resourceFilename =~ /.*\\.(http_loadbalancer|origin_pool|app_firewall)\\.json$/",
           "group": "navigation"
         },
         {
-          "command": "f5xc.diff",
-          "when": "resourceExtname == .f5xc.json || resourceFilename =~ /.*\\.(http_loadbalancer|origin_pool|app_firewall)\\.json$/",
+          "command": "xcsh.diff",
+          "when": "resourceExtname == .xcsh.json || resourceFilename =~ /.*\\.(http_loadbalancer|origin_pool|app_firewall)\\.json$/",
           "group": "navigation"
         },
         {
-          "command": "f5xc.fileApply",
-          "when": "f5xc.isManifestFile",
-          "group": "f5xc@1"
+          "command": "xcsh.fileApply",
+          "when": "xcsh.isManifestFile",
+          "group": "xcsh@1"
         },
         {
-          "command": "f5xc.fileDiff",
-          "when": "f5xc.isManifestFile",
-          "group": "f5xc@2"
+          "command": "xcsh.fileDiff",
+          "when": "xcsh.isManifestFile",
+          "group": "xcsh@2"
         }
       ],
       "commandPalette": [
         {
-          "command": "f5xc.setActiveContext",
+          "command": "xcsh.setActiveContext",
           "when": "false"
         },
         {
-          "command": "f5xc.copyName",
+          "command": "xcsh.copyName",
           "when": "false"
         },
         {
-          "command": "f5xc.copyAsJson",
+          "command": "xcsh.copyAsJson",
           "when": "false"
         },
         {
-          "command": "f5xc.fileApply",
+          "command": "xcsh.fileApply",
           "when": "false"
         },
         {
-          "command": "f5xc.fileCreate",
+          "command": "xcsh.fileCreate",
           "when": "false"
         },
         {
-          "command": "f5xc.fileDiff",
+          "command": "xcsh.fileDiff",
           "when": "false"
         },
         {
-          "command": "f5xc.fileDelete",
+          "command": "xcsh.fileDelete",
           "when": "false"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "f5xc.apply",
+        "command": "xcsh.apply",
         "key": "ctrl+shift+a",
         "mac": "cmd+shift+a",
         "when": "editorTextFocus && resourceExtname == .json"
       },
       {
-        "command": "f5xc.refresh",
+        "command": "xcsh.refresh",
         "key": "ctrl+shift+r",
         "mac": "cmd+shift+r",
-        "when": "view == f5xc.explorer"
+        "when": "view == xcsh.explorer"
       }
     ],
     "languageModelTools": [
       {
-        "name": "f5xc-readFile",
+        "name": "xcsh-readFile",
         "displayName": "%tool.readFile.displayName%",
         "modelDescription": "Read the contents of a file in the workspace. Use when you need to examine source code, configuration files, or any text file. Returns the full file content as text.",
         "userDescription": "%tool.readFile.userDescription%",
@@ -727,7 +764,7 @@
         "toolReferenceName": "readFile",
         "icon": "$(file)",
         "tags": [
-          "f5xc"
+          "xcsh"
         ],
         "inputSchema": {
           "type": "object",
@@ -743,7 +780,7 @@
         }
       },
       {
-        "name": "f5xc-getSelection",
+        "name": "xcsh-getSelection",
         "displayName": "%tool.getSelection.displayName%",
         "modelDescription": "Get the currently selected text in the active editor. Use when the user references 'this code' or 'selected text'. Returns empty string if no selection.",
         "userDescription": "%tool.getSelection.userDescription%",
@@ -751,7 +788,7 @@
         "toolReferenceName": "getSelection",
         "icon": "$(selection)",
         "tags": [
-          "f5xc"
+          "xcsh"
         ],
         "inputSchema": {
           "type": "object",
@@ -759,7 +796,7 @@
         }
       },
       {
-        "name": "f5xc-getDiagnostics",
+        "name": "xcsh-getDiagnostics",
         "displayName": "%tool.getDiagnostics.displayName%",
         "modelDescription": "Get compiler errors, warnings, and linter diagnostics for a specific file. Use when investigating build errors or code quality issues. Returns an array of diagnostics with severity, line number, message, and source.",
         "userDescription": "%tool.getDiagnostics.userDescription%",
@@ -767,7 +804,7 @@
         "toolReferenceName": "diagnostics",
         "icon": "$(warning)",
         "tags": [
-          "f5xc"
+          "xcsh"
         ],
         "inputSchema": {
           "type": "object",
@@ -783,7 +820,7 @@
         }
       },
       {
-        "name": "f5xc-openFile",
+        "name": "xcsh-openFile",
         "displayName": "%tool.openFile.displayName%",
         "modelDescription": "Open a file in the VS Code editor, optionally at a specific line number. Use when you want to show the user a specific file or location in the codebase.",
         "userDescription": "%tool.openFile.userDescription%",
@@ -791,7 +828,7 @@
         "toolReferenceName": "openFile",
         "icon": "$(go-to-file)",
         "tags": [
-          "f5xc"
+          "xcsh"
         ],
         "inputSchema": {
           "type": "object",
@@ -813,13 +850,13 @@
     ],
     "languageModelChatProviders": [
       {
-        "vendor": "f5xc",
+        "vendor": "xcsh",
         "displayName": "xcsh"
       }
     ],
     "chatParticipants": [
       {
-        "id": "f5xc.xcsh",
+        "id": "xcsh.chat",
         "name": "xcsh",
         "fullName": "xcsh",
         "description": "%chat.xcsh.description%",
@@ -840,7 +877,7 @@
         ],
         "disambiguation": [
           {
-            "category": "f5xc_networking",
+            "category": "xcsh_networking",
             "description": "%chat.xcsh.disambiguation.networking%",
             "examples": [
               "Create an HTTP load balancer",
@@ -849,7 +886,7 @@
             ]
           },
           {
-            "category": "f5xc_security",
+            "category": "xcsh_security",
             "description": "%chat.xcsh.disambiguation.security%",
             "examples": [
               "Configure a WAF policy for my app",
@@ -858,7 +895,7 @@
             ]
           },
           {
-            "category": "f5xc_infrastructure",
+            "category": "xcsh_infrastructure",
             "description": "%chat.xcsh.disambiguation.infrastructure%",
             "examples": [
               "Check site health for my AWS site",
@@ -871,19 +908,19 @@
     ],
     "chatSkills": [
       {
-        "path": "./skills/f5xc-resource-management/SKILL.md"
+        "path": "./skills/xcsh-resource-management/SKILL.md"
       },
       {
-        "path": "./skills/f5xc-troubleshooting/SKILL.md"
+        "path": "./skills/xcsh-troubleshooting/SKILL.md"
       },
       {
-        "path": "./skills/f5xc-configuration-authoring/SKILL.md"
+        "path": "./skills/xcsh-configuration-authoring/SKILL.md"
       }
     ],
     "terminal": {
       "profiles": [
         {
-          "id": "f5xc.xcsh.terminal",
+          "id": "xcsh.terminal",
           "title": "xcsh",
           "icon": "terminal"
         }
@@ -948,10 +985,10 @@
     ]
   },
   "dependencies": {
-    "@f5xc-salesdemos/pi-resource-management": "^19.38.1",
+    "@f5xc-salesdemos/pi-resource-management": "^19.37.0",
     "@vscode/l10n": "^0.0.18",
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.8",
     "marked": "^18.0.5",
     "node-forge": "^1.4.0",
     "react": "^19.2.7",
@@ -973,30 +1010,30 @@
     "@types/node-forge": "^1.3.11",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
-    "@types/vscode": "^1.125.0",
-    "@typescript-eslint/eslint-plugin": "^8.61.1",
-    "@typescript-eslint/parser": "^8.61.1",
-    "@vitejs/plugin-react": "^6.0.3",
+    "@types/vscode": "^1.120.0",
+    "@typescript-eslint/eslint-plugin": "^8.60.1",
+    "@typescript-eslint/parser": "^8.60.1",
+    "@vitejs/plugin-react": "^4.5.2",
     "@vscode/l10n-dev": "^0.0.35",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^3.0.0",
-    "eslint": "^10.5.0",
+    "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.0.1",
     "glob": "^13.0.6",
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
-    "lint-staged": "^17.0.8",
-    "markdownlint-cli": "^0.49.0",
-    "prettier": "^3.8.4",
+    "lint-staged": "^17.0.7",
+    "markdownlint-cli": "^0.48.0",
+    "prettier": "^3.8.3",
     "rimraf": "^6.1.3",
-    "semantic-release": "^25.0.5",
+    "semantic-release": "^25.0.3",
     "ts-jest": "^29.4.11",
-    "ts-loader": "^9.6.2",
+    "ts-loader": "^9.6.0",
     "typescript": "^5.3.3",
-    "typescript-eslint": "^8.61.1",
-    "vite": "^8.1.0",
+    "typescript-eslint": "^8.60.1",
+    "vite": "^6.3.5",
     "webpack": "^5.107.2",
     "webpack-cli": "^7.0.3"
   }

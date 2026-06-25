@@ -33,7 +33,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
     installCommand: 'brew install f5xc-salesdemos/tap/xcsh',
   },
   {
-    id: 'f5xc',
+    id: 'xcsh',
     name: 'F5 XC Context',
     category: 'platform',
     badge: { label: 'F5', color: '#e01f27' },
@@ -139,7 +139,7 @@ function findBinary(name: string): Promise<string | null> {
 }
 
 async function detectOne(def: IntegrationDef, contextManager: ContextManager): Promise<IntegrationStatus> {
-  if (def.id === 'f5xc') {
+  if (def.id === 'xcsh') {
     const ctx = await contextManager.getActiveContext();
     if (ctx) {
       return { id: def.id, state: 'connected' };

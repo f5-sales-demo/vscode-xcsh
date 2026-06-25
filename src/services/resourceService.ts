@@ -1,6 +1,6 @@
-import type { F5XCClient } from '../api/client';
+import type { XCSHClient } from '../api/client';
 import type { ContextManager } from '../config/contextManager';
-import { F5XCApiError } from '../utils/errors';
+import { XCSHApiError } from '../utils/errors';
 import { getKindResolver } from '../xcsh/specBridge';
 
 const piResourceManagement = require('@f5xc-salesdemos/pi-resource-management') as {
@@ -135,11 +135,11 @@ interface ResourceClientInstance {
   ): Promise<{ diff?: ResourceDiff; isNew: boolean; error?: { kind: string; message: string } }>;
 }
 
-class F5XCTransport implements HttpTransport {
-  readonly #client: F5XCClient;
+class XCSHTransport implements HttpTransport {
+  readonly #client: XCSHClient;
   readonly #baseUrl: string;
 
-  constructor(client: F5XCClient, baseUrl: string) {
+  constructor(client: XCSHClient, baseUrl: string) {
     this.#client = client;
     this.#baseUrl = baseUrl.replace(/\/$/, '');
   }
@@ -154,7 +154,7 @@ class F5XCTransport implements HttpTransport {
       });
       return { httpStatus: 200, body: result ?? {} };
     } catch (err) {
-      if (err instanceof F5XCApiError) {
+      if (err instanceof XCSHApiError) {
         let body: Record<string, unknown> | undefined;
         try {
           body = JSON.parse(err.body) as Record<string, unknown>;
@@ -207,7 +207,7 @@ export class ResourceService {
     }
 
     const client = await this.#contextManager.getClient(contextName);
-    const transport = new F5XCTransport(client, ctx.apiUrl);
+    const transport = new XCSHTransport(client, ctx.apiUrl);
 
     return new piResourceManagement.ResourceClient({
       apiUrl: ctx.apiUrl,

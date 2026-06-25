@@ -7,14 +7,14 @@ import { getLogger } from './logger';
 /**
  * Custom error class for F5 XC API errors
  */
-export class F5XCApiError extends Error {
+export class XCSHApiError extends Error {
   public readonly statusCode: number;
   public readonly body: string;
   public readonly resourcePath?: string;
 
   constructor(statusCode: number, body: string, resourcePath?: string) {
     super(`API Error ${statusCode}: ${body}`);
-    this.name = 'F5XCApiError';
+    this.name = 'XCSHApiError';
     this.statusCode = statusCode;
     this.body = body;
     this.resourcePath = resourcePath;
@@ -133,7 +133,7 @@ export async function withErrorHandling<T>(
   } catch (error) {
     logger.error(`${context} failed`, error as Error);
 
-    if (error instanceof F5XCApiError) {
+    if (error instanceof XCSHApiError) {
       // Try to get a smart error message if we have resource context
       let smartMessage: string | undefined;
       if (options?.resourceTypeKey && options?.operation) {
@@ -149,9 +149,9 @@ export async function withErrorHandling<T>(
           vscode.l10n.t('Clear Auth Cache'),
         );
         if (action === vscode.l10n.t('Configure Context')) {
-          await vscode.commands.executeCommand('f5xc.editContext');
+          await vscode.commands.executeCommand('xcsh.editContext');
         } else if (action === vscode.l10n.t('Clear Auth Cache')) {
-          await vscode.commands.executeCommand('f5xc.clearAuthCache');
+          await vscode.commands.executeCommand('xcsh.clearAuthCache');
         }
       } else if (error.isForbidden) {
         // 403 - Permission denied, show smart message if available
@@ -172,12 +172,12 @@ export async function withErrorHandling<T>(
     } else if (error instanceof ConfigurationError) {
       const action = await vscode.window.showErrorMessage(error.message, vscode.l10n.t('Open Settings'));
       if (action === vscode.l10n.t('Open Settings')) {
-        await vscode.commands.executeCommand('workbench.action.openSettings', 'f5xc');
+        await vscode.commands.executeCommand('workbench.action.openSettings', 'xcsh');
       }
     } else if (error instanceof AuthenticationError) {
       const action = await vscode.window.showErrorMessage(error.message, vscode.l10n.t('Configure Context'));
       if (action === vscode.l10n.t('Configure Context')) {
-        await vscode.commands.executeCommand('f5xc.addContext');
+        await vscode.commands.executeCommand('xcsh.addContext');
       }
     } else if (error instanceof Error) {
       void vscode.window.showErrorMessage(`${context}: ${error.message}`);

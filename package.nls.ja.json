@@ -30,7 +30,7 @@
   "view.cloudStatus.name": "クラウドステータス",
   "view.cloudStatus.contextualTitle": "xcsh クラウドステータス",
 
-  "viewsWelcome.explorer": "xcsh コンテキストが設定されていません。\n[コンテキストを追加](command:f5xc.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud) の詳細を見る。",
+  "viewsWelcome.explorer": "xcsh コンテキストが設定されていません。\n[コンテキストを追加](command:xcsh.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud) の詳細を見る。",
 
   "command.addContext.title": "xcsh: コンテキストを追加",
   "command.editContext.title": "xcsh: コンテキストを編集",

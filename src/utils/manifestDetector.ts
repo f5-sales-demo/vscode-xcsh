@@ -130,24 +130,24 @@ export class ManifestDetector implements vscode.Disposable {
 
   #updateContext(document: vscode.TextDocument | undefined): void {
     if (!document) {
-      void vscode.commands.executeCommand('setContext', 'f5xc.isManifestFile', false);
+      void vscode.commands.executeCommand('setContext', 'xcsh.isManifestFile', false);
       return;
     }
 
     const languageId = document.languageId;
     if (languageId !== 'json' && languageId !== 'jsonc' && languageId !== 'yaml') {
-      void vscode.commands.executeCommand('setContext', 'f5xc.isManifestFile', false);
+      void vscode.commands.executeCommand('setContext', 'xcsh.isManifestFile', false);
       return;
     }
 
     if (document.uri.scheme !== 'file' && document.uri.scheme !== 'untitled') {
-      void vscode.commands.executeCommand('setContext', 'f5xc.isManifestFile', false);
+      void vscode.commands.executeCommand('setContext', 'xcsh.isManifestFile', false);
       return;
     }
 
     const content = document.getText();
     const isManifest = isXCManifest(content);
-    void vscode.commands.executeCommand('setContext', 'f5xc.isManifestFile', isManifest);
+    void vscode.commands.executeCommand('setContext', 'xcsh.isManifestFile', isManifest);
 
     if (isManifest) {
       logger.debug(`Detected XC manifest: ${document.uri.fsPath}`);

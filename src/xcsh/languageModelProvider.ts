@@ -5,7 +5,7 @@ import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { RpcToolCall } from './types';
 
-const MODEL_ID = 'f5xc-xcsh';
+const MODEL_ID = 'xcsh';
 const MODEL_NAME = 'xcsh';
 
 interface SimpleChatMessage {
@@ -61,7 +61,7 @@ export function registerLanguageModelProvider(
   const modelInfo: vscode.LanguageModelChatInformation = {
     id: MODEL_ID,
     name: MODEL_NAME,
-    family: 'f5xc-xcsh',
+    family: 'xcsh',
     version: '1.0.0',
     maxInputTokens: 200_000,
     maxOutputTokens: 16_000,
@@ -153,7 +153,7 @@ export function registerLanguageModelProvider(
     },
   };
 
-  const disposable = vscode.lm.registerLanguageModelChatProvider('f5xc', provider);
+  const disposable = vscode.lm.registerLanguageModelChatProvider('xcsh', provider);
   extensionContext.subscriptions.push(disposable);
 
   logger.info(`Registered language model provider: ${MODEL_NAME}`);

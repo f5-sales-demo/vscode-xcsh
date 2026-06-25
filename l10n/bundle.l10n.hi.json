@@ -283,7 +283,7 @@
   "No active editor": "कोई सक्रिय संपादक नहीं",
   "Invalid JSON in editor": "संपादक में अमान्य JSON",
   "Resource must have metadata.namespace and metadata.name": "संसाधन में metadata.namespace और metadata.name होना चाहिए",
-  "Could not determine resource type. Use naming convention: *.{type}.f5xc.json": "संसाधन प्रकार निर्धारित नहीं हो सका। नामकरण परंपरा का उपयोग करें: *.{type}.f5xc.json",
+  "Could not determine resource type. Use naming convention: *.{type}.xcsh.json": "संसाधन प्रकार निर्धारित नहीं हो सका। नामकरण परंपरा का उपयोग करें: *.{type}.xcsh.json",
   "{0}\n\nDo you want to continue anyway?": "{0}\n\nक्या आप फिर भी जारी रखना चाहते हैं?",
   "{0} {1} \"{2}\" in namespace \"{3}\"?": "{0} {1} \"{2}\" नेमस्पेस \"{3}\" में?",
   "Updating {0}...": "{0} अपडेट हो रहा है...",

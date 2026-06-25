@@ -1,5 +1,5 @@
 ---
-name: f5xc-troubleshooting
+name: xcsh-troubleshooting
 description:
   Guide for diagnosing xcsh issues including site health, connectivity problems,
   WAF blocks, security events, and alert investigation. Use when the user

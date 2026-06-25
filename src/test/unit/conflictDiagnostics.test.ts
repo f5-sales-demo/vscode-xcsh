@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import { findConflicts } from '../../providers/f5xcConflictDiagnosticProvider';
+import { findConflicts } from '../../providers/xcshConflictDiagnosticProvider';
 
 describe('Conflict diagnostics', () => {
   describe('findConflicts', () => {

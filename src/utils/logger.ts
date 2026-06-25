@@ -12,7 +12,7 @@ export class Logger {
   }
 
   private getConfiguredLogLevel(): LogLevel {
-    const config = vscode.workspace.getConfiguration('f5xc');
+    const config = vscode.workspace.getConfiguration('xcsh');
     return config.get<LogLevel>('logLevel', 'info');
   }
 

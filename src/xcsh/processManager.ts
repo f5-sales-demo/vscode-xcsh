@@ -111,7 +111,7 @@ export class XcshProcessManager implements vscode.Disposable {
       return;
     }
 
-    const userPath = vscode.workspace.getConfiguration('f5xc').get<string>('xcsh.path');
+    const userPath = vscode.workspace.getConfiguration('xcsh').get<string>('xcsh.path');
     const binary = findXcshBinary(userPath);
 
     if (!binary) {

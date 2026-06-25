@@ -166,8 +166,8 @@ export class OpenFileTool implements vscode.LanguageModelTool<OpenFileInput> {
 // ───────── Registration ─────────
 
 export function registerLanguageModelTools(context: vscode.ExtensionContext): void {
-  context.subscriptions.push(vscode.lm.registerTool('f5xc-readFile', new ReadFileTool()));
-  context.subscriptions.push(vscode.lm.registerTool('f5xc-getSelection', new GetSelectionTool()));
-  context.subscriptions.push(vscode.lm.registerTool('f5xc-getDiagnostics', new GetDiagnosticsTool()));
-  context.subscriptions.push(vscode.lm.registerTool('f5xc-openFile', new OpenFileTool()));
+  context.subscriptions.push(vscode.lm.registerTool('xcsh-readFile', new ReadFileTool()));
+  context.subscriptions.push(vscode.lm.registerTool('xcsh-getSelection', new GetSelectionTool()));
+  context.subscriptions.push(vscode.lm.registerTool('xcsh-getDiagnostics', new GetDiagnosticsTool()));
+  context.subscriptions.push(vscode.lm.registerTool('xcsh-openFile', new OpenFileTool()));
 }

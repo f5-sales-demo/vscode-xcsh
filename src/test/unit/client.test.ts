@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import { F5XCClient, type ListOptions } from '../../api/client';
+import { type ListOptions, XCSHClient } from '../../api/client';
 import { ResourceCategory, type ResourceTypeInfo } from '../../api/resourceTypes';
 
-describe('F5XCClient', () => {
+describe('XCSHClient', () => {
   describe('buildListOptions', () => {
     it('should build list options from minimal resource type info', () => {
       const resourceType: ResourceTypeInfo = {
@@ -14,7 +14,7 @@ describe('F5XCClient', () => {
         supportsCustomOps: false,
       };
 
-      const options = F5XCClient.buildListOptions(resourceType);
+      const options = XCSHClient.buildListOptions(resourceType);
 
       expect(options.apiBase).toBeUndefined();
       expect(options.customListPath).toBeUndefined();
@@ -38,7 +38,7 @@ describe('F5XCClient', () => {
         listResponseField: 'alerts',
       };
 
-      const options = F5XCClient.buildListOptions(resourceType);
+      const options = XCSHClient.buildListOptions(resourceType);
 
       expect(options.apiBase).toBe('web');
       expect(options.customListPath).toBe('/api/web/namespaces/{namespace}/active_alerts');
@@ -56,7 +56,7 @@ describe('F5XCClient', () => {
         supportsCustomOps: false,
       };
 
-      const options = F5XCClient.buildListOptions(resourceType, 'env=prod');
+      const options = XCSHClient.buildListOptions(resourceType, 'env=prod');
 
       expect(options.labelFilter).toBe('env=prod');
     });
@@ -70,7 +70,7 @@ describe('F5XCClient', () => {
         supportsCustomOps: false,
       };
 
-      const options = F5XCClient.buildListOptions(resourceType, undefined);
+      const options = XCSHClient.buildListOptions(resourceType, undefined);
 
       expect(options.labelFilter).toBeUndefined();
     });
@@ -85,7 +85,7 @@ describe('F5XCClient', () => {
         apiBase: 'config',
       };
 
-      const options = F5XCClient.buildListOptions(resourceType);
+      const options = XCSHClient.buildListOptions(resourceType);
 
       expect(options.apiBase).toBe('config');
     });
@@ -100,7 +100,7 @@ describe('F5XCClient', () => {
         apiBase: 'web',
       };
 
-      const options = F5XCClient.buildListOptions(resourceType);
+      const options = XCSHClient.buildListOptions(resourceType);
 
       expect(options.apiBase).toBe('web');
     });

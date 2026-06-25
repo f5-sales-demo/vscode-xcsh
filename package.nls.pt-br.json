@@ -75,7 +75,7 @@
   "view.explorer.contextualTitle": "Recursos xcsh",
   "view.cloudStatus.name": "Status da Nuvem",
   "view.cloudStatus.contextualTitle": "Status da Nuvem xcsh",
-  "viewsWelcome.explorer": "Nenhum contexto xcsh configurado.\n[Adicionar Contexto](command:f5xc.addContext)\nSaiba mais sobre o [F5 Distributed Cloud](https://www.f5.com/cloud).",
+  "viewsWelcome.explorer": "Nenhum contexto xcsh configurado.\n[Adicionar Contexto](command:xcsh.addContext)\nSaiba mais sobre o [F5 Distributed Cloud](https://www.f5.com/cloud).",
   "tool.readFile.displayName": "Ler Arquivo",
   "tool.readFile.userDescription": "Ler um arquivo do espaço de trabalho",
   "tool.getSelection.displayName": "Obter Seleção do Editor",

@@ -7,10 +7,10 @@ import type { ContextManager } from '../config/contextManager';
 import { API_ENDPOINTS } from '../generated/constants';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
 import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
-import { getIconForCategory, getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { getIconForCategory, getToolbarIconSvg } from '../utils/xcshIcons';
 import { renderBestPractices } from './metadataRenderer';
 
 const logger = getLogger();
@@ -48,7 +48,7 @@ interface SectionDefinition {
  * WebView provider for displaying F5 XC resource descriptions.
  * Matches the F5 XC Console UI layout with toolbar, sidebar, and organized sections.
  */
-export class F5XCDescribeProvider {
+export class XCSHDescribeProvider {
   private panel: vscode.WebviewPanel | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
@@ -188,7 +188,7 @@ export class F5XCDescribeProvider {
       if (this.panel) {
         this.panel.reveal(vscode.ViewColumn.Beside);
       } else {
-        this.panel = vscode.window.createWebviewPanel('f5xcDescribe', `${resourceName}`, vscode.ViewColumn.Beside, {
+        this.panel = vscode.window.createWebviewPanel('xcshDescribe', `${resourceName}`, vscode.ViewColumn.Beside, {
           enableScripts: true,
           retainContextWhenHidden: true,
           localResourceRoots: [],
@@ -202,7 +202,7 @@ export class F5XCDescribeProvider {
         this.panel.webview.onDidReceiveMessage(async (message: { command: string; resourceType?: string }) => {
           switch (message.command) {
             case 'editResource':
-              await vscode.commands.executeCommand('f5xc.edit', {
+              await vscode.commands.executeCommand('xcsh.edit', {
                 profileName,
                 namespace,
                 resourceType,
@@ -282,7 +282,7 @@ export class F5XCDescribeProvider {
       if (this.panel) {
         this.panel.reveal(vscode.ViewColumn.Beside);
       } else {
-        this.panel = vscode.window.createWebviewPanel('f5xcDescribe', namespaceName, vscode.ViewColumn.Beside, {
+        this.panel = vscode.window.createWebviewPanel('xcshDescribe', namespaceName, vscode.ViewColumn.Beside, {
           enableScripts: true,
           retainContextWhenHidden: true,
           localResourceRoots: [],

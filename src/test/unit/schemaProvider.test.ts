@@ -5,7 +5,7 @@
  */
 
 import type * as vscode from 'vscode';
-import { F5XCSchemaProvider, getSchemaUriForDocument } from '../../providers/f5xcSchemaProvider';
+import { getSchemaUriForDocument, XCSHSchemaProvider } from '../../providers/xcshSchemaProvider';
 import { resetSchemaRegistry } from '../../schema/schemaRegistry';
 
 // Mock vscode module
@@ -48,18 +48,18 @@ jest.mock(
   { virtual: true },
 );
 
-describe('F5XCSchemaProvider', () => {
-  let provider: F5XCSchemaProvider;
+describe('XCSHSchemaProvider', () => {
+  let provider: XCSHSchemaProvider;
 
   beforeEach(() => {
     resetSchemaRegistry();
-    provider = new F5XCSchemaProvider();
+    provider = new XCSHSchemaProvider();
     jest.clearAllMocks();
   });
 
   describe('constructor', () => {
     it('should create instance with event emitter', () => {
-      expect(provider).toBeInstanceOf(F5XCSchemaProvider);
+      expect(provider).toBeInstanceOf(XCSHSchemaProvider);
       expect(provider.onDidChange).toBeDefined();
     });
   });
@@ -68,7 +68,7 @@ describe('F5XCSchemaProvider', () => {
     it('should return schema content for valid resource type URI', () => {
       const uri = {
         path: '/schemas/http_loadbalancer.json',
-        toString: () => 'f5xc-schema://schemas/http_loadbalancer.json',
+        toString: () => 'xcsh-schema://schemas/http_loadbalancer.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -81,7 +81,7 @@ describe('F5XCSchemaProvider', () => {
     it('should return schema content for healthcheck', () => {
       const uri = {
         path: '/schemas/healthcheck.json',
-        toString: () => 'f5xc-schema://schemas/healthcheck.json',
+        toString: () => 'xcsh-schema://schemas/healthcheck.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -93,7 +93,7 @@ describe('F5XCSchemaProvider', () => {
     it('should return schema content for origin_pool', () => {
       const uri = {
         path: '/schemas/origin_pool.json',
-        toString: () => 'f5xc-schema://schemas/origin_pool.json',
+        toString: () => 'xcsh-schema://schemas/origin_pool.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -105,7 +105,7 @@ describe('F5XCSchemaProvider', () => {
     it('should return generic schema for "generic" resource type', () => {
       const uri = {
         path: '/schemas/generic.json',
-        toString: () => 'f5xc-schema://schemas/generic.json',
+        toString: () => 'xcsh-schema://schemas/generic.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -117,7 +117,7 @@ describe('F5XCSchemaProvider', () => {
     it('should return error schema for invalid URI format', () => {
       const uri = {
         path: '/invalid/path',
-        toString: () => 'f5xc-schema://invalid/path',
+        toString: () => 'xcsh-schema://invalid/path',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -130,7 +130,7 @@ describe('F5XCSchemaProvider', () => {
     it('should handle URI without .json extension', () => {
       const uri = {
         path: '/schemas/http_loadbalancer',
-        toString: () => 'f5xc-schema://schemas/http_loadbalancer',
+        toString: () => 'xcsh-schema://schemas/http_loadbalancer',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -143,7 +143,7 @@ describe('F5XCSchemaProvider', () => {
     it('should return generic schema for unknown resource type', () => {
       const uri = {
         path: '/schemas/unknown_resource_type.json',
-        toString: () => 'f5xc-schema://schemas/unknown_resource_type.json',
+        toString: () => 'xcsh-schema://schemas/unknown_resource_type.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -191,7 +191,7 @@ describe('F5XCSchemaProvider', () => {
       for (const resourceType of resourceTypes) {
         const uri = {
           path: `/schemas/${resourceType}.json`,
-          toString: () => `f5xc-schema://schemas/${resourceType}.json`,
+          toString: () => `xcsh-schema://schemas/${resourceType}.json`,
         };
 
         const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -207,7 +207,7 @@ describe('F5XCSchemaProvider', () => {
     it('should include metadata and spec properties in all schemas', () => {
       const uri = {
         path: '/schemas/http_loadbalancer.json',
-        toString: () => 'f5xc-schema://schemas/http_loadbalancer.json',
+        toString: () => 'xcsh-schema://schemas/http_loadbalancer.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -226,7 +226,7 @@ describe('getSchemaUriForDocument', () => {
     resetSchemaRegistry();
   });
 
-  it('should return null for non-f5xc scheme', () => {
+  it('should return null for non-xcsh scheme', () => {
     const documentUri = {
       scheme: 'file',
       path: '/some/file.json',
@@ -237,9 +237,9 @@ describe('getSchemaUriForDocument', () => {
     expect(result).toBeNull();
   });
 
-  it('should return schema URI for valid f5xc document URI', () => {
+  it('should return schema URI for valid xcsh document URI', () => {
     const documentUri = {
-      scheme: 'f5xc',
+      scheme: 'xcsh',
       path: '/default/http_loadbalancer/my-lb.json',
     };
 
@@ -251,7 +251,7 @@ describe('getSchemaUriForDocument', () => {
 
   it('should return generic schema URI for unknown resource type', () => {
     const documentUri = {
-      scheme: 'f5xc',
+      scheme: 'xcsh',
       path: '/default/unknown_type/resource.json',
     };
 
@@ -263,7 +263,7 @@ describe('getSchemaUriForDocument', () => {
 
   it('should return null for invalid path format', () => {
     const documentUri = {
-      scheme: 'f5xc',
+      scheme: 'xcsh',
       path: '/invalid',
     };
 
@@ -274,7 +274,7 @@ describe('getSchemaUriForDocument', () => {
 
   it('should return null for empty path', () => {
     const documentUri = {
-      scheme: 'f5xc',
+      scheme: 'xcsh',
       path: '',
     };
 
@@ -292,7 +292,7 @@ describe('getSchemaUriForDocument', () => {
 
     for (const { path, expectedType } of testCases) {
       const documentUri = {
-        scheme: 'f5xc',
+        scheme: 'xcsh',
         path,
       };
 
@@ -305,18 +305,18 @@ describe('getSchemaUriForDocument', () => {
 });
 
 describe('Schema Provider Integration', () => {
-  let provider: F5XCSchemaProvider;
+  let provider: XCSHSchemaProvider;
 
   beforeEach(() => {
     resetSchemaRegistry();
-    provider = new F5XCSchemaProvider();
+    provider = new XCSHSchemaProvider();
   });
 
   describe('consistency between calls', () => {
     it('should return identical content for same URI', () => {
       const uri = {
         path: '/schemas/http_loadbalancer.json',
-        toString: () => 'f5xc-schema://schemas/http_loadbalancer.json',
+        toString: () => 'xcsh-schema://schemas/http_loadbalancer.json',
       };
 
       const content1 = provider.provideTextDocumentContent(uri as vscode.Uri);
@@ -328,11 +328,11 @@ describe('Schema Provider Integration', () => {
     it('should return different content for different resource types', () => {
       const uri1 = {
         path: '/schemas/http_loadbalancer.json',
-        toString: () => 'f5xc-schema://schemas/http_loadbalancer.json',
+        toString: () => 'xcsh-schema://schemas/http_loadbalancer.json',
       };
       const uri2 = {
         path: '/schemas/origin_pool.json',
-        toString: () => 'f5xc-schema://schemas/origin_pool.json',
+        toString: () => 'xcsh-schema://schemas/origin_pool.json',
       };
 
       const content1 = provider.provideTextDocumentContent(uri1 as vscode.Uri);
@@ -350,7 +350,7 @@ describe('Schema Provider Integration', () => {
     it('should provide schemas usable by JSON language service', () => {
       const uri = {
         path: '/schemas/healthcheck.json',
-        toString: () => 'f5xc-schema://schemas/healthcheck.json',
+        toString: () => 'xcsh-schema://schemas/healthcheck.json',
       };
 
       const content = provider.provideTextDocumentContent(uri as vscode.Uri);

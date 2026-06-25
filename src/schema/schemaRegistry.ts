@@ -8,10 +8,10 @@
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
 import {
-  type F5XCJsonSchema,
   generateGenericSchema,
   generateSchemaForResourceType,
   getSchemaResourceTypes,
+  type XCSHJsonSchema,
 } from './schemaGenerator';
 
 const logger = getLogger();
@@ -21,22 +21,22 @@ const logger = getLogger();
  * Implements lazy loading - schemas are generated on first access.
  */
 export class SchemaRegistry {
-  private schemas = new Map<string, F5XCJsonSchema>();
-  private genericSchema: F5XCJsonSchema | null = null;
+  private schemas = new Map<string, XCSHJsonSchema>();
+  private genericSchema: XCSHJsonSchema | null = null;
 
   /**
    * Get the schema URI for a resource type.
-   * The URI uses the f5xc-schema:// scheme for VSCode's JSON language service.
+   * The URI uses the xcsh-schema:// scheme for VSCode's JSON language service.
    */
   getSchemaUri(resourceType: string): vscode.Uri {
-    return vscode.Uri.parse(`f5xc-schema://schemas/${resourceType}.json`);
+    return vscode.Uri.parse(`xcsh-schema://schemas/${resourceType}.json`);
   }
 
   /**
    * Get the generic schema URI for any F5 XC resource.
    */
   getGenericSchemaUri(): vscode.Uri {
-    return vscode.Uri.parse('f5xc-schema://schemas/generic.json');
+    return vscode.Uri.parse('xcsh-schema://schemas/generic.json');
   }
 
   /**
@@ -46,7 +46,7 @@ export class SchemaRegistry {
    * @param resourceType - The resource type key (e.g., 'http_loadbalancer')
    * @returns The JSON Schema or null if resource type is unknown
    */
-  getOrGenerateSchema(resourceType: string): F5XCJsonSchema | null {
+  getOrGenerateSchema(resourceType: string): XCSHJsonSchema | null {
     // Check cache first
     if (this.schemas.has(resourceType)) {
       return this.schemas.get(resourceType) ?? null;
@@ -66,7 +66,7 @@ export class SchemaRegistry {
    * Get the generic schema for any F5 XC resource.
    * Useful as a fallback when the specific resource type is unknown.
    */
-  getGenericSchema(): F5XCJsonSchema {
+  getGenericSchema(): XCSHJsonSchema {
     if (!this.genericSchema) {
       this.genericSchema = generateGenericSchema();
       logger.debug('Generated generic F5 XC resource schema');

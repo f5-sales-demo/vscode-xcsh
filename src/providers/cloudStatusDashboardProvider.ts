@@ -21,9 +21,9 @@ import {
 import { geocodeLocation } from '../api/geocoder';
 import { type Coordinates, formatCoordinates, getPopCoordinates } from '../api/popCoordinates';
 import type { ContextManager } from '../config/contextManager';
-import { getToolbarIconSvg } from '../utils/f5xcIcons';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
+import { getToolbarIconSvg } from '../utils/xcshIcons';
 
 /**
  * WebView provider for Cloud Status Dashboard
