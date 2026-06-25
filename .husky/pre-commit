@@ -1,7 +1,21 @@
 #!/usr/bin/env sh
 
 # Husky pre-commit hook
+# - Blocks xcsh context files (they may contain API tokens)
 # - Runs lint-staged for TypeScript/JavaScript linting and formatting
+
+# Block .xcsh/contexts/ files from being committed — they may contain credentials.
+BLOCKED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.xcsh/contexts/' || true)
+if [ -n "$BLOCKED_FILES" ]; then
+  echo "ERROR: Refusing to commit xcsh context files (they may contain API tokens)." >&2
+  echo "" >&2
+  echo "Files blocked:" >&2
+  echo "$BLOCKED_FILES" | sed 's/^/  /' >&2
+  echo "" >&2
+  echo "If these are staged by mistake, run:" >&2
+  echo "  git reset HEAD -- .xcsh/contexts/" >&2
+  exit 1
+fi
 
 # Run lint-staged for code quality
 npx lint-staged

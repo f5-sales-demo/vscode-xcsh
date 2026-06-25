@@ -1,9 +1,9 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { resolveContext } from '../config/contextResolver';
+import { checkGitTracking, resolveContext } from '../config/contextResolver';
 import type { ContextManagerInterface } from '../config/contextTypes';
-import { deriveTenantFromUrl } from '../config/contextTypes';
+import { CURRENT_SCHEMA_VERSION, deriveTenantFromUrl } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { registerChatParticipant } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
@@ -85,19 +85,48 @@ export async function activateXcsh(
   const setEnvFromContext = async (): Promise<void> => {
     // Use three-tier context resolution (env > local > global)
     const resolved = await resolveContext(getWorkspaceCwd());
-    if (resolved) {
-      const ctx = resolved.context;
-      const tenant = deriveTenantFromUrl(ctx.apiUrl);
-      const env: Record<string, string> = {
-        XCSH_API_URL: ctx.apiUrl,
-        XCSH_API_TOKEN: ctx.apiToken,
-        XCSH_NAMESPACE: ctx.defaultNamespace,
-        XCSH_CONTEXT_NAME: ctx.name,
-      };
-      if (tenant) {
-        env.XCSH_TENANT = tenant;
-      }
-      processManager.setEnvVars(env);
+    if (!resolved) {
+      return;
+    }
+    const ctx = resolved.context;
+
+    // Schema-version gate: refuse a context written by a newer schema this build
+    // can't safely interpret (mirrors the shell's compatible-version check).
+    if (typeof ctx.version === 'number' && ctx.version > CURRENT_SCHEMA_VERSION) {
+      logger.warn(
+        `Context "${ctx.name}" uses schema version ${String(ctx.version)}, newer than supported ` +
+          `(${String(CURRENT_SCHEMA_VERSION)}); not applying it. Update the extension.`,
+      );
+      return;
+    }
+
+    const tenant = deriveTenantFromUrl(ctx.apiUrl);
+    const env: Record<string, string> = {
+      XCSH_API_URL: ctx.apiUrl,
+      XCSH_API_TOKEN: ctx.apiToken,
+      XCSH_NAMESPACE: ctx.defaultNamespace,
+      XCSH_CONTEXT_NAME: ctx.name,
+    };
+    if (tenant) {
+      env.XCSH_TENANT = tenant;
+    }
+    processManager.setEnvVars(env);
+
+    // Git-tracking safety: a project-local context file under .xcsh/contexts/
+    // may hold an API token; warn if it is tracked by git (matches the shell).
+    if (resolved.source === 'local') {
+      checkGitTracking(resolved.sourcePath)
+        .then((tracked) => {
+          if (tracked) {
+            logger.warn(
+              `${resolved.sourcePath} is tracked by git and may contain credentials. ` +
+                `Run: git rm --cached "${resolved.sourcePath}"`,
+            );
+          }
+        })
+        .catch(() => {
+          /* best-effort safety check */
+        });
     }
   };
 

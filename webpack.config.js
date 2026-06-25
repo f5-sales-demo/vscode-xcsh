@@ -22,6 +22,16 @@ const extensionConfig = {
   },
   resolve: {
     extensions: ['.ts', '.js', '.json'],
+    alias: {
+      // pi-utils exposes its ESM TypeScript subpaths only under the "import"
+      // condition, so a CommonJS require() can't resolve them through the exports
+      // map. Point straight at the source file — the @f5xc-salesdemos vendor
+      // ts-loader rule below transpiles it. Mirrors the jest moduleNameMapper.
+      '@f5xc-salesdemos/pi-utils/xcsh-context-resolver$': path.resolve(
+        __dirname,
+        'node_modules/@f5xc-salesdemos/pi-utils/src/xcsh-context-resolver.ts',
+      ),
+    },
   },
   module: {
     rules: [
