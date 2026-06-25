@@ -21,6 +21,7 @@ import { loadValidationData, type ValidationResourceEntry } from '../../../scrip
 
 const DOMAINS_DIR = path.resolve(__dirname, '../../../docs/specifications/api/domains');
 const VALIDATION_PATH = path.join(DOMAINS_DIR, 'validation.json');
+const NAMESPACE_PROFILES_PATH = path.join(DOMAINS_DIR, 'namespace_profiles.json');
 
 describe('loadValidationData()', () => {
   describe('loading the real validation.json', () => {
@@ -118,7 +119,7 @@ describe('generateResourceTypesFromDomainFiles() + validation.json integration',
   });
 
   it('generates resource types and merges validation data for http_loadbalancer', () => {
-    const specs = generateResourceTypesFromDomainFiles(DOMAINS_DIR, tmpOutputPath);
+    const specs = generateResourceTypesFromDomainFiles(DOMAINS_DIR, tmpOutputPath, NAMESPACE_PROFILES_PATH);
 
     const hlb = specs.find((s) => s.resourceKey === 'http_loadbalancer');
     expect(hlb).toBeDefined();
@@ -131,7 +132,7 @@ describe('generateResourceTypesFromDomainFiles() + validation.json integration',
   });
 
   it('merges userRequiredFields from validation create for http_loadbalancer', () => {
-    const specs = generateResourceTypesFromDomainFiles(DOMAINS_DIR, tmpOutputPath);
+    const specs = generateResourceTypesFromDomainFiles(DOMAINS_DIR, tmpOutputPath, NAMESPACE_PROFILES_PATH);
 
     const hlb = specs.find((s) => s.resourceKey === 'http_loadbalancer');
     expect(hlb).toBeDefined();
@@ -142,7 +143,7 @@ describe('generateResourceTypesFromDomainFiles() + validation.json integration',
   it('logs that validation data was merged', () => {
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
     try {
-      generateResourceTypesFromDomainFiles(DOMAINS_DIR, tmpOutputPath);
+      generateResourceTypesFromDomainFiles(DOMAINS_DIR, tmpOutputPath, NAMESPACE_PROFILES_PATH);
       const mergeLog = consoleSpy.mock.calls.find((call) => String(call[0]).includes('Merged validation data for'));
       expect(mergeLog).toBeDefined();
     } finally {

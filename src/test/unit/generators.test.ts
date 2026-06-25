@@ -10,20 +10,7 @@
  * since the scripts/ directory is outside the src/ rootDir.
  */
 
-// Inline implementations of generator utility functions for testing
-// These match the implementations in scripts/generators/spec-parser.ts
-
-type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
-
-interface NamespaceProfile {
-  constraint: { allowed: NamespaceType[]; enforced: boolean };
-  recommendation: {
-    primary: NamespaceType;
-    alternatives?: Array<{ namespace_type: NamespaceType; use_case: string }>;
-    rationale: string;
-  };
-  classification: { category: string; multiTenantPattern: 'none' | 'shared-ref' | 'per-tenant' | 'hybrid' };
-}
+// Inline implementations of generator utility functions for testing.
 
 function extractSchemaId(filename: string): string | null {
   const match = filename.match(/^docs-cloud-f5-com\.\d+\.public\.(.+)\.ves-swagger\.json$/);
@@ -51,38 +38,6 @@ function deriveApiPathSuffix(resourceKey: string): string {
     return `${resourceKey}es`;
   }
   return `${resourceKey}s`;
-}
-
-function deriveNamespaceProfile(fullPath: string | null): NamespaceProfile {
-  if (!fullPath) {
-    return {
-      constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
-      recommendation: { primary: 'custom', rationale: 'No namespace path - user namespace resource' },
-      classification: { category: 'general', multiTenantPattern: 'per-tenant' },
-    };
-  }
-
-  if (fullPath.includes('/namespaces/system/')) {
-    return {
-      constraint: { allowed: ['system'], enforced: true },
-      recommendation: { primary: 'system', rationale: 'System-scoped resource' },
-      classification: { category: 'infrastructure', multiTenantPattern: 'none' },
-    };
-  }
-
-  if (fullPath.includes('/namespaces/shared/')) {
-    return {
-      constraint: { allowed: ['shared'], enforced: true },
-      recommendation: { primary: 'shared', rationale: 'Shared-scoped resource' },
-      classification: { category: 'shared', multiTenantPattern: 'shared-ref' },
-    };
-  }
-
-  return {
-    constraint: { allowed: ['shared', 'default', 'custom'], enforced: false },
-    recommendation: { primary: 'custom', rationale: 'Parameterized namespace - user namespace resource' },
-    classification: { category: 'general', multiTenantPattern: 'per-tenant' },
-  };
 }
 
 function formatDisplayName(title: string | undefined, resourceKey: string): string {
@@ -166,41 +121,6 @@ describe('Generator Utilities', () => {
     });
   });
 
-  describe('deriveNamespaceProfile', () => {
-    it('should return system profile for literal system paths', () => {
-      const profile = deriveNamespaceProfile('/api/config/namespaces/system/sites');
-      expect(profile.constraint.allowed).toEqual(['system']);
-      expect(profile.recommendation.primary).toBe('system');
-    });
-
-    it('should return shared profile for literal shared paths', () => {
-      const profile = deriveNamespaceProfile('/api/config/namespaces/shared/resources');
-      expect(profile.constraint.allowed).toEqual(['shared']);
-      expect(profile.recommendation.primary).toBe('shared');
-    });
-
-    it('should return user namespace profile for parameterized namespace paths', () => {
-      const profile1 = deriveNamespaceProfile('/api/config/namespaces/{namespace}/http_loadbalancers');
-      expect(profile1.constraint.allowed).toContain('custom');
-      expect(profile1.constraint.allowed).not.toContain('system');
-
-      const profile2 = deriveNamespaceProfile('/api/config/namespaces/{ns}/resources');
-      expect(profile2.constraint.allowed).toContain('custom');
-    });
-
-    it('should return user namespace profile for tenant-level paths', () => {
-      const profile = deriveNamespaceProfile('/api/config/tenant_resources');
-      expect(profile.constraint.allowed).toContain('custom');
-      expect(profile.constraint.allowed).not.toContain('system');
-    });
-
-    it('should return user namespace profile for null path', () => {
-      const profile = deriveNamespaceProfile(null);
-      expect(profile.constraint.allowed).toContain('custom');
-      expect(profile.constraint.allowed).not.toContain('system');
-    });
-  });
-
   describe('formatDisplayName', () => {
     it('should format title with F5 prefix', () => {
       const title = 'F5 Distributed Cloud Services API for ves.io.schema.views.http_loadbalancer';
@@ -233,19 +153,6 @@ describe('Generation Determinism', () => {
 
     const results1 = keys.map(deriveApiPathSuffix);
     const results2 = keys.map(deriveApiPathSuffix);
-
-    expect(results1).toEqual(results2);
-  });
-
-  it('should produce consistent namespace profile derivation', () => {
-    const paths = [
-      '/api/config/namespaces/system/sites',
-      '/api/config/namespaces/{namespace}/http_loadbalancers',
-      '/api/web/namespaces/{ns}/resources',
-    ];
-
-    const results1 = paths.map(deriveNamespaceProfile);
-    const results2 = paths.map(deriveNamespaceProfile);
 
     expect(results1).toEqual(results2);
   });
