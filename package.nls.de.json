@@ -36,6 +36,8 @@
   "command.editContext.title": "xcsh: Kontext bearbeiten",
   "command.manageContextEnv.title": "xcsh: Kontext-Umgebungsvariablen verwalten",
   "command.switchNamespace.title": "xcsh: Namespace wechseln",
+  "command.exportContexts.title": "xcsh: Kontexte exportieren",
+  "command.importContexts.title": "xcsh: Kontexte importieren",
   "command.deleteContext.title": "xcsh: Kontext löschen",
   "command.setActiveContext.title": "xcsh: Als aktiven Kontext festlegen",
   "command.clearAuthCache.title": "xcsh: Authentifizierungs-Cache leeren",

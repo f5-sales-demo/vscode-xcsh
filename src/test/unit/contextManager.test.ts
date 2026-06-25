@@ -445,4 +445,94 @@ describe('ContextManager', () => {
     await expect(mgr.setContextNamespace('nope', 'ns')).rejects.toThrow(/not found/i);
     mgr.dispose();
   });
+
+  // --------------- export / import ---------------
+
+  it('exports with tokens masked by default', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'exp', apiToken: 'supersecrettoken' }));
+    const bundle = await mgr.exportContexts({ includeTokens: false });
+
+    expect(bundle.version).toBe(1);
+    expect(bundle.tokensMasked).toBe(true);
+    expect(bundle.contexts).toHaveLength(1);
+    expect(bundle.contexts[0]?.apiToken).not.toBe('supersecrettoken');
+    expect(typeof bundle.exportedAt).toBe('string');
+    mgr.dispose();
+  });
+
+  it('exports real tokens when includeTokens is set', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'exp', apiToken: 'supersecrettoken' }));
+    const bundle = await mgr.exportContexts({ includeTokens: true });
+
+    expect(bundle.tokensMasked).toBe(false);
+    expect(bundle.contexts[0]?.apiToken).toBe('supersecrettoken');
+    mgr.dispose();
+  });
+
+  it('round-trips export (with tokens) then import into a clean store', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'a', apiToken: 'tok-a' }));
+    await mgr.addContext(makeContext({ name: 'b', apiToken: 'tok-b' }));
+    const bundle = await mgr.exportContexts({ includeTokens: true });
+
+    // Wipe and re-import
+    await mgr.deleteContext('a');
+    await mgr.deleteContext('b');
+    const result = await mgr.importContexts(bundle, { overwrite: false });
+
+    expect(result.imported.sort()).toEqual(['a', 'b']);
+    expect(result.skipped).toEqual([]);
+    expect((await mgr.getContext('a'))?.apiToken).toBe('tok-a');
+    mgr.dispose();
+  });
+
+  it('skips existing contexts on import unless overwrite is set', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'keep', apiToken: 'original' }));
+    const bundle = {
+      version: 1,
+      exportedAt: 'x',
+      tokensMasked: false,
+      contexts: [makeContext({ name: 'keep', apiToken: 'replaced' })],
+    };
+
+    const skip = await mgr.importContexts(bundle, { overwrite: false });
+    expect(skip.skipped).toEqual(['keep']);
+    expect((await mgr.getContext('keep'))?.apiToken).toBe('original');
+
+    const over = await mgr.importContexts(bundle, { overwrite: true });
+    expect(over.imported).toEqual(['keep']);
+    expect((await mgr.getContext('keep'))?.apiToken).toBe('replaced');
+    mgr.dispose();
+  });
+
+  it('rejects a token-masked bundle on import', async () => {
+    const mgr = new ContextManager();
+    const bundle = { version: 1, exportedAt: 'x', tokensMasked: true, contexts: [] };
+    await expect(mgr.importContexts(bundle, { overwrite: false })).rejects.toThrow(/masked/i);
+    mgr.dispose();
+  });
+
+  it('rejects a malformed bundle on import', async () => {
+    const mgr = new ContextManager();
+    await expect(mgr.importContexts({ nope: true }, { overwrite: false })).rejects.toThrow(/invalid/i);
+    await expect(mgr.importContexts('notjson', { overwrite: false })).rejects.toThrow(/invalid/i);
+    mgr.dispose();
+  });
+
+  it('skips invalid context names within a bundle', async () => {
+    const mgr = new ContextManager();
+    const bundle = {
+      version: 1,
+      exportedAt: 'x',
+      tokensMasked: false,
+      contexts: [makeContext({ name: 'good' }), makeContext({ name: '../evil' })],
+    };
+    const result = await mgr.importContexts(bundle, { overwrite: false });
+    expect(result.imported).toEqual(['good']);
+    expect(result.skipped).toEqual(['../evil']);
+    mgr.dispose();
+  });
 });
