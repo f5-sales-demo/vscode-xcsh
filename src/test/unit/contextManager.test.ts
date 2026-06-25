@@ -70,17 +70,17 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
-  it('strips a trailing slash from apiUrl on save', async () => {
+  it('normalizes a pasted full URL to its origin on save', async () => {
     const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'trailing', apiUrl: 'https://host.example.com/api/' }));
+    await mgr.addContext(makeContext({ name: 'pasted', apiUrl: 'https://host.example.com/web/home?iss=x' }));
 
-    const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'trailing.json'), 'utf-8')) as XCSHContext;
-    expect(onDisk.apiUrl).toBe('https://host.example.com/api');
+    const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'pasted.json'), 'utf-8')) as XCSHContext;
+    expect(onDisk.apiUrl).toBe('https://host.example.com');
     mgr.dispose();
   });
 
-  it('heals a pre-existing trailing-slash apiUrl on read', async () => {
-    // Simulate a context file written before normalization existed.
+  it('heals a pre-existing path/trailing-slash apiUrl to its origin on read', async () => {
+    // Simulate a context file written before origin normalization existed.
     fs.mkdirSync(contextsDir, { recursive: true });
     const legacy: XCSHContext = {
       name: 'legacy',
@@ -93,7 +93,7 @@ describe('ContextManager', () => {
 
     const mgr = new ContextManager();
     const retrieved = await mgr.getContext('legacy');
-    expect(retrieved?.apiUrl).toBe('https://host.example.com/api');
+    expect(retrieved?.apiUrl).toBe('https://host.example.com');
     mgr.dispose();
   });
 
