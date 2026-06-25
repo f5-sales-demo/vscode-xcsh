@@ -29,6 +29,11 @@ export const TreeItemContext = {
   SUBSCRIPTION_GROUP: 'subscriptionGroup',
   SUBSCRIPTION_PLAN: 'subscriptionPlan',
   SUBSCRIPTION_QUOTAS: 'subscriptionQuotas',
+  // Platform & Add-ons section contexts (non-namespace, tenant-level add-on infrastructure)
+  ADDONS_GROUP: 'addonsGroup',
+  ADDON_SUBSCRIBED: 'addon:subscribed',
+  ADDON_UNSUBSCRIBED: 'addon:unsubscribed',
+  ADDON_PENDING: 'addon:pending',
   // Error display
   ERROR: 'error',
 } as const;
@@ -58,6 +63,21 @@ export interface ResourceTypeNodeData {
   resourceType: ResourceTypeInfo;
   resourceTypeKey: string;
   namespace: string;
+  profileName: string;
+}
+
+/**
+ * Add-on node data (Platform & Add-ons section). Represents a tenant-level add-on
+ * service (e.g. DNS, Bot Defense Advanced) and its activation state.
+ */
+export interface AddonNodeData {
+  /** Add-on service name (e.g. f5xc_bot_defense_advanced) */
+  name: string;
+  /** Human-readable name */
+  displayName: string;
+  /** Activation state from getAddonActivationStatus */
+  subscribed: boolean;
+  pending: boolean;
   profileName: string;
 }
 

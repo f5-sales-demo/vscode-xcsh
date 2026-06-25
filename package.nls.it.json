@@ -20,7 +20,6 @@
   "config.xcsh.panelMode.description": "Esperienza del pannello xcsh: webview avanzata o terminale CLI classico",
   "config.xcsh.panelMode.webview": "Pannello chat integrato avanzato (consigliato)",
   "config.xcsh.panelMode.terminal": "Esperienza terminale CLI classica",
-
   "view.profiles.name": "Contesti",
   "view.profiles.contextualTitle": "Contesti xcsh",
   "view.subscription.name": "Abbonamento",
@@ -29,9 +28,7 @@
   "view.explorer.contextualTitle": "Risorse xcsh",
   "view.cloudStatus.name": "Stato cloud",
   "view.cloudStatus.contextualTitle": "Stato cloud xcsh",
-
   "viewsWelcome.explorer": "Nessun contesto xcsh configurato.\n[Aggiungi contesto](command:xcsh.addContext)\nScopri di più su [F5 Distributed Cloud](https://www.f5.com/cloud).",
-
   "command.addContext.title": "xcsh: Aggiungi contesto",
   "command.editContext.title": "xcsh: Modifica contesto",
   "command.manageContextEnv.title": "xcsh: Gestisci le variabili d'ambiente del contesto",
@@ -85,7 +82,6 @@
   "command.xcsh.restart.title": "xcsh: Riavvia",
   "command.xcsh.openPanel.title": "xcsh: Apri pannello",
   "command.xcsh.newSession.title": "xcsh: Nuova sessione",
-
   "tool.readFile.displayName": "Leggi file",
   "tool.readFile.userDescription": "Leggi un file dall'area di lavoro",
   "tool.getSelection.displayName": "Ottieni selezione editor",
@@ -94,12 +90,13 @@
   "tool.getDiagnostics.userDescription": "Ottieni errori e avvisi per un file",
   "tool.openFile.displayName": "Apri file nell'editor",
   "tool.openFile.userDescription": "Apri un file nell'editor",
-
   "chat.xcsh.description": "Chiedi informazioni su risorse, configurazione e risoluzione dei problemi di F5 Distributed Cloud tramite xcsh",
   "chat.xcsh.command.status": "Mostra lo stato di integrità e connessione dell'integrazione xcsh",
   "chat.xcsh.command.context": "Mostra i dettagli del contesto xcsh attivo (tenant, namespace, URL API)",
   "chat.xcsh.command.resources": "Elenca le risorse nel namespace corrente",
   "chat.xcsh.disambiguation.networking": "Domande sulla rete di F5 Distributed Cloud, bilanciatori di carico, pool di origine, route, DNS, CDN, host virtuali e configurazione del bilanciatore di carico HTTP",
   "chat.xcsh.disambiguation.security": "Domande sulla sicurezza di F5 Distributed Cloud, criteri WAF, criteri di servizio, protezione DDoS, difesa bot, sicurezza API e configurazione del firewall applicativo",
-  "chat.xcsh.disambiguation.infrastructure": "Domande sui siti di F5 Distributed Cloud, integrità dei siti, connettori cloud, connettori di rete, gestione della flotta e stato dell'infrastruttura"
+  "chat.xcsh.disambiguation.infrastructure": "Domande sui siti di F5 Distributed Cloud, integrità dei siti, connettori cloud, connettori di rete, gestione della flotta e stato dell'infrastruttura",
+  "command.subscribeAddon.title": "Subscribe to Add-on",
+  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
 }

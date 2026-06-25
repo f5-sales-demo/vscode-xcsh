@@ -20,7 +20,6 @@
   "config.xcsh.panelMode.description": "ประสบการณ์แผง xcsh: เว็บวิวแบบสมบูรณ์หรือเทอร์มินัล CLI คลาสสิก",
   "config.xcsh.panelMode.webview": "แผงแชทแบบรวมที่สมบูรณ์ (แนะนำ)",
   "config.xcsh.panelMode.terminal": "ประสบการณ์เทอร์มินัล CLI คลาสสิก",
-
   "view.profiles.name": "บริบท",
   "view.profiles.contextualTitle": "บริบท xcsh",
   "view.subscription.name": "การสมัครสมาชิก",
@@ -29,9 +28,7 @@
   "view.explorer.contextualTitle": "ทรัพยากร xcsh",
   "view.cloudStatus.name": "สถานะคลาวด์",
   "view.cloudStatus.contextualTitle": "สถานะคลาวด์ xcsh",
-
   "viewsWelcome.explorer": "ไม่มีบริบท xcsh ที่กำหนดค่า\n[เพิ่มบริบท](command:xcsh.addContext)\nเรียนรู้เพิ่มเติมเกี่ยวกับ [F5 Distributed Cloud](https://www.f5.com/cloud)",
-
   "command.addContext.title": "xcsh: เพิ่มบริบท",
   "command.editContext.title": "xcsh: แก้ไขบริบท",
   "command.manageContextEnv.title": "xcsh: จัดการตัวแปรสภาพแวดล้อมของบริบท",
@@ -85,7 +82,6 @@
   "command.xcsh.restart.title": "xcsh: เริ่มใหม่",
   "command.xcsh.openPanel.title": "xcsh: เปิดแผง",
   "command.xcsh.newSession.title": "xcsh: เซสชันใหม่",
-
   "tool.readFile.displayName": "อ่านไฟล์",
   "tool.readFile.userDescription": "อ่านไฟล์จากเวิร์กสเปซ",
   "tool.getSelection.displayName": "รับข้อความที่เลือกในตัวแก้ไข",
@@ -94,12 +90,13 @@
   "tool.getDiagnostics.userDescription": "รับข้อผิดพลาดและคำเตือนสำหรับไฟล์",
   "tool.openFile.displayName": "เปิดไฟล์ในตัวแก้ไข",
   "tool.openFile.userDescription": "เปิดไฟล์ในตัวแก้ไข",
-
   "chat.xcsh.description": "สอบถามเกี่ยวกับทรัพยากร F5 Distributed Cloud การกำหนดค่า และการแก้ไขปัญหาผ่าน xcsh",
   "chat.xcsh.command.status": "แสดงสุขภาพการรวมระบบ xcsh และสถานะการเชื่อมต่อ",
   "chat.xcsh.command.context": "แสดงรายละเอียดบริบท xcsh ที่ใช้งานอยู่ (ผู้เช่า, เนมสเปซ, API URL)",
   "chat.xcsh.command.resources": "แสดงรายการทรัพยากรในเนมสเปซปัจจุบัน",
   "chat.xcsh.disambiguation.networking": "คำถามเกี่ยวกับเครือข่าย F5 Distributed Cloud โหลดบาลานเซอร์ origin pool เส้นทาง DNS CDN virtual host และการกำหนดค่า HTTP โหลดบาลานเซอร์",
   "chat.xcsh.disambiguation.security": "คำถามเกี่ยวกับความปลอดภัย F5 Distributed Cloud นโยบาย WAF นโยบายบริการ การป้องกัน DDoS การป้องกันบอท ความปลอดภัย API และการกำหนดค่าไฟร์วอลล์แอปพลิเคชัน",
-  "chat.xcsh.disambiguation.infrastructure": "คำถามเกี่ยวกับไซต์ F5 Distributed Cloud สุขภาพไซต์ คลาวด์คอนเนกเตอร์ เครือข่ายคอนเนกเตอร์ การจัดการฟลีต และสถานะโครงสร้างพื้นฐาน"
+  "chat.xcsh.disambiguation.infrastructure": "คำถามเกี่ยวกับไซต์ F5 Distributed Cloud สุขภาพไซต์ คลาวด์คอนเนกเตอร์ เครือข่ายคอนเนกเตอร์ การจัดการฟลีต และสถานะโครงสร้างพื้นฐาน",
+  "command.subscribeAddon.title": "Subscribe to Add-on",
+  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
 }

@@ -240,8 +240,9 @@ function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): R
     // Pattern for list endpoints (plural resource path, no trailing {name})
     // Matches: /api/config/namespaces/{metadata.namespace}/http_loadbalancers
     // Also matches extended paths: /api/config/dns/namespaces/{ns}/dns_zones
+    // Character classes include digits so versioned resources (e.g. v1_dns_monitors) parse.
     const listEndpointPattern =
-      /^\/api\/([a-z_-]+)(?:\/([a-z_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z_]+)$/;
+      /^\/api\/([a-z0-9_-]+)(?:\/([a-z0-9_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z0-9_]+)$/;
 
     const seen = new Set<string>();
 

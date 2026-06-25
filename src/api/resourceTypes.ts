@@ -547,7 +547,12 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     supportsCustomOps: false,
     icon: 'output',
   },
-  synthetic_monitor: {
+  v1_dns_monitor: {
+    category: ResourceCategory.Observability,
+    supportsCustomOps: false,
+    icon: 'pulse',
+  },
+  v1_http_monitor: {
     category: ResourceCategory.Observability,
     supportsCustomOps: false,
     icon: 'pulse',
@@ -604,19 +609,19 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
   // =====================================================
   // API Security (P1)
   // =====================================================
-  api_sec_api_crawler: {
+  api_crawler: {
     displayName: 'API Crawler',
     category: ResourceCategory.APIProtection,
     supportsCustomOps: false,
     icon: 'search',
   },
-  api_sec_api_discovery: {
+  api_discovery: {
     displayName: 'API Discovery',
     category: ResourceCategory.APIProtection,
     supportsCustomOps: false,
     icon: 'telescope',
   },
-  api_sec_api_testing: {
+  api_testing: {
     displayName: 'API Testing',
     category: ResourceCategory.APIProtection,
     supportsCustomOps: false,
@@ -674,35 +679,17 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     supportsCustomOps: false,
     icon: 'server',
   },
-  bigip_apm: {
+  apm: {
     displayName: 'BIG-IP APM',
     category: ResourceCategory.BigIPConnector,
     supportsCustomOps: false,
     icon: 'verified',
   },
   // P2: Additional BIG-IP Connector resources (#51)
-  bigcne_data_group: {
-    displayName: 'BIG-CNE Data Groups',
-    category: ResourceCategory.BigIPConnector,
-    supportsCustomOps: false,
-    icon: 'database',
-  },
-  bigcne_irule: {
-    displayName: 'BIG-CNE iRules',
-    category: ResourceCategory.BigIPConnector,
-    supportsCustomOps: false,
-    icon: 'file-code',
-  },
 
   // =====================================================
   // Infrastructure Protection (P1)
   // =====================================================
-  infraprotect: {
-    displayName: 'Infrastructure Protection',
-    category: ResourceCategory.InfraProtection,
-    supportsCustomOps: false,
-    icon: 'shield',
-  },
   infraprotect_asn: {
     displayName: 'ASN Protection',
     category: ResourceCategory.InfraProtection,
@@ -746,12 +733,6 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     supportsCustomOps: false,
     icon: 'checklist',
   },
-  infraprotect_information: {
-    displayName: 'Protection Information',
-    category: ResourceCategory.InfraProtection,
-    supportsCustomOps: false,
-    icon: 'info',
-  },
   infraprotect_internet_prefix_advertisement: {
     displayName: 'Internet Prefix Advertisements',
     category: ResourceCategory.InfraProtection,
@@ -762,107 +743,75 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
   // =====================================================
   // NGINX One (P1)
   // =====================================================
-  nginx_one_nginx_instance: {
+  nginx_instance: {
     displayName: 'NGINX Instances',
     category: ResourceCategory.NGINXOne,
     supportsCustomOps: false,
     icon: 'server',
   },
-  nginx_one_nginx_server: {
+  nginx_server: {
     displayName: 'NGINX Servers',
     category: ResourceCategory.NGINXOne,
     supportsCustomOps: false,
     icon: 'server-process',
   },
   // P2: Additional NGINX One resources (#53)
-  nginx_one_nginx_csg: {
+  nginx_csg: {
     displayName: 'NGINX Cloud Service Gateway',
     category: ResourceCategory.NGINXOne,
     supportsCustomOps: false,
     icon: 'cloud',
   },
-  nginx_one_nginx_service_discovery: {
+  nginx_service_discovery: {
     displayName: 'NGINX Service Discovery',
     category: ResourceCategory.NGINXOne,
     supportsCustomOps: false,
     icon: 'search',
   },
-  nginx_one_subscription: {
-    displayName: 'NGINX One Subscriptions',
-    category: ResourceCategory.NGINXOne,
-    supportsCustomOps: false,
-    icon: 'credit-card',
-    apiPath: 'nginx_one_subscribe', // Unique path to avoid conflict with other 'subscribe' paths
-  },
 
   // =====================================================
   // Client-Side Defense (P1)
   // =====================================================
-  shape_client_side_defense: {
-    displayName: 'Client-Side Defense',
-    category: ResourceCategory.ClientSideDefense,
-    supportsCustomOps: false,
-    icon: 'browser',
-  },
-  shape_client_side_defense_protected_domain: {
+  protected_domain: {
     displayName: 'Protected Domains',
     category: ResourceCategory.ClientSideDefense,
     supportsCustomOps: false,
     icon: 'globe',
   },
   // P2: Additional Client-Side Defense resources (#54)
-  shape_client_side_defense_allowed_domain: {
+  allowed_domain: {
     displayName: 'Allowed Domains',
     category: ResourceCategory.ClientSideDefense,
     supportsCustomOps: false,
     icon: 'check',
   },
-  shape_client_side_defense_mitigated_domain: {
+  mitigated_domain: {
     displayName: 'Mitigated Domains',
     category: ResourceCategory.ClientSideDefense,
     supportsCustomOps: false,
     icon: 'shield',
   },
-  shape_client_side_defense_subscription: {
-    displayName: 'CSD Subscriptions',
-    category: ResourceCategory.ClientSideDefense,
-    supportsCustomOps: false,
-    icon: 'credit-card',
-    apiPath: 'csd_subscribe', // Unique path to avoid conflict with other 'subscribe' paths
-  },
 
   // =====================================================
   // AI & Automation (P1)
   // =====================================================
-  ai_assistant: {
-    displayName: 'AI Assistant',
-    category: ResourceCategory.AI,
-    supportsCustomOps: false,
-    icon: 'sparkle',
-  },
-  gia: {
-    displayName: 'Global Infrastructure Analytics',
-    category: ResourceCategory.AI,
-    supportsCustomOps: false,
-    icon: 'graph',
-  },
 
   // =====================================================
   // Shape Bot Defense Extended (P2) (#55)
   // =====================================================
-  shape_bot_defense_bot_allowlist_policy: {
+  bot_allowlist_policy: {
     displayName: 'Bot Allowlist Policies',
     category: ResourceCategory.BotDefense,
     supportsCustomOps: false,
     icon: 'check',
   },
-  shape_bot_defense_bot_endpoint_policy: {
+  bot_endpoint_policy: {
     displayName: 'Bot Endpoint Policies',
     category: ResourceCategory.BotDefense,
     supportsCustomOps: false,
     icon: 'link',
   },
-  shape_bot_defense_bot_network_policy: {
+  bot_network_policy: {
     displayName: 'Bot Network Policies',
     category: ResourceCategory.BotDefense,
     supportsCustomOps: false,
@@ -874,19 +823,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     supportsCustomOps: false,
     icon: 'server',
   },
-  shape_bot_defense_protected_application: {
-    displayName: 'Shape Protected Applications',
-    category: ResourceCategory.BotDefense,
-    supportsCustomOps: false,
-    icon: 'verified',
-  },
-  shape_bot_defense_reporting: {
-    displayName: 'Bot Defense Reporting',
-    category: ResourceCategory.BotDefense,
-    supportsCustomOps: false,
-    icon: 'graph',
-  },
-  shape_bot_defense_threat_intelligence_bot_detection_rule: {
+  bot_detection_rule: {
     displayName: 'Threat Intelligence Rules',
     category: ResourceCategory.BotDefense,
     supportsCustomOps: false,
@@ -930,12 +867,6 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
   // =====================================================
   // Secret Management (P3) (#57)
   // =====================================================
-  secret_management: {
-    displayName: 'Secret Management',
-    category: ResourceCategory.Configuration,
-    supportsCustomOps: false,
-    icon: 'lock',
-  },
   secret_management_access: {
     displayName: 'Secret Access Policies',
     category: ResourceCategory.Configuration,
@@ -958,13 +889,7 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
   // =====================================================
   // Data & Analytics (P3) (#58)
   // =====================================================
-  data_privacy_geo_config: {
-    displayName: 'Data Privacy Geo Config',
-    category: ResourceCategory.DataProtection,
-    supportsCustomOps: false,
-    icon: 'globe',
-  },
-  data_privacy_lma_region: {
+  lma_region: {
     displayName: 'LMA Region Config',
     category: ResourceCategory.DataProtection,
     supportsCustomOps: false,
@@ -976,13 +901,6 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     supportsCustomOps: false,
     icon: 'symbol-class',
   },
-  flow: {
-    displayName: 'Flow Data',
-    category: ResourceCategory.Observability,
-    supportsCustomOps: false,
-    icon: 'pulse',
-    apiPath: 'flow_subscribe', // Unique path to avoid conflict with other 'subscribe' paths
-  },
   flow_anomaly: {
     displayName: 'Flow Anomaly Detection',
     category: ResourceCategory.Observability,
@@ -993,12 +911,6 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
   // =====================================================
   // Terraform Integration (P3) (#59)
   // =====================================================
-  terraform_parameters: {
-    displayName: 'Terraform Parameters',
-    category: ResourceCategory.Configuration,
-    supportsCustomOps: false,
-    icon: 'code',
-  },
 };
 
 /**
