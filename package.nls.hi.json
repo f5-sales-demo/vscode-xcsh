@@ -38,6 +38,8 @@
   "command.switchNamespace.title": "xcsh: नेमस्पेस बदलें",
   "command.exportContexts.title": "xcsh: संदर्भ निर्यात करें",
   "command.importContexts.title": "xcsh: संदर्भ आयात करें",
+  "command.renameContext.title": "xcsh: संदर्भ का नाम बदलें",
+  "command.validateContext.title": "xcsh: संदर्भ सत्यापित करें",
   "command.deleteContext.title": "xcsh: संदर्भ हटाएं",
   "command.setActiveContext.title": "xcsh: सक्रिय संदर्भ के रूप में सेट करें",
   "command.clearAuthCache.title": "xcsh: प्रमाणीकरण कैश साफ़ करें",

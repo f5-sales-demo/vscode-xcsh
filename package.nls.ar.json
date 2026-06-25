@@ -38,6 +38,8 @@
   "command.switchNamespace.title": "xcsh: تبديل مساحة الاسم",
   "command.exportContexts.title": "xcsh: تصدير السياقات",
   "command.importContexts.title": "xcsh: استيراد السياقات",
+  "command.renameContext.title": "xcsh: إعادة تسمية السياق",
+  "command.validateContext.title": "xcsh: التحقق من السياق",
   "command.deleteContext.title": "xcsh: حذف السياق",
   "command.setActiveContext.title": "xcsh: تعيين كسياق نشط",
   "command.clearAuthCache.title": "xcsh: مسح ذاكرة التخزين المؤقت للمصادقة",
