@@ -679,12 +679,6 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     supportsCustomOps: false,
     icon: 'server',
   },
-  apm: {
-    displayName: 'BIG-IP APM',
-    category: ResourceCategory.BigIPConnector,
-    supportsCustomOps: false,
-    icon: 'verified',
-  },
   // P2: Additional BIG-IP Connector resources (#51)
 
   // =====================================================
