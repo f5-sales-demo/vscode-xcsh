@@ -410,4 +410,39 @@ describe('ContextManager', () => {
     await expect(mgr.setContextEnv('nope', 'A', '1')).rejects.toThrow(/not found/i);
     mgr.dispose();
   });
+
+  // --------------- namespace switch ---------------
+
+  it('switches the default namespace', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'ns-ctx', defaultNamespace: 'old' }));
+    await mgr.setContextNamespace('ns-ctx', 'new-ns');
+
+    const ctx = await mgr.getContext('ns-ctx');
+    expect(ctx?.defaultNamespace).toBe('new-ns');
+    mgr.dispose();
+  });
+
+  it('trims the namespace before saving', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'ns-ctx' }));
+    await mgr.setContextNamespace('ns-ctx', '  spaced  ');
+
+    const ctx = await mgr.getContext('ns-ctx');
+    expect(ctx?.defaultNamespace).toBe('spaced');
+    mgr.dispose();
+  });
+
+  it('rejects an empty namespace', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'ns-ctx' }));
+    await expect(mgr.setContextNamespace('ns-ctx', '   ')).rejects.toThrow(/empty/i);
+    mgr.dispose();
+  });
+
+  it('throws when switching namespace on a nonexistent context', async () => {
+    const mgr = new ContextManager();
+    await expect(mgr.setContextNamespace('nope', 'ns')).rejects.toThrow(/not found/i);
+    mgr.dispose();
+  });
 });

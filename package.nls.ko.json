@@ -35,6 +35,7 @@
   "command.addContext.title": "xcsh: 컨텍스트 추가",
   "command.editContext.title": "xcsh: 컨텍스트 편집",
   "command.manageContextEnv.title": "xcsh: 컨텍스트 환경 변수 관리",
+  "command.switchNamespace.title": "xcsh: 네임스페이스 전환",
   "command.deleteContext.title": "xcsh: 컨텍스트 삭제",
   "command.setActiveContext.title": "xcsh: 활성 컨텍스트로 설정",
   "command.clearAuthCache.title": "xcsh: 인증 캐시 지우기",

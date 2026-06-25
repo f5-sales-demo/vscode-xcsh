@@ -242,6 +242,22 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     await this.updateContext(name, { env });
   }
 
+  /**
+   * Switch a context's default namespace. Mirrors xcsh `/context namespace <ns>`:
+   * the namespace must be non-empty (use Edit Context to clear it instead).
+   */
+  async setContextNamespace(name: string, namespace: string): Promise<void> {
+    const ns = namespace.trim();
+    if (!ns) {
+      throw new Error('Namespace must not be empty');
+    }
+    const existing = await this.getContext(name);
+    if (!existing) {
+      throw new Error(`Context "${name}" not found`);
+    }
+    await this.updateContext(name, { defaultNamespace: ns });
+  }
+
   async deleteContext(name: string): Promise<void> {
     const filePath = getContextPath(name);
     if (!fs.existsSync(filePath)) {

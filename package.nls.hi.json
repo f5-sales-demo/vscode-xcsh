@@ -35,6 +35,7 @@
   "command.addContext.title": "xcsh: संदर्भ जोड़ें",
   "command.editContext.title": "xcsh: संदर्भ संपादित करें",
   "command.manageContextEnv.title": "xcsh: संदर्भ पर्यावरण चर प्रबंधित करें",
+  "command.switchNamespace.title": "xcsh: नेमस्पेस बदलें",
   "command.deleteContext.title": "xcsh: संदर्भ हटाएं",
   "command.setActiveContext.title": "xcsh: सक्रिय संदर्भ के रूप में सेट करें",
   "command.clearAuthCache.title": "xcsh: प्रमाणीकरण कैश साफ़ करें",

@@ -35,6 +35,7 @@
   "command.addContext.title": "xcsh: เพิ่มบริบท",
   "command.editContext.title": "xcsh: แก้ไขบริบท",
   "command.manageContextEnv.title": "xcsh: จัดการตัวแปรสภาพแวดล้อมของบริบท",
+  "command.switchNamespace.title": "xcsh: สลับเนมสเปซ",
   "command.deleteContext.title": "xcsh: ลบบริบท",
   "command.setActiveContext.title": "xcsh: ตั้งเป็นบริบทที่ใช้งาน",
   "command.clearAuthCache.title": "xcsh: ล้างแคชการยืนยันตัวตน",
