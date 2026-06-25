@@ -7,13 +7,12 @@ export const FILE_MODE = 0o600;
 export const DIR_MODE = 0o700;
 
 export function getConfigDir(): string {
-  if (process.env.XDG_CONFIG_HOME) {
-    return path.join(process.env.XDG_CONFIG_HOME, 'xcsh');
-  }
-  if (os.platform() === 'win32' && process.env.APPDATA) {
-    return path.join(process.env.APPDATA, 'xcsh');
-  }
-  return path.join(os.homedir(), '.config', 'xcsh');
+  // Must match xcsh's getXCSHConfigDir exactly so the shell and the extension
+  // read the SAME global contexts on every OS: $XDG_CONFIG_HOME/xcsh, else
+  // ~/.config/xcsh. (No %APPDATA% branch — the xcsh CLI does not use it on
+  // Windows, and diverging here would hide the CLI's contexts from the extension.)
+  const xdgConfig = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
+  return path.join(xdgConfig, 'xcsh');
 }
 
 export function getContextsDir(): string {

@@ -5,6 +5,10 @@ const sharedTransform = {
     'ts-jest',
     {
       tsconfig: 'tsconfig.test.json',
+      // Transpile each file independently so files outside the tsconfig program
+      // (e.g. the mapped pi-utils source under node_modules) still compile to
+      // CommonJS instead of leaking raw ESM `import` statements into jest.
+      isolatedModules: true,
       diagnostics: {
         ignoreCodes: [151002, 2554, 2307, 7016, 7026, 17004, 7006],
       },
@@ -14,6 +18,10 @@ const sharedTransform = {
 
 const sharedModuleNameMapper = {
   '^vscode$': '<rootDir>/src/test/__mocks__/vscode.ts',
+  // pi-utils ships ESM TypeScript source via an `exports` wildcard; jest-resolve
+  // doesn't honor that subpath, so map it straight to the source file (and the
+  // transformIgnorePatterns exception below lets ts-jest compile it).
+  '^@f5xc-salesdemos/pi-utils/(.*)$': '<rootDir>/node_modules/@f5xc-salesdemos/pi-utils/src/$1.ts',
 };
 
 /** @type {import('jest').Config} */
@@ -58,6 +66,8 @@ module.exports = {
       moduleFileExtensions: ['ts', 'js', 'json'],
       moduleNameMapper: sharedModuleNameMapper,
       transform: sharedTransform,
+      // Transform pi-utils' shared TypeScript source (ignored node_modules otherwise).
+      transformIgnorePatterns: ['/node_modules/(?!@f5xc-salesdemos/pi-utils/)'],
     },
     {
       displayName: 'webview',
