@@ -582,37 +582,37 @@
       "view/item/context": [
         {
           "command": "xcsh.setActiveContext",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "inline"
         },
         {
           "command": "xcsh.editContext",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "1_profile@1"
         },
         {
           "command": "xcsh.manageContextEnv",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "1_profile@2"
         },
         {
           "command": "xcsh.switchNamespace",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "1_profile@3"
         },
         {
           "command": "xcsh.renameContext",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "1_profile@4"
         },
         {
           "command": "xcsh.validateContext",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "1_profile@5"
         },
         {
           "command": "xcsh.deleteContext",
-          "when": "view == xcsh.profiles && viewItem == profile",
+          "when": "view == xcsh.profiles && viewItem == context",
           "group": "1_profile@6"
         },
         {
