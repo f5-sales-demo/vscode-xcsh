@@ -27,7 +27,7 @@ import {
   getLocalContextPath,
   getLocalContextsDir,
 } from './contextPaths';
-import { isValidContextName, type XCSHContext } from './contextTypes';
+import { isValidContextName, normalizeApiUrl, type XCSHContext } from './contextTypes';
 
 // ───────── public types ─────────
 
@@ -223,11 +223,21 @@ function resolvePointer(pointer: PointerContext, pointerPath: string): ResolvedC
  *   3. Global `~/.config/xcsh/contexts/`
  */
 export function resolveContext(workspaceFolder: string | undefined): Promise<ResolvedContext | null> {
+  const resolved = resolveContextFromSources(workspaceFolder);
+  if (resolved && typeof resolved.context.apiUrl === 'string') {
+    // Strip trailing slash(es) regardless of source (env / local / global / pointer)
+    // so the resolved apiUrl can never collapse the request host. See normalizeApiUrl.
+    resolved.context = { ...resolved.context, apiUrl: normalizeApiUrl(resolved.context.apiUrl) };
+  }
+  return Promise.resolve(resolved);
+}
+
+function resolveContextFromSources(workspaceFolder: string | undefined): ResolvedContext | null {
   // Priority 1: environment variables
   const envUrl = process.env.XCSH_API_URL;
   const envToken = process.env.XCSH_API_TOKEN;
   if (envUrl && envToken) {
-    return Promise.resolve({
+    return {
       context: {
         name: '(env)',
         apiUrl: envUrl,
@@ -236,17 +246,17 @@ export function resolveContext(workspaceFolder: string | undefined): Promise<Res
       },
       source: 'env',
       sourcePath: 'environment variables',
-    });
+    };
   }
 
   // Priority 2: local workspace
   if (workspaceFolder) {
     const localResult = resolveFromLocal(workspaceFolder);
     if (localResult) {
-      return Promise.resolve(localResult);
+      return localResult;
     }
   }
 
   // Priority 3: global config
-  return Promise.resolve(resolveFromGlobal());
+  return resolveFromGlobal();
 }
