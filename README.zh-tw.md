@@ -1,16 +1,16 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) |
-[日本語](https://f5xc-salesdemos.github.io/vscode-xcsh/ja/) |
-[한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) |
-[简体中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-cn/) |
+🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) |
+[日本語](https://f5-sales-demo.github.io/vscode-xcsh/ja/) |
+[한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) |
+[简体中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-cn/) |
 **繁體中文** |
-[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
-[Português](https://f5xc-salesdemos.github.io/vscode-xcsh/pt-br/) |
-[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
-[العربية](https://f5xc-salesdemos.github.io/vscode-xcsh/ar/) |
-[हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/) |
-[ไทย](https://f5xc-salesdemos.github.io/vscode-xcsh/th/)
+[Español](https://f5-sales-demo.github.io/vscode-xcsh/es/) |
+[Português](https://f5-sales-demo.github.io/vscode-xcsh/pt-br/) |
+[Français](https://f5-sales-demo.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5-sales-demo.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
+[العربية](https://f5-sales-demo.github.io/vscode-xcsh/ar/) |
+[हिन्दी](https://f5-sales-demo.github.io/vscode-xcsh/hi/) |
+[ไทย](https://f5-sales-demo.github.io/vscode-xcsh/th/)
 
 # VS Code 擴充功能
 
@@ -31,7 +31,7 @@ Code 擴充功能
 1. 從
    [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
    安裝擴充功能
-2. 安裝 xcsh：`brew install f5xc-salesdemos/tap/xcsh`
+2. 安裝 xcsh：`brew install f5-sales-demo/tap/xcsh`
 3. 開啟命令面板（`Cmd+Shift+P`）並執行 **xcsh: Platform Readiness** 檢查您的設定
 4. 透過 **xcsh: Add Context** 新增 F5 XC 上下文
 
@@ -39,7 +39,7 @@ Code 擴充功能
 
 | 整合項目       | 安裝                                    | 認證                |
 | -------------- | --------------------------------------- | ------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | 安裝時內建          |
+| xcsh           | `brew install f5-sales-demo/tap/xcsh` | 安裝時內建          |
 | AWS CLI        | `brew install awscli`                   | `aws sso login`     |
 | Azure CLI      | `brew install azure-cli`                | `az login`          |
 | Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
@@ -54,7 +54,7 @@ Code 擴充功能
 ## 文件
 
 完整文件請參閱
-**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**。
+**[https://f5-sales-demo.github.io/vscode-xcsh/](https://f5-sales-demo.github.io/vscode-xcsh/)**。
 
 ## 貢獻
 

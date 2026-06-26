@@ -1,15 +1,15 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) |
-[日本語](https://f5xc-salesdemos.github.io/vscode-xcsh/ja/) |
-[한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) |
-[简体中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-cn/) |
-[繁體中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-tw/) |
-[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
-[Português](https://f5xc-salesdemos.github.io/vscode-xcsh/pt-br/) |
-[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
-[العربية](https://f5xc-salesdemos.github.io/vscode-xcsh/ar/) |
-[हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/) | **ไทย**
+🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) |
+[日本語](https://f5-sales-demo.github.io/vscode-xcsh/ja/) |
+[한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) |
+[简体中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-cn/) |
+[繁體中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-tw/) |
+[Español](https://f5-sales-demo.github.io/vscode-xcsh/es/) |
+[Português](https://f5-sales-demo.github.io/vscode-xcsh/pt-br/) |
+[Français](https://f5-sales-demo.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5-sales-demo.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
+[العربية](https://f5-sales-demo.github.io/vscode-xcsh/ar/) |
+[हिन्दी](https://f5-sales-demo.github.io/vscode-xcsh/hi/) | **ไทย**
 
 # VS Code Extension
 
@@ -31,7 +31,7 @@
 
 1. ติดตั้งส่วนขยายจาก
    [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
-2. ติดตั้ง xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+2. ติดตั้ง xcsh: `brew install f5-sales-demo/tap/xcsh`
 3. เปิด Command Palette (`Cmd+Shift+P`) แล้วเรียกใช้ **xcsh: Platform
    Readiness** เพื่อตรวจสอบการตั้งค่าของคุณ
 4. เพิ่มคอนเท็กซ์ F5 XC ผ่าน **xcsh: Add Context**
@@ -40,7 +40,7 @@
 
 | การผสานรวม     | ติดตั้ง                                 | ยืนยันตัวตน         |
 | -------------- | --------------------------------------- | ------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | รวมอยู่ในการติดตั้ง |
+| xcsh           | `brew install f5-sales-demo/tap/xcsh` | รวมอยู่ในการติดตั้ง |
 | AWS CLI        | `brew install awscli`                   | `aws sso login`     |
 | Azure CLI      | `brew install azure-cli`                | `az login`          |
 | Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
@@ -55,7 +55,7 @@
 ## เอกสารประกอบ
 
 เอกสารฉบับเต็มมีให้ที่
-**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**
+**[https://f5-sales-demo.github.io/vscode-xcsh/](https://f5-sales-demo.github.io/vscode-xcsh/)**
 
 ## การมีส่วนร่วม
 

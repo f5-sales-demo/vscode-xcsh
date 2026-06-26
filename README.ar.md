@@ -1,15 +1,15 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) |
-[日本語](https://f5xc-salesdemos.github.io/vscode-xcsh/ja/) |
-[한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) |
-[简体中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-cn/) |
-[繁體中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-tw/) |
-[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
-[Português](https://f5xc-salesdemos.github.io/vscode-xcsh/pt-br/) |
-[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
-**العربية** | [हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/)
-| [ไทย](https://f5xc-salesdemos.github.io/vscode-xcsh/th/)
+🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) |
+[日本語](https://f5-sales-demo.github.io/vscode-xcsh/ja/) |
+[한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) |
+[简体中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-cn/) |
+[繁體中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-tw/) |
+[Español](https://f5-sales-demo.github.io/vscode-xcsh/es/) |
+[Português](https://f5-sales-demo.github.io/vscode-xcsh/pt-br/) |
+[Français](https://f5-sales-demo.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5-sales-demo.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
+**العربية** | [हिन्दी](https://f5-sales-demo.github.io/vscode-xcsh/hi/)
+| [ไทย](https://f5-sales-demo.github.io/vscode-xcsh/th/)
 
 # إضافة VS Code
 
@@ -30,7 +30,7 @@
 
 1. ثبّت الإضافة من
    [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
-2. ثبّت xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+2. ثبّت xcsh: `brew install f5-sales-demo/tap/xcsh`
 3. افتح لوحة الأوامر (`Cmd+Shift+P`) وشغّل **xcsh: Platform Readiness** للتحقق
    من الإعداد
 4. أضف سياق F5 XC عبر **xcsh: Add Context**
@@ -39,7 +39,7 @@
 
 | التكامل        | التثبيت                                 | المصادقة            |
 | -------------- | --------------------------------------- | ------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | مضمّن مع التثبيت    |
+| xcsh           | `brew install f5-sales-demo/tap/xcsh` | مضمّن مع التثبيت    |
 | AWS CLI        | `brew install awscli`                   | `aws sso login`     |
 | Azure CLI      | `brew install azure-cli`                | `az login`          |
 | Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
@@ -54,7 +54,7 @@
 ## التوثيق
 
 التوثيق الكامل متاح على
-**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**.
+**[https://f5-sales-demo.github.io/vscode-xcsh/](https://f5-sales-demo.github.io/vscode-xcsh/)**.
 
 ## المساهمة
 

@@ -3,11 +3,11 @@
   "displayName": "xcsh",
   "description": "Agentic Platform Shell",
   "version": "2.2606.261342",
-  "publisher": "f5xc-salesdemos",
+  "publisher": "f5-sales-demo",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/f5xc-salesdemos/vscode-f5xc-tools"
+    "url": "https://github.com/f5-sales-demo/vscode-f5xc-tools"
   },
   "engines": {
     "vscode": "^1.125.0"
@@ -1051,8 +1051,8 @@
     ]
   },
   "dependencies": {
-    "@f5xc-salesdemos/pi-resource-management": "^19.51.1",
-    "@f5xc-salesdemos/pi-utils": "^19.51.1",
+    "@f5-sales-demo/pi-resource-management": "^19.51.1",
+    "@f5-sales-demo/pi-utils": "^19.51.1",
     "@vscode/l10n": "^0.0.18",
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "dompurify": "^3.4.11",
@@ -1065,7 +1065,7 @@
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@eslint/js": "^10.0.1",
-    "@f5xc-salesdemos/i18n-core": "^1.0.0",
+    "@f5-sales-demo/i18n-core": "^1.0.0",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/git": "^10.0.1",
     "@testing-library/jest-dom": "^6.9.1",
