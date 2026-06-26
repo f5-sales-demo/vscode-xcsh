@@ -2,8 +2,8 @@
 
 ## Managed Files
 
-Files in `.claude/governance.json` are managed by docs-control. A hook blocks
-direct edits — open an issue in docs-control instead.
+Files in `.claude/governance.json` are managed by docs-control.
+A hook blocks direct edits — open an issue in docs-control instead.
 
 ## Git Workflow
 
