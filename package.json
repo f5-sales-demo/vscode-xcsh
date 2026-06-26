@@ -511,18 +511,6 @@
         "icon": "$(rocket)"
       },
       {
-        "command": "xcsh.subscribeAddon",
-        "title": "%command.subscribeAddon.title%",
-        "category": "xcsh",
-        "icon": "$(add)"
-      },
-      {
-        "command": "xcsh.unsubscribeAddon",
-        "title": "%command.unsubscribeAddon.title%",
-        "category": "xcsh",
-        "icon": "$(remove)"
-      },
-      {
         "command": "xcsh.createHealthcheckForm",
         "title": "%command.createHealthcheckForm.title%",
         "category": "xcsh",
@@ -666,16 +654,6 @@
           "command": "xcsh.delete",
           "when": "view == xcsh.explorer && viewItem =~ /resource:/",
           "group": "1_resource@4"
-        },
-        {
-          "command": "xcsh.subscribeAddon",
-          "when": "view == xcsh.explorer && viewItem == addon:unsubscribed",
-          "group": "inline"
-        },
-        {
-          "command": "xcsh.unsubscribeAddon",
-          "when": "view == xcsh.explorer && viewItem == addon:subscribed",
-          "group": "inline"
         },
         {
           "command": "xcsh.deleteNamespace",

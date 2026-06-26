@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "वर्तमान नेमस्पेस में संसाधनों की सूची",
   "chat.xcsh.disambiguation.networking": "F5 Distributed Cloud नेटवर्किंग, लोड बैलेंसर, ओरिजिन पूल, रूट, DNS, CDN, वर्चुअल होस्ट और HTTP लोड बैलेंसर कॉन्फ़िगरेशन के बारे में प्रश्न",
   "chat.xcsh.disambiguation.security": "F5 Distributed Cloud सुरक्षा, WAF नीतियां, सेवा नीतियां, DDoS सुरक्षा, बॉट रक्षा, API सुरक्षा और एप्लिकेशन फ़ायरवॉल कॉन्फ़िगरेशन के बारे में प्रश्न",
-  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud साइट, साइट स्वास्थ्य, क्लाउड कनेक्टर, नेटवर्क कनेक्टर, फ्लीट प्रबंधन और इंफ्रास्ट्रक्चर स्थिति के बारे में प्रश्न",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud साइट, साइट स्वास्थ्य, क्लाउड कनेक्टर, नेटवर्क कनेक्टर, फ्लीट प्रबंधन और इंफ्रास्ट्रक्चर स्थिति के बारे में प्रश्न"
 }

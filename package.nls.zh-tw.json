@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "列出目前命名空間中的資源",
   "chat.xcsh.disambiguation.networking": "關於 F5 Distributed Cloud 網路、負載平衡器、來源集區、路由、DNS、CDN、虛擬主機和 HTTP 負載平衡器設定的問題",
   "chat.xcsh.disambiguation.security": "關於 F5 Distributed Cloud 安全性、WAF 原則、服務原則、DDoS 防護、機器人防禦、API 安全性和應用程式防火牆設定的問題",
-  "chat.xcsh.disambiguation.infrastructure": "關於 F5 Distributed Cloud 站台、站台健康狀況、雲端連接器、網路連接器、叢集管理和基礎架構狀態的問題",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "關於 F5 Distributed Cloud 站台、站台健康狀況、雲端連接器、網路連接器、叢集管理和基礎架構狀態的問題"
 }

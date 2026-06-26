@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "현재 네임스페이스의 리소스 나열",
   "chat.xcsh.disambiguation.networking": "F5 Distributed Cloud 네트워킹, 로드 밸런서, 원본 풀, 라우트, DNS, CDN, 가상 호스트 및 HTTP 로드 밸런서 구성에 대한 질문",
   "chat.xcsh.disambiguation.security": "F5 Distributed Cloud 보안, WAF 정책, 서비스 정책, DDoS 보호, 봇 방어, API 보안 및 애플리케이션 방화벽 구성에 대한 질문",
-  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud 사이트, 사이트 상태, 클라우드 커넥터, 네트워크 커넥터, 플릿 관리 및 인프라 상태에 대한 질문",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud 사이트, 사이트 상태, 클라우드 커넥터, 네트워크 커넥터, 플릿 관리 및 인프라 상태에 대한 질문"
 }

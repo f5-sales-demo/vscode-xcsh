@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "Lister les ressources de l'espace de noms actuel",
   "chat.xcsh.disambiguation.networking": "Questions sur le réseau F5 Distributed Cloud, les répartiteurs de charge, les pools d'origines, les routes, le DNS, le CDN, les hôtes virtuels et la configuration du répartiteur de charge HTTP",
   "chat.xcsh.disambiguation.security": "Questions sur la sécurité F5 Distributed Cloud, les politiques WAF, les politiques de service, la protection DDoS, la défense contre les bots, la sécurité API et la configuration du pare-feu applicatif",
-  "chat.xcsh.disambiguation.infrastructure": "Questions sur les sites F5 Distributed Cloud, la santé des sites, les connecteurs cloud, les connecteurs réseau, la gestion de flotte et l'état de l'infrastructure",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "Questions sur les sites F5 Distributed Cloud, la santé des sites, les connecteurs cloud, les connecteurs réseau, la gestion de flotte et l'état de l'infrastructure"
 }

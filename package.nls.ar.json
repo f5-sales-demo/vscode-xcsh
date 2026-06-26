@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "سرد الموارد في مساحة الاسم الحالية",
   "chat.xcsh.disambiguation.networking": "أسئلة حول شبكات F5 Distributed Cloud، وموازنات الحمل، ومجمعات الأصل، والمسارات، وDNS، وCDN، والمضيفات الافتراضية، وتهيئة موازن حمل HTTP",
   "chat.xcsh.disambiguation.security": "أسئلة حول أمان F5 Distributed Cloud، وسياسات WAF، وسياسات الخدمة، والحماية من DDoS، والدفاع ضد الروبوتات، وأمان API، وتهيئة جدار حماية التطبيقات",
-  "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية"
 }

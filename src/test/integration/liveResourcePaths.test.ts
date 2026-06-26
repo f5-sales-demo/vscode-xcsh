@@ -9,31 +9,24 @@
  *    "API Group could not be determined" 404 that this change fixes;
  *  - a negative control proving the old /api/config/.../synthetic_monitors path still 404s;
  *  - a full sweep of every resource type available in the namespace (regression net);
- *  - the add-on catalog + activation status that AddonsGroupNode renders (read-only);
- *  - OPTIONAL add-on subscribe→unsubscribe, gated behind XCSH_TEST_ADDON (mutates tenant state).
+ *  - the add-on catalog + activation status the Subscription → Plan dashboard reads (read-only).
  *
  * Required env vars (suite is excluded by jest.config.js when XCSH_API_URL is absent):
  *   XCSH_API_URL        — e.g. https://tenant.console.ves.volterra.io
  *   XCSH_API_TOKEN      — a valid API token
  *   XCSH_TEST_NAMESPACE — namespace to list resources in (default: "default")
- *   XCSH_TEST_ADDON     — (optional) addon service name to subscribe/unsubscribe (MUTATING)
  */
 
+import { getAddonSchemaInfo } from '../../api/addonCatalog';
 import { TokenAuthProvider } from '../../api/auth/tokenAuth';
 import { XCSHClient } from '../../api/client';
 import { getCategorizedResourceTypesForNamespace, RESOURCE_TYPES } from '../../api/resourceTypes';
-import {
-  createAddonSubscription,
-  deleteAddonSubscription,
-  getAddonActivationStatus,
-  getCurrentPlan,
-} from '../../api/subscription';
+import { getAddonActivationStatus, getCurrentPlan } from '../../api/subscription';
 import { XCSHApiError } from '../../utils/errors';
 
 const API_URL = process.env.XCSH_API_URL ?? '';
 const API_TOKEN = process.env.XCSH_API_TOKEN ?? '';
 const NS = process.env.XCSH_TEST_NAMESPACE ?? 'default';
-const MUTATE_ADDON = process.env.XCSH_TEST_ADDON;
 
 let client: XCSHClient;
 
@@ -121,15 +114,17 @@ describe('Live: resource list paths (404 fix)', () => {
   }, 600000);
 });
 
-describe('Live: Platform & Add-ons (read-only)', () => {
-  it('loads the add-on catalog via getCurrentPlan (what AddonsGroupNode lists)', async () => {
+describe('Live: subscription add-on data (read-only)', () => {
+  it('loads the add-on catalog via getCurrentPlan (the Plan dashboard data source)', async () => {
     const plan = await getCurrentPlan(client);
     expect(plan).toBeDefined();
     expect(Array.isArray(plan.allowedAddonServices)).toBe(true);
     expect(Array.isArray(plan.includedAddonServices)).toBe(true);
+    // Included add-on services are the subscribed/active ones shown with a tier badge.
+    expect(plan.includedAddonServices.length).toBeGreaterThan(0);
   }, 30000);
 
-  it('reads activation status for each add-on without throwing', async () => {
+  it('activation-status endpoint responds with a valid state for each add-on', async () => {
     const plan = await getCurrentPlan(client);
     const addons = [...plan.includedAddonServices, ...plan.allowedAddonServices];
     const valid = ['AS_NONE', 'AS_PENDING', 'AS_SUBSCRIBED', 'AS_ERROR'];
@@ -138,18 +133,30 @@ describe('Live: Platform & Add-ons (read-only)', () => {
       expect(valid).toContain(status.state);
     }
   }, 120000);
-});
 
-// Gated, MUTATING: subscribe then unsubscribe a specific add-on. Only runs when XCSH_TEST_ADDON is set.
-(MUTATE_ADDON ? describe : describe.skip)('Live: add-on subscribe/unsubscribe (MUTATING)', () => {
-  it('subscribes then unsubscribes the add-on', async () => {
-    const addon = MUTATE_ADDON as string;
-    const sub = await createAddonSubscription(client, addon, 'system');
-    expect(sub.metadata?.name).toBeDefined();
+  it('dashboard augmentation maps the tenant add-ons to real resources/API/cloud (no fabrication)', async () => {
+    const plan = await getCurrentPlan(client);
+    const seen = new Set<string>();
+    let mapped = 0;
+    for (const addon of [...plan.includedAddonServices, ...plan.allowedAddonServices]) {
+      if (seen.has(addon.name)) {
+        continue;
+      }
+      seen.add(addon.name);
+      const info = getAddonSchemaInfo(addon); // must not throw on any real add-on
+      if (info.resources.length > 0) {
+        mapped++;
+        // Every mapped resource must be real (validated against the registry).
+        for (const r of info.resources) {
+          expect(r.displayName).toBeTruthy();
+        }
+      }
 
-    const status = await getAddonActivationStatus(client, addon);
-    expect(['AS_PENDING', 'AS_SUBSCRIBED']).toContain(status.state);
-
-    await deleteAddonSubscription(client, addon, 'system');
-  }, 120000);
+      console.log(
+        `addon: ${addon.displayName.padEnd(30)} resources=${info.resources.length} api=${info.apiBases.join(',') || '-'} cloud=${info.cloud ?? '-'}`,
+      );
+    }
+    // The staging tenant includes DNS / Bot Defense / Synthetic Monitoring / etc., so some map.
+    expect(mapped).toBeGreaterThan(0);
+  }, 60000);
 });

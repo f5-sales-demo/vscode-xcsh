@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "現在の名前空間のリソースを一覧表示",
   "chat.xcsh.disambiguation.networking": "F5 Distributed Cloud のネットワーキング、ロードバランサー、オリジンプール、ルート、DNS、CDN、仮想ホスト、HTTP ロードバランサーの構成に関する質問",
   "chat.xcsh.disambiguation.security": "F5 Distributed Cloud のセキュリティ、WAF ポリシー、サービスポリシー、DDoS 保護、ボット防御、API セキュリティ、アプリケーションファイアウォールの構成に関する質問",
-  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud のサイト、サイトヘルス、クラウドコネクタ、ネットワークコネクタ、フリート管理、インフラストラクチャステータスに関する質問",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud のサイト、サイトヘルス、クラウドコネクタ、ネットワークコネクタ、フリート管理、インフラストラクチャステータスに関する質問"
 }
