@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "Listar recursos no namespace atual",
   "chat.xcsh.disambiguation.networking": "Perguntas sobre rede do F5 Distributed Cloud, balanceadores de carga, pools de origem, rotas, DNS, CDN, hosts virtuais e configuração de balanceador de carga HTTP",
   "chat.xcsh.disambiguation.security": "Perguntas sobre segurança do F5 Distributed Cloud, políticas WAF, políticas de serviço, proteção contra DDoS, defesa contra bots, segurança de API e configuração de firewall de aplicação",
-  "chat.xcsh.disambiguation.infrastructure": "Perguntas sobre sites do F5 Distributed Cloud, integridade dos sites, conectores de nuvem, conectores de rede, gerenciamento de frota e status da infraestrutura",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "Perguntas sobre sites do F5 Distributed Cloud, integridade dos sites, conectores de nuvem, conectores de rede, gerenciamento de frota e status da infraestrutura"
 }

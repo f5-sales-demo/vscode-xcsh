@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "แสดงรายการทรัพยากรในเนมสเปซปัจจุบัน",
   "chat.xcsh.disambiguation.networking": "คำถามเกี่ยวกับเครือข่าย F5 Distributed Cloud โหลดบาลานเซอร์ origin pool เส้นทาง DNS CDN virtual host และการกำหนดค่า HTTP โหลดบาลานเซอร์",
   "chat.xcsh.disambiguation.security": "คำถามเกี่ยวกับความปลอดภัย F5 Distributed Cloud นโยบาย WAF นโยบายบริการ การป้องกัน DDoS การป้องกันบอท ความปลอดภัย API และการกำหนดค่าไฟร์วอลล์แอปพลิเคชัน",
-  "chat.xcsh.disambiguation.infrastructure": "คำถามเกี่ยวกับไซต์ F5 Distributed Cloud สุขภาพไซต์ คลาวด์คอนเนกเตอร์ เครือข่ายคอนเนกเตอร์ การจัดการฟลีต และสถานะโครงสร้างพื้นฐาน",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "คำถามเกี่ยวกับไซต์ F5 Distributed Cloud สุขภาพไซต์ คลาวด์คอนเนกเตอร์ เครือข่ายคอนเนกเตอร์ การจัดการฟลีต และสถานะโครงสร้างพื้นฐาน"
 }

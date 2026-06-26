@@ -96,7 +96,5 @@
   "chat.xcsh.command.resources": "列出当前命名空间中的资源",
   "chat.xcsh.disambiguation.networking": "关于 F5 Distributed Cloud 网络、负载均衡器、源池、路由、DNS、CDN、虚拟主机和 HTTP 负载均衡器配置的问题",
   "chat.xcsh.disambiguation.security": "关于 F5 Distributed Cloud 安全、WAF 策略、服务策略、DDoS 防护、机器人防御、API 安全和应用防火墙配置的问题",
-  "chat.xcsh.disambiguation.infrastructure": "关于 F5 Distributed Cloud 站点、站点健康状况、云连接器、网络连接器、集群管理和基础设施状态的问题",
-  "command.subscribeAddon.title": "Subscribe to Add-on",
-  "command.unsubscribeAddon.title": "Unsubscribe from Add-on"
+  "chat.xcsh.disambiguation.infrastructure": "关于 F5 Distributed Cloud 站点、站点健康状况、云连接器、网络连接器、集群管理和基础设施状态的问题"
 }

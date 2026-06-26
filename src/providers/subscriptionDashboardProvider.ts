@@ -5,6 +5,7 @@
  */
 
 import * as vscode from 'vscode';
+import { getAddonSchemaInfo } from '../api/addonCatalog';
 import {
   type AccessStatus,
   type AddonService,
@@ -398,7 +399,38 @@ export class SubscriptionDashboardProvider {
         <span class="addon-tier ${tierClass}">${tierLabel}</span>
         ${isActive ? `<span class="addon-status">${statusIcon}</span>` : actionHtml}
       </div>
+      ${this.renderAddonSchema(addon)}
     `;
+  }
+
+  /**
+   * Render the schema-derived capabilities for an add-on: where it runs (cloud), which API
+   * base/service-segment it serves, and the resource types it unlocks in the namespace tree.
+   * Renders nothing for add-ons with no mapped capabilities.
+   */
+  private renderAddonSchema(addon: AddonService): string {
+    const info = getAddonSchemaInfo(addon);
+    if (!info.cloud && info.apiBases.length === 0 && info.resources.length === 0) {
+      return '';
+    }
+
+    const rows: string[] = [];
+    if (info.cloud) {
+      rows.push(
+        `<div class="addon-meta"><span class="meta-label">${vscode.l10n.t('Hosted on')}</span> ${escapeHtml(info.cloud)}</div>`,
+      );
+    }
+    if (info.apiBases.length > 0) {
+      rows.push(
+        `<div class="addon-meta"><span class="meta-label">${vscode.l10n.t('API')}</span> <code>${info.apiBases.map(escapeHtml).join('</code> <code>')}</code></div>`,
+      );
+    }
+    if (info.resources.length > 0) {
+      rows.push(
+        `<div class="addon-meta"><span class="meta-label">${vscode.l10n.t('Resources')}</span> ${info.resources.map((r) => escapeHtml(r.displayName)).join(', ')}</div>`,
+      );
+    }
+    return `<div class="addon-detail">${rows.join('')}</div>`;
   }
 
   /**
@@ -739,6 +771,37 @@ export class SubscriptionDashboardProvider {
     .addon-status {
       color: var(--vscode-testing-iconPassed, #73c991);
       font-weight: bold;
+    }
+
+    /* Schema-derived add-on capabilities */
+    .addon-detail {
+      margin: 2px 0 6px 12px;
+      padding-left: 10px;
+      border-left: 1px solid var(--vscode-panel-border, rgba(128,128,128,0.35));
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .addon-meta {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      line-height: 1.5;
+    }
+
+    .addon-meta .meta-label {
+      display: inline-block;
+      min-width: 72px;
+      color: var(--vscode-foreground);
+      opacity: 0.8;
+      font-weight: 500;
+    }
+
+    .addon-meta code {
+      font-size: 10px;
+      background: var(--vscode-textCodeBlock-background, rgba(128,128,128,0.15));
+      padding: 1px 5px;
+      border-radius: 3px;
     }
 
     /* Activate Button */

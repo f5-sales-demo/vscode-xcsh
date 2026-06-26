@@ -1,7 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { createAddonSubscription, deleteAddonSubscription } from './api/subscription';
 import { registerCloudStatusCommands } from './commands/cloudStatus';
 import { registerContextCommands } from './commands/context';
 import { registerCrudCommands } from './commands/crud';
@@ -28,7 +27,6 @@ import { getSchemaRegistry } from './schema/schemaRegistry';
 import { CloudStatusProvider } from './tree/cloudStatusProvider';
 import { ContextProvider } from './tree/contextProvider';
 import { SubscriptionProvider } from './tree/subscriptionProvider';
-import type { AddonNodeData } from './tree/treeTypes';
 import { XCSHExplorerProvider } from './tree/xcshExplorer';
 import { getLogger, type Logger } from './utils/logger';
 import { ManifestDetector } from './utils/manifestDetector';
@@ -189,72 +187,6 @@ export function activate(context: vscode.ExtensionContext): void {
       void vscode.window.showInformationMessage(
         vscode.l10n.t('To activate "{0}", click the Activate button in the Plan dashboard.', addonName),
       );
-    }),
-  );
-
-  // Subscribe to an add-on from the Platform & Add-ons tree (mutates tenant-wide platform state).
-  context.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.subscribeAddon', async (node?: { getData?: () => AddonNodeData }) => {
-      const data = node?.getData?.();
-      if (!data) {
-        return;
-      }
-      const yes = vscode.l10n.t('Subscribe');
-      const confirm = await vscode.window.showWarningMessage(
-        vscode.l10n.t(
-          'Subscribe to add-on "{0}"?\n\nThis enables a tenant-wide platform service and may require approval from F5 support.',
-          data.displayName,
-        ),
-        { modal: true },
-        yes,
-      );
-      if (confirm !== yes) {
-        return;
-      }
-      try {
-        const client = await contextManager.getClient(data.profileName);
-        await createAddonSubscription(client, data.name, 'system');
-        void vscode.window.showInformationMessage(
-          vscode.l10n.t('Subscription requested for "{0}" (pending approval).', data.displayName),
-        );
-        explorerProvider.refresh();
-      } catch (error) {
-        void vscode.window.showErrorMessage(
-          vscode.l10n.t('Failed to subscribe to add-on: {0}', (error as Error).message),
-        );
-      }
-    }),
-  );
-
-  // Unsubscribe from an add-on (mutates tenant-wide platform state).
-  context.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.unsubscribeAddon', async (node?: { getData?: () => AddonNodeData }) => {
-      const data = node?.getData?.();
-      if (!data) {
-        return;
-      }
-      const yes = vscode.l10n.t('Unsubscribe');
-      const confirm = await vscode.window.showWarningMessage(
-        vscode.l10n.t(
-          'Unsubscribe from add-on "{0}"?\n\nThis disables a tenant-wide platform service for the whole tenant.',
-          data.displayName,
-        ),
-        { modal: true },
-        yes,
-      );
-      if (confirm !== yes) {
-        return;
-      }
-      try {
-        const client = await contextManager.getClient(data.profileName);
-        await deleteAddonSubscription(client, data.name, 'system');
-        void vscode.window.showInformationMessage(vscode.l10n.t('Unsubscribed from "{0}".', data.displayName));
-        explorerProvider.refresh();
-      } catch (error) {
-        void vscode.window.showErrorMessage(
-          vscode.l10n.t('Failed to unsubscribe from add-on: {0}', (error as Error).message),
-        );
-      }
     }),
   );
 
