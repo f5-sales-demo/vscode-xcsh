@@ -33,7 +33,7 @@ VS Code extension for managing F5 Distributed Cloud resources with IntelliSense 
 ## Getting Started
 
 1. Install the extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
-2. Install xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+2. Install xcsh: `brew install f5-sales-demo/tap/xcsh`
 3. Open the Command Palette (`Cmd+Shift+P`) and run **xcsh: Platform Readiness** to check your setup
 4. Add an F5 XC context via **xcsh: Add Context**
 
@@ -41,7 +41,7 @@ VS Code extension for managing F5 Distributed Cloud resources with IntelliSense 
 
 | Integration | Install | Authenticate |
 |---|---|---|
-| xcsh | `brew install f5xc-salesdemos/tap/xcsh` | Included with install |
+| xcsh | `brew install f5-sales-demo/tap/xcsh` | Included with install |
 | AWS CLI | `brew install awscli` | `aws sso login` |
 | Azure CLI | `brew install azure-cli` | `az login` |
 | Google Cloud | `brew install google-cloud-sdk` | `gcloud auth login` |
