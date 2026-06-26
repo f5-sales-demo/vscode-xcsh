@@ -1,15 +1,15 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) | **日本語**
-| [한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) |
-[简体中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-cn/) |
-[繁體中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-tw/) |
-[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
-[Português](https://f5xc-salesdemos.github.io/vscode-xcsh/pt-br/) |
-[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
-[العربية](https://f5xc-salesdemos.github.io/vscode-xcsh/ar/) |
-[हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/) |
-[ไทย](https://f5xc-salesdemos.github.io/vscode-xcsh/th/)
+🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) | **日本語**
+| [한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) |
+[简体中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-cn/) |
+[繁體中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-tw/) |
+[Español](https://f5-sales-demo.github.io/vscode-xcsh/es/) |
+[Português](https://f5-sales-demo.github.io/vscode-xcsh/pt-br/) |
+[Français](https://f5-sales-demo.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5-sales-demo.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
+[العربية](https://f5-sales-demo.github.io/vscode-xcsh/ar/) |
+[हिन्दी](https://f5-sales-demo.github.io/vscode-xcsh/hi/) |
+[ไทย](https://f5-sales-demo.github.io/vscode-xcsh/th/)
 
 # VS Code Extension
 
@@ -32,7 +32,7 @@ IntelliSense と xcsh チャットに対応
 
 1. [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
    から拡張機能をインストール
-2. xcsh をインストール: `brew install f5xc-salesdemos/tap/xcsh`
+2. xcsh をインストール: `brew install f5-sales-demo/tap/xcsh`
 3. コマンドパレット（`Cmd+Shift+P`）を開き、**xcsh: Platform Readiness**
    を実行してセットアップを確認
 4. **xcsh: Add Context** で F5 XC コンテキストを追加
@@ -41,7 +41,7 @@ IntelliSense と xcsh チャットに対応
 
 | インテグレーション | インストール                            | 認証                   |
 | ------------------ | --------------------------------------- | ---------------------- |
-| xcsh               | `brew install f5xc-salesdemos/tap/xcsh` | インストールに含まれる |
+| xcsh               | `brew install f5-sales-demo/tap/xcsh` | インストールに含まれる |
 | AWS CLI            | `brew install awscli`                   | `aws sso login`        |
 | Azure CLI          | `brew install azure-cli`                | `az login`             |
 | Google Cloud       | `brew install google-cloud-sdk`         | `gcloud auth login`    |
@@ -56,7 +56,7 @@ VS Code で **xcsh: Platform Readiness**
 ## ドキュメント
 
 完全なドキュメントは
-**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**
+**[https://f5-sales-demo.github.io/vscode-xcsh/](https://f5-sales-demo.github.io/vscode-xcsh/)**
 でご覧いただけます。
 
 ## コントリビューション

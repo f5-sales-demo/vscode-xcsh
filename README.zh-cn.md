@@ -1,15 +1,15 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) |
-[日本語](https://f5xc-salesdemos.github.io/vscode-xcsh/ja/) |
-[한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) | **简体中文**
-| [繁體中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-tw/) |
-[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
-[Português](https://f5xc-salesdemos.github.io/vscode-xcsh/pt-br/) |
-[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
-[العربية](https://f5xc-salesdemos.github.io/vscode-xcsh/ar/) |
-[हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/) |
-[ไทย](https://f5xc-salesdemos.github.io/vscode-xcsh/th/)
+🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) |
+[日本語](https://f5-sales-demo.github.io/vscode-xcsh/ja/) |
+[한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) | **简体中文**
+| [繁體中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-tw/) |
+[Español](https://f5-sales-demo.github.io/vscode-xcsh/es/) |
+[Português](https://f5-sales-demo.github.io/vscode-xcsh/pt-br/) |
+[Français](https://f5-sales-demo.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5-sales-demo.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
+[العربية](https://f5-sales-demo.github.io/vscode-xcsh/ar/) |
+[हिन्दी](https://f5-sales-demo.github.io/vscode-xcsh/hi/) |
+[ไทย](https://f5-sales-demo.github.io/vscode-xcsh/th/)
 
 # VS Code Extension
 
@@ -30,7 +30,7 @@ Code 扩展，支持 IntelliSense 和 xcsh 聊天
 1. 从
    [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
    安装扩展
-2. 安装 xcsh：`brew install f5xc-salesdemos/tap/xcsh`
+2. 安装 xcsh：`brew install f5-sales-demo/tap/xcsh`
 3. 打开命令面板（`Cmd+Shift+P`）并运行 **xcsh: Platform Readiness**
    以检查您的环境配置
 4. 通过 **xcsh: Add Context** 添加 F5 XC 上下文
@@ -39,7 +39,7 @@ Code 扩展，支持 IntelliSense 和 xcsh 聊天
 
 | 集成工具       | 安装                                    | 认证                |
 | -------------- | --------------------------------------- | ------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | 安装时已包含        |
+| xcsh           | `brew install f5-sales-demo/tap/xcsh` | 安装时已包含        |
 | AWS CLI        | `brew install awscli`                   | `aws sso login`     |
 | Azure CLI      | `brew install azure-cli`                | `az login`          |
 | Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
@@ -53,7 +53,7 @@ Code 扩展，支持 IntelliSense 和 xcsh 聊天
 ## 文档
 
 完整文档请访问
-**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**。
+**[https://f5-sales-demo.github.io/vscode-xcsh/](https://f5-sales-demo.github.io/vscode-xcsh/)**。
 
 ## 贡献
 

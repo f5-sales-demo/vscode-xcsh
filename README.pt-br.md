@@ -1,16 +1,16 @@
-🌐 [English](https://f5xc-salesdemos.github.io/vscode-xcsh/) |
-[日本語](https://f5xc-salesdemos.github.io/vscode-xcsh/ja/) |
-[한국어](https://f5xc-salesdemos.github.io/vscode-xcsh/ko/) |
-[简体中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-cn/) |
-[繁體中文](https://f5xc-salesdemos.github.io/vscode-xcsh/zh-tw/) |
-[Español](https://f5xc-salesdemos.github.io/vscode-xcsh/es/) |
+🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) |
+[日本語](https://f5-sales-demo.github.io/vscode-xcsh/ja/) |
+[한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) |
+[简体中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-cn/) |
+[繁體中文](https://f5-sales-demo.github.io/vscode-xcsh/zh-tw/) |
+[Español](https://f5-sales-demo.github.io/vscode-xcsh/es/) |
 **Português** |
-[Français](https://f5xc-salesdemos.github.io/vscode-xcsh/fr/) |
-[Deutsch](https://f5xc-salesdemos.github.io/vscode-xcsh/de/) |
-[Italiano](https://f5xc-salesdemos.github.io/vscode-xcsh/it/) |
-[العربية](https://f5xc-salesdemos.github.io/vscode-xcsh/ar/) |
-[हिन्दी](https://f5xc-salesdemos.github.io/vscode-xcsh/hi/) |
-[ไทย](https://f5xc-salesdemos.github.io/vscode-xcsh/th/)
+[Français](https://f5-sales-demo.github.io/vscode-xcsh/fr/) |
+[Deutsch](https://f5-sales-demo.github.io/vscode-xcsh/de/) |
+[Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
+[العربية](https://f5-sales-demo.github.io/vscode-xcsh/ar/) |
+[हिन्दी](https://f5-sales-demo.github.io/vscode-xcsh/hi/) |
+[ไทย](https://f5-sales-demo.github.io/vscode-xcsh/th/)
 
 # Extensão para VS Code
 
@@ -33,7 +33,7 @@ IntelliSense e chat xcsh
 
 1. Instale a extensão pelo
    [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=RobinMordasiewicz.xcsh)
-2. Instale o xcsh: `brew install f5xc-salesdemos/tap/xcsh`
+2. Instale o xcsh: `brew install f5-sales-demo/tap/xcsh`
 3. Abra a Paleta de Comandos (`Cmd+Shift+P`) e execute **xcsh: Platform
    Readiness** para verificar sua configuração
 4. Adicione um contexto do F5 XC via **xcsh: Add Context**
@@ -42,7 +42,7 @@ IntelliSense e chat xcsh
 
 | Integração     | Instalação                              | Autenticação           |
 | -------------- | --------------------------------------- | ---------------------- |
-| xcsh           | `brew install f5xc-salesdemos/tap/xcsh` | Incluída na instalação |
+| xcsh           | `brew install f5-sales-demo/tap/xcsh` | Incluída na instalação |
 | AWS CLI        | `brew install awscli`                   | `aws sso login`        |
 | Azure CLI      | `brew install azure-cli`                | `az login`             |
 | Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login`    |
@@ -57,7 +57,7 @@ instaladas e autenticadas.
 ## Documentação
 
 A documentação completa está disponível em
-**[https://f5xc-salesdemos.github.io/vscode-xcsh/](https://f5xc-salesdemos.github.io/vscode-xcsh/)**.
+**[https://f5-sales-demo.github.io/vscode-xcsh/](https://f5-sales-demo.github.io/vscode-xcsh/)**.
 
 ## Contribuição
 
