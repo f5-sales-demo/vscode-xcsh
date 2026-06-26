@@ -17,7 +17,7 @@ import * as path from 'node:path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const SPECS_DIR = path.join(PROJECT_ROOT, 'docs/specifications/api');
-const UPSTREAM_REPO = 'f5xc-salesdemos/api-specs-enriched';
+const UPSTREAM_REPO = 'f5-sales-demo/api-specs-enriched';
 
 interface GitHubRelease {
   tag_name: string;

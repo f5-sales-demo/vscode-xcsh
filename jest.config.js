@@ -17,7 +17,7 @@ const sharedModuleNameMapper = {
   // pi-utils ships ESM TypeScript source via an `exports` wildcard; jest-resolve
   // doesn't honor that subpath, so map it straight to the source file (and the
   // transformIgnorePatterns exception below lets ts-jest compile it).
-  '^@f5xc-salesdemos/pi-utils/(.*)$': '<rootDir>/node_modules/@f5xc-salesdemos/pi-utils/src/$1.ts',
+  '^@f5-sales-demo/pi-utils/(.*)$': '<rootDir>/node_modules/@f5-sales-demo/pi-utils/src/$1.ts',
 };
 
 /** @type {import('jest').Config} */
@@ -63,7 +63,7 @@ module.exports = {
       moduleNameMapper: sharedModuleNameMapper,
       transform: sharedTransform,
       // Transform pi-utils' shared TypeScript source (ignored node_modules otherwise).
-      transformIgnorePatterns: ['/node_modules/(?!@f5xc-salesdemos/pi-utils/)'],
+      transformIgnorePatterns: ['/node_modules/(?!@f5-sales-demo/pi-utils/)'],
     },
     {
       displayName: 'webview',

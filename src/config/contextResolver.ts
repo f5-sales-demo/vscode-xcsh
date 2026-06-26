@@ -9,14 +9,14 @@
  *   3. Global config dir       (~/.config/xcsh/contexts/)
  *
  * The resolution algorithm itself lives in the shared, host-agnostic
- * `@f5xc-salesdemos/pi-utils` `ContextResolver` so the extension and the xcsh
+ * `@f5-sales-demo/pi-utils` `ContextResolver` so the extension and the xcsh
  * shell resolve contexts identically (precedence, pointer/inline detection,
  * both/neither + inline-field validation, reserved-name rejection,
  * git-tracking). This module injects the extension's own path provider and keeps
  * the public `resolveContext` surface its callers already use.
  *
  * pi-utils ships ESM TypeScript source; the extension compiles to CommonJS and
- * bundles it via the webpack `@f5xc-salesdemos` vendor rule, so the module is
+ * bundles it via the webpack `@f5-sales-demo` vendor rule, so the module is
  * loaded with `require()` and described by local type shapes — the same pattern
  * `specBridge.ts` / `resourceService.ts` use for `pi-resource-management`. The
  * type shapes mirror the resolver's public surface; the Phase-4 parity test
@@ -33,7 +33,7 @@ import {
 } from './contextPaths';
 import type { XCSHContext } from './contextTypes';
 
-// ───────── public types (mirror @f5xc-salesdemos/pi-utils/xcsh-context-resolver) ─────────
+// ───────── public types (mirror @f5-sales-demo/pi-utils/xcsh-context-resolver) ─────────
 
 export interface ContextOverrides {
   defaultNamespace?: string;
@@ -82,7 +82,7 @@ interface SharedResolverModule {
   mergePointerOverrides(base: XCSHContext, overrides: ContextOverrides): XCSHContext;
 }
 
-const shared = require('@f5xc-salesdemos/pi-utils/xcsh-context-resolver') as SharedResolverModule;
+const shared = require('@f5-sales-demo/pi-utils/xcsh-context-resolver') as SharedResolverModule;
 
 // Re-export the shared detection/merge helpers (thin wrappers so the standalone
 // functions aren't flagged as unbound methods) so existing importers

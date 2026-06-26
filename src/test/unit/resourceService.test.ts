@@ -46,7 +46,7 @@ const mockKindResolver = {
 };
 
 jest.mock(
-  '@f5xc-salesdemos/pi-resource-management',
+  '@f5-sales-demo/pi-resource-management',
   () => ({
     ResourceClient: jest.fn().mockImplementation(() => mockResourceClient),
     toManifest: jest.fn((resource: Record<string, unknown>, kind: string) => ({
@@ -257,7 +257,7 @@ describe('ResourceService', () => {
     });
 
     it('returns error for empty content', async () => {
-      const piMod = require('@f5xc-salesdemos/pi-resource-management');
+      const piMod = require('@f5-sales-demo/pi-resource-management');
       piMod.parseManifests.mockReturnValueOnce([]);
 
       const result = await service.applyManifest('test-ctx', '{}');

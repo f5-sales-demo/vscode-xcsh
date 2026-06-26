@@ -20,7 +20,7 @@ jest.mock('vscode', () => ({
 }));
 
 jest.mock(
-  '@f5xc-salesdemos/pi-resource-management',
+  '@f5-sales-demo/pi-resource-management',
   () => ({
     ResourceClient: jest.fn(),
     toManifest: jest.fn(),
@@ -74,7 +74,7 @@ describe('metadata coverage for target resources', () => {
   }
 });
 
-// buildMinimalExportFilter now lives in @f5xc-salesdemos/pi-resource-management and is
+// buildMinimalExportFilter now lives in @f5-sales-demo/pi-resource-management and is
 // covered by that package's own test suite (build-minimal-filter.test.ts). vscode only
 // verifies the local field-metadata helpers that its non-export UI still relies on.
 

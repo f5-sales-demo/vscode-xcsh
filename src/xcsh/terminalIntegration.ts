@@ -6,7 +6,7 @@ import { deriveTenantFromUrl, isInjectableContextEnvKey } from '../config/contex
 import { getLogger } from '../utils/logger';
 import { findXcshBinary } from './processManager';
 
-const BREW_INSTALL_CMD = 'brew install f5xc-salesdemos/tap/xcsh';
+const BREW_INSTALL_CMD = 'brew install f5-sales-demo/tap/xcsh';
 
 async function showXcshNotFoundPrompt(): Promise<void> {
   const action = await vscode.window.showErrorMessage(

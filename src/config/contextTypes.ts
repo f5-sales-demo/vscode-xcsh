@@ -75,10 +75,10 @@ export function isValidContextName(name: string): boolean {
 
 /**
  * Auth-env recognition shared with the xcsh shell via
- * `@f5xc-salesdemos/pi-utils/xcsh-env-names` — the single source of truth for
+ * `@f5-sales-demo/pi-utils/xcsh-env-names` — the single source of truth for
  * reserved control keys, the recognized web-console login credentials, and the
  * secret-detection rule. pi-utils ships ESM TypeScript; the extension compiles to
- * CommonJS and bundles it through the webpack `@f5xc-salesdemos` vendor rule, so
+ * CommonJS and bundles it through the webpack `@f5-sales-demo` vendor rule, so
  * it is loaded with `require()` and described by local type shapes — the same
  * pattern `contextResolver.ts` uses.
  */
@@ -91,7 +91,7 @@ interface SharedEnvNamesModule {
   isInjectableContextEnvKey(key: string): boolean;
 }
 
-const sharedEnvNames = require('@f5xc-salesdemos/pi-utils/xcsh-env-names') as SharedEnvNamesModule;
+const sharedEnvNames = require('@f5-sales-demo/pi-utils/xcsh-env-names') as SharedEnvNamesModule;
 
 /** Web-console login username key — a generic (non-reserved) env credential. */
 export const XCSH_USERNAME = sharedEnvNames.XCSH_USERNAME;

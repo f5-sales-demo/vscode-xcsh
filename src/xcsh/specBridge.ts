@@ -8,7 +8,7 @@
 
 import { RESOURCE_TYPES, type ResourceTypeInfo } from '../api/resourceTypes';
 
-const piResourceManagement = require('@f5xc-salesdemos/pi-resource-management') as {
+const piResourceManagement = require('@f5-sales-demo/pi-resource-management') as {
   createKindResolver: (specIndex: ApiSpecIndex, validationData?: Record<string, unknown>) => KindResolver;
 };
 

@@ -4,7 +4,7 @@ import { normalizeApiUrl } from '../config/contextTypes';
 import { XCSHApiError } from '../utils/errors';
 import { getKindResolver } from '../xcsh/specBridge';
 
-const piResourceManagement = require('@f5xc-salesdemos/pi-resource-management') as {
+const piResourceManagement = require('@f5-sales-demo/pi-resource-management') as {
   ResourceClient: new (options: ResourceClientOptions) => ResourceClientInstance;
   toManifest: (resource: Record<string, unknown>, kind: string) => ExportedManifest;
   buildMinimalExportFilter: (kind: string) => MinimalExportFilter | undefined;

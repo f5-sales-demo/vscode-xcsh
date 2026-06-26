@@ -116,7 +116,7 @@ export class XcshProcessManager implements vscode.Disposable {
 
     if (!binary) {
       this.setStatus('not-installed');
-      this.logger.warn('xcsh binary not found. Install via: brew install f5xc-salesdemos/tap/xcsh');
+      this.logger.warn('xcsh binary not found. Install via: brew install f5-sales-demo/tap/xcsh');
       return;
     }
 

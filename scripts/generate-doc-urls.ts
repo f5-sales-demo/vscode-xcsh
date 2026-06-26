@@ -37,7 +37,7 @@ interface OpenAPISpec {
 
 const SPEC_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api');
 const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'generated', 'documentationUrls.ts');
-const API_REFERENCE_BASE_URL = 'https://f5xc-salesdemos.github.io/api-specs-enriched/api-reference';
+const API_REFERENCE_BASE_URL = 'https://f5-sales-demo.github.io/api-specs-enriched/api-reference';
 
 /**
  * Extract schema identifier from spec filename.

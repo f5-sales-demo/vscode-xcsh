@@ -20,7 +20,7 @@ import * as path from 'node:path';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const OPENAPI_PATH = path.join(PROJECT_ROOT, 'docs/specifications/api/openapi.json');
-const UPSTREAM_REPO = 'f5xc-salesdemos/api-specs-enriched';
+const UPSTREAM_REPO = 'f5-sales-demo/api-specs-enriched';
 
 interface SpecStatus {
   currentVersion: string;

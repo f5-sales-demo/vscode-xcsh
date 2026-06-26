@@ -30,7 +30,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
     category: 'platform',
     badge: { label: 'xcsh', color: '#e01f27' },
     binary: 'xcsh',
-    installCommand: 'brew install f5xc-salesdemos/tap/xcsh',
+    installCommand: 'brew install f5-sales-demo/tap/xcsh',
   },
   {
     id: 'xcsh',
