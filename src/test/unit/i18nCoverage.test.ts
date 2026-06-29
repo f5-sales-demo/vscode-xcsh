@@ -59,11 +59,7 @@ describe('i18n locale coverage', () => {
       const localeKeys = Object.keys(JSON.parse(fs.readFileSync(file, 'utf-8')));
       const missing = baseKeys.filter((k) => !localeKeys.includes(k));
 
-      if (missing.length > 0) {
-        fail(
-          `bundle.l10n.${slug}.json is missing ${missing.length} keys: ${missing.slice(0, 5).join(', ')}${missing.length > 5 ? '...' : ''}`,
-        );
-      }
+      expect(missing).toEqual([]);
     }
   });
 
@@ -83,11 +79,7 @@ describe('i18n locale coverage', () => {
       }
     }
 
-    if (missing.length > 0) {
-      fail(
-        `${missing.length} displayNames in resourceTypes.ts are missing from bundle.l10n.json: ${missing.join(', ')}`,
-      );
-    }
+    expect(missing).toEqual([]);
   });
 
   test('every locale package.nls file has all keys from the English base', () => {

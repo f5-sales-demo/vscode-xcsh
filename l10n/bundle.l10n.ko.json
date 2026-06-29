@@ -460,5 +460,9 @@
   "Data Privacy Geo Config": "데이터 개인 정보 지역 구성",
   "LMA Region Config": "LMA 리전 구성",
   "Terraform Parameters": "Terraform 매개변수",
-  "App Stack Sites": "App Stack 사이트"
+  "App Stack Sites": "App Stack 사이트",
+  "DNS Proxies": "DNS Proxies",
+  "Certificate Chains": "Certificate Chains",
+  "Virtual Kubernetes": "Virtual Kubernetes",
+  "K8s Cluster Roles": "K8s Cluster Roles"
 }

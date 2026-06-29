@@ -662,10 +662,20 @@ export function generateResourceTypesFromDomainFiles(
       mappedOverrideCount++;
     }
   }
+  const defaultFallbackCount = allParsed.length - mappedOverrideCount;
   console.log(
     `  Assigned namespace profiles: ${mappedOverrideCount} via explicit override, ` +
-      `${allParsed.length - mappedOverrideCount} via default`,
+      `${defaultFallbackCount} via default`,
   );
+  if (defaultFallbackCount > 0) {
+    const defaultResources = allParsed.filter((s) => !profilesMap.resources[s.resourceKey]).map((s) => s.resourceKey);
+    console.warn(`  ⚠ ${defaultFallbackCount} resources using default profile (not explicitly classified)`);
+    if (defaultResources.length <= 20) {
+      for (const r of defaultResources) {
+        console.warn(`    - ${r}`);
+      }
+    }
+  }
 
   // Merge validation.json data into fieldMetadata
   const validationPath = path.join(domainDir, 'validation.json');
