@@ -460,5 +460,9 @@
   "Data Privacy Geo Config": "Configuration géographique de confidentialité des données",
   "LMA Region Config": "Configuration de région LMA",
   "Terraform Parameters": "Paramètres Terraform",
-  "App Stack Sites": "Sites App Stack"
+  "App Stack Sites": "Sites App Stack",
+  "DNS Proxies": "DNS Proxies",
+  "Certificate Chains": "Certificate Chains",
+  "Virtual Kubernetes": "Virtual Kubernetes",
+  "K8s Cluster Roles": "K8s Cluster Roles"
 }

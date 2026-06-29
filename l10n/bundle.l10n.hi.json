@@ -460,5 +460,9 @@
   "Data Privacy Geo Config": "डेटा गोपनीयता भौगोलिक कॉन्फ़िगरेशन",
   "LMA Region Config": "LMA क्षेत्र कॉन्फ़िगरेशन",
   "Terraform Parameters": "Terraform पैरामीटर",
-  "App Stack Sites": "App Stack साइट्स"
+  "App Stack Sites": "App Stack साइट्स",
+  "DNS Proxies": "DNS Proxies",
+  "Certificate Chains": "Certificate Chains",
+  "Virtual Kubernetes": "Virtual Kubernetes",
+  "K8s Cluster Roles": "K8s Cluster Roles"
 }

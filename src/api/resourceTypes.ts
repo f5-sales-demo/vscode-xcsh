@@ -478,6 +478,13 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     customListPath: '/api/config/dns/namespaces/{namespace}/dns_lb_health_checks',
     customGetPath: '/api/config/dns/namespaces/{namespace}/dns_lb_health_checks/{name}',
   },
+  dns_proxy: {
+    apiPath: 'dns_proxys',
+    displayName: 'DNS Proxies',
+    category: ResourceCategory.DNS,
+    supportsCustomOps: false,
+    icon: 'arrow-swap',
+  },
 
   // =====================================================
   // IAM & Configuration
@@ -494,6 +501,11 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     listMethod: 'GET',
     skipNamespaceFilter: true,
     useListDataForDescribe: true,
+    namespaceProfile: {
+      constraint: { allowed: ['system' as const], enforced: true },
+      recommendation: { primary: 'system' as const, rationale: 'Users are platform-level' },
+      classification: { category: 'identity', multiTenantPattern: 'none' as const },
+    },
   },
   role: {
     category: ResourceCategory.IAM,
@@ -522,6 +534,13 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.Configuration,
     supportsCustomOps: false,
     icon: 'file-certificate',
+  },
+  certificate_chain: {
+    apiPath: 'certificate_chains',
+    displayName: 'Certificate Chains',
+    category: ResourceCategory.Configuration,
+    supportsCustomOps: false,
+    icon: 'link',
   },
   trusted_ca_list: {
     category: ResourceCategory.Configuration,
@@ -599,6 +618,20 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     category: ResourceCategory.Kubernetes,
     supportsCustomOps: false,
     icon: 'organization',
+  },
+  virtual_k8s: {
+    apiPath: 'virtual_k8ss',
+    displayName: 'Virtual Kubernetes',
+    category: ResourceCategory.Kubernetes,
+    supportsCustomOps: false,
+    icon: 'server-environment',
+  },
+  k8s_cluster_role: {
+    apiPath: 'k8s_cluster_roles',
+    displayName: 'K8s Cluster Roles',
+    category: ResourceCategory.Kubernetes,
+    supportsCustomOps: false,
+    icon: 'shield',
   },
   site_mesh_group: {
     category: ResourceCategory.ServiceMesh,
