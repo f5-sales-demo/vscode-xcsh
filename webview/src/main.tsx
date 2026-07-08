@@ -9,27 +9,6 @@ import { initProtocol, on } from './lib/protocol';
 import { createNewSession, getActiveSession } from './state/sessions';
 import './styles/webview.css';
 
-interface WelcomeState {
-  version?: string;
-  model?: string;
-  modelProvider?: string;
-  integrations?: Array<{ name: string; state: 'connected' | 'unauthenticated' | 'unavailable'; hint?: string }>;
-}
-
-// Welcome state store
-export let welcomeState: WelcomeState = {};
-
-const welcomeListeners = new Set<() => void>();
-
-export function subscribeWelcome(fn: () => void): () => void {
-  welcomeListeners.add(fn);
-  return () => welcomeListeners.delete(fn);
-}
-
-export function getWelcomeState(): WelcomeState {
-  return welcomeState;
-}
-
 // Initialize protocol and session
 initProtocol();
 createNewSession();
@@ -62,13 +41,6 @@ function handleTurnEnd(): void {
   }
 }
 
-function handleWelcomeState(msg: ExtensionMessage): void {
-  welcomeState = msg as unknown as WelcomeState;
-  for (const fn of welcomeListeners) {
-    fn();
-  }
-}
-
 function handleL10nBundle(msg: ExtensionMessage): void {
   if (msg.strings && typeof msg.strings === 'object') {
     setL10nBundle(msg.strings as Record<string, string>);
@@ -79,7 +51,6 @@ on('message_update', handleMessageUpdate);
 on('tool_execution_start', handleToolStart);
 on('tool_execution_end', handleToolEnd);
 on('turn_end', handleTurnEnd);
-on('welcome_state', handleWelcomeState);
 on('l10n_bundle', handleL10nBundle);
 
 const rootEl = document.getElementById('root');

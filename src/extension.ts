@@ -262,26 +262,14 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
 
-  // Register onboarding / platform readiness panel
+  // Register onboarding / platform readiness panel.
+  // Opens only on user action (command palette or view title button) — never
+  // auto-opens on startup, which users found noisy and confusing.
   const onboardingProvider = new OnboardingProvider(contextManager);
   context.subscriptions.push(
     vscode.commands.registerCommand('xcsh.showOnboarding', async () => {
       await onboardingProvider.showPanel();
-      void context.globalState.update('onboarding.shown', true);
     }),
-  );
-
-  // Auto-open onboarding panel when integrations need attention
-  onboardingProvider.shouldAutoOpen(context.globalState).then(
-    (shouldOpen) => {
-      if (shouldOpen) {
-        void onboardingProvider.showPanel();
-        void context.globalState.update('onboarding.shown', true);
-      }
-    },
-    (error) => {
-      logger.warn('Onboarding auto-open check failed', error as Error);
-    },
   );
 
   // Configure JSON schema associations for xcsh:// documents

@@ -5,8 +5,6 @@ import type { ContextManager } from '../config/contextManager';
 import { detectAll, INTEGRATIONS, type IntegrationDef, type IntegrationStatus } from '../utils/integrationDetector';
 import { escapeHtml, getF5LogoHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 
-const AUTO_OPEN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
-
 const CATEGORIES: { key: string; label: string }[] = [
   { key: 'platform', label: 'Platform Core' },
   { key: 'cloud', label: 'Cloud Providers' },
@@ -79,22 +77,6 @@ export class OnboardingProvider {
     } catch {
       this.panel.webview.html = this.buildHtml([]);
     }
-  }
-
-  async shouldAutoOpen(globalState: vscode.Memento): Promise<boolean> {
-    if (globalState.get<boolean>('onboarding.dismissed')) {
-      return false;
-    }
-    if (!globalState.get<boolean>('onboarding.shown')) {
-      return true;
-    }
-    const lastCheck = globalState.get<number>('onboarding.lastCheck') ?? 0;
-    if (Date.now() - lastCheck < AUTO_OPEN_COOLDOWN_MS) {
-      return false;
-    }
-    void globalState.update('onboarding.lastCheck', Date.now());
-    const statuses = await detectAll(this.contextManager);
-    return statuses.some((s) => s.state !== 'connected' && s.state !== 'unknown');
   }
 
   private buildHtml(statuses: IntegrationStatus[]): string {
