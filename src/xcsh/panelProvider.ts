@@ -78,7 +78,6 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       }),
     );
 
-    this.sendWelcomeState();
     this.sendL10nBundle();
     this.sendLocale();
 
@@ -91,53 +90,6 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     });
 
     this.logger.info('xcsh panel resolved');
-  }
-
-  private sendWelcomeState(): void {
-    const view = this.webviewView;
-    if (!view) {
-      return;
-    }
-
-    this.rpcBridge
-      .getIntegrations()
-      .then((data) => {
-        void view.webview.postMessage({
-          type: 'from-extension',
-          message: {
-            type: 'welcome_state',
-            version: `v${data.version}`,
-            model: data.model.provider ?? 'unknown',
-            modelProvider: data.model.state === 'connected' ? data.model.provider : undefined,
-            integrations: data.services,
-          },
-        });
-      })
-      .catch(() => {
-        this.rpcBridge
-          .getState()
-          .then((state) => {
-            void view.webview.postMessage({
-              type: 'from-extension',
-              message: {
-                type: 'welcome_state',
-                version: 'xcsh',
-                model: state.model?.name ?? state.model?.modelId ?? 'unknown',
-                modelProvider: state.model?.provider ?? 'anthropic',
-                integrations: [],
-              },
-            });
-          })
-          .catch(() => {
-            void view.webview.postMessage({
-              type: 'from-extension',
-              message: {
-                type: 'welcome_state',
-                integrations: [],
-              },
-            });
-          });
-      });
   }
 
   private sendLocale(): void {
