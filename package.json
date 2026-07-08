@@ -549,6 +549,11 @@
           "group": "navigation@1"
         },
         {
+          "command": "xcsh.showOnboarding",
+          "when": "view == xcsh.explorer",
+          "group": "navigation@2"
+        },
+        {
           "command": "xcsh.addContext",
           "when": "view == xcsh.profiles",
           "group": "navigation"
