@@ -310,6 +310,14 @@ describe('Resource Types Registry', () => {
       classification: { category: 'shared', multiTenantPattern: 'shared-ref' as const },
     };
 
+    // Advisory system-only profile: upstream (#934) marks unverified guesses
+    // enforced:false so downstream tooling never over-restricts on a guess.
+    const advisorySystemProfile = {
+      constraint: { allowed: ['system' as const], enforced: false },
+      recommendation: { primary: 'system' as const, rationale: 'Unverified system guess' },
+      classification: { category: 'networking', multiTenantPattern: 'none' as const },
+    };
+
     describe('isResourceTypeAvailableForNamespace', () => {
       beforeAll(() => {
         expect(baseResource).toBeDefined();
@@ -443,18 +451,70 @@ describe('Resource Types Registry', () => {
         };
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'my-ns')).toBe(false);
       });
+
+      // Verification gate (upstream #934): advisory (enforced:false) constraints
+      // must NOT over-restrict a namespace on an unverified guess. Only verified
+      // (enforced:true) constraints hard-filter.
+      it('should show an advisory system-only resource in a custom namespace', () => {
+        if (!baseResource) {
+          return;
+        }
+        const advisory: ResourceTypeInfo = {
+          ...baseResource,
+          namespaceProfile: advisorySystemProfile,
+        };
+        expect(isResourceTypeAvailableForNamespace(advisory, 'my-custom-ns')).toBe(true);
+      });
+
+      it('should show an advisory system-only resource in shared and default namespaces', () => {
+        if (!baseResource) {
+          return;
+        }
+        const advisory: ResourceTypeInfo = {
+          ...baseResource,
+          namespaceProfile: advisorySystemProfile,
+        };
+        expect(isResourceTypeAvailableForNamespace(advisory, 'shared')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(advisory, 'default')).toBe(true);
+      });
+
+      it('should still show an advisory system-only resource in the system namespace', () => {
+        if (!baseResource) {
+          return;
+        }
+        const advisory: ResourceTypeInfo = {
+          ...baseResource,
+          namespaceProfile: advisorySystemProfile,
+        };
+        expect(isResourceTypeAvailableForNamespace(advisory, 'system')).toBe(true);
+      });
+
+      it('should hard-restrict an ENFORCED system-only resource from custom namespaces', () => {
+        if (!baseResource) {
+          return;
+        }
+        // systemProfile has enforced:true — a verified constraint.
+        const enforced: ResourceTypeInfo = {
+          ...baseResource,
+          namespaceProfile: systemProfile,
+        };
+        expect(isResourceTypeAvailableForNamespace(enforced, 'my-custom-ns')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(enforced, 'system')).toBe(true);
+      });
     });
 
     describe('getResourceTypesForNamespace', () => {
-      it('should filter out system-only resources for custom namespaces', () => {
+      it('should filter out ENFORCED system-only resources for custom namespaces', () => {
         const filtered = getResourceTypesForNamespace('my-custom-namespace');
-        // System-profiled resources should not be in the result
+        // Only verified (enforced) system-only resources are hard-hidden; advisory
+        // (enforced:false) system-only resources must remain visible (upstream #934).
         for (const [_key, info] of Object.entries(filtered)) {
           if (
-            info.namespaceProfile?.constraint.allowed.length === 1 &&
+            info.namespaceProfile?.constraint.enforced === true &&
+            info.namespaceProfile.constraint.allowed.length === 1 &&
             info.namespaceProfile.constraint.allowed[0] === 'system'
           ) {
-            fail('System-profiled resource found in custom namespace filter result');
+            fail('Enforced system-only resource found in custom namespace filter result');
           }
         }
       });
@@ -478,15 +538,15 @@ describe('Resource Types Registry', () => {
         expect(customFiltered.http_loadbalancer).toBeDefined();
       });
 
-      it('should filter out system-only resources for shared namespace', () => {
+      it('should filter out ENFORCED system-only resources for shared namespace', () => {
         const filtered = getResourceTypesForNamespace('shared');
-        // System-profiled resources should not be in the result
         for (const [_key, info] of Object.entries(filtered)) {
           if (
-            info.namespaceProfile?.constraint.allowed.length === 1 &&
+            info.namespaceProfile?.constraint.enforced === true &&
+            info.namespaceProfile.constraint.allowed.length === 1 &&
             info.namespaceProfile.constraint.allowed[0] === 'system'
           ) {
-            fail('System-profiled resource found in shared namespace filter result');
+            fail('Enforced system-only resource found in shared namespace filter result');
           }
         }
       });
@@ -499,15 +559,16 @@ describe('Resource Types Registry', () => {
         expect(categorized.size).toBeGreaterThan(0);
       });
 
-      it('should not include system-only resources in custom namespace categories', () => {
+      it('should not include ENFORCED system-only resources in custom namespace categories', () => {
         const categorized = getCategorizedResourceTypesForNamespace('my-app-namespace');
         for (const [_category, resources] of categorized) {
           for (const [_key, info] of resources) {
             if (
-              info.namespaceProfile?.constraint.allowed.length === 1 &&
+              info.namespaceProfile?.constraint.enforced === true &&
+              info.namespaceProfile.constraint.allowed.length === 1 &&
               info.namespaceProfile.constraint.allowed[0] === 'system'
             ) {
-              fail('System-profiled resource found in custom namespace categorized result');
+              fail('Enforced system-only resource found in custom namespace categorized result');
             }
           }
         }
@@ -858,11 +919,16 @@ describe('Resource Types Registry', () => {
       }
     });
 
-    it('no system-only resources should appear in custom namespaces', () => {
+    it('no ENFORCED system-only resources should appear in custom namespaces', () => {
       const customResources = getResourceTypesForNamespace('test-custom-ns');
       for (const [_key, info] of Object.entries(customResources)) {
-        const allowed = info.namespaceProfile?.constraint?.allowed ?? [];
-        expect(allowed).not.toEqual(['system']);
+        const constraint = info.namespaceProfile?.constraint;
+        const allowed = constraint?.allowed ?? [];
+        // Advisory (enforced:false) system-only resources are allowed to appear
+        // in custom namespaces — we only reject verified (enforced) ones.
+        if (constraint?.enforced === true) {
+          expect(allowed).not.toEqual(['system']);
+        }
       }
     });
 

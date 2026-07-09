@@ -86,7 +86,10 @@ export function normalizeProfile(raw: RawNamespaceProfile): NamespaceProfile {
   return {
     constraint: {
       allowed,
-      enforced: raw.constraint?.enforced ?? true,
+      // Advisory unless proven: a missing `enforced` flag means the upstream map
+      // did not verify this constraint, so we must not over-restrict on a guess.
+      // The authoritative map always sets this explicitly; this is a safety net.
+      enforced: raw.constraint?.enforced ?? false,
     },
     recommendation: {
       primary: primary && VALID_NAMESPACE_TYPES.has(primary as NamespaceType) ? (primary as NamespaceType) : 'custom',
