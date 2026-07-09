@@ -677,6 +677,21 @@ export function generateResourceTypesFromDomainFiles(
     }
   }
 
+  // No-silent-drops report (#727): resources the map classifies but that the
+  // generator produces NO resource type for (parse gap). These can never be
+  // surfaced without an upstream spec/parser change; log them so a growing gap
+  // is visible in CI rather than silently swallowed.
+  const parsedKeys = new Set(allParsed.map((s) => s.resourceKey));
+  const parseGap = Object.keys(profilesMap.resources)
+    .filter((k) => !parsedKeys.has(k))
+    .sort();
+  if (parseGap.length > 0) {
+    console.warn(
+      `  ⚠ ${parseGap.length} map-classified resources have no generated type (parse gap; not consumable): ` +
+        `${parseGap.slice(0, 10).join(', ')}${parseGap.length > 10 ? ', …' : ''}`,
+    );
+  }
+
   // Merge validation.json data into fieldMetadata
   const validationPath = path.join(domainDir, 'validation.json');
   const validationData = loadValidationData(validationPath);

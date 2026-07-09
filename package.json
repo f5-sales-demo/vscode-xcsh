@@ -1005,6 +1005,7 @@
     "generate:menu-schema": "npx ts-node scripts/generators/menu-schema-generator.ts",
     "generate": "npm run generate:types && npm run generate:docs && npm run generate:menu-schema",
     "validate:generation": "npx ts-node scripts/validate-generation.ts",
+    "coverage:update": "npx ts-node scripts/update-resource-coverage.ts",
     "validate:forms": "npx ts-node scripts/validate-form-defaults.ts",
     "validate:i18n": "npx @vscode/l10n-dev export -o ./l10n ./src",
     "validate:i18n-coverage": "npx tsx scripts/validate-i18n-coverage.mts",
