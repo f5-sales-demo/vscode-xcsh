@@ -13,6 +13,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { writeConstantsFile } from './generators/constants-generator';
 import { generateDomainCategoriesFile } from './generators/domain-category-generator';
+import { writeNamespaceProfilesFile } from './generators/namespace-profiles-generator';
 import { generateResourceTypesFromDomainFiles, type ParsedSpecInfo } from './generators/resource-type-generator';
 
 // Use domain-based specs (new upstream format with x-f5xc-cli-domain)
@@ -22,6 +23,7 @@ const SPECS_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api');
 const NAMESPACE_PROFILES_PATH = path.join(DOMAIN_DIR, 'namespace_profiles.json');
 const GENERATED_DIR = path.join(__dirname, '..', 'src', 'generated');
 const RESOURCE_TYPES_OUTPUT = path.join(GENERATED_DIR, 'resourceTypesBase.ts');
+const NAMESPACE_PROFILES_OUTPUT = path.join(GENERATED_DIR, 'namespaceProfiles.ts');
 const CONSTANTS_OUTPUT = path.join(GENERATED_DIR, 'constants.ts');
 const DOMAIN_CATEGORIES_OUTPUT = path.join(GENERATED_DIR, 'domainCategories.ts');
 const INDEX_OUTPUT = path.join(GENERATED_DIR, 'index.ts');
@@ -40,6 +42,7 @@ function generateIndexFile(): void {
 // Re-export all generated modules
 export * from './constants';
 export * from './resourceTypesBase';
+export * from './namespaceProfiles';
 export * from './documentationUrls';
 export * from './domainCategories';
 `;
@@ -142,6 +145,11 @@ function main(): void {
     console.error('Error: No resource types were generated');
     process.exit(1);
   }
+
+  // Bake the authoritative namespace-profiles map into a runtime module so
+  // manually-defined resource types resolve their profile from the map (#726).
+  console.log('\nPhase 1b: Baking namespace-profiles map for runtime resolution...');
+  writeNamespaceProfilesFile(NAMESPACE_PROFILES_PATH, NAMESPACE_PROFILES_OUTPUT);
 
   // Generate constants file
   console.log('\nPhase 2: Generating constants file...');
