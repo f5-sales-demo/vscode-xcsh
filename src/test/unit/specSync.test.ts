@@ -167,3 +167,38 @@ describe('Spec Directory Structure', () => {
     });
   });
 });
+
+describe('Spec version single-source-of-truth', () => {
+  const PACKAGE_JSON = path.resolve(__dirname, '../../../package.json');
+  const OPENAPI_JSON = path.join(SPEC_ROOT, 'openapi.json');
+
+  it('package.json must not hand-maintain a spec-version marker', () => {
+    // Regression guard: `x-upstream-specs-version` was a dead, hand-maintained
+    // field that drifted from the real (auto-synced) spec version and produced
+    // recurring false "we are pinned to an old spec" alarms. The bundled
+    // openapi.json info.version is the single source of truth.
+    const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON, 'utf-8')) as Record<string, unknown>;
+    expect(pkg['x-upstream-specs-version']).toBeUndefined();
+
+    const handMaintainedSpecVersionKeys = Object.keys(pkg).filter((k) =>
+      /upstream.*spec.*version|spec.*version/i.test(k),
+    );
+    expect(handMaintainedSpecVersionKeys).toEqual([]);
+  });
+
+  it('the extension version must be derived from the bundled spec version', () => {
+    // scripts/version.ts builds the semver from openapi.json info.version, so a
+    // freshly-synced build always reflects the latest upstream spec. This asserts
+    // the two stay coupled (major segment of the extension version tracks the
+    // upstream major), catching a decoupled/pinned version marker sneaking back.
+    if (!fs.existsSync(OPENAPI_JSON)) {
+      return; // specs not synced in this environment; covered by CI where they are
+    }
+    const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON, 'utf-8')) as { version: string };
+    const spec = JSON.parse(fs.readFileSync(OPENAPI_JSON, 'utf-8')) as { info?: { version?: string } };
+    const upstreamMajor = (spec.info?.version ?? '').split('.')[0];
+    const pkgMajor = pkg.version.split('.')[0];
+    expect(upstreamMajor).not.toEqual('');
+    expect(pkgMajor).toEqual(upstreamMajor);
+  });
+});

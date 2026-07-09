@@ -198,7 +198,26 @@ Examples:
     console.warn(`⚠️  Warning: ${status.error}`);
     console.log(`   Current version: ${status.currentVersion}`);
     console.log(`   Unable to check upstream version`);
-    // Don't fail on network errors - allow build to proceed
+
+    // --warn explicitly means "never fail" — honor that contract.
+    if (warnOnly) {
+      console.warn('⚠️  Proceeding despite unverifiable freshness (--warn).');
+      process.exit(0);
+    }
+
+    // Fail loudly only when there are no local specs to build against — a
+    // freshness re-check that we cannot complete (e.g. a transient API rate
+    // limit) must NOT fail a build whose specs are already present. The
+    // authoritative freshness gate is `specs:sync` (sync-specs.ts), which is
+    // always run before generation and exits non-zero on its own fetch errors.
+    const specsUnusable = status.currentVersion === 'none' || status.currentVersion === 'error';
+    if (specsUnusable) {
+      // No local specs to fall back on — generation would build against nothing.
+      console.error('❌ No local specs present and upstream is unreachable. Cannot proceed.');
+      process.exit(1);
+    }
+    // Specs are present; we just could not re-verify freshness. Proceed.
+    console.warn('⚠️  Proceeding with present local specs (freshness unverified).');
     process.exit(0);
   }
 

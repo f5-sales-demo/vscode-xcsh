@@ -1108,8 +1108,18 @@ export function isBuiltInNamespace(namespace: string): boolean {
 /**
  * Check if a resource type is available for a given namespace.
  *
- * Uses the NamespaceProfile constraint to determine availability.
- * Resources without a profile default to being available in all namespaces except system.
+ * Honors the upstream verification gate (api-specs-enriched #934):
+ * `constraint.enforced` is true only for resources whose namespace scope has
+ * been verified (live CRUD probe or strong spec signal). Enforced constraints
+ * hard-filter on `constraint.allowed`. Unverified constraints are advisory:
+ * we must NOT over-restrict a namespace on a guess, so the resource stays
+ * visible in user namespaces (its `recommendation` is surfaced as a hint
+ * elsewhere, not used to hide it). The reserved `system` namespace is the only
+ * one still gated for advisory profiles, and only by whether the advisory
+ * allow-list names `system` at all.
+ *
+ * Resources without a profile default to being available in all namespaces
+ * except system.
  */
 export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeInfo, namespace: string): boolean {
   const profile = resourceType.namespaceProfile;
@@ -1118,7 +1128,15 @@ export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeIn
     return namespace !== 'system';
   }
   const nsType = namespaceTypeOf(namespace);
-  return profile.constraint.allowed.includes(nsType);
+  if (profile.constraint.enforced) {
+    // Verified constraint — hard filter on the allowed set.
+    return profile.constraint.allowed.includes(nsType);
+  }
+  // Advisory (unverified) constraint — never over-restrict on a guess.
+  if (nsType === 'system') {
+    return profile.constraint.allowed.includes('system');
+  }
+  return true;
 }
 
 /**
