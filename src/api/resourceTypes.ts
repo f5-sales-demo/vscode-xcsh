@@ -39,6 +39,7 @@ import {
   getLocalCategoryForDomain,
   isPreviewDomain,
 } from '../generated/domainCategories';
+import { resolveNamespaceProfileForKey } from '../generated/namespaceProfiles';
 
 /**
  * Namespace type classification for F5 XC namespaces.
@@ -216,8 +217,11 @@ interface ResourceTypeOverride {
   supportsLogs?: boolean;
   /** Whether the resource supports metrics */
   supportsMetrics?: boolean;
-  /** Namespace profile */
-  namespaceProfile?: NamespaceProfile;
+  /**
+   * Namespace profile is NOT overridable — it is resolved authoritatively from
+   * the baked namespace-profiles map by resource key (#726). To change a
+   * resource's namespace scope, update the upstream map, not this override.
+   */
   /** Override API base */
   apiBase?: ApiBase;
   /** Custom list endpoint path */
@@ -501,11 +505,9 @@ const RESOURCE_TYPE_OVERRIDES: Record<string, ResourceTypeOverride> = {
     listMethod: 'GET',
     skipNamespaceFilter: true,
     useListDataForDescribe: true,
-    namespaceProfile: {
-      constraint: { allowed: ['system' as const], enforced: true },
-      recommendation: { primary: 'system' as const, rationale: 'Users are platform-level' },
-      classification: { category: 'identity', multiTenantPattern: 'none' as const },
-    },
+    // Namespace profile comes from the authoritative map (#726): user is
+    // classified there as advisory system-only (enforced:false). If it must be
+    // hard-restricted, verify it upstream rather than hardcoding here.
   },
   role: {
     category: ResourceCategory.IAM,
@@ -975,7 +977,11 @@ function mergeResourceType(
   const domainCategory = getCategoryFromDomain(generated?.domain);
   const category = override.category ?? domainCategory ?? ResourceCategory.Configuration;
 
-  const namespaceProfile = override.namespaceProfile ?? generated?.namespaceProfile;
+  // Namespace profile resolution is map-driven and single-sourced (#726):
+  // a generated resource type already carries its map-resolved profile; a
+  // manually-defined type (no generated entry) resolves from the authoritative
+  // baked map by key. Overrides may not hardcode a profile.
+  const namespaceProfile = generated?.namespaceProfile ?? resolveNamespaceProfileForKey(key);
 
   // Start with defaults
   const result: ResourceTypeInfo = {
