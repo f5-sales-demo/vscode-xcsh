@@ -452,10 +452,12 @@ describe('Resource Types Registry', () => {
         expect(isResourceTypeAvailableForNamespace(sharedResource, 'my-ns')).toBe(false);
       });
 
-      // Verification gate (upstream #934): advisory (enforced:false) constraints
-      // must NOT over-restrict a namespace on an unverified guess. Only verified
-      // (enforced:true) constraints hard-filter.
-      it('should show an advisory system-only resource in a custom namespace', () => {
+      // Default-deny display policy: the tree hard-filters on `constraint.allowed`
+      // for ALL profiles (advisory or verified). An unverified system-only guess
+      // is hidden from user namespaces so the tree shows only what is proven
+      // tenant-creatable. `enforced` remains a downstream (Terraform/CLI) hard-
+      // constraint signal but no longer relaxes the tree display filter.
+      it('should hide an advisory system-only resource from a custom namespace', () => {
         if (!baseResource) {
           return;
         }
@@ -463,10 +465,10 @@ describe('Resource Types Registry', () => {
           ...baseResource,
           namespaceProfile: advisorySystemProfile,
         };
-        expect(isResourceTypeAvailableForNamespace(advisory, 'my-custom-ns')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(advisory, 'my-custom-ns')).toBe(false);
       });
 
-      it('should show an advisory system-only resource in shared and default namespaces', () => {
+      it('should hide an advisory system-only resource from shared and default namespaces', () => {
         if (!baseResource) {
           return;
         }
@@ -474,8 +476,8 @@ describe('Resource Types Registry', () => {
           ...baseResource,
           namespaceProfile: advisorySystemProfile,
         };
-        expect(isResourceTypeAvailableForNamespace(advisory, 'shared')).toBe(true);
-        expect(isResourceTypeAvailableForNamespace(advisory, 'default')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(advisory, 'shared')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(advisory, 'default')).toBe(false);
       });
 
       it('should still show an advisory system-only resource in the system namespace', () => {
@@ -487,6 +489,22 @@ describe('Resource Types Registry', () => {
           namespaceProfile: advisorySystemProfile,
         };
         expect(isResourceTypeAvailableForNamespace(advisory, 'system')).toBe(true);
+      });
+
+      it('should keep showing an advisory TENANT resource in user namespaces', () => {
+        if (!baseResource) {
+          return;
+        }
+        // userProfile is advisory (enforced:false) but allows tenant namespaces —
+        // it stays visible; default-deny only hides resources whose allow-list
+        // does not name the namespace.
+        const advisoryTenant: ResourceTypeInfo = {
+          ...baseResource,
+          namespaceProfile: userProfile,
+        };
+        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'my-custom-ns')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'shared')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'system')).toBe(false);
       });
 
       it('should hard-restrict an ENFORCED system-only resource from custom namespaces', () => {
@@ -504,17 +522,17 @@ describe('Resource Types Registry', () => {
     });
 
     describe('getResourceTypesForNamespace', () => {
-      it('should filter out ENFORCED system-only resources for custom namespaces', () => {
+      it('should filter out ALL system-only resources for custom namespaces (default-deny)', () => {
         const filtered = getResourceTypesForNamespace('my-custom-namespace');
-        // Only verified (enforced) system-only resources are hard-hidden; advisory
-        // (enforced:false) system-only resources must remain visible (upstream #934).
+        // Default-deny display: any system-only profile (advisory OR verified) is
+        // hidden from custom namespaces — the tree shows only proven tenant/shared
+        // resources.
         for (const [_key, info] of Object.entries(filtered)) {
           if (
-            info.namespaceProfile?.constraint.enforced === true &&
-            info.namespaceProfile.constraint.allowed.length === 1 &&
+            info.namespaceProfile?.constraint.allowed.length === 1 &&
             info.namespaceProfile.constraint.allowed[0] === 'system'
           ) {
-            fail('Enforced system-only resource found in custom namespace filter result');
+            fail('System-only resource found in custom namespace filter result');
           }
         }
       });
