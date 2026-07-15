@@ -64,26 +64,30 @@ const FIXED_RESOURCES = [
 ];
 
 describe('Live: resource list paths (404 fix)', () => {
-  it.each(FIXED_RESOURCES)('lists "%s" without an API-Group 404', async (key) => {
-    const info = RESOURCE_TYPES[key];
-    expect(info).toBeDefined();
-    if (!info) {
-      return;
-    }
-    try {
-      await client.listWithOptions(NS, info.apiPath, XCSHClient.buildListOptions(info));
-      // A 2xx (possibly empty) is the success case.
-    } catch (e) {
-      // RBAC/permission (403) and other errors are tolerated here; the regression we guard
-      // against is specifically the "API Group could not be determined" 404.
-      if (isApiGroup404(e)) {
-        throw new Error(
-          `${key} still 404s: GET /api/${info.apiBase ?? 'config'}${info.serviceSegment ? `/${info.serviceSegment}` : ''}/namespaces/${NS}/${info.apiPath}`,
-          { cause: e },
-        );
+  it.each(FIXED_RESOURCES)(
+    'lists "%s" without an API-Group 404',
+    async (key) => {
+      const info = RESOURCE_TYPES[key];
+      expect(info).toBeDefined();
+      if (!info) {
+        return;
       }
-    }
-  }, 30000);
+      try {
+        await client.listWithOptions(NS, info.apiPath, XCSHClient.buildListOptions(info));
+        // A 2xx (possibly empty) is the success case.
+      } catch (e) {
+        // RBAC/permission (403) and other errors are tolerated here; the regression we guard
+        // against is specifically the "API Group could not be determined" 404.
+        if (isApiGroup404(e)) {
+          throw new Error(
+            `${key} still 404s: GET /api/${info.apiBase ?? 'config'}${info.serviceSegment ? `/${info.serviceSegment}` : ''}/namespaces/${NS}/${info.apiPath}`,
+            { cause: e },
+          );
+        }
+      }
+    },
+    30000,
+  );
 
   it('negative control: old /synthetic_monitors path still returns an API-Group 404', async () => {
     let threw = false;
