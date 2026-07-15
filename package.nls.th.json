@@ -33,6 +33,7 @@
   "command.editContext.title": "xcsh: แก้ไขบริบท",
   "command.manageContextEnv.title": "xcsh: จัดการตัวแปรสภาพแวดล้อมของบริบท",
   "command.switchNamespace.title": "xcsh: สลับเนมสเปซ",
+  "command.selectActiveNamespace.title": "xcsh: เลือกเนมสเปซที่ใช้งาน",
   "command.exportContexts.title": "xcsh: ส่งออกบริบท",
   "command.importContexts.title": "xcsh: นำเข้าบริบท",
   "command.renameContext.title": "xcsh: เปลี่ยนชื่อบริบท",

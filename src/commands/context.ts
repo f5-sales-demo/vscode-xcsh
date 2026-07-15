@@ -26,7 +26,7 @@ function setOrClearEnv(env: Record<string, string> | undefined, key: string, val
 }
 
 import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
-import type { XCSHExplorerProvider } from '../tree/xcshExplorer';
+import { buildSelectableNamespaces, type XCSHExplorerProvider } from '../tree/xcshExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 
 /**
@@ -541,6 +541,45 @@ export function registerContextCommands(
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Switch namespace');
+    }),
+  );
+
+  // SELECT ACTIVE NAMESPACE (Resources view) — pick from a live list of tenant
+  // namespaces (default + custom, excluding system/shared) and activate it.
+  context.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.selectActiveNamespace', async () => {
+      await withErrorHandling(async () => {
+        const activeContext = await contextManager.getActiveContext();
+        if (!activeContext) {
+          showWarning(vscode.l10n.t('No active context'));
+          return;
+        }
+
+        const client = await contextManager.getClient(activeContext.name);
+        const namespaces = await client.listNamespaces();
+        const selectable = buildSelectableNamespaces(namespaces.map((ns) => ns.name));
+        if (selectable.length === 0) {
+          showWarning(vscode.l10n.t('No selectable namespaces available'));
+          return;
+        }
+
+        const current = activeContext.defaultNamespace || 'default';
+        const picked = await vscode.window.showQuickPick(
+          selectable.map((name) => ({
+            label: name,
+            description: name === current ? vscode.l10n.t('active') : undefined,
+          })),
+          { placeHolder: vscode.l10n.t('Select active namespace'), ignoreFocusOut: true },
+        );
+        if (!picked || picked.label === current) {
+          return;
+        }
+
+        await contextManager.setContextNamespace(activeContext.name, picked.label);
+        showInfo(vscode.l10n.t('Active namespace set to {0}', picked.label));
+        contextProvider.refresh();
+        explorerProvider.refresh();
+      }, 'Select active namespace');
     }),
   );
 

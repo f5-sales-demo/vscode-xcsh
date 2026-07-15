@@ -33,6 +33,7 @@
   "command.editContext.title": "xcsh: संदर्भ संपादित करें",
   "command.manageContextEnv.title": "xcsh: संदर्भ पर्यावरण चर प्रबंधित करें",
   "command.switchNamespace.title": "xcsh: नेमस्पेस बदलें",
+  "command.selectActiveNamespace.title": "xcsh: सक्रिय नेमस्पेस चुनें",
   "command.exportContexts.title": "xcsh: संदर्भ निर्यात करें",
   "command.importContexts.title": "xcsh: संदर्भ आयात करें",
   "command.renameContext.title": "xcsh: संदर्भ का नाम बदलें",
