@@ -47,11 +47,14 @@ describe('Runtime namespace-profile resolution (#726)', () => {
       expect(c?.enforced).toBe(false);
     });
 
-    it('`user` (advisory) is visible in a custom namespace — never over-restrict on a guess', () => {
+    it('`user` (system-only) is hidden from a custom namespace — default-deny display', () => {
+      // Default-deny: a system-only allow-list hides the resource from user
+      // namespaces regardless of the advisory/verified `enforced` flag.
       const user = RESOURCE_TYPES.user;
       expect(user).toBeDefined();
       if (user) {
-        expect(isResourceTypeAvailableForNamespace(user, 'my-custom-ns')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(user, 'my-custom-ns')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(user, 'system')).toBe(true);
       }
     });
   });
