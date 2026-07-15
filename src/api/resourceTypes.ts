@@ -1114,16 +1114,17 @@ export function isBuiltInNamespace(namespace: string): boolean {
 /**
  * Check if a resource type is available for a given namespace.
  *
- * Default-deny display policy: the tree hard-filters on `constraint.allowed`
- * for EVERY profile, verified or advisory. A resource is shown in a namespace
- * only when its allow-list names that namespace type. This keeps the tree clean
- * — it surfaces only resources proven creatable in the namespace, and hides
- * unverified system-only guesses rather than showing them on a guess.
+ * Default-deny display policy: a resource is shown in a USER namespace
+ * (custom/shared/default) only when it is BOTH allow-listed for that namespace
+ * type AND verified (`constraint.enforced`). If a resource cannot be verified
+ * as creatable there, we assume it is not — so unverified guesses never leak
+ * into user namespaces. The reserved `system` namespace shows anything whose
+ * allow-list names `system` (system is not a custom namespace, so it is not
+ * gated on verification).
  *
- * `constraint.enforced` (api-specs-enriched verification gate) is retained on
- * the profile as a downstream hard-constraint signal for Terraform/CLI creates,
- * but it no longer relaxes the tree display filter. The `recommendation` is
- * surfaced as a hint elsewhere, not used to hide/show.
+ * `constraint.enforced` is the api-specs-enriched verification gate: true only
+ * for live-CRUD-verified (or strong-signal) classifications. `recommendation`
+ * is a hint surfaced elsewhere, not used to hide/show.
  *
  * Resources without a profile default to user namespaces (shared, default,
  * custom) but NOT system.
@@ -1135,7 +1136,15 @@ export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeIn
     return namespace !== 'system';
   }
   const nsType = namespaceTypeOf(namespace);
-  return profile.constraint.allowed.includes(nsType);
+  if (!profile.constraint.allowed.includes(nsType)) {
+    return false;
+  }
+  if (nsType === 'system') {
+    return true;
+  }
+  // User namespace (custom/shared/default): show only if verified. Unverifiable
+  // resources are assumed NOT custom-namespace-eligible.
+  return profile.constraint.enforced;
 }
 
 /**

@@ -298,9 +298,18 @@ describe('Resource Types Registry', () => {
       classification: { category: 'infrastructure', multiTenantPattern: 'none' as const },
     };
 
+    // A VERIFIED tenant resource (enforced:true) — visible in user namespaces.
     const userProfile = {
-      constraint: { allowed: ['shared' as const, 'default' as const, 'custom' as const], enforced: false },
+      constraint: { allowed: ['shared' as const, 'default' as const, 'custom' as const], enforced: true },
       recommendation: { primary: 'custom' as const, rationale: 'User namespace resource' },
+      classification: { category: 'general', multiTenantPattern: 'per-tenant' as const },
+    };
+
+    // An ADVISORY (unverified) tenant profile — allow-listed for tenant but not
+    // yet CRUD-verified, so default-deny hides it from user namespaces.
+    const advisoryTenantProfile = {
+      constraint: { allowed: ['shared' as const, 'default' as const, 'custom' as const], enforced: false },
+      recommendation: { primary: 'custom' as const, rationale: 'Unverified tenant guess' },
       classification: { category: 'general', multiTenantPattern: 'per-tenant' as const },
     };
 
@@ -491,19 +500,19 @@ describe('Resource Types Registry', () => {
         expect(isResourceTypeAvailableForNamespace(advisory, 'system')).toBe(true);
       });
 
-      it('should keep showing an advisory TENANT resource in user namespaces', () => {
+      it('should HIDE an advisory (unverified) TENANT resource from user namespaces', () => {
         if (!baseResource) {
           return;
         }
-        // userProfile is advisory (enforced:false) but allows tenant namespaces —
-        // it stays visible; default-deny only hides resources whose allow-list
-        // does not name the namespace.
+        // Allow-listed for tenant but advisory (enforced:false). Per default-deny,
+        // an unverifiable resource is assumed NOT custom-eligible, so it is hidden
+        // from user namespaces until CRUD-verified.
         const advisoryTenant: ResourceTypeInfo = {
           ...baseResource,
-          namespaceProfile: userProfile,
+          namespaceProfile: advisoryTenantProfile,
         };
-        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'my-custom-ns')).toBe(true);
-        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'shared')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'my-custom-ns')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'shared')).toBe(false);
         expect(isResourceTypeAvailableForNamespace(advisoryTenant, 'system')).toBe(false);
       });
 
@@ -544,16 +553,23 @@ describe('Resource Types Registry', () => {
         expect(awsVpcSite).toBeDefined();
       });
 
-      it('should include user-profiled resources in user namespaces but not system', () => {
-        // user-profiled resources should be available in user namespaces (shared, custom) but NOT system
-        const systemFiltered = getResourceTypesForNamespace('system');
-        const sharedFiltered = getResourceTypesForNamespace('shared');
-        const customFiltered = getResourceTypesForNamespace('my-custom-namespace');
-
-        // HTTP Load Balancer should be in shared and custom, but NOT system
-        expect(systemFiltered.http_loadbalancer).toBeUndefined();
-        expect(sharedFiltered.http_loadbalancer).toBeDefined();
-        expect(customFiltered.http_loadbalancer).toBeDefined();
+      it('should include VERIFIED tenant resources in user namespaces but not system', () => {
+        // Data-resilient: pick a verified (enforced) tenant resource from the
+        // loaded map and assert the default-deny gate shows it in user namespaces
+        // but not system. (Which specific resources are verified depends on the
+        // synced api-specs release; the gate contract does not.)
+        const verifiedTenantKey = Object.entries(RESOURCE_TYPES).find(
+          ([, info]) =>
+            info.namespaceProfile?.constraint.enforced === true &&
+            info.namespaceProfile.constraint.allowed.includes('custom'),
+        )?.[0];
+        expect(verifiedTenantKey).toBeDefined();
+        if (!verifiedTenantKey) {
+          return;
+        }
+        expect(getResourceTypesForNamespace('system')[verifiedTenantKey]).toBeUndefined();
+        expect(getResourceTypesForNamespace('shared')[verifiedTenantKey]).toBeDefined();
+        expect(getResourceTypesForNamespace('my-custom-namespace')[verifiedTenantKey]).toBeDefined();
       });
 
       it('should filter out ENFORCED system-only resources for shared namespace', () => {
@@ -607,19 +623,21 @@ describe('Resource Types Registry', () => {
         expect(foundSystemResource).toBe(true);
       });
 
-      it('should include user-profiled resources in shared namespace', () => {
-        const categorized = getCategorizedResourceTypesForNamespace('shared');
-        // Security category should contain app_firewall in shared namespace
-        let foundAppFirewall = false;
-        for (const [_category, resources] of categorized) {
-          for (const [key, _info] of resources) {
-            if (key === 'app_firewall') {
-              foundAppFirewall = true;
-              break;
-            }
-          }
+      it('should include VERIFIED tenant resources in the shared namespace tree', () => {
+        // Data-resilient: a verified (enforced) shared-capable resource must
+        // appear somewhere in the categorised shared-namespace tree.
+        const verifiedSharedKey = Object.entries(RESOURCE_TYPES).find(
+          ([, info]) =>
+            info.namespaceProfile?.constraint.enforced === true &&
+            info.namespaceProfile.constraint.allowed.includes('shared'),
+        )?.[0];
+        expect(verifiedSharedKey).toBeDefined();
+        if (!verifiedSharedKey) {
+          return;
         }
-        expect(foundAppFirewall).toBe(true);
+        const categorized = getCategorizedResourceTypesForNamespace('shared');
+        const found = [...categorized].some(([, resources]) => resources.some(([key]) => key === verifiedSharedKey));
+        expect(found).toBe(true);
       });
     });
   });
@@ -968,12 +986,21 @@ describe('Resource Types Registry', () => {
       }
     });
 
-    it('http_loadbalancer should appear in custom namespaces but not system', () => {
-      const httpLb = RESOURCE_TYPES.http_loadbalancer;
-      if (httpLb) {
-        expect(isResourceTypeAvailableForNamespace(httpLb, 'system')).toBe(false);
-        expect(isResourceTypeAvailableForNamespace(httpLb, 'r-mordasiewicz')).toBe(true);
-        expect(isResourceTypeAvailableForNamespace(httpLb, 'shared')).toBe(true);
+    it('a verified tenant resource should appear in custom namespaces but not system', () => {
+      // Data-resilient default-deny UAT: a verified (enforced) tenant resource is
+      // visible in custom/shared but never system. When http_loadbalancer's
+      // verified profile is synced it satisfies this; the assertion does not hinge
+      // on any one resource's verification state in the current release.
+      const verified = Object.values(RESOURCE_TYPES).find(
+        (info) =>
+          info.namespaceProfile?.constraint.enforced === true &&
+          info.namespaceProfile.constraint.allowed.includes('custom'),
+      );
+      expect(verified).toBeDefined();
+      if (verified) {
+        expect(isResourceTypeAvailableForNamespace(verified, 'system')).toBe(false);
+        expect(isResourceTypeAvailableForNamespace(verified, 'r-mordasiewicz')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(verified, 'shared')).toBe(true);
       }
     });
   });
