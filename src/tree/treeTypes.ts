@@ -18,10 +18,10 @@ export interface XCSHTreeItem {
  * Context value prefixes for tree items
  */
 export const TreeItemContext = {
-  NAMESPACE_GROUP: 'namespaceGroup',
-  NAMESPACE: 'namespace',
+  /** Always-present built-in namespaces shown at the tree root (system, shared) */
   NAMESPACE_BUILTIN: 'namespace:builtin',
-  NAMESPACE_CUSTOM: 'namespace:custom',
+  /** The single selectable/active tenant namespace (default or a custom namespace) */
+  NAMESPACE_ACTIVE: 'namespace:active',
   CATEGORY: 'category',
   RESOURCE_TYPE: 'resourceType',
   RESOURCE: 'resource',
@@ -39,7 +39,10 @@ export const TreeItemContext = {
 export interface NamespaceNodeData {
   name: string;
   profileName: string;
+  /** True for the always-present built-in root namespaces (system, shared) */
   isBuiltIn?: boolean;
+  /** True for the single selectable/active tenant namespace node (shows the switch action) */
+  isActiveSelector?: boolean;
 }
 
 /**

@@ -33,6 +33,7 @@
   "command.editContext.title": "xcsh: コンテキストを編集",
   "command.manageContextEnv.title": "xcsh: コンテキストの環境変数を管理",
   "command.switchNamespace.title": "xcsh: 名前空間を切り替え",
+  "command.selectActiveNamespace.title": "xcsh: アクティブな名前空間を選択",
   "command.exportContexts.title": "xcsh: コンテキストをエクスポート",
   "command.importContexts.title": "xcsh: コンテキストをインポート",
   "command.renameContext.title": "xcsh: コンテキストの名前を変更",

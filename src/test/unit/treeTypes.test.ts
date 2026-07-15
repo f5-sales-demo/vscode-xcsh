@@ -3,20 +3,12 @@
 import { TreeItemContext } from '../../tree/treeTypes';
 
 describe('TreeItemContext', () => {
-  it('should have NAMESPACE_GROUP context', () => {
-    expect(TreeItemContext.NAMESPACE_GROUP).toBe('namespaceGroup');
-  });
-
-  it('should have NAMESPACE context', () => {
-    expect(TreeItemContext.NAMESPACE).toBe('namespace');
-  });
-
   it('should have NAMESPACE_BUILTIN context', () => {
     expect(TreeItemContext.NAMESPACE_BUILTIN).toBe('namespace:builtin');
   });
 
-  it('should have NAMESPACE_CUSTOM context', () => {
-    expect(TreeItemContext.NAMESPACE_CUSTOM).toBe('namespace:custom');
+  it('should have NAMESPACE_ACTIVE context', () => {
+    expect(TreeItemContext.NAMESPACE_ACTIVE).toBe('namespace:active');
   });
 
   it('should have CATEGORY context', () => {
@@ -47,13 +39,18 @@ describe('TreeItemContext', () => {
     expect(TreeItemContext.ERROR).toBe('error');
   });
 
+  it('should not expose the removed grouping context values', () => {
+    const keys = Object.keys(TreeItemContext);
+    expect(keys).not.toContain('NAMESPACE_GROUP');
+    expect(keys).not.toContain('NAMESPACE');
+    expect(keys).not.toContain('NAMESPACE_CUSTOM');
+  });
+
   it('should be a readonly object', () => {
     // Test that all keys are present
     const keys = Object.keys(TreeItemContext);
-    expect(keys).toContain('NAMESPACE_GROUP');
-    expect(keys).toContain('NAMESPACE');
     expect(keys).toContain('NAMESPACE_BUILTIN');
-    expect(keys).toContain('NAMESPACE_CUSTOM');
+    expect(keys).toContain('NAMESPACE_ACTIVE');
     expect(keys).toContain('CATEGORY');
     expect(keys).toContain('RESOURCE_TYPE');
     expect(keys).toContain('RESOURCE');
@@ -61,6 +58,6 @@ describe('TreeItemContext', () => {
     expect(keys).toContain('SUBSCRIPTION_PLAN');
     expect(keys).toContain('SUBSCRIPTION_QUOTAS');
     expect(keys).toContain('ERROR');
-    expect(keys).toHaveLength(11);
+    expect(keys).toHaveLength(9);
   });
 });

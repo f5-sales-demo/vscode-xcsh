@@ -33,6 +33,7 @@
   "command.editContext.title": "xcsh: 編輯內容",
   "command.manageContextEnv.title": "xcsh: 管理內容環境變數",
   "command.switchNamespace.title": "xcsh: 切換命名空間",
+  "command.selectActiveNamespace.title": "xcsh: 選取使用中的命名空間",
   "command.exportContexts.title": "xcsh: 匯出內容",
   "command.importContexts.title": "xcsh: 匯入內容",
   "command.renameContext.title": "xcsh: 重新命名內容",
