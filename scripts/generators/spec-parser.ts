@@ -258,6 +258,8 @@ export interface ParsedSpecInfo {
   operationMetadata?: ResourceOperationMetadata;
   /** Field metadata for server defaults and required fields */
   fieldMetadata?: ResourceFieldMetadata;
+  /** Read-only view layout (labelled, ordered fields from GetSpecType) for the describe panel */
+  viewLayout?: ResourceViewLayout;
   /** Domain-level best practices (from x-f5xc-best-practices in spec info) */
   bestPractices?: BestPracticesInfo;
   /** Guided workflows (from x-f5xc-guided-workflows in spec info) */
@@ -1117,6 +1119,225 @@ export function extractResourceFieldMetadata(
   return result;
 }
 
+// ─────────────────────────── View layout extraction ───────────────────────────
+// The describe/view panel renders a resource read-only, grouped into labelled,
+// ordered sections. Unlike the flat fieldMetadata (keyed off CreateSpecType for
+// the form system), the view layout is built from GetSpecType — the superset that
+// also carries read-only status fields (dns_info, host_name, cert_state, …) — and
+// captures the display hints the console uses: x-displayname (label),
+// x-ves-displayorder (order), x-field-mutability (read-only).
+
+/** Maximum nesting depth captured in a view layout (bounds output size + recursion). */
+const MAX_VIEW_LAYOUT_DEPTH = 3;
+
+/** A single node in a resource's view layout tree. */
+export interface ViewFieldNode {
+  /** Raw spec property key (e.g. 'default_route_pools') */
+  key: string;
+  /** Human-readable label from x-displayname (trailing period stripped) */
+  label?: string;
+  /** Display order from x-ves-displayorder */
+  order?: number;
+  /** Structural kind of the field */
+  kind: 'scalar' | 'object' | 'array';
+  /** True when x-field-mutability is 'read-only' */
+  readOnly?: boolean;
+  /** Child fields (objects and array items), bounded by MAX_VIEW_LAYOUT_DEPTH */
+  children?: ViewFieldNode[];
+}
+
+/** Ordered, labelled view layout for one resource type. */
+export interface ResourceViewLayout {
+  /** Top-level spec fields in display order */
+  fields: ViewFieldNode[];
+}
+
+/** Minimal structural shape shared by SchemaObject and SchemaProperty for layout walking. */
+interface SchemaLike {
+  type?: string;
+  $ref?: string;
+  properties?: Record<string, SchemaLike>;
+  allOf?: SchemaLike[];
+  items?: SchemaLike;
+  'x-displayname'?: string;
+  'x-ves-displayorder'?: string | number;
+  'x-field-mutability'?: string;
+}
+
+/** Strip a trailing period/whitespace from an x-displayname; return undefined if empty. */
+function cleanViewLabel(raw: string | undefined): string | undefined {
+  if (!raw) {
+    return undefined;
+  }
+  const trimmed = raw.trim().replace(/\.$/, '').trim();
+  return trimmed || undefined;
+}
+
+/**
+ * Find the schema that best represents the resource for a READ-ONLY view.
+ * GetSpecType is preferred because it is the superset (includes status fields);
+ * falls back through the other spec suffixes. Mirrors findCreateSpecSchemaName
+ * but Get-first.
+ */
+function findViewSpecSchemaName(schemas: Record<string, SchemaLike>, resourceKey: string): string | undefined {
+  const suffixes = ['GetSpecType', 'ReplaceSpecType', 'CreateSpecType', 'GlobalSpecType', 'SpecType'];
+  const keyLower = resourceKey.toLowerCase();
+
+  for (const suffix of suffixes) {
+    let bestMatch: string | undefined;
+    let bestPropertyCount = -1;
+
+    for (const schemaName of Object.keys(schemas)) {
+      if (!schemaName.endsWith(suffix)) {
+        continue;
+      }
+      const base = schemaName.slice(0, -suffix.length).toLowerCase();
+      if (base === keyLower || base.endsWith(keyLower)) {
+        const schema = schemas[schemaName];
+        const propCount = schema?.properties ? Object.keys(schema.properties).length : 0;
+        if (propCount > bestPropertyCount) {
+          bestPropertyCount = propCount;
+          bestMatch = schemaName;
+        }
+      }
+    }
+
+    if (bestMatch) {
+      return bestMatch;
+    }
+  }
+
+  return undefined;
+}
+
+/** Merge a schema's own + $ref + allOf properties into a single map (cycle-guarded). */
+function collectViewProperties(
+  schema: SchemaLike,
+  schemas: Record<string, SchemaLike>,
+  seenRefs: Set<string>,
+): Record<string, SchemaLike> {
+  let out: Record<string, SchemaLike> = {};
+
+  if (schema.$ref) {
+    const name = schema.$ref.replace('#/components/schemas/', '');
+    if (seenRefs.has(name)) {
+      return out;
+    }
+    seenRefs.add(name);
+    const ref = schemas[name];
+    if (ref) {
+      out = { ...out, ...collectViewProperties(ref, schemas, seenRefs) };
+    }
+    return out;
+  }
+
+  if (schema.properties) {
+    out = { ...out, ...schema.properties };
+  }
+  if (schema.allOf) {
+    for (const sub of schema.allOf) {
+      out = { ...out, ...collectViewProperties(sub, schemas, seenRefs) };
+    }
+  }
+  return out;
+}
+
+/** Resolve the child properties of an object/array-item property, if any. */
+function resolveChildProperties(
+  prop: SchemaLike,
+  schemas: Record<string, SchemaLike>,
+  seenRefs: Set<string>,
+): Record<string, SchemaLike> | undefined {
+  // Branch-local copy so the same schema may appear in sibling branches.
+  const seen = new Set(seenRefs);
+  if (prop.$ref || prop.properties || prop.allOf) {
+    const props = collectViewProperties(prop, schemas, seen);
+    return Object.keys(props).length > 0 ? props : undefined;
+  }
+  return undefined;
+}
+
+/** Build view nodes for a properties map, sorted by display order then key. */
+function buildViewNodes(
+  props: Record<string, SchemaLike>,
+  schemas: Record<string, SchemaLike>,
+  depth: number,
+  seenRefs: Set<string>,
+): ViewFieldNode[] {
+  const nodes: ViewFieldNode[] = [];
+
+  for (const [key, prop] of Object.entries(props)) {
+    const label = cleanViewLabel(prop['x-displayname']);
+    const orderRaw = prop['x-ves-displayorder'];
+    const order = orderRaw !== undefined ? Number.parseInt(String(orderRaw), 10) : undefined;
+    const readOnly = prop['x-field-mutability'] === 'read-only';
+
+    let kind: ViewFieldNode['kind'] = 'scalar';
+    let childSource: SchemaLike | undefined;
+    if (prop.type === 'array' && prop.items) {
+      kind = 'array';
+      childSource = prop.items;
+    } else if (prop.$ref || prop.properties || prop.allOf) {
+      kind = 'object';
+      childSource = prop;
+    }
+
+    const node: ViewFieldNode = { key, kind };
+    if (label) {
+      node.label = label;
+    }
+    if (order !== undefined && !Number.isNaN(order)) {
+      node.order = order;
+    }
+    if (readOnly) {
+      node.readOnly = true;
+    }
+
+    if (childSource && depth < MAX_VIEW_LAYOUT_DEPTH) {
+      const childProps = resolveChildProperties(childSource, schemas, seenRefs);
+      if (childProps) {
+        const children = buildViewNodes(childProps, schemas, depth + 1, seenRefs);
+        if (children.length > 0) {
+          node.children = children;
+        }
+      }
+    }
+
+    nodes.push(node);
+  }
+
+  nodes.sort((a, b) => {
+    const ao = a.order ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.order ?? Number.MAX_SAFE_INTEGER;
+    return ao !== bo ? ao - bo : a.key.localeCompare(b.key);
+  });
+
+  return nodes;
+}
+
+/**
+ * Build the read-only view layout for a resource from its GetSpecType schema.
+ * Returns undefined when no suitable schema/fields are found.
+ */
+export function buildResourceViewLayout(spec: OpenAPISpec, resourceKey: string): ResourceViewLayout | undefined {
+  const schemas = spec.components?.schemas;
+  if (!schemas) {
+    return undefined;
+  }
+  const schemaName = findViewSpecSchemaName(schemas, resourceKey);
+  if (!schemaName) {
+    return undefined;
+  }
+  const schema = schemas[schemaName];
+  if (!schema) {
+    return undefined;
+  }
+
+  const topProps = collectViewProperties(schema, schemas, new Set([schemaName]));
+  const fields = buildViewNodes(topProps, schemas, 1, new Set([schemaName]));
+  return fields.length > 0 ? { fields } : undefined;
+}
+
 /**
  * Parse a domain file and extract all resource types.
  * Domain files contain multiple resource types grouped by domain.
@@ -1189,7 +1410,13 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
         const candidateFields = extractResourceFieldMetadata(spec, resourceKey);
         const candidateCount = candidateFields ? Object.keys(candidateFields.fields).length : 0;
         if (candidateCount > existingFields && candidateFields) {
-          results[existingIdx] = { ...existing, fieldMetadata: candidateFields };
+          // The richer spec file also owns the more complete view layout.
+          const candidateLayout = buildResourceViewLayout(spec, resourceKey);
+          results[existingIdx] = {
+            ...existing,
+            fieldMetadata: candidateFields,
+            viewLayout: candidateLayout ?? existing.viewLayout,
+          };
         }
       }
       continue;
@@ -1280,6 +1507,12 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     // Only include fieldMetadata if we have meaningful data
     if (fieldMetadata) {
       result.fieldMetadata = fieldMetadata;
+    }
+
+    // Build the read-only view layout (GetSpecType superset) for the describe panel
+    const viewLayout = buildResourceViewLayout(spec, resourceKey);
+    if (viewLayout) {
+      result.viewLayout = viewLayout;
     }
 
     // Extract guided workflows from spec info
