@@ -128,8 +128,14 @@ describe('Resource Type Registry (comprehensive)', () => {
   // Namespace availability
   // ---------------------------------------------------------------------------
   describe('namespace scope helpers', () => {
-    it('http_loadbalancer is available in the default namespace', () => {
-      const info = RESOURCE_TYPES.http_loadbalancer;
+    it('a verified tenant resource is available in the default namespace', () => {
+      // Data-resilient: default-deny shows a verified (enforced) tenant resource
+      // in the default namespace. Not tied to any one resource's current
+      // verification state (which depends on the synced api-specs release).
+      const info = Object.values(RESOURCE_TYPES).find(
+        (r) =>
+          r.namespaceProfile?.constraint.enforced === true && r.namespaceProfile.constraint.allowed.includes('default'),
+      );
       expect(info).toBeDefined();
       if (!info) {
         return;
