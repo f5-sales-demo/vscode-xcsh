@@ -1114,18 +1114,19 @@ export function isBuiltInNamespace(namespace: string): boolean {
 /**
  * Check if a resource type is available for a given namespace.
  *
- * Honors the upstream verification gate (api-specs-enriched #934):
- * `constraint.enforced` is true only for resources whose namespace scope has
- * been verified (live CRUD probe or strong spec signal). Enforced constraints
- * hard-filter on `constraint.allowed`. Unverified constraints are advisory:
- * we must NOT over-restrict a namespace on a guess, so the resource stays
- * visible in user namespaces (its `recommendation` is surfaced as a hint
- * elsewhere, not used to hide it). The reserved `system` namespace is the only
- * one still gated for advisory profiles, and only by whether the advisory
- * allow-list names `system` at all.
+ * Default-deny display policy: the tree hard-filters on `constraint.allowed`
+ * for EVERY profile, verified or advisory. A resource is shown in a namespace
+ * only when its allow-list names that namespace type. This keeps the tree clean
+ * — it surfaces only resources proven creatable in the namespace, and hides
+ * unverified system-only guesses rather than showing them on a guess.
  *
- * Resources without a profile default to being available in all namespaces
- * except system.
+ * `constraint.enforced` (api-specs-enriched verification gate) is retained on
+ * the profile as a downstream hard-constraint signal for Terraform/CLI creates,
+ * but it no longer relaxes the tree display filter. The `recommendation` is
+ * surfaced as a hint elsewhere, not used to hide/show.
+ *
+ * Resources without a profile default to user namespaces (shared, default,
+ * custom) but NOT system.
  */
 export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeInfo, namespace: string): boolean {
   const profile = resourceType.namespaceProfile;
@@ -1134,15 +1135,7 @@ export function isResourceTypeAvailableForNamespace(resourceType: ResourceTypeIn
     return namespace !== 'system';
   }
   const nsType = namespaceTypeOf(namespace);
-  if (profile.constraint.enforced) {
-    // Verified constraint — hard filter on the allowed set.
-    return profile.constraint.allowed.includes(nsType);
-  }
-  // Advisory (unverified) constraint — never over-restrict on a guess.
-  if (nsType === 'system') {
-    return profile.constraint.allowed.includes('system');
-  }
-  return true;
+  return profile.constraint.allowed.includes(nsType);
 }
 
 /**
