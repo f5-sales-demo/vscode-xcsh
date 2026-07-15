@@ -339,6 +339,12 @@
         "icon": "$(info)"
       },
       {
+        "command": "xcsh.selectActiveNamespace",
+        "title": "%command.selectActiveNamespace.title%",
+        "category": "xcsh",
+        "icon": "$(arrow-swap)"
+      },
+      {
         "command": "xcsh.apply",
         "title": "%command.apply.title%",
         "category": "xcsh",
@@ -661,8 +667,13 @@
           "group": "1_resource@4"
         },
         {
+          "command": "xcsh.selectActiveNamespace",
+          "when": "view == xcsh.explorer && viewItem == namespace:active",
+          "group": "inline"
+        },
+        {
           "command": "xcsh.deleteNamespace",
-          "when": "view == xcsh.explorer && viewItem == namespace:custom",
+          "when": "view == xcsh.explorer && viewItem == namespace:active",
           "group": "1_namespace@1"
         },
         {

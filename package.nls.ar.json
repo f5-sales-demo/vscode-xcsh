@@ -33,6 +33,7 @@
   "command.editContext.title": "xcsh: تعديل السياق",
   "command.manageContextEnv.title": "xcsh: إدارة متغيرات بيئة السياق",
   "command.switchNamespace.title": "xcsh: تبديل مساحة الاسم",
+  "command.selectActiveNamespace.title": "xcsh: تحديد مساحة الاسم النشطة",
   "command.exportContexts.title": "xcsh: تصدير السياقات",
   "command.importContexts.title": "xcsh: استيراد السياقات",
   "command.renameContext.title": "xcsh: إعادة تسمية السياق",

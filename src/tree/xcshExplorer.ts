@@ -13,7 +13,6 @@ import {
   getPrerequisites,
   getResourceDomain,
   getResourceTypeTierRequirement,
-  isBuiltInNamespace,
   isResourceTypeAvailableForNamespace,
   isResourceTypePreview,
   RESOURCE_TYPES,
@@ -105,51 +104,35 @@ export class XCSHExplorerProvider implements vscode.TreeDataProvider<XCSHTreeIte
     try {
       const client = await this.clientFactory(activeContext);
       const namespaces = await client.listNamespaces();
+      const available = new Set(namespaces.map((ns) => ns.name));
 
-      // Separate built-in and custom namespaces using generated constants
-      const builtInNs = namespaces.filter((ns) => isBuiltInNamespace(ns.name));
-      const customNamespaces = namespaces.filter((ns) => !isBuiltInNamespace(ns.name));
+      const nodes: XCSHTreeItem[] = [];
 
-      // Sort built-in namespaces in the specified order
-      const builtInOrder: string[] = [...BUILT_IN_NAMESPACES];
-      builtInNs.sort((a, b) => builtInOrder.indexOf(a.name) - builtInOrder.indexOf(b.name));
-
-      // Sort custom namespaces alphabetically
-      customNamespaces.sort((a, b) => a.name.localeCompare(b.name));
-
-      const groups: XCSHTreeItem[] = [];
-
-      // Add built-in namespaces group if any exist
-      if (builtInNs.length > 0) {
-        groups.push(
-          new NamespaceGroupNode(
-            vscode.l10n.t('Built-in Namespaces'),
-            builtInNs.map((ns) => ns.name),
-            activeContext.name,
-            this.clientFactory,
-            this.contextManager,
-            'symbol-namespace',
-            true, // isBuiltIn
-          ),
-        );
+      // Always-present built-in root namespaces (system, shared) in canonical order.
+      for (const name of ROOT_BUILT_IN_NAMESPACES) {
+        if (available.has(name)) {
+          nodes.push(
+            new NamespaceNode(
+              { name, profileName: activeContext.name, isBuiltIn: true },
+              this.clientFactory,
+              this.contextManager,
+            ),
+          );
+        }
       }
 
-      // Add custom namespaces group if any exist
-      if (customNamespaces.length > 0) {
-        groups.push(
-          new NamespaceGroupNode(
-            vscode.l10n.t('Custom Namespaces'),
-            customNamespaces.map((ns) => ns.name),
-            activeContext.name,
-            this.clientFactory,
-            this.contextManager,
-            'folder-library',
-            false, // isBuiltIn
-          ),
-        );
-      }
+      // Single selectable/active tenant namespace (default, or a custom namespace).
+      // Switching is handled by the inline action on this node (xcsh.selectActiveNamespace).
+      const activeNamespace = activeContext.defaultNamespace || 'default';
+      nodes.push(
+        new NamespaceNode(
+          { name: activeNamespace, profileName: activeContext.name, isActiveSelector: true },
+          this.clientFactory,
+          this.contextManager,
+        ),
+      );
 
-      return groups;
+      return nodes;
     } catch (error) {
       this.logger.error('Failed to load namespaces', error as Error);
       const errorMessage = this.getErrorMessage(error as Error);
@@ -159,39 +142,23 @@ export class XCSHExplorerProvider implements vscode.TreeDataProvider<XCSHTreeIte
 }
 
 /**
- * Namespace group node (Built-in Namespaces, Custom Namespaces)
+ * Built-in namespaces shown as always-present, expandable root nodes. Excludes
+ * `default`, which the tenant ships as its system-created namespace but which
+ * otherwise behaves like any user namespace — it is chosen via the active-namespace
+ * selector instead of being pinned at the root.
  */
-class NamespaceGroupNode implements XCSHTreeItem {
-  constructor(
-    private readonly groupName: string,
-    private readonly namespaceNames: string[],
-    private readonly profileName: string,
-    private readonly clientFactory: (ctx: XCSHContext) => Promise<XCSHClient>,
-    private readonly contextManager: ContextManager,
-    private readonly icon: string,
-    private readonly isBuiltIn: boolean,
-  ) {}
+const ROOT_BUILT_IN_NAMESPACES: readonly string[] = BUILT_IN_NAMESPACES.filter((n) => n !== 'default');
 
-  getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem(this.groupName, vscode.TreeItemCollapsibleState.Expanded);
-    item.contextValue = TreeItemContext.NAMESPACE_GROUP;
-    item.iconPath = new vscode.ThemeIcon(this.icon);
-    item.tooltip = vscode.l10n.t('{0} namespaces', this.namespaceNames.length);
-    return item;
-  }
-
-  getChildren(): Promise<XCSHTreeItem[]> {
-    return Promise.resolve(
-      this.namespaceNames.map(
-        (name) =>
-          new NamespaceNode(
-            { name, profileName: this.profileName, isBuiltIn: this.isBuiltIn },
-            this.clientFactory,
-            this.contextManager,
-          ),
-      ),
-    );
-  }
+/**
+ * Build the list of selectable tenant namespaces for the active-namespace picker:
+ * every namespace except the always-shown root built-ins (`system`, `shared`), with
+ * `default` first (the tenant's system-created namespace) then the rest alphabetically.
+ */
+export function buildSelectableNamespaces(names: string[]): string[] {
+  const selectable = names.filter((n) => !ROOT_BUILT_IN_NAMESPACES.includes(n));
+  const hasDefault = selectable.includes('default');
+  const rest = selectable.filter((n) => n !== 'default').sort((a, b) => a.localeCompare(b));
+  return hasDefault ? ['default', ...rest] : rest;
 }
 
 /**
@@ -206,9 +173,12 @@ export class NamespaceNode implements XCSHTreeItem {
 
   getTreeItem(): vscode.TreeItem {
     const item = new vscode.TreeItem(this.data.name, vscode.TreeItemCollapsibleState.Collapsed);
-    // Use differentiated context value for built-in vs custom namespaces
-    item.contextValue = this.data.isBuiltIn ? TreeItemContext.NAMESPACE_BUILTIN : TreeItemContext.NAMESPACE_CUSTOM;
-    item.iconPath = new vscode.ThemeIcon('folder');
+    // The active/selectable tenant namespace carries the inline switch action; the
+    // built-in root namespaces (system, shared) are fixed.
+    item.contextValue = this.data.isActiveSelector
+      ? TreeItemContext.NAMESPACE_ACTIVE
+      : TreeItemContext.NAMESPACE_BUILTIN;
+    item.iconPath = new vscode.ThemeIcon(this.data.isActiveSelector ? 'folder-active' : 'folder');
     item.tooltip = `${vscode.l10n.t('Namespace')}: ${this.data.name}`;
     return item;
   }
