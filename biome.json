@@ -31,7 +31,6 @@
         "build/**",
         "release/**",
         "vendor/**",
-        "src/generated/**",
         "docs/snapshots/**",
         ".github/config/managed-files-manifest.json",
         "**/*.svg"
@@ -40,9 +39,6 @@
         "enabled": false
       },
       "linter": {
-        "enabled": false
-      },
-      "assist": {
         "enabled": false
       }
     },
