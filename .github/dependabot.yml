@@ -42,3 +42,12 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # typescript-eslint peer-caps TypeScript at <6.1.0, and no typescript-eslint
+      # release yet supports TS 6 or the TS 7 native-compiler preview. Major
+      # TypeScript bumps therefore break `npm ci` with ERESOLVE. Ignore TS majors
+      # until the lint toolchain supports them; minor/patch within the 5.x line
+      # still flow via npm-minor-patch.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
