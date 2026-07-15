@@ -14,7 +14,11 @@ import * as path from 'node:path';
 import { writeConstantsFile } from './generators/constants-generator';
 import { generateDomainCategoriesFile } from './generators/domain-category-generator';
 import { writeNamespaceProfilesFile } from './generators/namespace-profiles-generator';
-import { generateResourceTypesFromDomainFiles, type ParsedSpecInfo } from './generators/resource-type-generator';
+import {
+  generateResourceTypesFromDomainFiles,
+  type ParsedSpecInfo,
+  writeViewLayoutsFile,
+} from './generators/resource-type-generator';
 
 // Use domain-based specs (new upstream format with x-f5xc-cli-domain)
 const DOMAIN_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api', 'domains');
@@ -25,6 +29,7 @@ const GENERATED_DIR = path.join(__dirname, '..', 'src', 'generated');
 const RESOURCE_TYPES_OUTPUT = path.join(GENERATED_DIR, 'resourceTypesBase.ts');
 const NAMESPACE_PROFILES_OUTPUT = path.join(GENERATED_DIR, 'namespaceProfiles.ts');
 const CONSTANTS_OUTPUT = path.join(GENERATED_DIR, 'constants.ts');
+const VIEW_LAYOUTS_OUTPUT = path.join(GENERATED_DIR, 'viewLayouts.ts');
 const DOMAIN_CATEGORIES_OUTPUT = path.join(GENERATED_DIR, 'domainCategories.ts');
 const INDEX_OUTPUT = path.join(GENERATED_DIR, 'index.ts');
 const INDEX_JSON_PATH = path.join(SPECS_DIR, 'index.json');
@@ -45,6 +50,7 @@ export * from './resourceTypesBase';
 export * from './namespaceProfiles';
 export * from './documentationUrls';
 export * from './domainCategories';
+export * from './viewLayouts';
 `;
 
   fs.writeFileSync(INDEX_OUTPUT, content, 'utf-8');
@@ -150,6 +156,11 @@ function main(): void {
   // manually-defined resource types resolve their profile from the map (#726).
   console.log('\nPhase 1b: Baking namespace-profiles map for runtime resolution...');
   writeNamespaceProfilesFile(NAMESPACE_PROFILES_PATH, NAMESPACE_PROFILES_OUTPUT);
+
+  // Emit per-resource read-only view layouts (labels/order from GetSpecType) for
+  // the describe/view panel's spec-driven rendering.
+  console.log('\nPhase 1c: Generating resource view layouts...');
+  writeViewLayoutsFile(specs, VIEW_LAYOUTS_OUTPUT);
 
   // Generate constants file
   console.log('\nPhase 2: Generating constants file...');

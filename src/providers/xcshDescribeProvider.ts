@@ -6,12 +6,14 @@ import { getQuotaForResourceType, type QuotaItem } from '../api/subscription';
 import type { ContextManager } from '../config/contextManager';
 import { API_ENDPOINTS } from '../generated/constants';
 import { getDocumentationUrl as getGeneratedDocUrl } from '../generated/documentationUrls';
-import { GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
+import { API_PATH_TO_RESOURCE_KEY, GENERATED_RESOURCE_TYPES } from '../generated/resourceTypesBase';
+import { GENERATED_VIEW_LAYOUTS, type ViewFieldNode } from '../generated/viewLayouts';
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import { getIconForCategory, getToolbarIconSvg } from '../utils/xcshIcons';
 import { renderBestPractices } from './metadataRenderer';
+import { VIEW_SECTION_MANIFESTS } from './viewSectionManifests';
 
 const logger = getLogger();
 
@@ -52,40 +54,6 @@ export class XCSHDescribeProvider {
   private panel: vscode.WebviewPanel | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
-
-  /**
-   * Check if a value is empty (null, undefined, {}, [], "")
-   */
-  private isEmpty(value: unknown): boolean {
-    if (value === null || value === undefined) {
-      return true;
-    }
-    if (value === '') {
-      return true;
-    }
-    if (Array.isArray(value) && value.length === 0) {
-      return true;
-    }
-    if (typeof value === 'object' && Object.keys(value).length === 0) {
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * Format ISO date to short format "Mar 4, 2026"
-   */
-  private formatDateShort(isoString: string | undefined): string | undefined {
-    if (!isoString) {
-      return undefined;
-    }
-    try {
-      const date = new Date(isoString);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return isoString;
-    }
-  }
 
   /**
    * Format timestamp to locale string
@@ -130,27 +98,6 @@ export class XCSHDescribeProvider {
       .split('_')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-  }
-
-  /**
-   * Get status for enable/disable fields
-   */
-  private getEnableDisableStatus(
-    spec: Record<string, unknown>,
-    disableKey: string,
-    enableKey: string,
-  ): { enabled: boolean; value: string } | null {
-    // In F5 XC API, the presence of the key indicates selection, even if value is empty {}
-    // e.g., "disable_trust_client_ip_headers": {} means disabled IS selected
-    const isDisabled = disableKey in spec;
-    const isEnabled = enableKey in spec;
-
-    if (isDisabled) {
-      return { enabled: false, value: 'Disable' };
-    } else if (isEnabled) {
-      return { enabled: true, value: 'Enable' };
-    }
-    return null;
   }
 
   /**
@@ -398,7 +345,9 @@ export class XCSHDescribeProvider {
   }
 
   /**
-   * Extract all sections based on resource type
+   * Extract all sections for a resource. Spec-driven for every type: labels/order
+   * come from the generated view layout; a curated section manifest (when present)
+   * groups fields into the console's exact section titles.
    */
   private extractSections(
     apiPath: string,
@@ -407,841 +356,316 @@ export class XCSHDescribeProvider {
     spec: Record<string, unknown> | undefined,
     namespace: string,
   ): SectionDefinition[] {
-    switch (apiPath) {
-      case 'http_loadbalancers':
-        return this.extractHttpLbSections(metadata, systemMetadata, spec, namespace);
-      case 'origin_pools':
-        return this.extractOriginPoolSections(metadata, systemMetadata, spec, namespace);
-      default:
-        return this.extractGenericSections(metadata, systemMetadata, spec, namespace);
-    }
+    const resourceKey = API_PATH_TO_RESOURCE_KEY[apiPath];
+    return this.extractSpecDrivenSections(resourceKey, metadata, systemMetadata, spec, namespace);
   }
 
   /**
-   * Extract HTTP Load Balancer sections matching F5 XC Console layout
+   * Shared Metadata section used by every resource view (Name, Namespace,
+   * Description, Labels, Creator, timestamps, UID).
    */
-  private extractHttpLbSections(
+  private buildMetadataSection(
     metadata: Record<string, unknown> | undefined,
-    _systemMetadata: Record<string, unknown> | undefined,
-    spec: Record<string, unknown> | undefined,
-    _namespace: string,
-  ): SectionDefinition[] {
-    const sections: SectionDefinition[] = [];
-
-    // 1. Metadata
-    const metadataFields: FieldDefinition[] = [];
+    systemMetadata: Record<string, unknown> | undefined,
+    namespace: string,
+  ): SectionDefinition {
+    const fields: FieldDefinition[] = [];
     if (metadata?.name) {
-      metadataFields.push({ key: 'Name', value: String(metadata.name) });
+      fields.push({ key: 'Name', value: String(metadata.name) });
     }
-    sections.push({ id: 'metadata', title: vscode.l10n.t('Metadata'), fields: metadataFields });
-
-    // 2. Domains and LB Type
-    const domainsFields: FieldDefinition[] = [];
-    const domains = spec?.domains as string[] | undefined;
-    if (domains && domains.length > 0) {
-      domainsFields.push({ key: 'Domains', value: domains.join(', ') });
+    fields.push({ key: 'Namespace', value: namespace });
+    if (metadata?.description) {
+      fields.push({ key: 'Description', value: String(metadata.description) });
     }
-
-    // Determine LB type and extract all HTTPS config fields
-    const httpsAutoConfig = spec?.https_auto_cert as Record<string, unknown> | undefined;
-    const httpsConfig = spec?.https as Record<string, unknown> | undefined;
-    const httpConfig = spec?.http as Record<string, unknown> | undefined;
-    const activeConfig = httpsAutoConfig || httpsConfig || httpConfig;
-
-    // Track LB type for conditional section rendering
-    let lbType: 'https_auto' | 'https_custom' | 'http' | 'unknown' = 'unknown';
-
-    if (httpsAutoConfig && !this.isEmpty(httpsAutoConfig)) {
-      lbType = 'https_auto';
-      domainsFields.push({ key: 'Load Balancer Type', value: 'HTTPS with Automatic Certificate' });
-
-      // HTTP Redirect to HTTPS
-      if (httpsAutoConfig.http_redirect !== undefined) {
-        domainsFields.push({
-          key: 'HTTP Redirect to HTTPS',
-          value: httpsAutoConfig.http_redirect ? 'True' : 'False',
-        });
-      }
-
-      // Add HSTS Header
-      if (httpsAutoConfig.add_hsts !== undefined) {
-        domainsFields.push({
-          key: 'Add HSTS Header',
-          value: httpsAutoConfig.add_hsts ? 'True' : 'False',
-        });
-      }
-
-      // HTTPS Listen Port Choice and Port
-      if (httpsAutoConfig.port || httpsAutoConfig.default_https_port) {
-        domainsFields.push({
-          key: 'HTTPS Listen Port Choice',
-          value: httpsAutoConfig.default_https_port ? 'Default HTTPS Port' : 'HTTPS Listen Port',
-        });
-        if (httpsAutoConfig.port) {
-          domainsFields.push({ key: 'HTTPS Listen Port', value: String(httpsAutoConfig.port) });
-        }
-      }
-
-      // TLS Security Level
-      if (httpsAutoConfig.tls_config) {
-        const tlsConfig = httpsAutoConfig.tls_config as Record<string, unknown>;
-        if (tlsConfig.default_security) {
-          domainsFields.push({ key: 'TLS Security Level', value: 'High' });
-        } else if (tlsConfig.medium_security) {
-          domainsFields.push({ key: 'TLS Security Level', value: 'Medium' });
-        } else if (tlsConfig.low_security) {
-          domainsFields.push({ key: 'TLS Security Level', value: 'Low' });
-        } else if (tlsConfig.custom_security) {
-          domainsFields.push({ key: 'TLS Security Level', value: 'Custom' });
-        }
-      }
-
-      // mTLS
-      if (httpsAutoConfig.no_mtls) {
-        domainsFields.push({ key: 'mTLS', value: 'Disable', status: 'disabled' });
-      } else if (httpsAutoConfig.use_mtls) {
-        domainsFields.push({ key: 'mTLS', value: 'Enable', status: 'enabled' });
-      }
-    } else if (httpsConfig && !this.isEmpty(httpsConfig)) {
-      lbType = 'https_custom';
-      domainsFields.push({ key: 'Load Balancer Type', value: 'HTTPS with Custom Certificate' });
-    } else if (httpConfig && !this.isEmpty(httpConfig)) {
-      lbType = 'http';
-      domainsFields.push({ key: 'Load Balancer Type', value: 'HTTP' });
-
-      // HTTP Listen Port
-      if (httpConfig.port !== undefined) {
-        domainsFields.push({ key: 'HTTP Listen Port', value: String(httpConfig.port) });
-      }
-
-      // DNS Management
-      if (httpConfig.dns_volterra_managed !== undefined) {
-        domainsFields.push({
-          key: 'DNS Info',
-          value: httpConfig.dns_volterra_managed ? 'F5 XC Managed' : 'Manual DNS Configuration',
-        });
-      }
+    if (systemMetadata?.creator_id) {
+      fields.push({ key: 'Creator', value: String(systemMetadata.creator_id) });
     }
-
-    // Server Response Header (at spec level)
-    if (spec?.response_headers_to_add || spec?.response_headers_to_remove) {
-      domainsFields.push({ key: 'Server Response Header', value: 'Custom' });
-    } else if (spec?.default_header !== undefined || !spec?.response_headers_to_add) {
-      domainsFields.push({ key: 'Server Response Header', value: 'Default' });
+    const createTime = this.formatTimestamp(systemMetadata?.creation_timestamp as string | undefined);
+    if (createTime) {
+      fields.push({ key: 'Created', value: createTime });
     }
-
-    // Path Normalization (at spec level)
-    if (spec?.enable_path_normalization) {
-      domainsFields.push({ key: 'Path Normalization', value: 'Enable', status: 'enabled' });
-    } else if (spec?.disable_path_normalization) {
-      domainsFields.push({ key: 'Path Normalization', value: 'Disable', status: 'disabled' });
-    } else {
-      // Default is enabled
-      domainsFields.push({ key: 'Path Normalization', value: 'Enable', status: 'enabled' });
+    const modTime = this.formatTimestamp(systemMetadata?.modification_timestamp as string | undefined);
+    if (modTime) {
+      fields.push({ key: 'Last Modified', value: modTime });
     }
-
-    // Default Load Balancer (at spec level)
-    if (spec?.default_loadbalancer) {
-      domainsFields.push({ key: 'Default Load Balancer', value: 'Yes' });
-    } else {
-      // Default is "No" when not explicitly set
-      domainsFields.push({ key: 'Default Load Balancer', value: 'No' });
+    if (systemMetadata?.uid) {
+      fields.push({ key: 'UID', value: String(systemMetadata.uid) });
     }
-
-    // Connection Idle Timeout (inside https config)
-    if (activeConfig?.connection_idle_timeout) {
-      domainsFields.push({
-        key: 'Connection Idle Timeout',
-        value: String(activeConfig.connection_idle_timeout),
-      });
+    const labels = metadata?.labels as Record<string, string> | undefined;
+    if (labels && Object.keys(labels).length > 0) {
+      const labelStr = Object.entries(labels)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(', ');
+      fields.push({ key: 'Labels', value: labelStr });
     }
-
-    // HTTP Protocol Configuration (at spec level)
-    if (spec?.http_protocol_configuration) {
-      const httpProto = spec.http_protocol_configuration as Record<string, unknown>;
-      if (httpProto.http_protocol_enable_v1_v2) {
-        domainsFields.push({ key: 'HTTP Protocol Configuration', value: 'HTTP/1.1 and HTTP/2' });
-      } else if (httpProto.http_protocol_enable_v1_only) {
-        domainsFields.push({ key: 'HTTP Protocol Configuration', value: 'HTTP/1.1 Only' });
-      } else if (httpProto.http_protocol_enable_v2_only) {
-        domainsFields.push({ key: 'HTTP Protocol Configuration', value: 'HTTP/2 Only' });
-      } else {
-        domainsFields.push({ key: 'HTTP Protocol Configuration', value: 'HTTP/1.1 and HTTP/2' });
-      }
-    } else {
-      // Default is HTTP/1.1 and HTTP/2 when not explicitly set
-      domainsFields.push({ key: 'HTTP Protocol Configuration', value: 'HTTP/1.1 and HTTP/2' });
-    }
-
-    // TLS Coalescing Options (inside https config) - only for HTTPS load balancers
-    if (httpsAutoConfig || httpsConfig) {
-      if (httpsAutoConfig?.no_tls_coalescing || httpsConfig?.no_tls_coalescing) {
-        domainsFields.push({ key: 'TLS Coalescing Options', value: 'No Coalescing' });
-      } else {
-        // Default is "Default Coalescing" for HTTPS
-        domainsFields.push({ key: 'TLS Coalescing Options', value: 'Default Coalescing' });
-      }
-    }
-
-    sections.push({ id: 'domains', title: vscode.l10n.t('Domains and LB Type'), fields: domainsFields });
-
-    // 3. Web Application Firewall
-    const wafFields: FieldDefinition[] = [];
-    const wafStatus = this.getEnableDisableStatus(spec || {}, 'disable_waf', 'app_firewall');
-    if (wafStatus) {
-      wafFields.push({
-        key: 'Web Application Firewall (WAF)',
-        value: wafStatus.value,
-        status: wafStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    if (spec?.waf_exclusion_rules && !this.isEmpty(spec.waf_exclusion_rules)) {
-      wafFields.push({ key: 'WAF Exclusion', value: 'Inline Rules' });
-    }
-    sections.push({ id: 'waf', title: vscode.l10n.t('Web Application Firewall'), fields: wafFields });
-
-    // 4. Bot Protection
-    const botFields: FieldDefinition[] = [];
-    const botStatus = this.getEnableDisableStatus(spec || {}, 'disable_bot_defense', 'bot_defense');
-    if (botStatus) {
-      botFields.push({
-        key: 'Bot Defense',
-        value: botStatus.value,
-        status: botStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    sections.push({ id: 'bot-protection', title: vscode.l10n.t('Bot Protection'), fields: botFields });
-
-    // 5. API Protection
-    const apiFields: FieldDefinition[] = [];
-    const apiDefStatus = this.getEnableDisableStatus(spec || {}, 'disable_api_definition', 'api_definition');
-    if (apiDefStatus) {
-      apiFields.push({
-        key: 'API Definition',
-        value: apiDefStatus.value,
-        status: apiDefStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    const apiDiscStatus = this.getEnableDisableStatus(spec || {}, 'disable_api_discovery', 'enable_api_discovery');
-    if (apiDiscStatus) {
-      apiFields.push({
-        key: 'API Discovery',
-        value: apiDiscStatus.value,
-        status: apiDiscStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    // Sensitive Data Discovery
-    if (spec?.default_sensitive_data_policy) {
-      apiFields.push({ key: 'Sensitive Data Discovery', value: 'Default' });
-    }
-    // API Testing
-    const apiTestingStatus = this.getEnableDisableStatus(spec || {}, 'disable_api_testing', 'api_testing_config');
-    if (apiTestingStatus) {
-      apiFields.push({
-        key: 'API Testing',
-        value: apiTestingStatus.value,
-        status: apiTestingStatus.enabled ? 'enabled' : 'disabled',
-      });
-    } else {
-      apiFields.push({ key: 'API Testing', value: 'Disable', status: 'disabled' });
-    }
-    sections.push({ id: 'api-protection', title: vscode.l10n.t('API Protection'), fields: apiFields });
-
-    // 6. Malware Protection
-    const malwareFields: FieldDefinition[] = [];
-    const malwareStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_malware_protection',
-      'malware_protection_setting',
-    );
-    if (malwareStatus) {
-      malwareFields.push({
-        key: 'Malware Protection',
-        value: malwareStatus.value,
-        status: malwareStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    sections.push({ id: 'malware-protection', title: vscode.l10n.t('Malware Protection'), fields: malwareFields });
-
-    // 7. DoS Settings (with sub-groups)
-    const mitigationFields: FieldDefinition[] = [];
-    const protectionFields: FieldDefinition[] = [];
-    const ungroupedDosFields: FieldDefinition[] = [];
-
-    const l7Ddos = spec?.l7_ddos_protection as Record<string, unknown> | undefined;
-    if (l7Ddos && !this.isEmpty(l7Ddos)) {
-      // Mitigation Settings group
-      if (l7Ddos.mitigation_block) {
-        mitigationFields.push({ key: 'Mitigation Action', value: 'Block' });
-      } else if (l7Ddos.mitigation_captcha_challenge) {
-        mitigationFields.push({ key: 'Mitigation Action', value: 'Captcha Challenge' });
-      } else if (l7Ddos.mitigation_js_challenge) {
-        mitigationFields.push({ key: 'Mitigation Action', value: 'JS Challenge' });
-      }
-      if (l7Ddos.default_rps_threshold) {
-        mitigationFields.push({ key: 'RPS Threshold', value: 'Default' });
-      } else if (l7Ddos.rps_threshold) {
-        mitigationFields.push({ key: 'RPS Threshold', value: String(l7Ddos.rps_threshold) });
-      }
-
-      // Protection Settings group
-      if (l7Ddos.clientside_action_none) {
-        protectionFields.push({ key: 'Client-Side Challenge', value: 'None' });
-      }
-      if (l7Ddos.custom_service_policy) {
-        protectionFields.push({ key: 'Custom Service Policy', value: 'Configured' });
-      } else {
-        protectionFields.push({ key: 'Custom Service Policy', value: 'None' });
-      }
-    }
-
-    // Slow DDoS (ungrouped - at section level)
-    if (spec?.system_default_timeouts) {
-      ungroupedDosFields.push({ key: 'Slow DDoS Mitigation', value: 'Default' });
-    }
-
-    // Build section with sub-groups
-    const dosSubGroups: SubGroupDefinition[] = [];
-    if (mitigationFields.length > 0) {
-      dosSubGroups.push({
-        id: 'mitigation',
-        title: vscode.l10n.t('Mitigation Settings'),
-        fields: mitigationFields,
-      });
-    }
-    if (protectionFields.length > 0) {
-      dosSubGroups.push({
-        id: 'protection',
-        title: vscode.l10n.t('Protection Settings'),
-        fields: protectionFields,
-      });
-    }
-
-    sections.push({
-      id: 'dos-settings',
-      title: vscode.l10n.t('DoS Settings'),
-      subCategoryLabel: dosSubGroups.length > 0 ? 'L7 DDoS Protection Settings' : undefined,
-      subGroups: dosSubGroups.length > 0 ? dosSubGroups : undefined,
-      fields: ungroupedDosFields,
-    });
-
-    // 8. Client-Side Defense (separate section)
-    const csdFields: FieldDefinition[] = [];
-    const csdStatus = this.getEnableDisableStatus(spec || {}, 'disable_client_side_defense', 'client_side_defense');
-    if (csdStatus) {
-      csdFields.push({
-        key: 'Client-Side Defense',
-        value: csdStatus.value,
-        status: csdStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    sections.push({ id: 'client-side-defense', title: vscode.l10n.t('Client-Side Defense'), fields: csdFields });
-
-    // 9. Common Security Controls
-    const securityFields: FieldDefinition[] = [];
-    // Service Policies
-    if (spec?.service_policies_from_namespace) {
-      securityFields.push({ key: 'Service Policies', value: 'Apply Namespace Service Policies' });
-    } else if (spec?.no_service_policies) {
-      securityFields.push({ key: 'Service Policies', value: 'None' });
-    } else if (spec?.active_service_policies) {
-      securityFields.push({ key: 'Service Policies', value: 'Custom' });
-    }
-    // IP Reputation
-    const ipRepStatus = this.getEnableDisableStatus(spec || {}, 'disable_ip_reputation', 'enable_ip_reputation');
-    if (ipRepStatus) {
-      securityFields.push({
-        key: 'IP Reputation',
-        value: ipRepStatus.value,
-        status: ipRepStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    // Threat Mesh
-    const threatMeshStatus = this.getEnableDisableStatus(spec || {}, 'disable_threat_mesh', 'enable_threat_mesh');
-    if (threatMeshStatus) {
-      securityFields.push({
-        key: 'Threat Mesh',
-        value: threatMeshStatus.value,
-        status: threatMeshStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    // User Identifier
-    if (spec?.user_id_client_ip) {
-      securityFields.push({ key: 'User Identifier', value: 'Client IP Address' });
-    }
-    // Malicious User Detection
-    const malUserStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_malicious_user_detection',
-      'enable_malicious_user_detection',
-    );
-    if (malUserStatus) {
-      securityFields.push({
-        key: 'Malicious User Detection',
-        value: malUserStatus.value,
-        status: malUserStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    // Malicious User Mitigation And Challenges
-    const malMitigationStatus = this.getEnableDisableStatus(
-      spec || {},
-      'no_malicious_user_mitigation',
-      'malicious_user_mitigation',
-    );
-    if (malMitigationStatus) {
-      securityFields.push({
-        key: 'Malicious User Mitigation And Challenges',
-        value: malMitigationStatus.value,
-        status: malMitigationStatus.enabled ? 'enabled' : 'disabled',
-      });
-    } else {
-      securityFields.push({
-        key: 'Malicious User Mitigation And Challenges',
-        value: 'Disable',
-        status: 'disabled',
-      });
-    }
-    // Rate Limiting
-    const rateStatus = this.getEnableDisableStatus(spec || {}, 'disable_rate_limit', 'rate_limit');
-    if (rateStatus) {
-      securityFields.push({
-        key: 'Rate Limiting',
-        value: rateStatus.value,
-        status: rateStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    sections.push({
-      id: 'security-controls',
-      title: vscode.l10n.t('Common Security Controls'),
-      fields: securityFields,
-    });
-
-    // 9. Other Settings
-    const otherFields: FieldDefinition[] = [];
-    // VIP Advertisement
-    if (spec?.advertise_on_public_default_vip) {
-      otherFields.push({ key: 'VIP Advertisement', value: 'Internet' });
-    } else if (spec?.advertise_on_public) {
-      otherFields.push({ key: 'VIP Advertisement', value: 'Public' });
-    } else if (spec?.advertise_custom) {
-      otherFields.push({ key: 'VIP Advertisement', value: 'Custom' });
-    } else if (spec?.do_not_advertise) {
-      otherFields.push({ key: 'VIP Advertisement', value: 'Do Not Advertise' });
-    }
-    // Load Balancing Algorithm
-    if (spec?.round_robin) {
-      otherFields.push({ key: 'Load Balancing Algorithm', value: 'Round Robin' });
-    } else if (spec?.least_active) {
-      otherFields.push({ key: 'Load Balancing Algorithm', value: 'Least Active' });
-    } else if (spec?.random) {
-      otherFields.push({ key: 'Load Balancing Algorithm', value: 'Random' });
-    } else if (spec?.source_ip_stickiness) {
-      otherFields.push({ key: 'Load Balancing Algorithm', value: 'Source IP Stickiness' });
-    } else if (spec?.cookie_stickiness) {
-      otherFields.push({ key: 'Load Balancing Algorithm', value: 'Cookie Stickiness' });
-    }
-    // Trusted Client IP Headers
-    const trustedIpStatus = this.getEnableDisableStatus(
-      spec || {},
-      'disable_trust_client_ip_headers',
-      'enable_trust_client_ip_headers',
-    );
-    if (trustedIpStatus) {
-      otherFields.push({
-        key: 'Trusted Client IP Headers',
-        value: trustedIpStatus.value,
-        status: trustedIpStatus.enabled ? 'enabled' : 'disabled',
-      });
-    }
-    // Add Location
-    if (spec?.add_location !== undefined) {
-      otherFields.push({ key: 'Add Location', value: spec.add_location ? 'True' : 'False' });
-    }
-    sections.push({ id: 'other-settings', title: vscode.l10n.t('Other Settings'), fields: otherFields });
-
-    // 10. Virtual Host State
-    const vhStateFields: FieldDefinition[] = [];
-    const state = spec?.state as string | undefined;
-    if (state) {
-      const displayState = state.replace('VIRTUAL_HOST_', '');
-      const isReady = state.includes('READY');
-      vhStateFields.push({
-        key: 'Virtual Host State',
-        value: displayState,
-        status: isReady ? 'good' : 'warning',
-      });
-    }
-    sections.push({ id: 'vh-state', title: vscode.l10n.t('Virtual Host State'), fields: vhStateFields });
-
-    // Certificate sections - only show for HTTPS types (not HTTP)
-    // HTTP type has cert_state = "AutoCertNotApplicable" which is not relevant to display
-    if (lbType !== 'http') {
-      const autoCertInfo = spec?.auto_cert_info as Record<string, unknown> | undefined;
-
-      // 12. Auto Cert State
-      const autoCertStateFields: FieldDefinition[] = [];
-      if (autoCertInfo?.auto_cert_state) {
-        const certState = String(autoCertInfo.auto_cert_state);
-        const isValid = certState.toLowerCase().includes('valid');
-        autoCertStateFields.push({
-          key: 'Auto Cert State',
-          value: isValid ? 'Certificate Valid' : certState,
-          status: isValid ? 'good' : 'bad',
-        });
-      }
-      sections.push({
-        id: 'auto-cert-state',
-        title: vscode.l10n.t('Auto Cert State'),
-        fields: autoCertStateFields,
-      });
-
-      // 13. Auto Cert Expiry Timestamp
-      const autoCertExpiryFields: FieldDefinition[] = [];
-      if (autoCertInfo?.auto_cert_expiry) {
-        const formatted = this.formatDateShort(String(autoCertInfo.auto_cert_expiry));
-        autoCertExpiryFields.push({
-          key: 'Auto Cert Expiry Timestamp',
-          value: formatted || String(autoCertInfo.auto_cert_expiry),
-        });
-      }
-      sections.push({
-        id: 'auto-cert-expiry',
-        title: vscode.l10n.t('Auto Cert Expiry Timestamp'),
-        fields: autoCertExpiryFields,
-      });
-
-      // 14. Auto Cert Subject - show full DN value (e.g., "CN=domain.com") for F5 XC Console consistency
-      const autoCertSubjectFields: FieldDefinition[] = [];
-      if (autoCertInfo?.auto_cert_subject) {
-        autoCertSubjectFields.push({
-          key: 'Auto Cert Subject',
-          value: String(autoCertInfo.auto_cert_subject),
-        });
-      }
-      sections.push({
-        id: 'auto-cert-subject',
-        title: vscode.l10n.t('Auto Cert Subject'),
-        fields: autoCertSubjectFields,
-      });
-
-      // 15. Auto Cert Issuer - show full value (organization info is valuable)
-      const autoCertIssuerFields: FieldDefinition[] = [];
-      if (autoCertInfo?.auto_cert_issuer) {
-        autoCertIssuerFields.push({
-          key: 'Auto Cert Issuer',
-          value: String(autoCertInfo.auto_cert_issuer),
-        });
-      }
-      sections.push({
-        id: 'auto-cert-issuer',
-        title: vscode.l10n.t('Auto Cert Issuer'),
-        fields: autoCertIssuerFields,
-      });
-
-      // 16. Cert State
-      const certStateFields: FieldDefinition[] = [];
-      const certState = spec?.cert_state as string | undefined;
-      if (certState) {
-        const isValid = certState.toLowerCase().includes('valid');
-        certStateFields.push({
-          key: 'Cert State',
-          value: isValid ? 'Certificate Valid' : certState,
-          status: isValid ? 'good' : 'bad',
-        });
-      }
-      sections.push({ id: 'cert-state', title: vscode.l10n.t('Cert State'), fields: certStateFields });
-    }
-
-    // Return all sections (empty ones will show "Not Configured")
-    return sections;
+    return { id: 'metadata', title: vscode.l10n.t('Metadata'), fields };
   }
 
   /**
-   * Extract Origin Pool sections matching F5 XC Console layout
+   * Build the resource view generically from the spec-driven view layout, applying
+   * a curated section manifest when one exists (exact console titles/grouping).
    */
-  private extractOriginPoolSections(
-    metadata: Record<string, unknown> | undefined,
-    _systemMetadata: Record<string, unknown> | undefined,
-    spec: Record<string, unknown> | undefined,
-    _namespace: string,
-  ): SectionDefinition[] {
-    const sections: SectionDefinition[] = [];
-
-    // Display name mappings for enums
-    const lbAlgorithmDisplay: Record<string, string> = {
-      LB_OVERRIDE: 'Load Balancer Override',
-      ROUND_ROBIN: 'Round Robin',
-      LEAST_ACTIVE: 'Least Active',
-      RANDOM: 'Random',
-      SOURCE_IP_STICKINESS: 'Source IP Stickiness',
-      COOKIE_STICKINESS: 'Cookie Stickiness',
-      RING_HASH: 'Ring Hash',
-    };
-
-    const endpointSelectionDisplay: Record<string, string> = {
-      LOCAL_PREFERRED: 'Local Endpoints Preferred',
-      LOCAL_ONLY: 'Local Endpoints Only',
-      DISTRIBUTED: 'Distributed',
-    };
-
-    // 1. Metadata
-    const metadataFields: FieldDefinition[] = [];
-    if (metadata?.name) {
-      metadataFields.push({ key: 'Name', value: String(metadata.name) });
-    }
-    sections.push({ id: 'metadata', title: vscode.l10n.t('Metadata'), fields: metadataFields });
-
-    // 2. Origin Servers section with sub-group for servers table
-    const serversSubGroupFields: FieldDefinition[] = [];
-    const originServers = spec?.origin_servers as Array<Record<string, unknown>> | undefined;
-    if (originServers && originServers.length > 0) {
-      originServers.forEach((server, index) => {
-        const serverInfo = this.getOriginServerTypeAndValue(server);
-        serversSubGroupFields.push({
-          key: `Server ${index + 1} Type`,
-          value: serverInfo.type,
-        });
-        serversSubGroupFields.push({
-          key: `Server ${index + 1} Name/IP`,
-          value: serverInfo.value,
-        });
-        // Add labels if present
-        const labels = server.labels as Record<string, string> | undefined;
-        if (labels && Object.keys(labels).length > 0) {
-          const labelStr = Object.entries(labels)
-            .map(([k, v]) => `${k}=${v}`)
-            .join(', ');
-          serversSubGroupFields.push({
-            key: `Server ${index + 1} Labels`,
-            value: labelStr,
-          });
-        }
-      });
-    }
-
-    // Build sub-groups for Origin Servers section
-    const originServersSubGroups: SubGroupDefinition[] = [];
-    if (serversSubGroupFields.length > 0) {
-      originServersSubGroups.push({
-        id: 'servers-list',
-        title: vscode.l10n.t('Origin Servers'),
-        fields: serversSubGroupFields,
-      });
-    }
-
-    // Fields below the sub-group (port, connection pool, health check, LB algo, endpoint selection)
-    const originServersFields: FieldDefinition[] = [];
-
-    // Origin Server Port
-    if (spec?.port !== undefined) {
-      originServersFields.push({ key: 'Origin server Port', value: 'Port' });
-      originServersFields.push({ key: 'Port', value: String(spec.port) });
-    }
-
-    // Connection Pool Reuse
-    const connPoolType = spec?.upstream_conn_pool_reuse_type as Record<string, unknown> | undefined;
-    if (connPoolType) {
-      if ('enable_conn_pool_reuse' in connPoolType) {
-        originServersFields.push({
-          key: 'Select upstream connection pool reuse state',
-          value: 'Enable Connection Pool Reuse',
-          status: 'enabled',
-        });
-      } else if ('disable_conn_pool_reuse' in connPoolType) {
-        originServersFields.push({
-          key: 'Select upstream connection pool reuse state',
-          value: 'Disable Connection Pool Reuse',
-          status: 'disabled',
-        });
-      }
-    }
-
-    // Health Check Port
-    if ('same_as_endpoint_port' in (spec || {})) {
-      originServersFields.push({ key: 'Port used for health check', value: 'Endpoint port' });
-    } else if (spec?.port_override !== undefined) {
-      originServersFields.push({
-        key: 'Port used for health check',
-        value: String(spec.port_override),
-      });
-    }
-
-    // Load Balancer Algorithm
-    if (spec?.loadbalancer_algorithm) {
-      const algo = String(spec.loadbalancer_algorithm);
-      originServersFields.push({
-        key: 'LoadBalancer Algorithm',
-        value: lbAlgorithmDisplay[algo] || algo,
-      });
-    }
-
-    // Endpoint Selection
-    if (spec?.endpoint_selection) {
-      const selection = String(spec.endpoint_selection);
-      originServersFields.push({
-        key: 'Endpoint Selection',
-        value: endpointSelectionDisplay[selection] || selection,
-      });
-    }
-
-    sections.push({
-      id: 'origin-servers',
-      title: vscode.l10n.t('Origin Servers'),
-      subGroups: originServersSubGroups.length > 0 ? originServersSubGroups : undefined,
-      fields: originServersFields,
-    });
-
-    // 3. TLS
-    const tlsFields: FieldDefinition[] = [];
-    if ('no_tls' in (spec || {})) {
-      tlsFields.push({ key: 'TLS', value: 'Disable', status: 'disabled' });
-    } else if (spec?.use_tls) {
-      tlsFields.push({ key: 'TLS', value: 'Enable', status: 'enabled' });
-      // Extract TLS settings if present
-      const tlsConfig = spec.use_tls as Record<string, unknown>;
-      if (tlsConfig) {
-        if ('use_host_header_as_sni' in tlsConfig) {
-          tlsFields.push({ key: 'SNI', value: 'Use Host Header as SNI' });
-        } else if (tlsConfig.sni) {
-          tlsFields.push({ key: 'SNI', value: String(tlsConfig.sni) });
-        }
-        if ('skip_server_verification' in tlsConfig) {
-          tlsFields.push({ key: 'Server Verification', value: 'Skip', status: 'warning' });
-        } else if ('use_server_verification' in tlsConfig) {
-          tlsFields.push({ key: 'Server Verification', value: 'Enable', status: 'enabled' });
-        }
-        if ('volterra_trusted_ca' in tlsConfig) {
-          tlsFields.push({ key: 'Trusted CA', value: 'F5 Distributed Cloud Trusted CA' });
-        }
-      }
-    }
-    sections.push({ id: 'tls', title: vscode.l10n.t('TLS'), fields: tlsFields });
-
-    return sections;
-  }
-
-  /**
-   * Get origin server type and value from server configuration
-   */
-  private getOriginServerTypeAndValue(server: Record<string, unknown>): {
-    type: string;
-    value: string;
-  } {
-    if (server.public_ip) {
-      const ip = server.public_ip as Record<string, unknown>;
-      return { type: vscode.l10n.t('Public IP'), value: String(ip.ip || vscode.l10n.t('Unknown')) };
-    }
-    if (server.private_ip) {
-      const ip = server.private_ip as Record<string, unknown>;
-      const ipValue = String(ip.ip || vscode.l10n.t('Unknown'));
-      const site = ip.site_locator as Record<string, unknown> | undefined;
-      const siteRef = site?.site as Record<string, unknown> | undefined;
-      const siteName = siteRef?.name ? ` (${String(siteRef.name)})` : '';
-      return { type: vscode.l10n.t('Private IP'), value: `${ipValue}${siteName}` };
-    }
-    if (server.public_name) {
-      const dns = server.public_name as Record<string, unknown>;
-      return { type: vscode.l10n.t('Public DNS'), value: String(dns.dns_name || vscode.l10n.t('Unknown')) };
-    }
-    if (server.private_name) {
-      const dns = server.private_name as Record<string, unknown>;
-      const dnsName = String(dns.dns_name || vscode.l10n.t('Unknown'));
-      const site = dns.site_locator as Record<string, unknown> | undefined;
-      const siteRef = site?.site as Record<string, unknown> | undefined;
-      const siteName = siteRef?.name ? ` (${String(siteRef.name)})` : '';
-      return { type: vscode.l10n.t('Private DNS'), value: `${dnsName}${siteName}` };
-    }
-    if (server.k8s_service) {
-      const k8s = server.k8s_service as Record<string, unknown>;
-      const name = String(k8s.service_name || vscode.l10n.t('Unknown'));
-      const ns = k8s.service_namespace ? `${String(k8s.service_namespace)}/` : '';
-      return { type: vscode.l10n.t('K8s Service'), value: `${ns}${name}` };
-    }
-    if (server.consul_service) {
-      const consul = server.consul_service as Record<string, unknown>;
-      return { type: vscode.l10n.t('Consul Service'), value: String(consul.service_name || vscode.l10n.t('Unknown')) };
-    }
-    if (server.custom_endpoint_object) {
-      const custom = server.custom_endpoint_object as Record<string, unknown>;
-      const endpoint = custom.endpoint as Record<string, unknown> | undefined;
-      return { type: vscode.l10n.t('Custom Endpoint'), value: String(endpoint?.name || vscode.l10n.t('Unknown')) };
-    }
-    if (server.vn_private_ip) {
-      const vn = server.vn_private_ip as Record<string, unknown>;
-      return { type: vscode.l10n.t('VN Private IP'), value: String(vn.ip || vscode.l10n.t('Unknown')) };
-    }
-    if (server.vn_private_name) {
-      const vn = server.vn_private_name as Record<string, unknown>;
-      return { type: vscode.l10n.t('VN Private DNS'), value: String(vn.dns_name || vscode.l10n.t('Unknown')) };
-    }
-    return { type: vscode.l10n.t('Unknown'), value: vscode.l10n.t('Unknown') };
-  }
-
-  /**
-   * Extract generic sections for unknown resource types
-   */
-  private extractGenericSections(
+  private extractSpecDrivenSections(
+    resourceKey: string | undefined,
     metadata: Record<string, unknown> | undefined,
     systemMetadata: Record<string, unknown> | undefined,
     spec: Record<string, unknown> | undefined,
     namespace: string,
   ): SectionDefinition[] {
-    const sections: SectionDefinition[] = [];
+    const sections: SectionDefinition[] = [this.buildMetadataSection(metadata, systemMetadata, namespace)];
+    if (!spec) {
+      return sections;
+    }
 
-    // Metadata section
-    const metadataFields: FieldDefinition[] = [];
-    if (metadata?.name) {
-      metadataFields.push({ key: 'Name', value: String(metadata.name) });
+    const layout = resourceKey ? GENERATED_VIEW_LAYOUTS[resourceKey] : undefined;
+    const layoutMap = new Map<string, ViewFieldNode>();
+    for (const node of layout?.fields ?? []) {
+      layoutMap.set(node.key, node);
     }
-    metadataFields.push({ key: 'Namespace', value: namespace });
-    if (metadata?.description) {
-      metadataFields.push({ key: 'Description', value: String(metadata.description) });
-    }
-    // Creator information from system metadata
-    if (systemMetadata?.creator_id) {
-      metadataFields.push({ key: 'Creator', value: String(systemMetadata.creator_id) });
-    }
-    // Creation timestamp
-    const createTime = this.formatTimestamp(systemMetadata?.creation_timestamp as string | undefined);
-    if (createTime) {
-      metadataFields.push({ key: 'Created', value: createTime });
-    }
-    const modTime = this.formatTimestamp(systemMetadata?.modification_timestamp as string | undefined);
-    if (modTime) {
-      metadataFields.push({ key: 'Last Modified', value: modTime });
-    }
-    // Unique identifier
-    if (systemMetadata?.uid) {
-      metadataFields.push({ key: 'UID', value: String(systemMetadata.uid) });
-    }
-    // Labels (key-value pairs for organization)
-    if (metadata?.labels && Object.keys(metadata.labels).length > 0) {
-      const labels = metadata.labels as Record<string, string>;
-      const labelStr = Object.entries(labels)
-        .map(([k, v]) => `${k}=${v}`)
-        .join(', ');
-      metadataFields.push({ key: 'Labels', value: labelStr });
-    }
-    sections.push({ id: 'metadata', title: vscode.l10n.t('Metadata'), fields: metadataFields });
 
-    // Spec section - show all non-empty scalar fields
-    if (spec) {
-      const specFields: FieldDefinition[] = [];
-      for (const [key, value] of Object.entries(spec)) {
-        if (this.isEmpty(value)) {
-          continue;
-        }
-        if (typeof value === 'object') {
-          continue;
-        }
-        specFields.push({ key: this.formatKey(key), value: String(value) });
+    const manifest = resourceKey ? VIEW_SECTION_MANIFESTS[resourceKey] : undefined;
+    const overrides = manifest?.labelOverrides ?? {};
+    const consumed = new Set<string>();
+
+    if (manifest) {
+      for (const ms of manifest.sections) {
+        sections.push(this.buildSpecSection(ms.id, ms.title, ms.keys, spec, layoutMap, overrides, consumed));
       }
-      if (specFields.length > 0) {
-        sections.push({ id: 'spec', title: vscode.l10n.t('Configuration'), fields: specFields });
+      // Any present spec key the manifest did not claim → trailing catch-all so
+      // coverage is never silently dropped.
+      const leftover = Object.keys(spec).filter((k) => !consumed.has(k) && this.isPresent(spec, k));
+      if (leftover.length > 0) {
+        sections.push(
+          this.buildSpecSection('additional', 'Additional Settings', leftover, spec, layoutMap, overrides, consumed),
+        );
+      }
+      return sections;
+    }
+
+    // No manifest: derive grouping from the layout. Scalars → "Configuration";
+    // each present object/array top-level field becomes its own titled section.
+    const orderedKeys = layout?.fields.map((f) => f.key) ?? Object.keys(spec);
+    const seen = new Set(orderedKeys);
+    for (const k of Object.keys(spec)) {
+      if (!seen.has(k)) {
+        orderedKeys.push(k);
       }
     }
 
+    const scalarKeys: string[] = [];
+    const complexKeys: string[] = [];
+    for (const key of orderedKeys) {
+      if (!this.isPresent(spec, key)) {
+        continue;
+      }
+      const v = spec[key];
+      if (v !== null && typeof v === 'object') {
+        complexKeys.push(key);
+      } else {
+        scalarKeys.push(key);
+      }
+    }
+    if (scalarKeys.length > 0) {
+      sections.push(
+        this.buildSpecSection(
+          'configuration',
+          vscode.l10n.t('Configuration'),
+          scalarKeys,
+          spec,
+          layoutMap,
+          overrides,
+          consumed,
+        ),
+      );
+    }
+    for (const key of complexKeys) {
+      const node = layoutMap.get(key);
+      const title = overrides[key] || node?.label || this.formatKey(key);
+      sections.push(this.buildSpecSection(`s-${key}`, title, [key], spec, layoutMap, overrides, consumed));
+    }
     return sections;
+  }
+
+  /**
+   * Presence check: key exists with a non-null, non-empty-string value. Empty
+   * objects/arrays still count — in F5 XC they encode a selected oneof choice.
+   */
+  private isPresent(spec: Record<string, unknown>, key: string): boolean {
+    if (!(key in spec)) {
+      return false;
+    }
+    const v = spec[key];
+    return v !== null && v !== undefined && v !== '';
+  }
+
+  /** Build one section from a list of spec keys, marking them consumed. */
+  private buildSpecSection(
+    id: string,
+    title: string,
+    keys: string[],
+    spec: Record<string, unknown>,
+    layoutMap: Map<string, ViewFieldNode>,
+    overrides: Record<string, string>,
+    consumed: Set<string>,
+  ): SectionDefinition {
+    const fields: FieldDefinition[] = [];
+    const subGroups: SubGroupDefinition[] = [];
+
+    for (const key of keys) {
+      consumed.add(key);
+      if (!this.isPresent(spec, key)) {
+        continue;
+      }
+      const node = layoutMap.get(key);
+      const label = overrides[key] || node?.label || this.formatKey(key);
+      this.renderSpecKey(key, label, node, spec[key], fields, subGroups);
+    }
+
+    const section: SectionDefinition = { id, title, fields };
+    if (subGroups.length > 0) {
+      section.subGroups = subGroups;
+    }
+    return section;
+  }
+
+  /** Render a single spec key into fields/subGroups based on its shape. */
+  private renderSpecKey(
+    key: string,
+    label: string,
+    node: ViewFieldNode | undefined,
+    value: unknown,
+    fields: FieldDefinition[],
+    subGroups: SubGroupDefinition[],
+  ): void {
+    // Scalars
+    if (value === null || typeof value !== 'object') {
+      fields.push({ key: label, value: this.formatScalar(value) });
+      return;
+    }
+    // Arrays
+    if (Array.isArray(value)) {
+      if (value.length === 0) {
+        fields.push({ key: label, value: this.presenceValue(key) });
+        return;
+      }
+      if (value.every((v) => v === null || typeof v !== 'object')) {
+        fields.push({ key: label, value: value.map((v) => this.formatScalar(v)).join(', ') });
+        return;
+      }
+      const itemFields: FieldDefinition[] = value.slice(0, 25).map((item, i) => ({
+        key: this.itemLabel(item as Record<string, unknown>, i),
+        value: this.itemSummary(item as Record<string, unknown>),
+      }));
+      if (value.length > 25) {
+        itemFields.push({ key: '…', value: `${value.length - 25} more` });
+      }
+      subGroups.push({ id: `sg-${key}`, title: `${label} (${value.length})`, fields: itemFields });
+      return;
+    }
+    // Objects
+    const obj = value as Record<string, unknown>;
+    if (Object.keys(obj).length === 0) {
+      fields.push({ key: label, value: this.presenceValue(key) });
+      return;
+    }
+    const childFields = this.flattenObject(obj, node, 1);
+    if (childFields.length === 0) {
+      fields.push({ key: label, value: this.presenceValue(key) });
+    } else if (childFields.length <= 2) {
+      for (const f of childFields) {
+        fields.push({ key: `${label} · ${f.key}`, value: f.value });
+      }
+    } else {
+      subGroups.push({ id: `sg-${key}`, title: label, fields: childFields });
+    }
+  }
+
+  /** Flatten an object's fields into labelled rows, bounded to shallow depth. */
+  private flattenObject(
+    obj: Record<string, unknown>,
+    node: ViewFieldNode | undefined,
+    depth: number,
+  ): FieldDefinition[] {
+    const childMap = new Map<string, ViewFieldNode>();
+    for (const c of node?.children ?? []) {
+      childMap.set(c.key, c);
+    }
+    const out: FieldDefinition[] = [];
+    for (const [k, v] of Object.entries(obj)) {
+      const cn = childMap.get(k);
+      const label = cn?.label || this.formatKey(k);
+      if (v === null || typeof v !== 'object') {
+        out.push({ key: label, value: this.formatScalar(v) });
+      } else if (Array.isArray(v)) {
+        if (v.length === 0) {
+          continue;
+        }
+        if (v.every((x) => x === null || typeof x !== 'object')) {
+          out.push({ key: label, value: v.map((x) => this.formatScalar(x)).join(', ') });
+        } else {
+          out.push({ key: label, value: `${v.length} item(s)` });
+        }
+      } else if (Object.keys(v).length === 0) {
+        out.push({ key: label, value: this.presenceValue(k) });
+      } else if (depth < 2) {
+        for (const f of this.flattenObject(v as Record<string, unknown>, cn, depth + 1)) {
+          out.push({ key: `${label} · ${f.key}`, value: f.value });
+        }
+      } else {
+        out.push({ key: label, value: 'Configured' });
+      }
+    }
+    return out;
+  }
+
+  /** Value shown for present-but-empty objects/arrays (oneof choice markers). */
+  private presenceValue(key: string): string {
+    if (key.startsWith('disable_')) {
+      return 'Disabled';
+    }
+    if (key.startsWith('enable_')) {
+      return 'Enabled';
+    }
+    if (key.startsWith('no_')) {
+      return 'No';
+    }
+    return 'Configured';
+  }
+
+  /** Format a scalar value for display. */
+  private formatScalar(value: unknown): string {
+    if (typeof value === 'boolean') {
+      return value ? 'True' : 'False';
+    }
+    return String(value);
+  }
+
+  /** Best-effort human label for an array item (name-like field, else index). */
+  private itemLabel(item: Record<string, unknown>, index: number): string {
+    for (const k of ['name', 'label', 'type', 'host_name', 'domain']) {
+      if (typeof item[k] === 'string' && item[k]) {
+        return String(item[k]);
+      }
+    }
+    const pool = item.pool as Record<string, unknown> | undefined;
+    if (pool && typeof pool.name === 'string') {
+      return pool.name;
+    }
+    return `Item ${index + 1}`;
+  }
+
+  /** Short summary of an array item's leading scalar fields. */
+  private itemSummary(item: Record<string, unknown>): string {
+    const parts: string[] = [];
+    for (const [k, v] of Object.entries(item)) {
+      if (v !== null && typeof v !== 'object') {
+        parts.push(`${this.formatKey(k)}: ${this.formatScalar(v)}`);
+      }
+      if (parts.length >= 3) {
+        break;
+      }
+    }
+    return parts.join(', ') || 'Configured';
   }
 
   /**
