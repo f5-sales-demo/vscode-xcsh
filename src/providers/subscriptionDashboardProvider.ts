@@ -9,6 +9,7 @@ import { getAddonSchemaInfo } from '../api/addonCatalog';
 import {
   type AccessStatus,
   type AddonService,
+  type ApiRateLimitItem,
   createAddonSubscription,
   getAddonActivationStatus,
   getCurrentPlan,
@@ -479,11 +480,15 @@ export class SubscriptionDashboardProvider {
     const nonce = getNonce();
     const cspSource = this.quotasPanel?.webview.cspSource;
 
-    // Calculate summary stats
-    const allItems = [...quotaUsage.objects, ...quotaUsage.resources];
-    const totalUsed = allItems.reduce((sum, item) => sum + item.usage, 0);
-    const totalLimit = allItems.reduce((sum, item) => sum + item.limit, 0);
-    const criticalItems = allItems.filter((item) => item.percentUsed >= 80);
+    // Summary tiles reflect OBJECT quotas (comparable integer counts). Resource quotas
+    // (floats/large units like vCPU limits) and API rate limits (different units) are not
+    // summed here — mixing them yields a meaningless total; they get their own sections.
+    const objectItems = quotaUsage.objects;
+    const totalUsed = objectItems.reduce((sum, item) => sum + item.usage, 0);
+    const totalLimit = objectItems.reduce((sum, item) => sum + item.limit, 0);
+    const criticalItems = objectItems.filter((item) => item.percentUsed >= 80);
+    const isEmpty =
+      quotaUsage.objects.length === 0 && quotaUsage.resources.length === 0 && quotaUsage.apis.length === 0;
 
     return `<!DOCTYPE html>
 <html lang="en">
@@ -562,14 +567,14 @@ export class SubscriptionDashboardProvider {
       <div class="section">
         <h3 class="section-header">${vscode.l10n.t('API Rate Limits')}</h3>
         <div class="quota-table">
-          ${quotaUsage.apis.map((item) => this.renderQuotaItem(item)).join('')}
+          ${quotaUsage.apis.map((item) => this.renderApiRateLimitItem(item)).join('')}
         </div>
       </div>
       `
           : ''
       }
 
-      ${allItems.length === 0 ? `<div class="empty-state">${vscode.l10n.t('No quota information available')}</div>` : ''}
+      ${isEmpty ? `<div class="empty-state">${vscode.l10n.t('No quota information available')}</div>` : ''}
     </main>
   </div>
 
@@ -587,17 +592,29 @@ export class SubscriptionDashboardProvider {
    * Render a single quota item with progress bar
    */
   private renderQuotaItem(item: QuotaItem): string {
+    // Over-limit is a genuine state (usage exceeds a reduced/soft limit); flag it
+    // distinctly so it reads as real data, not a rendering glitch. Bar stays capped.
     let statusClass = 'good';
-    if (item.percentUsed >= 80) {
+    if (item.overLimit) {
+      statusClass = 'over-limit';
+    } else if (item.percentUsed >= 80) {
       statusClass = 'critical';
     } else if (item.percentUsed >= 60) {
       statusClass = 'warning';
     }
 
+    const overLimitBadge = item.overLimit
+      ? `<span class="over-limit-badge" title="${escapeHtml(
+          vscode.l10n.t(
+            'Usage exceeds the configured limit — the limit may have been reduced after these objects were created.',
+          ),
+        )}">${vscode.l10n.t('Over limit')}</span>`
+      : '';
+
     return `
       <div class="quota-row">
         <div class="quota-info">
-          <span class="quota-name">${escapeHtml(item.displayName)}</span>
+          <span class="quota-name">${escapeHtml(item.displayName)}${overLimitBadge}</span>
           <span class="quota-values">${item.usage} / ${item.limit}</span>
         </div>
         <div class="quota-progress">
@@ -605,6 +622,24 @@ export class SubscriptionDashboardProvider {
             <div class="progress-fill ${statusClass}" style="width: ${Math.min(item.percentUsed, 100)}%"></div>
           </div>
           <span class="quota-percent ${statusClass}">${item.percentUsed}%</span>
+        </div>
+      </div>
+    `;
+  }
+
+  /**
+   * Render an API rate-limit row (rate/burst/unit) — no usage bar, distinct from
+   * count quotas.
+   */
+  private renderApiRateLimitItem(item: ApiRateLimitItem): string {
+    const unit = item.unit ? item.unit.replace(/^per-/, '/') : '';
+    const rateText = `${item.rate}${unit ? ` ${unit}` : ''}`;
+    const burstText = item.burst > 0 ? ` · ${vscode.l10n.t('burst')} ${item.burst}` : '';
+    return `
+      <div class="quota-row">
+        <div class="quota-info">
+          <span class="quota-name">${escapeHtml(item.displayName)}</span>
+          <span class="quota-values">${escapeHtml(rateText + burstText)}</span>
         </div>
       </div>
     `;
@@ -934,6 +969,16 @@ export class SubscriptionDashboardProvider {
       background: var(--vscode-testing-iconFailed, #f14c4c);
     }
 
+    .progress-fill.over-limit {
+      background: repeating-linear-gradient(
+        45deg,
+        var(--vscode-testing-iconFailed, #f14c4c),
+        var(--vscode-testing-iconFailed, #f14c4c) 6px,
+        var(--vscode-errorForeground, #be1100) 6px,
+        var(--vscode-errorForeground, #be1100) 12px
+      );
+    }
+
     .quota-percent {
       font-size: 11px;
       font-weight: 600;
@@ -951,6 +996,22 @@ export class SubscriptionDashboardProvider {
 
     .quota-percent.critical {
       color: var(--vscode-testing-iconFailed, #f14c4c);
+    }
+
+    .quota-percent.over-limit {
+      color: var(--vscode-errorForeground, #f14c4c);
+    }
+
+    .over-limit-badge {
+      margin-left: 8px;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--vscode-inputValidation-errorForeground, #fff);
+      background: var(--vscode-errorForeground, #be1100);
     }
 
     /* Empty State */
