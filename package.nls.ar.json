@@ -97,5 +97,5 @@
   "chat.xcsh.disambiguation.networking": "أسئلة حول شبكات F5 Distributed Cloud، وموازنات الحمل، ومجمعات الأصل، والمسارات، وDNS، وCDN، والمضيفات الافتراضية، وتهيئة موازن حمل HTTP",
   "chat.xcsh.disambiguation.security": "أسئلة حول أمان F5 Distributed Cloud، وسياسات WAF، وسياسات الخدمة، والحماية من DDoS، والدفاع ضد الروبوتات، وأمان API، وتهيئة جدار حماية التطبيقات",
   "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية",
-  "viewsWelcome.profiles": "لا توجد سياقات xcsh بعد. أضف سياقًا للاتصال بمستأجر F5 Distributed Cloud.\n[إضافة سياق](command:xcsh.addContext)\nتعرف على المزيد حول [F5 Distributed Cloud](https://www.f5.com/cloud)."
+  "viewsWelcome.profiles": "لا توجد سياقات xcsh بعد. أضف سياقًا للاتصال بمستأجر F5 Distributed Cloud.\n[إضافة سياق](command:xcsh.addContext)"
 }
