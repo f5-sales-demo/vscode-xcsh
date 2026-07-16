@@ -6,7 +6,13 @@
  * API Endpoints:
  * - GET /api/web/namespaces/system/usage_plans/current - Current plan info
  * - GET /api/web/namespaces/{namespace}/quota/usage - Quota limits and usage
- * - GET /api/web/namespaces/{namespace}/quota/limits - Quota limits only
+ *
+ * The quota/usage response carries three current maps (keyed by snake_case object kind):
+ *   - `objects`   object-count quotas   { limit:{maximum}, usage:{current}, display_name, description }
+ *   - `resources` resource quotas       (same shape; floats/counts, e.g. tickets, CPU limits)
+ *   - `apis`      API rate limits        { api_limit:{rate,burst,unit}, display_name, description }
+ * The deprecated mirrors (quota_usage / float_quota_usage / api_limits) are intentionally
+ * NOT read — this is pre-release code with no backwards-compatibility requirement.
  */
 
 import { getLogger } from '../utils/logger';
@@ -50,7 +56,7 @@ export interface PlanInfo {
 }
 
 /**
- * Quota item with limit and current usage
+ * Count-based quota item (object/resource) with limit and current usage.
  */
 export interface QuotaItem {
   key: string;
@@ -58,16 +64,31 @@ export interface QuotaItem {
   description?: string;
   limit: number;
   usage: number;
+  /** Rounded usage/limit percentage; NOT clamped — may exceed 100 for genuine over-limit. */
   percentUsed: number;
+  /** True when current usage exceeds the configured limit (e.g. limit reduced after creation). */
+  overLimit: boolean;
 }
 
 /**
- * Quota usage response
+ * API rate-limit item — distinct shape from count quotas (rate/burst/unit, no usage).
+ */
+export interface ApiRateLimitItem {
+  key: string;
+  displayName: string;
+  description?: string;
+  rate: number;
+  burst: number;
+  unit: string;
+}
+
+/**
+ * Parsed quota usage: object-count quotas, resource quotas, and API rate limits.
  */
 export interface QuotaUsage {
   objects: QuotaItem[];
   resources: QuotaItem[];
-  apis: QuotaItem[];
+  apis: ApiRateLimitItem[];
 }
 
 /**
@@ -107,7 +128,8 @@ interface UsagePlanResponse {
   plans: UsagePlanItem[];
 }
 
-interface QuotaUsageItem {
+/** Raw count-quota item from the `objects` / `resources` maps. */
+interface QuotaObjectItem {
   limit?: {
     maximum?: number;
   };
@@ -118,8 +140,22 @@ interface QuotaUsageItem {
   description?: string;
 }
 
+/** Raw API rate-limit item from the `apis` map. */
+interface ApiLimitItem {
+  api_limit?: {
+    rate?: number;
+    burst?: number;
+    unit?: string;
+  };
+  display_name?: string;
+  description?: string;
+}
+
+/** quota/usage response — current maps only (deprecated mirrors are ignored). */
 interface QuotaUsageResponse {
-  quota_usage: Record<string, QuotaUsageItem>;
+  objects?: Record<string, QuotaObjectItem | null>;
+  resources?: Record<string, QuotaObjectItem | null>;
+  apis?: Record<string, ApiLimitItem | null>;
 }
 
 /**
@@ -179,34 +215,63 @@ function parseAddonService(service: ApiAddonService): AddonService {
   };
 }
 
+/** Title-case a snake_case key as a display-name fallback (e.g. namespace_role → Namespace Role). */
+function titleCaseKey(key: string): string {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 /**
- * Convert quota records to QuotaItem arrays
- * Handles both new format (limit.maximum, usage.current) and legacy format
+ * Convert a count-quota map (`objects` or `resources`) to QuotaItem[].
+ * Skips null entries and unlimited/disabled items (limit.maximum <= 0, e.g. -1).
+ * percentUsed is left unclamped so genuine over-limit usage is reported faithfully.
  */
-function parseQuotaItems(items: Record<string, QuotaUsageItem>): QuotaItem[] {
+function parseQuotaItems(items: Record<string, QuotaObjectItem | null>): QuotaItem[] {
   return Object.entries(items)
-    .filter(([, value]) => {
-      // Filter out items with -1 limit (unlimited/disabled)
+    .filter((entry): entry is [string, QuotaObjectItem] => {
+      const value = entry[1];
+      if (!value) {
+        return false;
+      }
       const limit = value.limit?.maximum ?? 0;
       return limit > 0;
     })
     .map(([key, value]) => {
-      // Handle new format: limit.maximum, usage.current
       const limit = value.limit?.maximum ?? 0;
       const usage = value.usage?.current ?? 0;
       const percentUsed = limit > 0 ? Math.round((usage / limit) * 100) : 0;
 
       return {
         key,
-        // The key itself is the display name in the new API format
-        displayName: value.display_name || key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()),
+        displayName: value.display_name || titleCaseKey(key),
         description: value.description,
         limit,
         usage,
         percentUsed,
+        overLimit: usage > limit,
       };
     })
-    .sort((a, b) => b.percentUsed - a.percentUsed); // Sort by usage percentage descending
+    .sort((a, b) => b.percentUsed - a.percentUsed);
+}
+
+/**
+ * Convert the `apis` map to ApiRateLimitItem[]. Skips null entries and items with no
+ * api_limit. Sorted by display name for stable presentation.
+ */
+function parseApiRateLimits(items: Record<string, ApiLimitItem | null>): ApiRateLimitItem[] {
+  return Object.entries(items)
+    .filter((entry): entry is [string, ApiLimitItem] => Boolean(entry[1]?.api_limit))
+    .map(([key, value]) => {
+      const rl = value.api_limit ?? {};
+      return {
+        key,
+        displayName: value.display_name || titleCaseKey(key),
+        description: value.description,
+        rate: rl.rate ?? 0,
+        burst: rl.burst ?? 0,
+        unit: rl.unit ?? '',
+      };
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
 /**
@@ -256,31 +321,15 @@ export async function getQuotaUsage(client: XCSHClient, namespace: string = 'sys
 
   const response = await client.customRequest<QuotaUsageResponse>(`/api/web/namespaces/${namespace}/quota/usage`);
 
-  if (!response.quota_usage) {
-    throw new Error('Unexpected API response: quota/usage missing quota_usage object');
+  if (!response || (!response.objects && !response.resources && !response.apis)) {
+    throw new Error('Unexpected API response: quota/usage missing objects/resources/apis maps');
   }
 
-  const allItems = parseQuotaItems(response.quota_usage);
-  // Split into categories based on item names (heuristic)
-  const objects = allItems.filter(
-    (item) =>
-      !item.key.toLowerCase().includes('api') ||
-      item.key.toLowerCase().includes('api credential') ||
-      item.key.toLowerCase().includes('api definition') ||
-      item.key.toLowerCase().includes('api group'),
-  );
-  const apis = allItems.filter(
-    (item) =>
-      item.key.toLowerCase().includes('api') &&
-      !item.key.toLowerCase().includes('api credential') &&
-      !item.key.toLowerCase().includes('api definition') &&
-      !item.key.toLowerCase().includes('api group'),
-  );
-
+  // Each category comes from its own map — no name heuristic, no deprecated fields.
   return {
-    objects,
-    resources: [],
-    apis,
+    objects: parseQuotaItems(response.objects ?? {}),
+    resources: parseQuotaItems(response.resources ?? {}),
+    apis: parseApiRateLimits(response.apis ?? {}),
   };
 }
 

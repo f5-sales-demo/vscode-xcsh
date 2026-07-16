@@ -39,11 +39,7 @@ module.exports = {
     '!src/extension.ts',
     '!src/generated/**',
     '!src/providers/xcshDiagramProvider.ts',
-    '!src/providers/subscriptionDashboardProvider.ts',
     '!src/commands/diagram.ts',
-    '!src/api/subscription.ts',
-    '!src/tree/subscriptionNodes.ts',
-    '!src/tree/subscriptionProvider.ts',
   ],
   verbose: true,
   projects: [
