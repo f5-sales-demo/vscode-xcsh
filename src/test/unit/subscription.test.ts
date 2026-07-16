@@ -33,6 +33,15 @@ const QUOTA_RESPONSE = {
       api_limit: { rate: 60, burst: 15, unit: 'per-minute' },
       display_name: 'AI Assistant Query',
     },
+    // Generic method names shared across services — disambiguated by the key's domain.
+    'ves.io.schema.oidc_provider.CustomAPI.Create': {
+      api_limit: { rate: 20, burst: 2, unit: 'per-hour' },
+      display_name: 'Create',
+    },
+    'ves.io.schema.known_label.CustomAPI.Create': {
+      api_limit: { rate: 20, burst: 5, unit: 'per-minute' },
+      display_name: 'Create',
+    },
     no_rate_limit: { api_limit: null, display_name: 'No Rate Limit' },
   },
 };
@@ -97,15 +106,24 @@ describe('getQuotaUsage', () => {
 
   it('parses apis as rate limits (rate/burst/unit, no usage), dropping entries without api_limit', async () => {
     const usage = await getQuotaUsage(mockClient(QUOTA_RESPONSE));
-    expect(usage.apis).toHaveLength(1);
-    expect(usage.apis[0]).toEqual({
+    expect(usage.apis).toHaveLength(3); // 3 with api_limit; no_rate_limit dropped
+    expect(usage.apis.find((a) => a.key.endsWith('AIAssistantQuery'))).toEqual({
       key: 'ves.io.schema.ai_assistant.SahayaAPI.AIAssistantQuery',
       displayName: 'AI Assistant Query',
       description: undefined,
+      group: 'Ai Assistant',
       rate: 60,
       burst: 15,
       unit: 'per-minute',
     });
+  });
+
+  it('disambiguates generic API method names by service group and sorts by it', async () => {
+    const usage = await getQuotaUsage(mockClient(QUOTA_RESPONSE));
+    const creates = usage.apis.filter((a) => a.displayName === 'Create');
+    expect(creates.map((a) => a.group).sort()).toEqual(['Known Label', 'Oidc Provider']);
+    // sorted by (group, displayName): Ai Assistant < Known Label < Oidc Provider
+    expect(usage.apis.map((a) => a.group)).toEqual(['Ai Assistant', 'Known Label', 'Oidc Provider']);
   });
 
   it('throws when the response has none of the current maps', async () => {
