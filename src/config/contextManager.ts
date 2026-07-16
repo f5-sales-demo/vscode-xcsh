@@ -53,6 +53,16 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   private fileWatcher: vscode.Disposable | undefined;
   private localFileWatcher: vscode.Disposable | undefined;
 
+  /**
+   * Session-scoped activation gate. A fresh ContextManager (i.e. a new extension
+   * session / window) starts with NO active context even if a persisted
+   * `active_context` pointer exists on disk — matching the xcsh TUI, which no longer
+   * auto-loads a context. The gate opens only when the user explicitly activates a
+   * context (setActiveContext) or creates one (addContext = activate). The persisted
+   * pointer file is never cleared, so the TUI (which shares it) is unaffected.
+   */
+  private sessionActivated = false;
+
   // ───────── directory helpers ─────────
 
   /** Ensure the contexts directory exists with 0o700 permissions. */
@@ -146,6 +156,11 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   }
 
   getActiveContextName(): Promise<string | null> {
+    // Session gate: do not honor a persisted active context until the user has
+    // explicitly activated one this session (no auto-load, matching the TUI).
+    if (!this.sessionActivated) {
+      return Promise.resolve(null);
+    }
     const p = getActiveContextPath();
     if (!fs.existsSync(p)) {
       return Promise.resolve(null);
@@ -187,13 +202,9 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
     this.atomicWrite(filePath, `${JSON.stringify(toWrite, null, 2)}\n`, FILE_MODE);
 
-    // Auto-activate if this is the first context
-    const all = await this.getContexts();
-    if (all.length === 1) {
-      this.setActiveContextInternal(ctx.name);
-    }
-
-    this._onDidChangeContext.fire();
+    // Creating a context activates it (an explicit user action, not auto-load).
+    // setActiveContext opens the session gate and fires onDidChangeContext.
+    await this.setActiveContext(ctx.name);
   }
 
   async updateContext(name: string, updates: Partial<XCSHContext>): Promise<void> {
@@ -368,14 +379,34 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     if (oldName === newName) {
       return;
     }
+    // A rename must never change which context is active (or whether one is active).
+    // addContext activates the new context as a side-effect, so capture the prior
+    // state and restore it afterwards. Read the pointer file directly (ungated) so
+    // we can faithfully restore a persisted-but-not-yet-loaded pointer instead of
+    // clearing it (cross-tool safety with the TUI).
     const wasActive = (await this.getActiveContextName()) === oldName;
-    // addContext validates the new name and rejects duplicates; old still exists
-    // here so it never auto-activates as "first context".
+    const priorFlag = this.sessionActivated;
+    const activePath = getActiveContextPath();
+    const rawBefore = fs.existsSync(activePath) ? fs.readFileSync(activePath, 'utf-8').trim() || null : null;
+
     await this.addContext({ ...existing, name: newName });
-    if (wasActive) {
-      await this.setActiveContext(newName);
-    }
     await this.deleteContext(oldName);
+
+    if (wasActive) {
+      // The renamed context was the effective active one → follow the rename.
+      this.setActiveContextInternal(newName);
+    } else {
+      // Undo addContext's activation side-effect: restore the prior pointer
+      // (redirecting to newName only if it pointed at the just-renamed context).
+      const restore = rawBefore === oldName ? newName : rawBefore;
+      if (restore) {
+        this.setActiveContextInternal(restore);
+      } else {
+        this.clearActiveContext();
+      }
+      this.sessionActivated = priorFlag;
+    }
+    this._onDidChangeContext.fire();
   }
 
   async deleteContext(name: string): Promise<void> {
@@ -402,6 +433,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       return Promise.reject(new Error(`Context "${name}" not found`));
     }
     this.setActiveContextInternal(name);
+    this.sessionActivated = true;
     this._onDidChangeContext.fire();
     return Promise.resolve();
   }
@@ -459,6 +491,10 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   /** Read the active_context pointer from the workspace's local contexts dir. */
   getLocalActiveContextName(workspaceFolder: string): Promise<string | null> {
+    // Session gate: see getActiveContextName — no auto-load until explicit activation.
+    if (!this.sessionActivated) {
+      return Promise.resolve(null);
+    }
     const p = getLocalActiveContextPath(workspaceFolder);
     if (!fs.existsSync(p)) {
       return Promise.resolve(null);
@@ -493,13 +529,8 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
     this.atomicWrite(filePath, `${JSON.stringify(toWrite, null, 2)}\n`, FILE_MODE);
 
-    // Auto-activate if this is the first local context
-    const all = await this.getLocalContexts(workspaceFolder);
-    if (all.length === 1) {
-      this.setLocalActiveContextInternal(ctx.name, workspaceFolder);
-    }
-
-    this._onDidChangeContext.fire();
+    // Creating a local context activates it (explicit user action, not auto-load).
+    await this.setLocalActiveContext(ctx.name, workspaceFolder);
   }
 
   /** Set the active local context pointer. */
@@ -512,6 +543,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       return Promise.reject(new Error(`Local context "${name}" not found`));
     }
     this.setLocalActiveContextInternal(name, workspaceFolder);
+    this.sessionActivated = true;
     this._onDidChangeContext.fire();
     return Promise.resolve();
   }
@@ -570,13 +602,8 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     const filePath = getLocalContextPath(globalName, workspaceFolder);
     this.atomicWrite(filePath, `${JSON.stringify(pointer, null, 2)}\n`, FILE_MODE);
 
-    // Auto-activate if this is the first local context
-    const all = await this.getLocalContexts(workspaceFolder);
-    if (all.length === 1) {
-      this.setLocalActiveContextInternal(globalName, workspaceFolder);
-    }
-
-    this._onDidChangeContext.fire();
+    // Linking a global context into the workspace activates it (explicit user action).
+    await this.setLocalActiveContext(globalName, workspaceFolder);
   }
 
   // ───────── cache management ─────────
