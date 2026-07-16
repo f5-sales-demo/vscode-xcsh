@@ -28,7 +28,6 @@
   "view.explorer.contextualTitle": "xcsh 資源",
   "view.cloudStatus.name": "雲端狀態",
   "view.cloudStatus.contextualTitle": "xcsh 雲端狀態",
-  "viewsWelcome.explorer": "沒有使用中的 xcsh 內容。\n[新增內容](command:xcsh.addContext)\n[啟用內容](command:xcsh.setActiveContext)\n深入了解 [F5 Distributed Cloud](https://www.f5.com/cloud)。",
   "command.addContext.title": "xcsh: 新增內容",
   "command.editContext.title": "xcsh: 編輯內容",
   "command.manageContextEnv.title": "xcsh: 管理內容環境變數",
