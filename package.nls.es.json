@@ -97,5 +97,5 @@
   "chat.xcsh.disambiguation.networking": "Preguntas sobre redes de F5 Distributed Cloud, balanceadores de carga, origin pools, rutas, DNS, CDN, hosts virtuales y configuración de balanceadores HTTP",
   "chat.xcsh.disambiguation.security": "Preguntas sobre seguridad de F5 Distributed Cloud, políticas WAF, políticas de servicio, protección DDoS, defensa contra bots, seguridad de API y configuración de firewall de aplicaciones",
   "chat.xcsh.disambiguation.infrastructure": "Preguntas sobre sitios de F5 Distributed Cloud, estado de sitios, conectores de nube, conectores de red, gestión de flotas y estado de infraestructura",
-  "viewsWelcome.profiles": "Aún no hay contextos de xcsh. Añade un contexto para conectarte a un inquilino de F5 Distributed Cloud.\n[Añadir Contexto](command:xcsh.addContext)\nMás información sobre [F5 Distributed Cloud](https://www.f5.com/cloud)."
+  "viewsWelcome.profiles": "Aún no hay contextos de xcsh. Añade un contexto para conectarte a un inquilino de F5 Distributed Cloud.\n[Añadir Contexto](command:xcsh.addContext)"
 }

@@ -97,5 +97,5 @@
   "chat.xcsh.disambiguation.networking": "F5 Distributed Cloud नेटवर्किंग, लोड बैलेंसर, ओरिजिन पूल, रूट, DNS, CDN, वर्चुअल होस्ट और HTTP लोड बैलेंसर कॉन्फ़िगरेशन के बारे में प्रश्न",
   "chat.xcsh.disambiguation.security": "F5 Distributed Cloud सुरक्षा, WAF नीतियां, सेवा नीतियां, DDoS सुरक्षा, बॉट रक्षा, API सुरक्षा और एप्लिकेशन फ़ायरवॉल कॉन्फ़िगरेशन के बारे में प्रश्न",
   "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud साइट, साइट स्वास्थ्य, क्लाउड कनेक्टर, नेटवर्क कनेक्टर, फ्लीट प्रबंधन और इंफ्रास्ट्रक्चर स्थिति के बारे में प्रश्न",
-  "viewsWelcome.profiles": "अभी तक कोई xcsh संदर्भ नहीं है। F5 Distributed Cloud टेनेंट से कनेक्ट करने के लिए एक संदर्भ जोड़ें।\n[संदर्भ जोड़ें](command:xcsh.addContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud) के बारे में और जानें।"
+  "viewsWelcome.profiles": "अभी तक कोई xcsh संदर्भ नहीं है। F5 Distributed Cloud टेनेंट से कनेक्ट करने के लिए एक संदर्भ जोड़ें।\n[संदर्भ जोड़ें](command:xcsh.addContext)"
 }
