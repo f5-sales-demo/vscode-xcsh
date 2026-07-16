@@ -229,6 +229,41 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
+  // --------------- session activation gate ---------------
+
+  it('does not auto-load a persisted active context in a fresh session', async () => {
+    // Session 1: create + activate, leaving a persisted active_context pointer on disk.
+    const mgr1 = new ContextManager();
+    await mgr1.addContext(makeContext({ name: 'prod' }));
+    expect(await mgr1.getActiveContextName()).toBe('prod');
+    mgr1.dispose();
+
+    // Session 2: a fresh manager must NOT auto-load the persisted pointer.
+    const mgr2 = new ContextManager();
+    expect(await mgr2.getActiveContextName()).toBeNull();
+    expect(await mgr2.getActiveContext()).toBeNull();
+    // The context still exists and is listable — only "active" is gated.
+    expect((await mgr2.getContexts()).map((c) => c.name)).toContain('prod');
+    // The persisted pointer file is left untouched (cross-tool safety).
+    expect(fs.existsSync(path.join(configDir, 'active_context'))).toBe(true);
+
+    // Explicit activation opens the gate for this session.
+    await mgr2.setActiveContext('prod');
+    expect(await mgr2.getActiveContextName()).toBe('prod');
+    expect((await mgr2.getActiveContext())?.name).toBe('prod');
+    mgr2.dispose();
+  });
+
+  it('creating any context activates it in the current session', async () => {
+    const mgr = new ContextManager();
+    await mgr.addContext(makeContext({ name: 'alpha' }));
+    expect(await mgr.getActiveContextName()).toBe('alpha');
+    // A second create switches active to the newest (create = activate, any create).
+    await mgr.addContext(makeContext({ name: 'bravo' }));
+    expect(await mgr.getActiveContextName()).toBe('bravo');
+    mgr.dispose();
+  });
+
   // --------------- getTokenHealth ---------------
 
   it('getTokenHealth returns correct health for context', async () => {
