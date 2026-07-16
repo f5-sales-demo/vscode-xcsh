@@ -657,10 +657,13 @@ export class SubscriptionDashboardProvider {
     const unit = item.unit ? item.unit.replace(/^per-/, '/') : '';
     const rateText = `${item.rate}${unit ? ` ${unit}` : ''}`;
     const burstText = item.burst > 0 ? ` · ${vscode.l10n.t('burst')} ${item.burst}` : '';
+    // Many services share generic method names (Create/Delete/Get); show the service
+    // group as muted context so rows are distinguishable.
+    const groupContext = item.group ? ` <span class="quota-group">${escapeHtml(item.group)}</span>` : '';
     return `
       <div class="quota-row">
         <div class="quota-info">
-          <span class="quota-name">${escapeHtml(item.displayName)}</span>
+          <span class="quota-name">${escapeHtml(item.displayName)}${groupContext}</span>
           <span class="quota-values">${escapeHtml(rateText + burstText)}</span>
         </div>
       </div>
@@ -1032,6 +1035,12 @@ export class SubscriptionDashboardProvider {
     .quota-percent.unknown {
       color: var(--vscode-descriptionForeground, #808080);
       font-style: italic;
+    }
+
+    .quota-group {
+      margin-left: 8px;
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground, #808080);
     }
 
     .over-limit-badge {
