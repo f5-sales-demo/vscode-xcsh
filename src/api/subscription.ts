@@ -64,7 +64,13 @@ export interface QuotaItem {
   description?: string;
   limit: number;
   usage: number;
-  /** Rounded usage/limit percentage; NOT clamped — may exceed 100 for genuine over-limit. */
+  /**
+   * Whether current usage is tracked by the API. The API reports `usage.current == -1`
+   * for object kinds whose usage it does not count; such rows have a real limit but no
+   * measurable usage/percentage.
+   */
+  usageKnown: boolean;
+  /** Rounded usage/limit percentage; NOT clamped — may exceed 100 for genuine over-limit. 0 when usage is unknown. */
   percentUsed: number;
   /** True when current usage exceeds the configured limit (e.g. limit reduced after creation). */
   overLimit: boolean;
@@ -223,34 +229,47 @@ function titleCaseKey(key: string): string {
 /**
  * Convert a count-quota map (`objects` or `resources`) to QuotaItem[].
  * Skips null entries and unlimited/disabled items (limit.maximum <= 0, e.g. -1).
+ * A `usage.current` of -1 means the API does not track usage for that kind — the row
+ * keeps its real limit but is flagged `usageKnown: false` (no percentage/over-limit).
  * percentUsed is left unclamped so genuine over-limit usage is reported faithfully.
  */
 function parseQuotaItems(items: Record<string, QuotaObjectItem | null>): QuotaItem[] {
-  return Object.entries(items)
-    .filter((entry): entry is [string, QuotaObjectItem] => {
-      const value = entry[1];
-      if (!value) {
-        return false;
-      }
-      const limit = value.limit?.maximum ?? 0;
-      return limit > 0;
-    })
-    .map(([key, value]) => {
-      const limit = value.limit?.maximum ?? 0;
-      const usage = value.usage?.current ?? 0;
-      const percentUsed = limit > 0 ? Math.round((usage / limit) * 100) : 0;
+  return (
+    Object.entries(items)
+      .filter((entry): entry is [string, QuotaObjectItem] => {
+        const value = entry[1];
+        if (!value) {
+          return false;
+        }
+        const limit = value.limit?.maximum ?? 0;
+        return limit > 0;
+      })
+      .map(([key, value]) => {
+        const limit = value.limit?.maximum ?? 0;
+        const rawUsage = value.usage?.current ?? 0;
+        const usageKnown = rawUsage >= 0;
+        const usage = usageKnown ? rawUsage : 0;
+        const percentUsed = usageKnown && limit > 0 ? Math.round((usage / limit) * 100) : 0;
 
-      return {
-        key,
-        displayName: value.display_name || titleCaseKey(key),
-        description: value.description,
-        limit,
-        usage,
-        percentUsed,
-        overLimit: usage > limit,
-      };
-    })
-    .sort((a, b) => b.percentUsed - a.percentUsed);
+        return {
+          key,
+          displayName: value.display_name || titleCaseKey(key),
+          description: value.description,
+          limit,
+          usage,
+          usageKnown,
+          percentUsed,
+          overLimit: usageKnown && usage > limit,
+        };
+      })
+      // Measurable rows first (by percent desc), untracked-usage rows after.
+      .sort((a, b) => {
+        if (a.usageKnown !== b.usageKnown) {
+          return a.usageKnown ? -1 : 1;
+        }
+        return b.percentUsed - a.percentUsed;
+      })
+  );
 }
 
 /**

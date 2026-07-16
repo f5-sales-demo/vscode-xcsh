@@ -483,10 +483,11 @@ export class SubscriptionDashboardProvider {
     // Summary tiles reflect OBJECT quotas (comparable integer counts). Resource quotas
     // (floats/large units like vCPU limits) and API rate limits (different units) are not
     // summed here — mixing them yields a meaningless total; they get their own sections.
-    const objectItems = quotaUsage.objects;
-    const totalUsed = objectItems.reduce((sum, item) => sum + item.usage, 0);
-    const totalLimit = objectItems.reduce((sum, item) => sum + item.limit, 0);
-    const criticalItems = objectItems.filter((item) => item.percentUsed >= 80);
+    // Only rows with tracked usage are measurable, so untracked-usage rows are excluded.
+    const measuredObjects = quotaUsage.objects.filter((item) => item.usageKnown);
+    const totalUsed = measuredObjects.reduce((sum, item) => sum + item.usage, 0);
+    const totalLimit = measuredObjects.reduce((sum, item) => sum + item.limit, 0);
+    const criticalItems = measuredObjects.filter((item) => item.percentUsed >= 80);
     const isEmpty =
       quotaUsage.objects.length === 0 && quotaUsage.resources.length === 0 && quotaUsage.apis.length === 0;
 
@@ -592,6 +593,27 @@ export class SubscriptionDashboardProvider {
    * Render a single quota item with progress bar
    */
   private renderQuotaItem(item: QuotaItem): string {
+    // Rows whose usage the API does not track (usage.current == -1): show the real
+    // limit but no percentage/bar — usage is unavailable, not zero or negative.
+    if (!item.usageKnown) {
+      return `
+      <div class="quota-row">
+        <div class="quota-info">
+          <span class="quota-name">${escapeHtml(item.displayName)}</span>
+          <span class="quota-values">— / ${item.limit}</span>
+        </div>
+        <div class="quota-progress">
+          <div class="progress-bar">
+            <div class="progress-fill unknown" style="width: 0%"></div>
+          </div>
+          <span class="quota-percent unknown" title="${escapeHtml(
+            vscode.l10n.t('Usage is not tracked for this quota type'),
+          )}">${vscode.l10n.t('n/a')}</span>
+        </div>
+      </div>
+    `;
+    }
+
     // Over-limit is a genuine state (usage exceeds a reduced/soft limit); flag it
     // distinctly so it reads as real data, not a rendering glitch. Bar stays capped.
     let statusClass = 'good';
@@ -969,6 +991,11 @@ export class SubscriptionDashboardProvider {
       background: var(--vscode-testing-iconFailed, #f14c4c);
     }
 
+    .progress-fill.unknown {
+      background: var(--vscode-descriptionForeground, #808080);
+      opacity: 0.3;
+    }
+
     .progress-fill.over-limit {
       background: repeating-linear-gradient(
         45deg,
@@ -1000,6 +1027,11 @@ export class SubscriptionDashboardProvider {
 
     .quota-percent.over-limit {
       color: var(--vscode-errorForeground, #f14c4c);
+    }
+
+    .quota-percent.unknown {
+      color: var(--vscode-descriptionForeground, #808080);
+      font-style: italic;
     }
 
     .over-limit-badge {
