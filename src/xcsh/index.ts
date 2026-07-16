@@ -88,6 +88,16 @@ export async function activateXcsh(
     if (!resolved) {
       return;
     }
+
+    // Session gate (parity with the TUI and the views): do NOT auto-load a
+    // persisted context (local/global pointer files) into the embedded shell until
+    // the user has explicitly activated one this session. The env tier
+    // (XCSH_API_URL/XCSH_API_TOKEN) is an explicit user choice and is always honored.
+    if (resolved.source !== 'env' && !contextManager.isSessionActivated()) {
+      logger.info('No context activated this session; starting xcsh without a context.');
+      return;
+    }
+
     const ctx = resolved.context;
 
     // Schema-version gate: refuse a context written by a newer schema this build

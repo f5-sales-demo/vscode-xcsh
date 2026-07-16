@@ -254,6 +254,21 @@ describe('ContextManager', () => {
     mgr2.dispose();
   });
 
+  it('isSessionActivated reflects the gate state', async () => {
+    const mgr = new ContextManager();
+    expect(mgr.isSessionActivated()).toBe(false);
+    await mgr.addContext(makeContext({ name: 'prod' }));
+    expect(mgr.isSessionActivated()).toBe(true);
+    mgr.dispose();
+
+    // A fresh session (new manager) starts un-activated even with a persisted pointer.
+    const mgr2 = new ContextManager();
+    expect(mgr2.isSessionActivated()).toBe(false);
+    await mgr2.setActiveContext('prod');
+    expect(mgr2.isSessionActivated()).toBe(true);
+    mgr2.dispose();
+  });
+
   it('creating any context activates it in the current session', async () => {
     const mgr = new ContextManager();
     await mgr.addContext(makeContext({ name: 'alpha' }));
