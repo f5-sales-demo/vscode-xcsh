@@ -277,6 +277,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           HUSKY: 0
+          # Stamp package.json to the exact version this release tagged (version.ts
+          # reads RELEASE_TAG), so the bump PR matches the tag instead of regenerating.
+          RELEASE_TAG: v${{ steps.version.outputs.version }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           SEMVER="${{ steps.version.outputs.semver }}"
@@ -316,6 +319,9 @@ jobs:
       - name: Update package.json version for VSIX
         env:
           HUSKY: 0
+          # Match the tag exactly (version.ts reads RELEASE_TAG) so the GH-release VSIX
+          # carries the tagged version, not a freshly regenerated timestamp.
+          RELEASE_TAG: v${{ steps.version.outputs.version }}
         run: npm run version:update
 
       - name: Build release VSIX
