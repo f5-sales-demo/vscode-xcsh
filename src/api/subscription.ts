@@ -83,6 +83,12 @@ export interface ApiRateLimitItem {
   key: string;
   displayName: string;
   description?: string;
+  /**
+   * Service/domain the API belongs to, derived from the key
+   * (`ves.io.schema.<domain>.<Service>.<Method>`). Disambiguates generic method names
+   * like "Create"/"Delete" that many services share.
+   */
+  group: string;
   rate: number;
   burst: number;
   unit: string;
@@ -273,8 +279,18 @@ function parseQuotaItems(items: Record<string, QuotaObjectItem | null>): QuotaIt
 }
 
 /**
+ * Derive the service/domain from an API key so generic method names can be
+ * disambiguated. `ves.io.schema.<domain>.<Service>.<Method>` → title-cased `<domain>`.
+ */
+function deriveApiGroup(key: string): string {
+  const domain = key.replace(/^ves\.io\.schema\./, '').split('.')[0] ?? '';
+  return domain ? titleCaseKey(domain) : '';
+}
+
+/**
  * Convert the `apis` map to ApiRateLimitItem[]. Skips null entries and items with no
- * api_limit. Sorted by display name for stable presentation.
+ * api_limit. Grouped by service (from the key), then display name, so related methods
+ * cluster and generic names aren't ambiguous.
  */
 function parseApiRateLimits(items: Record<string, ApiLimitItem | null>): ApiRateLimitItem[] {
   return Object.entries(items)
@@ -285,12 +301,13 @@ function parseApiRateLimits(items: Record<string, ApiLimitItem | null>): ApiRate
         key,
         displayName: value.display_name || titleCaseKey(key),
         description: value.description,
+        group: deriveApiGroup(key),
         rate: rl.rate ?? 0,
         burst: rl.burst ?? 0,
         unit: rl.unit ?? '',
       };
     })
-    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+    .sort((a, b) => a.group.localeCompare(b.group) || a.displayName.localeCompare(b.displayName));
 }
 
 /**
