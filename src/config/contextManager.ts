@@ -63,6 +63,11 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
    */
   private sessionActivated = false;
 
+  /** Whether the user has explicitly activated a context this session. */
+  isSessionActivated(): boolean {
+    return this.sessionActivated;
+  }
+
   // ───────── directory helpers ─────────
 
   /** Ensure the contexts directory exists with 0o700 permissions. */
