@@ -37,6 +37,8 @@ export interface ContextManagerInterface {
   getActiveContext(): Promise<XCSHContext | null>;
   getContexts(): Promise<XCSHContext[]>;
   getClient(contextName: string): Promise<XCSHClient>;
+  /** Whether the user has explicitly activated a context this session (session gate). */
+  isSessionActivated(): boolean;
   onDidChangeContext: vscode.Event<void>;
 }
 
