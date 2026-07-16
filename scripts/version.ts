@@ -113,11 +113,30 @@ function toSemver(upstream: string, timestamp: string): string {
 }
 
 /**
- * Generate all version information
+ * Parse a release tag (`v{upstream}-YYMMDDHHMM[-BETA]`) into its parts, so a release
+ * can stamp the exact version its tag represents rather than generating a fresh
+ * timestamp (which caused published-version drift/collisions). Returns null when the
+ * tag does not match the expected format.
  */
-function generateVersionInfo(isBeta: boolean = false): VersionInfo {
-  const upstream = getUpstreamVersion();
-  const timestamp = generateTimestamp();
+export function parseTag(tag: string): { upstream: string; timestamp: string; isBeta: boolean } | null {
+  const match = tag.match(/^v(.+)-(\d{10})(-BETA)?$/);
+  if (!match) {
+    return null;
+  }
+  return { upstream: match[1] as string, timestamp: match[2] as string, isBeta: Boolean(match[3]) };
+}
+
+/**
+ * Generate all version information. When `override` is supplied (e.g. derived from a
+ * release tag) its upstream/timestamp are used verbatim instead of the live
+ * OpenAPI version + current time — keeping the published version identical to the tag.
+ */
+export function generateVersionInfo(
+  isBeta: boolean = false,
+  override?: { upstream: string; timestamp: string },
+): VersionInfo {
+  const upstream = override?.upstream ?? getUpstreamVersion();
+  const timestamp = override?.timestamp ?? generateTimestamp();
   const version = `${upstream}-${timestamp}`;
   const betaVersion = `${version}-BETA`;
 
@@ -131,17 +150,14 @@ function generateVersionInfo(isBeta: boolean = false): VersionInfo {
 }
 
 /**
- * Update package.json with new version
+ * Update package.json with the given semver (already computed — no regeneration).
  */
-function updatePackageJson(version: string): void {
+function updatePackageJson(semver: string): void {
   try {
     const content = fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8');
     const pkg = JSON.parse(content) as PackageJson;
 
-    // For package.json, we need semver-compatible format
-    // Extract just the numeric parts for semver
-    const versionInfo = generateVersionInfo(version.includes('BETA'));
-    pkg.version = versionInfo.semver;
+    pkg.version = semver;
 
     fs.writeFileSync(PACKAGE_JSON_PATH, `${JSON.stringify(pkg, null, 2)}\n`, 'utf-8');
     console.log(`Updated package.json version to: ${pkg.version}`);
@@ -184,10 +200,25 @@ Examples:
     return;
   }
 
-  const info = generateVersionInfo(isBeta);
+  // Optional: derive the version from an explicit release tag (CLI --from-tag=<tag>
+  // or RELEASE_TAG env) so a release publishes exactly the version its tag encodes.
+  const fromTagArg = args.find((a) => a.startsWith('--from-tag='))?.split('=')[1] ?? process.env.RELEASE_TAG;
+  let override: { upstream: string; timestamp: string } | undefined;
+  let betaFromTag = false;
+  if (fromTagArg) {
+    const parsed = parseTag(fromTagArg);
+    if (!parsed) {
+      console.error(`Invalid release tag: "${fromTagArg}" (expected v{upstream}-YYMMDDHHMM[-BETA])`);
+      process.exit(1);
+    }
+    override = { upstream: parsed.upstream, timestamp: parsed.timestamp };
+    betaFromTag = parsed.isBeta;
+  }
+
+  const info = generateVersionInfo(isBeta || betaFromTag, override);
 
   if (shouldUpdate) {
-    updatePackageJson(info.version);
+    updatePackageJson(info.semver);
     return;
   }
 
@@ -198,4 +229,6 @@ Examples:
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
