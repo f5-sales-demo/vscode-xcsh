@@ -96,5 +96,6 @@
   "chat.xcsh.command.resources": "List resources in the current namespace",
   "chat.xcsh.disambiguation.networking": "Questions about F5 Distributed Cloud networking, load balancers, origin pools, routes, DNS, CDN, virtual hosts, and HTTP load balancer configuration",
   "chat.xcsh.disambiguation.security": "Questions about F5 Distributed Cloud security, WAF policies, service policies, DDoS protection, bot defense, API security, and application firewall configuration",
-  "chat.xcsh.disambiguation.infrastructure": "Questions about F5 Distributed Cloud sites, site health, cloud connectors, network connectors, fleet management, and infrastructure status"
+  "chat.xcsh.disambiguation.infrastructure": "Questions about F5 Distributed Cloud sites, site health, cloud connectors, network connectors, fleet management, and infrastructure status",
+  "viewsWelcome.profiles": "No xcsh contexts yet. Add a context to connect to an F5 Distributed Cloud tenant.\n[Add Context](command:xcsh.addContext)\nLearn more about [F5 Distributed Cloud](https://www.f5.com/cloud)."
 }
