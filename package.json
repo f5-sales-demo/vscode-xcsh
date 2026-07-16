@@ -217,6 +217,12 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "xcsh.profiles",
+        "contents": "%viewsWelcome.profiles%"
+      }
+    ],
     "commands": [
       {
         "command": "xcsh.addContext",
