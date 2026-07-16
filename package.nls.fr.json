@@ -28,7 +28,6 @@
   "view.explorer.contextualTitle": "Ressources xcsh",
   "view.cloudStatus.name": "État du cloud",
   "view.cloudStatus.contextualTitle": "État du cloud xcsh",
-  "viewsWelcome.explorer": "Aucun contexte xcsh actif.\n[Ajouter un contexte](command:xcsh.addContext)\n[Activer un contexte](command:xcsh.setActiveContext)\nEn savoir plus sur [F5 Distributed Cloud](https://www.f5.com/cloud).",
   "command.addContext.title": "xcsh: Ajouter un contexte",
   "command.editContext.title": "xcsh: Modifier le contexte",
   "command.manageContextEnv.title": "xcsh: Gérer les variables d'environnement du contexte",
