@@ -41,7 +41,10 @@ describe('Live: quota/usage parsing', () => {
       expect(Number.isFinite(item.limit)).toBe(true);
       expect(item.limit).toBeGreaterThan(0); // unlimited (-1) / zero are filtered out
       expect(Number.isFinite(item.percentUsed)).toBe(true);
-      expect(item.overLimit).toBe(item.usage > item.limit);
+      // No negative usage/percentage ever leaks through (untracked usage is normalized).
+      expect(item.usage).toBeGreaterThanOrEqual(0);
+      expect(item.percentUsed).toBeGreaterThanOrEqual(0);
+      expect(item.overLimit).toBe(item.usageKnown && item.usage > item.limit);
     }
 
     for (const api of usage.apis) {

@@ -14,6 +14,8 @@ const QUOTA_RESPONSE = {
     dns_load_balancer: { limit: { maximum: 50 }, usage: { current: 50 }, display_name: 'DNS Load Balancer' },
     unlimited_thing: { limit: { maximum: -1 }, usage: { current: 5 }, display_name: 'Unlimited Thing' },
     broken_null: null,
+    // usage not tracked by the API (real limit, usage.current == -1)
+    data_type: { limit: { maximum: 50 }, usage: { current: -1 }, display_name: 'Data Type' },
     // no display_name -> title-cased key fallback
     known_label_key: { limit: { maximum: 10 }, usage: { current: 3 } },
   },
@@ -43,9 +45,21 @@ describe('getQuotaUsage', () => {
   it('parses the current objects map, dropping unlimited (-1) and null entries', async () => {
     const usage = await getQuotaUsage(mockClient(QUOTA_RESPONSE));
     const keys = usage.objects.map((o) => o.key);
-    expect(keys).not.toContain('unlimited_thing'); // -1 dropped
+    expect(keys).not.toContain('unlimited_thing'); // -1 limit dropped
     expect(keys).not.toContain('broken_null'); // null dropped
-    expect(keys.sort()).toEqual(['dns_load_balancer', 'known_label_key', 'namespace_role', 'virtual_host']);
+    expect(keys.sort()).toEqual([
+      'data_type',
+      'dns_load_balancer',
+      'known_label_key',
+      'namespace_role',
+      'virtual_host',
+    ]);
+  });
+
+  it('flags untracked usage (usage.current == -1) without a negative percentage', async () => {
+    const usage = await getQuotaUsage(mockClient(QUOTA_RESPONSE));
+    const dt = usage.objects.find((o) => o.key === 'data_type');
+    expect(dt).toMatchObject({ usageKnown: false, usage: 0, limit: 50, percentUsed: 0, overLimit: false });
   });
 
   it('reports genuine over-limit usage faithfully (unclamped percent + overLimit flag)', async () => {
