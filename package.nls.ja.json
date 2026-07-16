@@ -28,7 +28,6 @@
   "view.explorer.contextualTitle": "xcsh リソース",
   "view.cloudStatus.name": "クラウドステータス",
   "view.cloudStatus.contextualTitle": "xcsh クラウドステータス",
-  "viewsWelcome.explorer": "アクティブな xcsh コンテキストがありません。\n[コンテキストを追加](command:xcsh.addContext)\n[コンテキストをアクティブ化](command:xcsh.setActiveContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud) の詳細を見る。",
   "command.addContext.title": "xcsh: コンテキストを追加",
   "command.editContext.title": "xcsh: コンテキストを編集",
   "command.manageContextEnv.title": "xcsh: コンテキストの環境変数を管理",

@@ -207,7 +207,8 @@
         {
           "id": "xcsh.explorer",
           "name": "%view.explorer.name%",
-          "contextualTitle": "%view.explorer.contextualTitle%"
+          "contextualTitle": "%view.explorer.contextualTitle%",
+          "when": "xcsh.hasActiveContext"
         },
         {
           "id": "xcsh.cloudStatus",
@@ -216,13 +217,6 @@
         }
       ]
     },
-    "viewsWelcome": [
-      {
-        "view": "xcsh.explorer",
-        "contents": "%viewsWelcome.explorer%",
-        "when": "!xcsh.hasActiveContext"
-      }
-    ],
     "commands": [
       {
         "command": "xcsh.addContext",

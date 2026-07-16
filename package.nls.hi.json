@@ -28,7 +28,6 @@
   "view.explorer.contextualTitle": "xcsh संसाधन",
   "view.cloudStatus.name": "क्लाउड स्थिति",
   "view.cloudStatus.contextualTitle": "xcsh क्लाउड स्थिति",
-  "viewsWelcome.explorer": "कोई सक्रिय xcsh संदर्भ नहीं है।\n[संदर्भ जोड़ें](command:xcsh.addContext)\n[संदर्भ सक्रिय करें](command:xcsh.setActiveContext)\n[F5 Distributed Cloud](https://www.f5.com/cloud) के बारे में और जानें।",
   "command.addContext.title": "xcsh: संदर्भ जोड़ें",
   "command.editContext.title": "xcsh: संदर्भ संपादित करें",
   "command.manageContextEnv.title": "xcsh: संदर्भ पर्यावरण चर प्रबंधित करें",
