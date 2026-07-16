@@ -97,5 +97,5 @@
   "chat.xcsh.disambiguation.networking": "关于 F5 Distributed Cloud 网络、负载均衡器、源池、路由、DNS、CDN、虚拟主机和 HTTP 负载均衡器配置的问题",
   "chat.xcsh.disambiguation.security": "关于 F5 Distributed Cloud 安全、WAF 策略、服务策略、DDoS 防护、机器人防御、API 安全和应用防火墙配置的问题",
   "chat.xcsh.disambiguation.infrastructure": "关于 F5 Distributed Cloud 站点、站点健康状况、云连接器、网络连接器、集群管理和基础设施状态的问题",
-  "viewsWelcome.profiles": "尚无 xcsh 上下文。添加一个上下文以连接到 F5 Distributed Cloud 租户。\n[添加上下文](command:xcsh.addContext)\n了解更多关于 [F5 Distributed Cloud](https://www.f5.com/cloud) 的信息。"
+  "viewsWelcome.profiles": "尚无 xcsh 上下文。添加一个上下文以连接到 F5 Distributed Cloud 租户。\n[添加上下文](command:xcsh.addContext)"
 }
