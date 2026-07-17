@@ -266,6 +266,21 @@ export async function activateXcsh(
     }),
   );
 
+  // Inject a resource JSON payload into the chat input as a context attachment.
+  // Invoked by the resource webview button and the tree "Add to xcsh chat"
+  // command; both pass { name, content }. Always focus the webview panel — a
+  // context chip needs the webview even when panelMode is 'terminal'.
+  extensionContext.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.attachToChat', async (arg?: { name?: string; content?: string }) => {
+      if (typeof arg?.name !== 'string' || typeof arg?.content !== 'string') {
+        logger.warn('xcsh.attachToChat called without { name, content }');
+        return;
+      }
+      await vscode.commands.executeCommand(focusPanelCommand);
+      panelProvider.attachContext(arg.name, arg.content);
+    }),
+  );
+
   // Register terminal integration
   registerTerminalIntegration(extensionContext, contextManager);
   createXcshStatusBar(extensionContext.subscriptions);

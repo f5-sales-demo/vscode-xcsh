@@ -97,5 +97,7 @@
   "chat.xcsh.disambiguation.networking": "Fragen zum F5 Distributed Cloud-Netzwerk, Lastverteilern, Ursprungspools, Routen, DNS, CDN, virtuellen Hosts und HTTP-Lastverteiler-Konfiguration",
   "chat.xcsh.disambiguation.security": "Fragen zur F5 Distributed Cloud-Sicherheit, WAF-Richtlinien, Dienstrichtlinien, DDoS-Schutz, Bot-Abwehr, API-Sicherheit und Anwendungs-Firewall-Konfiguration",
   "chat.xcsh.disambiguation.infrastructure": "Fragen zu F5 Distributed Cloud-Sites, Site-Zustand, Cloud-Konnektoren, Netzwerkkonnektoren, Flottenverwaltung und Infrastrukturstatus",
-  "viewsWelcome.profiles": "Noch keine xcsh-Kontexte. Fügen Sie einen Kontext hinzu, um sich mit einem F5 Distributed Cloud-Mandanten zu verbinden.\n[Kontext hinzufügen](command:xcsh.addContext)"
+  "viewsWelcome.profiles": "Noch keine xcsh-Kontexte. Fügen Sie einen Kontext hinzu, um sich mit einem F5 Distributed Cloud-Mandanten zu verbinden.\n[Kontext hinzufügen](command:xcsh.addContext)",
+  "command.addToChat.title": "xcsh: Zum Chat hinzufügen",
+  "command.attachToChat.title": "xcsh: Inhalt an Chat anhängen"
 }

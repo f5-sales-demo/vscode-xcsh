@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PlusIcon, SendIcon, StopIcon } from '../assets/icons';
 import { t } from '../lib/i18n';
-import { on, sendRequestFilePicker, sendSetMode, sendSetThinking } from '../lib/protocol';
+import { on, sendReady, sendRequestFilePicker, sendSetMode, sendSetThinking } from '../lib/protocol';
 import { ModesMenu } from './ModesMenu';
 import { SlashCommandMenu } from './SlashCommandMenu';
 
@@ -88,6 +88,9 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
         setAttachedFile({ name: msg.name, content: msg.content });
       }
     });
+    // The file_attached listener is now live — tell the extension it may flush
+    // any attachment buffered while the panel was opening.
+    sendReady();
     return unsub;
   }, []);
 
