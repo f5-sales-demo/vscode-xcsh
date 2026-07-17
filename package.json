@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/f5-sales-demo/vscode-f5xc-tools"
+    "url": "https://github.com/f5-sales-demo/vscode-xcsh"
   },
   "engines": {
     "vscode": "^1.125.0"
