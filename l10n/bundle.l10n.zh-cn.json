@@ -468,5 +468,7 @@
   "DNS Proxies": "DNS Proxies",
   "Certificate Chains": "Certificate Chains",
   "Virtual Kubernetes": "Virtual Kubernetes",
-  "K8s Cluster Roles": "K8s Cluster Roles"
+  "K8s Cluster Roles": "K8s Cluster Roles",
+  "Add to xcsh chat": "添加到 xcsh 聊天",
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "内容过大，无法附加（{0}KB）。上限为 {1}KB。"
 }

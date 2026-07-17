@@ -12,6 +12,7 @@ import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import { escapeHtml, getNonce, getWebviewBaseStyles } from '../utils/panelBaseStyles';
 import { getIconForCategory, getToolbarIconSvg } from '../utils/xcshIcons';
+import { buildAttachmentName } from '../xcsh/attachment';
 import { renderBestPractices } from './metadataRenderer';
 import { VIEW_SECTION_MANIFESTS } from './viewSectionManifests';
 
@@ -52,6 +53,20 @@ interface SectionDefinition {
  */
 export class XCSHDescribeProvider {
   private panel: vscode.WebviewPanel | undefined;
+  /**
+   * The resource currently rendered in the (reused) panel. The webview message
+   * handler is registered once at panel creation, so it must read the live
+   * resource from here rather than closing over the first describe's arguments.
+   */
+  private currentDescribe:
+    | {
+        profileName: string;
+        namespace: string;
+        resourceType: string;
+        resourceName: string;
+        resource: Record<string, unknown>;
+      }
+    | undefined;
 
   constructor(private readonly contextManager: ContextManager) {}
 
@@ -132,6 +147,10 @@ export class XCSHDescribeProvider {
         })) as unknown as Record<string, unknown>;
       }
 
+      // Record the live resource so the (once-registered) message handler always
+      // acts on what is currently displayed, even when the panel is reused.
+      this.currentDescribe = { profileName, namespace, resourceType, resourceName, resource };
+
       if (this.panel) {
         this.panel.reveal(vscode.ViewColumn.Beside);
       } else {
@@ -145,20 +164,31 @@ export class XCSHDescribeProvider {
           this.panel = undefined;
         });
 
-        // Set up message handler
-        this.panel.webview.onDidReceiveMessage(async (message: { command: string; resourceType?: string }) => {
+        // Set up message handler. Registered once; reads the live resource from
+        // this.currentDescribe so it stays correct when the panel is reused.
+        this.panel.webview.onDidReceiveMessage(async (message: { command: string }) => {
+          const current = this.currentDescribe;
+          if (!current) {
+            return;
+          }
           switch (message.command) {
             case 'editResource':
               await vscode.commands.executeCommand('xcsh.edit', {
-                profileName,
-                namespace,
-                resourceType,
-                resourceName,
+                profileName: current.profileName,
+                namespace: current.namespace,
+                resourceType: current.resourceType,
+                resourceName: current.resourceName,
               });
               break;
             case 'openDocumentation': {
-              const docUrl = this.getDocumentationUrl(resourceType);
+              const docUrl = this.getDocumentationUrl(current.resourceType);
               await vscode.env.openExternal(vscode.Uri.parse(docUrl));
+              break;
+            }
+            case 'attachToChat': {
+              const name = buildAttachmentName(current.resourceType, current.resourceName);
+              const content = JSON.stringify(current.resource, null, 2);
+              await vscode.commands.executeCommand('xcsh.attachToChat', { name, content });
               break;
             }
           }
@@ -308,6 +338,7 @@ export class XCSHDescribeProvider {
     </div>
     <div class="toolbar-right">
       <input type="text" class="search-input" placeholder="Search..." />
+      <button class="attach-chat-btn">${vscode.l10n.t('Add to xcsh chat')}</button>
       <button class="edit-btn">${vscode.l10n.t('Edit Configuration')}</button>
     </div>
   </div>
@@ -946,6 +977,23 @@ export class XCSHDescribeProvider {
       background: var(--vscode-button-hoverBackground);
     }
 
+    .attach-chat-btn {
+      background: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: none;
+      padding: 6px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 12px;
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+
+    .attach-chat-btn:hover {
+      background: var(--vscode-button-secondaryHoverBackground);
+    }
+
     /* Container */
     .container {
       display: flex;
@@ -1376,6 +1424,14 @@ export class XCSHDescribeProvider {
       if (editButton) {
         editButton.addEventListener('click', () => {
           vscode.postMessage({ command: 'editResource' });
+        });
+      }
+
+      // Add to xcsh chat Button
+      const attachChatButton = document.querySelector('.attach-chat-btn');
+      if (attachChatButton) {
+        attachChatButton.addEventListener('click', () => {
+          vscode.postMessage({ command: 'attachToChat' });
         });
       }
 
