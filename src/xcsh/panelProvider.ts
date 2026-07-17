@@ -5,6 +5,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
+import { MAX_ATTACHMENT_BYTES } from './attachment';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './types';
 
@@ -15,6 +16,14 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
   private readonly logger = getLogger();
   private readonly disposables: vscode.Disposable[] = [];
   private webviewView: vscode.WebviewView | null = null;
+  /** True once the React app has mounted and registered its message listeners. */
+  private webviewReady = false;
+  /**
+   * An attachment awaiting delivery to the chat input. Buffered until the
+   * webview signals `webview_ready`, so an attachment injected while the panel
+   * is opening (focus → resolve → mount) is not lost to the load race.
+   */
+  private pendingAttachment: { name: string; content: string } | null = null;
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -27,6 +36,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ): void {
     this.webviewView = webviewView;
+    this.webviewReady = false;
     const distPath = vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview');
 
     webviewView.webview.options = {
@@ -83,6 +93,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
 
     webviewView.onDidDispose(() => {
       this.webviewView = null;
+      this.webviewReady = false;
       for (const d of this.disposables) {
         d.dispose();
       }
@@ -148,9 +159,55 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
         void this.handleFilePicker();
         break;
       }
+      case 'webview_ready': {
+        // The React app has mounted and its listeners are live. Flush anything
+        // buffered while the panel was opening, and re-send the l10n bundle
+        // (posted during resolve, it can race the listener registration).
+        this.webviewReady = true;
+        this.sendL10nBundle();
+        this.flushPendingAttachment();
+        break;
+      }
       default:
         break;
     }
+  }
+
+  /**
+   * Inject content into the chat input as a context attachment (a removable
+   * chip that is folded into the next prompt). Used by the resource webview
+   * button and the tree "Add to xcsh chat" command. Callers should focus the
+   * panel first so the webview resolves; delivery is buffered until the webview
+   * is ready.
+   */
+  attachContext(name: string, content: string): void {
+    const bytes = Buffer.byteLength(content, 'utf8');
+    if (bytes > MAX_ATTACHMENT_BYTES) {
+      void vscode.window.showWarningMessage(
+        vscode.l10n.t(
+          'Content too large to attach ({0}KB). Maximum is {1}KB.',
+          Math.round(bytes / 1024),
+          Math.round(MAX_ATTACHMENT_BYTES / 1024),
+        ),
+      );
+      return;
+    }
+    this.pendingAttachment = { name, content };
+    this.flushPendingAttachment();
+  }
+
+  /** Post the buffered attachment to the webview once it is live and ready. */
+  private flushPendingAttachment(): void {
+    const view = this.webviewView;
+    const pending = this.pendingAttachment;
+    if (!view || !this.webviewReady || !pending) {
+      return;
+    }
+    void view.webview.postMessage({
+      type: 'from-extension',
+      message: { type: 'file_attached', name: pending.name, content: pending.content },
+    });
+    this.pendingAttachment = null;
   }
 
   private async handleFilePicker(): Promise<void> {
@@ -204,7 +261,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     }
     try {
       const stat = await vscode.workspace.fs.stat(uri);
-      const maxSize = 512 * 1024;
+      const maxSize = MAX_ATTACHMENT_BYTES;
       if (stat.size > maxSize) {
         void vscode.window.showWarningMessage(
           `File too large to attach (${Math.round(stat.size / 1024)}KB). Maximum is 512KB.`,

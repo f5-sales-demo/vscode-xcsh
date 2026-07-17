@@ -97,3 +97,12 @@ export function sendSetThinking(level: string): void {
 export function sendRequestFilePicker(): void {
   send({ type: 'request_file_picker' });
 }
+
+/**
+ * Signal that the app has mounted and its message listeners are registered.
+ * The extension buffers injected attachments (e.g. "Add to xcsh chat") until it
+ * receives this, avoiding the panel-open load race.
+ */
+export function sendReady(): void {
+  send({ type: 'webview_ready' });
+}

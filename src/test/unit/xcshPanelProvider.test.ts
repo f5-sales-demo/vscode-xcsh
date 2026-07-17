@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type * as vscode from 'vscode';
+import { MAX_ATTACHMENT_BYTES } from '../../xcsh/attachment';
 import { XcshPanelProvider } from '../../xcsh/panelProvider';
 import type { XcshRpcBridge } from '../../xcsh/rpcBridge';
 
@@ -210,6 +211,75 @@ describe('XcshPanelProvider', () => {
       const { mockWebviewView } = createMockWebviewView();
       void mockWebviewView;
       // No throw is the main assertion; postMessage is on the internal webview
+    });
+  });
+
+  describe('attachContext', () => {
+    const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
+
+    function setup() {
+      const provider = new XcshPanelProvider(mockUri, createMockBridge());
+      const { mockWebviewView, messageHandlers } = createMockWebviewView();
+      provider.resolveWebviewView(
+        mockWebviewView,
+        {} as vscode.WebviewViewResolveContext,
+        {} as vscode.CancellationToken,
+      );
+      const postMessage = (mockWebviewView.webview as unknown as { postMessage: jest.Mock }).postMessage;
+      const dispatch = (msg: { type: string; [key: string]: unknown }) => messageHandlers[0]?.(msg);
+      return { provider, postMessage, dispatch };
+    }
+
+    function lastFileAttached(postMessage: jest.Mock): { name: string; content: string } | undefined {
+      const call = [...postMessage.mock.calls]
+        .reverse()
+        .find((c) => (c[0] as { message?: { type?: string } })?.message?.type === 'file_attached');
+      return call?.[0]?.message as { name: string; content: string } | undefined;
+    }
+
+    it('posts file_attached immediately when the webview is ready', () => {
+      const { provider, postMessage, dispatch } = setup();
+      dispatch({ type: 'webview_ready' });
+      postMessage.mockClear();
+
+      provider.attachContext('lb.http_loadbalancers.json', '{"a":1}');
+
+      expect(postMessage).toHaveBeenCalledWith({
+        type: 'from-extension',
+        message: { type: 'file_attached', name: 'lb.http_loadbalancers.json', content: '{"a":1}' },
+      });
+    });
+
+    it('buffers the attachment until the webview signals readiness, then flushes once', () => {
+      const { provider, postMessage, dispatch } = setup();
+      // Not ready yet — nothing should be delivered.
+      provider.attachContext('lb.http_loadbalancers.json', '{"a":1}');
+      expect(lastFileAttached(postMessage)).toBeUndefined();
+
+      // Readiness flushes the buffered attachment.
+      dispatch({ type: 'webview_ready' });
+      expect(lastFileAttached(postMessage)).toMatchObject({
+        name: 'lb.http_loadbalancers.json',
+        content: '{"a":1}',
+      });
+
+      // A second readiness signal must not re-deliver a consumed attachment.
+      postMessage.mockClear();
+      dispatch({ type: 'webview_ready' });
+      expect(lastFileAttached(postMessage)).toBeUndefined();
+    });
+
+    it('rejects an over-size payload with a warning and no post', async () => {
+      const vscode = await import('vscode');
+      (vscode.window.showWarningMessage as jest.Mock).mockClear();
+      const { provider, postMessage, dispatch } = setup();
+      dispatch({ type: 'webview_ready' });
+      postMessage.mockClear();
+
+      provider.attachContext('huge.json', 'x'.repeat(MAX_ATTACHMENT_BYTES + 1));
+
+      expect(vscode.window.showWarningMessage).toHaveBeenCalled();
+      expect(lastFileAttached(postMessage)).toBeUndefined();
     });
   });
 });

@@ -97,5 +97,7 @@
   "chat.xcsh.disambiguation.networking": "關於 F5 Distributed Cloud 網路、負載平衡器、來源集區、路由、DNS、CDN、虛擬主機和 HTTP 負載平衡器設定的問題",
   "chat.xcsh.disambiguation.security": "關於 F5 Distributed Cloud 安全性、WAF 原則、服務原則、DDoS 防護、機器人防禦、API 安全性和應用程式防火牆設定的問題",
   "chat.xcsh.disambiguation.infrastructure": "關於 F5 Distributed Cloud 站台、站台健康狀況、雲端連接器、網路連接器、叢集管理和基礎架構狀態的問題",
-  "viewsWelcome.profiles": "尚無 xcsh 內容。新增內容以連線至 F5 Distributed Cloud 租戶。\n[新增內容](command:xcsh.addContext)"
+  "viewsWelcome.profiles": "尚無 xcsh 內容。新增內容以連線至 F5 Distributed Cloud 租戶。\n[新增內容](command:xcsh.addContext)",
+  "command.addToChat.title": "xcsh: 新增至聊天",
+  "command.attachToChat.title": "xcsh: 將內容附加至聊天"
 }

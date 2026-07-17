@@ -26,6 +26,7 @@ import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import { filterResource, getFilterOptionsForViewMode, type ViewMode } from '../utils/resourceFilter';
 import { validateResourcePayload } from '../utils/validation';
+import { buildAttachmentName } from '../xcsh/attachment';
 
 const logger = getLogger();
 
@@ -790,6 +791,35 @@ export function registerCrudCommands(
         await vscode.env.clipboard.writeText(json);
         showInfo(vscode.l10n.t('Copied {0} JSON to clipboard ({1} view)', data.name, viewMode));
       }, 'Copy as JSON');
+    }),
+  );
+
+  // ADD TO XCSH CHAT - Attach the resource JSON to the chat input as context
+  context.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.addToChat', async (node: ResourceNode) => {
+      await withErrorHandling(async () => {
+        const data = node.getData();
+        const rt = data.resourceType;
+
+        // Mirror the describe fetch: use cached list data when the type has no
+        // GET endpoint, otherwise fetch the full resource from the API.
+        let resource: Record<string, unknown>;
+        if (rt.useListDataForDescribe && data.fullResourceData) {
+          resource = data.fullResourceData;
+        } else {
+          const client = await contextManager.getClient(data.profileName);
+          const apiBase = rt.apiBase || 'config';
+          resource = (await client.getWithOptions(data.namespace, rt.apiPath, data.name, {
+            apiBase,
+            customGetPath: rt.customGetPath,
+          })) as unknown as Record<string, unknown>;
+        }
+
+        const name = buildAttachmentName(rt.apiPath, data.name);
+        const content = JSON.stringify(resource, null, 2);
+        await vscode.commands.executeCommand('xcsh.attachToChat', { name, content });
+        logger.info(`Added ${data.name} to xcsh chat as context`);
+      }, 'Add to xcsh chat');
     }),
   );
 
