@@ -470,5 +470,12 @@
   "Virtual Kubernetes": "Virtual Kubernetes",
   "K8s Cluster Roles": "K8s Cluster Roles",
   "Add to xcsh chat": "إضافة إلى دردشة xcsh",
-  "Content too large to attach ({0}KB). Maximum is {1}KB.": "المحتوى كبير جدًا بحيث يتعذّر إرفاقه ({0} كيلوبايت). الحد الأقصى هو {1} كيلوبايت."
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "المحتوى كبير جدًا بحيث يتعذّر إرفاقه ({0} كيلوبايت). الحد الأقصى هو {1} كيلوبايت.",
+  "Verifying connection...": "جارٍ التحقق من الاتصال...",
+  "Authentication failed — the API token was rejected. Re-enter the URL and token.": "فشلت المصادقة — تم رفض رمز API المميز. أعد إدخال عنوان URL والرمز المميز.",
+  "Could not reach the API. Check the URL and token, then try again.": "تعذّر الوصول إلى API. تحقق من عنوان URL والرمز المميز ثم أعد المحاولة.",
+  "$(edit) Enter a custom namespace...": "$(edit) أدخل مساحة اسم مخصصة...",
+  "always present": "موجودة دائمًا",
+  "Select the default namespace": "حدد مساحة الاسم الافتراضية",
+  "Context \"{0}\" added and verified": "تمت إضافة السياق \"{0}\" والتحقق منه"
 }

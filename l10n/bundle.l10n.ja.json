@@ -470,5 +470,12 @@
   "Virtual Kubernetes": "Virtual Kubernetes",
   "K8s Cluster Roles": "K8s Cluster Roles",
   "Add to xcsh chat": "xcsh チャットに追加",
-  "Content too large to attach ({0}KB). Maximum is {1}KB.": "添付するにはコンテンツが大きすぎます（{0}KB）。最大は {1}KB です。"
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "添付するにはコンテンツが大きすぎます（{0}KB）。最大は {1}KB です。",
+  "Verifying connection...": "接続を確認しています...",
+  "Authentication failed — the API token was rejected. Re-enter the URL and token.": "認証に失敗しました — API トークンが拒否されました。URL とトークンを再入力してください。",
+  "Could not reach the API. Check the URL and token, then try again.": "API に接続できませんでした。URL とトークンを確認して、もう一度お試しください。",
+  "$(edit) Enter a custom namespace...": "$(edit) カスタム名前空間を入力...",
+  "always present": "常に存在します",
+  "Select the default namespace": "デフォルトの名前空間を選択",
+  "Context \"{0}\" added and verified": "コンテキスト \"{0}\" が追加され、検証されました"
 }
