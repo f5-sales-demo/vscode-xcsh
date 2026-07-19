@@ -470,5 +470,12 @@
   "Virtual Kubernetes": "Virtual Kubernetes",
   "K8s Cluster Roles": "K8s Cluster Roles",
   "Add to xcsh chat": "เพิ่มไปยังแชท xcsh",
-  "Content too large to attach ({0}KB). Maximum is {1}KB.": "เนื้อหาใหญ่เกินกว่าจะแนบได้ ({0}KB) สูงสุดคือ {1}KB"
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "เนื้อหาใหญ่เกินกว่าจะแนบได้ ({0}KB) สูงสุดคือ {1}KB",
+  "Verifying connection...": "กำลังตรวจสอบการเชื่อมต่อ...",
+  "Authentication failed — the API token was rejected. Re-enter the URL and token.": "การตรวจสอบสิทธิ์ล้มเหลว — API โทเคนถูกปฏิเสธ โปรดป้อน URL และโทเคนอีกครั้ง",
+  "Could not reach the API. Check the URL and token, then try again.": "ไม่สามารถเข้าถึง API ได้ ตรวจสอบ URL และโทเคน แล้วลองอีกครั้ง",
+  "$(edit) Enter a custom namespace...": "$(edit) ป้อนเนมสเปซที่กำหนดเอง...",
+  "always present": "มีอยู่เสมอ",
+  "Select the default namespace": "เลือกเนมสเปซเริ่มต้น",
+  "Context \"{0}\" added and verified": "เพิ่มและตรวจสอบบริบท \"{0}\" แล้ว"
 }

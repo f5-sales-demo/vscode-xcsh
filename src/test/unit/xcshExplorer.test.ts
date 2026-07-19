@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type { XCSHContext } from '../../config/contextTypes';
-import { buildSelectableNamespaces, XCSHExplorerProvider } from '../../tree/xcshExplorer';
+import { buildNamespacePickChoices, buildSelectableNamespaces, XCSHExplorerProvider } from '../../tree/xcshExplorer';
 
 const NAMESPACES = ['b-x', 'a-franklin', 'default', 'system', 'shared'];
 
@@ -32,6 +32,30 @@ describe('buildSelectableNamespaces', () => {
 
   it('returns an empty list when only built-in root namespaces exist', () => {
     expect(buildSelectableNamespaces(['system', 'shared'])).toEqual([]);
+  });
+});
+
+describe('buildNamespacePickChoices', () => {
+  it('lists default first, then custom namespaces alphabetically, with a custom-entry option last', () => {
+    expect(buildNamespacePickChoices(['b-x', 'a-franklin', 'default', 'system', 'shared'])).toEqual([
+      { name: 'default', isCustom: false },
+      { name: 'a-franklin', isCustom: false },
+      { name: 'b-x', isCustom: false },
+      { name: '', isCustom: true },
+    ]);
+  });
+
+  it('excludes system and shared but keeps the custom-entry option', () => {
+    expect(buildNamespacePickChoices(['system', 'shared', 'c-ns', 'a-ns'])).toEqual([
+      { name: 'a-ns', isCustom: false },
+      { name: 'c-ns', isCustom: false },
+      { name: '', isCustom: true },
+    ]);
+  });
+
+  it('offers only the custom-entry option when no selectable namespaces exist', () => {
+    expect(buildNamespacePickChoices(['system', 'shared'])).toEqual([{ name: '', isCustom: true }]);
+    expect(buildNamespacePickChoices([])).toEqual([{ name: '', isCustom: true }]);
   });
 });
 

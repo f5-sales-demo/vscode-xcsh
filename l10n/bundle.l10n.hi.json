@@ -470,5 +470,12 @@
   "Virtual Kubernetes": "Virtual Kubernetes",
   "K8s Cluster Roles": "K8s Cluster Roles",
   "Add to xcsh chat": "xcsh चैट में जोड़ें",
-  "Content too large to attach ({0}KB). Maximum is {1}KB.": "संलग्न करने के लिए सामग्री बहुत बड़ी है ({0}KB)। अधिकतम {1}KB है।"
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "संलग्न करने के लिए सामग्री बहुत बड़ी है ({0}KB)। अधिकतम {1}KB है।",
+  "Verifying connection...": "कनेक्शन सत्यापित किया जा रहा है...",
+  "Authentication failed — the API token was rejected. Re-enter the URL and token.": "प्रमाणीकरण विफल — API टोकन अस्वीकृत कर दिया गया। URL और टोकन फिर से दर्ज करें।",
+  "Could not reach the API. Check the URL and token, then try again.": "API तक नहीं पहुँच सका। URL और टोकन जाँचें, फिर पुनः प्रयास करें।",
+  "$(edit) Enter a custom namespace...": "$(edit) कस्टम नेमस्पेस दर्ज करें...",
+  "always present": "हमेशा मौजूद",
+  "Select the default namespace": "डिफ़ॉल्ट नेमस्पेस चुनें",
+  "Context \"{0}\" added and verified": "संदर्भ \"{0}\" जोड़ा और सत्यापित किया गया"
 }
