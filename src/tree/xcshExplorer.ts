@@ -161,6 +161,25 @@ export function buildSelectableNamespaces(names: string[]): string[] {
   return hasDefault ? ['default', ...rest] : rest;
 }
 
+/** One choice offered by the default-namespace picker in the add-context flow. */
+export interface NamespacePickChoice {
+  /** Enumerated namespace name; empty for the trailing custom-entry option. */
+  name: string;
+  /** True only for the "enter a custom namespace" option shown last. */
+  isCustom: boolean;
+}
+
+/**
+ * Build the default-namespace picker choices for the add-context flow: the
+ * selectable tenant namespaces (`default` first, then custom alphabetically,
+ * `system`/`shared` hidden) followed by a custom-entry option so a namespace that
+ * does not exist yet can still be typed. The custom option is always present, so
+ * the picker is never empty.
+ */
+export function buildNamespacePickChoices(names: string[]): NamespacePickChoice[] {
+  return [...buildSelectableNamespaces(names).map((name) => ({ name, isCustom: false })), { name: '', isCustom: true }];
+}
+
 /**
  * Namespace node in the tree
  */

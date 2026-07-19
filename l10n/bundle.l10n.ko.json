@@ -470,5 +470,12 @@
   "Virtual Kubernetes": "Virtual Kubernetes",
   "K8s Cluster Roles": "K8s Cluster Roles",
   "Add to xcsh chat": "xcsh 채팅에 추가",
-  "Content too large to attach ({0}KB). Maximum is {1}KB.": "첨부하기에 콘텐츠가 너무 큽니다({0}KB). 최대 {1}KB입니다."
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "첨부하기에 콘텐츠가 너무 큽니다({0}KB). 최대 {1}KB입니다.",
+  "Verifying connection...": "연결 확인 중...",
+  "Authentication failed — the API token was rejected. Re-enter the URL and token.": "인증 실패 — API 토큰이 거부되었습니다. URL과 토큰을 다시 입력하세요.",
+  "Could not reach the API. Check the URL and token, then try again.": "API에 연결할 수 없습니다. URL과 토큰을 확인한 후 다시 시도하세요.",
+  "$(edit) Enter a custom namespace...": "$(edit) 사용자 지정 네임스페이스 입력...",
+  "always present": "항상 존재함",
+  "Select the default namespace": "기본 네임스페이스 선택",
+  "Context \"{0}\" added and verified": "컨텍스트 \"{0}\"이(가) 추가되고 검증되었습니다"
 }

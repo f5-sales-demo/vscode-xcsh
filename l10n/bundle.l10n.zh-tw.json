@@ -470,5 +470,12 @@
   "Virtual Kubernetes": "Virtual Kubernetes",
   "K8s Cluster Roles": "K8s Cluster Roles",
   "Add to xcsh chat": "新增至 xcsh 聊天",
-  "Content too large to attach ({0}KB). Maximum is {1}KB.": "內容過大，無法附加（{0}KB）。上限為 {1}KB。"
+  "Content too large to attach ({0}KB). Maximum is {1}KB.": "內容過大，無法附加（{0}KB）。上限為 {1}KB。",
+  "Verifying connection...": "正在驗證連線...",
+  "Authentication failed — the API token was rejected. Re-enter the URL and token.": "驗證失敗 — API 權杖遭拒。請重新輸入 URL 和權杖。",
+  "Could not reach the API. Check the URL and token, then try again.": "無法連線到 API。請檢查 URL 和權杖，然後重試。",
+  "$(edit) Enter a custom namespace...": "$(edit) 輸入自訂命名空間...",
+  "always present": "一律存在",
+  "Select the default namespace": "選取預設命名空間",
+  "Context \"{0}\" added and verified": "內容 \"{0}\" 已新增並驗證"
 }

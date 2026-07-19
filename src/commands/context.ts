@@ -25,9 +25,11 @@ function setOrClearEnv(env: Record<string, string> | undefined, key: string, val
   return next;
 }
 
+import { TokenAuthProvider } from '../api/auth/tokenAuth';
+import { XCSHClient } from '../api/client';
 import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
-import { buildSelectableNamespaces, type XCSHExplorerProvider } from '../tree/xcshExplorer';
-import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
+import { buildNamespacePickChoices, buildSelectableNamespaces, type XCSHExplorerProvider } from '../tree/xcshExplorer';
+import { showInfo, showWarning, withErrorHandling, XCSHApiError } from '../utils/errors';
 
 /**
  * Resolve the target context name: use the tree node if invoked from the view,
@@ -89,57 +91,111 @@ export function registerContextCommands(
           return;
         }
 
-        // Step 2: API URL
-        const apiUrl = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('Enter API URL'),
-          placeHolder: 'https://tenant.console.ves.volterra.io',
-          value: 'https://',
-          ignoreFocusOut: true,
-          validateInput: (value) => {
-            if (!value?.startsWith('https://')) {
-              return vscode.l10n.t('API URL must start with https://');
+        // Steps 2–3: API URL + token, verified against the API before we go on.
+        // A failed check warns and re-prompts both (URL pre-filled with the last
+        // value) until it succeeds or the user cancels. On success the tenant's
+        // namespace list comes back with the verification and drives the picker.
+        const verified = await (async () => {
+          let url = 'https://';
+          for (;;) {
+            const urlInput = await vscode.window.showInputBox({
+              prompt: vscode.l10n.t('Enter API URL'),
+              placeHolder: 'https://tenant.console.ves.volterra.io',
+              value: url,
+              ignoreFocusOut: true,
+              validateInput: (value) => {
+                if (!value?.startsWith('https://')) {
+                  return vscode.l10n.t('API URL must start with https://');
+                }
+                try {
+                  new URL(value);
+                  return null;
+                } catch {
+                  return vscode.l10n.t('Invalid URL format');
+                }
+              },
+            });
+            if (!urlInput) {
+              return undefined;
             }
+            url = urlInput;
+
+            const tokenInput = await vscode.window.showInputBox({
+              prompt: vscode.l10n.t('Enter your API token'),
+              password: true,
+              placeHolder: vscode.l10n.t('Your API token'),
+              ignoreFocusOut: true,
+              validateInput: (value) => {
+                if (!value || value.trim().length === 0) {
+                  return vscode.l10n.t('API token is required');
+                }
+                return null;
+              },
+            });
+            if (!tokenInput) {
+              return undefined;
+            }
+
+            const auth = new TokenAuthProvider({ apiUrl: url, apiToken: tokenInput });
             try {
-              new URL(value);
-              return null;
-            } catch {
-              return vscode.l10n.t('Invalid URL format');
+              const namespaces = await vscode.window.withProgress(
+                {
+                  location: vscode.ProgressLocation.Notification,
+                  title: vscode.l10n.t('Verifying connection...'),
+                  cancellable: false,
+                },
+                async () => new XCSHClient(url, auth).listNamespaces(),
+              );
+              return { apiUrl: url, apiToken: tokenInput, namespaceNames: namespaces.map((ns) => ns.name) };
+            } catch (err) {
+              const rejected = err instanceof XCSHApiError && err.isAuthError;
+              showWarning(
+                rejected
+                  ? vscode.l10n.t('Authentication failed — the API token was rejected. Re-enter the URL and token.')
+                  : vscode.l10n.t('Could not reach the API. Check the URL and token, then try again.'),
+              );
+            } finally {
+              auth.dispose();
             }
-          },
-        });
+          }
+        })();
+        if (!verified) {
+          return;
+        }
+        const { apiUrl, apiToken, namespaceNames } = verified;
 
-        if (!apiUrl) {
+        // Step 4: Default namespace — pick from the tenant's namespaces (default
+        // first, system/shared hidden) or type a custom one that does not exist yet.
+        const customLabel = vscode.l10n.t('$(edit) Enter a custom namespace...');
+        const namespacePick = await vscode.window.showQuickPick(
+          buildNamespacePickChoices(namespaceNames).map((choice) =>
+            choice.isCustom
+              ? { label: customLabel, isCustom: true }
+              : {
+                  label: choice.name,
+                  description: choice.name === 'default' ? vscode.l10n.t('always present') : undefined,
+                  isCustom: false,
+                },
+          ),
+          { placeHolder: vscode.l10n.t('Select the default namespace'), ignoreFocusOut: true },
+        );
+        if (!namespacePick) {
           return;
         }
 
-        // Step 3: API Token
-        const apiToken = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('Enter your API token'),
-          password: true,
-          placeHolder: vscode.l10n.t('Your API token'),
-          ignoreFocusOut: true,
-          validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-              return vscode.l10n.t('API token is required');
-            }
-            return null;
-          },
-        });
-
-        if (!apiToken) {
-          return;
-        }
-
-        // Step 4: Default namespace
-        const defaultNamespace = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('Enter default namespace'),
-          placeHolder: 'system',
-          value: 'system',
-          ignoreFocusOut: true,
-        });
-
-        if (defaultNamespace === undefined) {
-          return;
+        let defaultNamespace: string;
+        if (namespacePick.isCustom) {
+          const typed = await vscode.window.showInputBox({
+            prompt: vscode.l10n.t('Enter default namespace'),
+            value: 'default',
+            ignoreFocusOut: true,
+          });
+          if (typed === undefined) {
+            return;
+          }
+          defaultNamespace = typed.trim() || 'default';
+        } else {
+          defaultNamespace = namespacePick.label;
         }
 
         // Step 5: Web-console username (optional — generic env credential)
@@ -168,7 +224,7 @@ export function registerContextCommands(
           name,
           apiUrl,
           apiToken,
-          defaultNamespace: defaultNamespace.trim() || 'system',
+          defaultNamespace,
         };
 
         // Stash the web-console credentials as generic env vars; auto-mark any
@@ -216,32 +272,15 @@ export function registerContextCommands(
           createLocal = scope.value === 'local';
         }
 
-        // Add context to the chosen location
+        // Add context to the chosen location. Credentials were already verified
+        // against the API before persisting, so no second validation is needed.
         if (createLocal && wsFolder) {
           await contextManager.addLocalContext(newContext, wsFolder);
         } else {
           await contextManager.addContext(newContext);
         }
 
-        // Validate credentials
-        const validating = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: vscode.l10n.t('Validating credentials...'),
-            cancellable: false,
-          },
-          async () => {
-            return contextManager.validateContext(name);
-          },
-        );
-
-        if (validating) {
-          showInfo(vscode.l10n.t('Context "{0}" added and validated successfully', name));
-        } else {
-          showWarning(
-            vscode.l10n.t('Context "{0}" added but credentials could not be validated. Check your settings.', name),
-          );
-        }
+        showInfo(vscode.l10n.t('Context "{0}" added and verified', name));
 
         contextProvider.refresh();
         explorerProvider.refresh();
