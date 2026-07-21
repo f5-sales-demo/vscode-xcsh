@@ -92,6 +92,8 @@ export default tseslint.config(
       '.vscode-test.mjs',
       'coverage/**',
       'src/generated/**',
+      'webview/src/vendored/**',
+      '**/vendored/**',
     ],
   },
 );
