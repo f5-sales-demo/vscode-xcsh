@@ -1,0 +1,5 @@
+# The vendored @f5-sales-demo/xcsh-chat-ui copy is hash-verified byte-for-byte
+# against VENDOR-MANIFEST.json (see vendorSync.test.ts). Force LF on every
+# platform so a Windows checkout (core.autocrlf) does not rewrite line endings
+# and break the hash match.
+* text eol=lf

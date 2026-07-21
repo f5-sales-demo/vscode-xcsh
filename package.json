@@ -1085,20 +1085,6 @@
     "pre-commit": "lint-staged",
     "audit:security": "npm audit --audit-level=high"
   },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix --max-warnings=0",
-      "biome check --fix",
-      "biome format --write"
-    ],
-    "*.{json,yaml,yml}": [
-      "prettier --write"
-    ],
-    "*.md": [
-      "prettier --write",
-      "markdownlint --fix"
-    ]
-  },
   "dependencies": {
     "@f5-sales-demo/pi-resource-management": "^19.68.0",
     "@f5-sales-demo/pi-utils": "^19.68.0",
