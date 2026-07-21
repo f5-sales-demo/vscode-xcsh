@@ -9,6 +9,7 @@ import { getLogger } from '../utils/logger';
 import { MAX_ATTACHMENT_BYTES } from './attachment';
 import { resolveAttachments } from './attachmentResolvers';
 import type { Attachment, FileAttachment, HostAttachmentCategory } from './attachmentTypes';
+import { HOST_TOOL_DEFINITIONS } from './hostTools';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './types';
 
@@ -132,6 +133,23 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     });
   }
 
+  /** Send the referenceable host tools to the webview for the Tools picker. */
+  private sendToolsAvailable(): void {
+    const view = this.webviewView;
+    if (!view) {
+      return;
+    }
+    const tools = HOST_TOOL_DEFINITIONS.filter((t) => !t.hidden).map((t) => ({
+      name: t.name,
+      label: t.label ?? t.name,
+      description: t.description,
+    }));
+    void view.webview.postMessage({
+      type: 'from-extension',
+      message: { type: 'tools_available', tools },
+    });
+  }
+
   private handleWebviewMessage(msg: { type: string; [key: string]: unknown }): void {
     switch (msg.type) {
       case 'prompt': {
@@ -171,6 +189,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
         // (posted during resolve, it can race the listener registration).
         this.webviewReady = true;
         this.sendL10nBundle();
+        this.sendToolsAvailable();
         this.flushPendingAttachments();
         break;
       }

@@ -6,16 +6,20 @@ import { PlusIcon, SendIcon, StopIcon } from '../assets/icons';
 import { type Attachment, addAttachment, serializeAttachments } from '../lib/attachmentTypes';
 import { t } from '../lib/i18n';
 import {
-  type HostAttachmentCategory,
+  type AttachCategory,
   on,
   sendReady,
   sendRequestAttachment,
   sendSetMode,
   sendSetThinking,
+  type ToolInfo,
 } from '../lib/protocol';
+import { serializeSessionTranscript } from '../state/session';
+import { getActiveSession } from '../state/sessions';
 import { AttachMenu } from './AttachMenu';
 import { ModesMenu } from './ModesMenu';
 import { SlashCommandMenu } from './SlashCommandMenu';
+import { ToolsPickerMenu } from './ToolsPickerMenu';
 
 interface InputBarProps {
   onSubmit: (text: string) => void;
@@ -29,6 +33,8 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
   const [showModesMenu, setShowModesMenu] = useState(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showToolsPicker, setShowToolsPicker] = useState(false);
+  const [tools, setTools] = useState<ToolInfo[]>([]);
   const [permissionMode, setPermissionMode] = useState('auto');
   const [thinkingLevel, setThinkingLevel] = useState('medium');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -57,16 +63,17 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
       }
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (showSlashMenu || showModesMenu || showAttachMenu) {
+        if (showSlashMenu || showModesMenu || showAttachMenu || showToolsPicker) {
           setShowSlashMenu(false);
           setShowModesMenu(false);
           setShowAttachMenu(false);
+          setShowToolsPicker(false);
         } else if (busy) {
           onInterrupt();
         }
       }
     },
-    [handleSubmit, busy, onInterrupt, showSlashMenu, showModesMenu, showAttachMenu],
+    [handleSubmit, busy, onInterrupt, showSlashMenu, showModesMenu, showAttachMenu, showToolsPicker],
   );
 
   const handleInput = useCallback(() => {
@@ -84,28 +91,81 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
       setShowModesMenu(false);
       setShowSlashMenu(false);
       setShowAttachMenu(false);
+      setShowToolsPicker(false);
     };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
 
-  const handleCategorySelect = useCallback((category: HostAttachmentCategory) => {
+  const handleCategorySelect = useCallback((category: AttachCategory) => {
     setShowAttachMenu(false);
+    if (category === 'tools') {
+      setShowToolsPicker(true);
+      return;
+    }
+    if (category === 'sessions') {
+      const session = getActiveSession();
+      if (!session) {
+        return;
+      }
+      const attachment: Attachment = {
+        id: crypto.randomUUID(),
+        kind: 'sessions',
+        label: `Session: ${session.summary}`,
+        dedupKey: `sessions:${session.id}`,
+        content: serializeSessionTranscript(session),
+        sessionId: session.id,
+      };
+      setAttachments((prev) => addAttachment(prev, attachment).list);
+      return;
+    }
     sendRequestAttachment(category);
   }, []);
 
+  const handleToolsConfirm = useCallback(
+    (names: string[]) => {
+      setShowToolsPicker(false);
+      if (names.length === 0) {
+        return;
+      }
+      const lines = names.map((name) => {
+        const info = tools.find((x) => x.name === name);
+        return `- ${info?.label ?? name} (${name})${info?.description ? `: ${info.description}` : ''}`;
+      });
+      const attachment: Attachment = {
+        id: crypto.randomUUID(),
+        kind: 'tools',
+        label: names.length === 1 ? '1 tool' : `${names.length} tools`,
+        dedupKey: 'tools',
+        content: `Requested tools:\n${lines.join('\n')}`,
+        toolNames: names,
+      };
+      setAttachments((prev) => addAttachment(prev, attachment).list);
+    },
+    [tools],
+  );
+
   useEffect(() => {
-    const unsub = on('attachment_added', (msg) => {
+    const unsubAttach = on('attachment_added', (msg) => {
       const attachment = msg.attachment as Attachment | undefined;
       if (!attachment || typeof attachment.dedupKey !== 'string' || typeof attachment.content !== 'string') {
         return;
       }
       setAttachments((prev) => addAttachment(prev, attachment).list);
     });
-    // The attachment_added listener is now live — tell the extension it may
-    // flush any attachment buffered while the panel was opening.
+    const unsubTools = on('tools_available', (msg) => {
+      const list = msg.tools as ToolInfo[] | undefined;
+      if (Array.isArray(list)) {
+        setTools(list);
+      }
+    });
+    // Listeners are live — tell the extension it may flush any attachment buffered
+    // while the panel was opening and send the available tools.
     sendReady();
-    return unsub;
+    return () => {
+      unsubAttach();
+      unsubTools();
+    };
   }, []);
 
   const handleSlashSelect = useCallback(
@@ -176,6 +236,11 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
           {showAttachMenu && (
             <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 10 }}>
               <AttachMenu onSelect={handleCategorySelect} onClose={() => setShowAttachMenu(false)} />
+            </div>
+          )}
+          {showToolsPicker && (
+            <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 10 }}>
+              <ToolsPickerMenu tools={tools} onConfirm={handleToolsConfirm} onClose={() => setShowToolsPicker(false)} />
             </div>
           )}
           <button

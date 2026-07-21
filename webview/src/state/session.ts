@@ -50,6 +50,32 @@ export interface Session {
   endTurn(): void;
 }
 
+/**
+ * Render a session's messages as plain text for the "Sessions" chat attachment.
+ * The backend agent is text-only, so tool-use and thinking blocks collapse to
+ * concise markers.
+ */
+export function serializeSessionTranscript(session: Session): string {
+  const lines: string[] = [];
+  for (const message of session.messages) {
+    if (message.type === 'user') {
+      lines.push(`User: ${message.text}`);
+      continue;
+    }
+    const parts = message.blocks.map((block) => {
+      if (block.type === 'text') {
+        return block.text;
+      }
+      if (block.type === 'tool_use') {
+        return `[tool: ${block.toolName}]`;
+      }
+      return '[thinking]';
+    });
+    lines.push(`Assistant: ${parts.join('\n')}`);
+  }
+  return lines.join('\n\n');
+}
+
 export function createSession(): Session {
   const listeners = new Set<() => void>();
 

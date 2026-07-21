@@ -4,16 +4,17 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { InputBar } from '../components/InputBar';
 import type { Attachment } from '../lib/attachmentTypes';
+import { createNewSession } from '../state/sessions';
 
-const mockState: { attachmentListener?: (msg: Record<string, unknown>) => void } = {};
+const mockState: { listeners: Record<string, (msg: Record<string, unknown>) => void> } = { listeners: {} };
 const mockSendRequestAttachment = jest.fn();
 
 jest.mock('../lib/protocol', () => ({
   on: (type: string, cb: (msg: Record<string, unknown>) => void) => {
-    if (type === 'attachment_added') {
-      mockState.attachmentListener = cb;
-    }
-    return () => {};
+    mockState.listeners[type] = cb;
+    return () => {
+      delete mockState.listeners[type];
+    };
   },
   sendReady: jest.fn(),
   sendRequestAttachment: (category: string) => mockSendRequestAttachment(category),
@@ -23,7 +24,13 @@ jest.mock('../lib/protocol', () => ({
 
 function emit(attachment: Attachment): void {
   act(() => {
-    mockState.attachmentListener?.({ type: 'attachment_added', attachment });
+    mockState.listeners.attachment_added?.({ type: 'attachment_added', attachment });
+  });
+}
+
+function emitTools(tools: Array<{ name: string; label: string; description: string }>): void {
+  act(() => {
+    mockState.listeners.tools_available?.({ type: 'tools_available', tools });
   });
 }
 
@@ -33,7 +40,7 @@ function file(id: string, label: string, content = 'X'): Attachment {
 
 beforeEach(() => {
   mockSendRequestAttachment.mockClear();
-  mockState.attachmentListener = undefined;
+  mockState.listeners = {};
 });
 
 describe('InputBar attachment picker', () => {
@@ -80,5 +87,26 @@ describe('InputBar attachment picker', () => {
     emit(file('1', 'a.ts', 'hello'));
     fireEvent.click(screen.getByTitle('Send (Enter)'));
     expect(onSubmit).toHaveBeenCalledWith('[File: a.ts]\n\nhello');
+  });
+
+  it('opens the tools picker and attaches the selected tools', () => {
+    render(<InputBar onSubmit={jest.fn()} onInterrupt={jest.fn()} busy={false} />);
+    emitTools([{ name: 'vscode_read_file', label: 'Read File', description: 'Read a file' }]);
+    fireEvent.click(screen.getByTitle('Add context'));
+    fireEvent.click(screen.getByText('Tools'));
+    fireEvent.click(screen.getByText('Read File'));
+    fireEvent.click(screen.getByRole('button', { name: /Attach/ }));
+    expect(screen.getByText('tools')).toBeInTheDocument(); // chip kind
+    expect(screen.getByText('1 tool')).toBeInTheDocument();
+  });
+
+  it('attaches the active session transcript', () => {
+    const session = createNewSession();
+    session.addUserMessage('hello there');
+    render(<InputBar onSubmit={jest.fn()} onInterrupt={jest.fn()} busy={false} />);
+    fireEvent.click(screen.getByTitle('Add context'));
+    fireEvent.click(screen.getByText('Sessions'));
+    expect(screen.getByText('sessions')).toBeInTheDocument(); // chip kind
+    expect(screen.getByText(/Session:/)).toBeInTheDocument();
   });
 });
