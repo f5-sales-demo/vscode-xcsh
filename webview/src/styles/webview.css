@@ -24,8 +24,10 @@ body {
 }
 
 html {
-  --app-xcsh-red: #e01f27;
-  --app-xcsh-red-button: #c6131b;
+  /* Canonical F5 xcsh-terminal red (unified across office/vscode/chrome — was
+     the divergent #e01f27). Dark variant matches the shared `f5DarkRed` token. */
+  --app-xcsh-red: #ca260a;
+  --app-xcsh-red-button: #8a1a07;
   --app-spacing-small: 4px;
   --app-spacing-medium: 8px;
   --app-spacing-large: 12px;
@@ -184,7 +186,7 @@ html {
 /* Welcome box — F5 red bordered frame matching xcsh terminal */
 .welcomeBox {
   position: relative;
-  border: 1px solid #e01f27;
+  border: 1px solid var(--app-xcsh-red);
   margin: 16px 8px;
   padding: 12px;
   flex: 1;
@@ -228,7 +230,7 @@ html {
 }
 
 .asciiLine { display: block; height: 1em; }
-.asciiRed { color: #e01f27; }
+.asciiRed { color: var(--app-xcsh-red); }
 .asciiWhite { color: #ffffff; font-weight: bold; }
 .asciiShadow { color: #8b0000; }
 

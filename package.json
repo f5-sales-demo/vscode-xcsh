@@ -27,7 +27,7 @@
   ],
   "icon": "resources/f5-icon.png",
   "galleryBanner": {
-    "color": "#e01f27",
+    "color": "#ca260a",
     "theme": "dark"
   },
   "activationEvents": [
