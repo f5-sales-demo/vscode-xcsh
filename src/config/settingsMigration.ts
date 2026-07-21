@@ -29,9 +29,13 @@ export async function migrateSettings(context: vscode.ExtensionContext): Promise
   };
 
   for (const key of Object.keys(oldConfig)) {
-    if (key === 'has' || key === 'get' || key === 'update' || key === 'inspect') continue;
+    if (key === 'has' || key === 'get' || key === 'update' || key === 'inspect') {
+      continue;
+    }
     const inspection = inspectable.inspect(key);
-    if (!inspection) continue;
+    if (!inspection) {
+      continue;
+    }
 
     if (inspection.globalValue !== undefined) {
       const newInspection = (newConfig as unknown as typeof inspectable).inspect(key);

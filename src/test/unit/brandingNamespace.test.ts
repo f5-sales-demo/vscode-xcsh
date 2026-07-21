@@ -74,8 +74,12 @@ describe('Branding namespace — all user-facing identifiers use xcsh.* prefix',
       const allCommands: string[] = [];
       for (const items of Object.values(menus)) {
         for (const item of items) {
-          if (item.when) allWhens.push(item.when);
-          if (item.command) allCommands.push(item.command);
+          if (item.when) {
+            allWhens.push(item.when);
+          }
+          if (item.command) {
+            allCommands.push(item.command);
+          }
         }
       }
       const badWhens = allWhens.filter((w) => w.includes('f5xc'));

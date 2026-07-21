@@ -1,11 +1,14 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { XCSHContext } from '../../config/contextTypes';
 import {
   buildFollowups,
   buildPromptWithContext,
   formatContextResponse,
   formatStatusResponse,
+  PARTICIPANT_ID,
 } from '../../xcsh/chatParticipant';
 
 describe('buildPromptWithContext', () => {
@@ -171,5 +174,19 @@ describe('buildFollowups', () => {
   it('returns general followups for unknown commands', () => {
     const followups = buildFollowups(undefined);
     expect(followups.length).toBeGreaterThan(0);
+  });
+});
+
+describe('chat participant registration id', () => {
+  // The id passed to vscode.chat.createChatParticipant() MUST match a
+  // contributes.chatParticipants[].id in package.json, or VS Code cannot bind the
+  // runtime handler to its static declaration (name, slash commands,
+  // disambiguation). This guards against the two drifting apart again.
+  it('PARTICIPANT_ID matches a declared chatParticipants id in package.json', () => {
+    const pkg = JSON.parse(readFileSync(join(__dirname, '../../../package.json'), 'utf8')) as {
+      contributes?: { chatParticipants?: Array<{ id?: string }> };
+    };
+    const declaredIds = (pkg.contributes?.chatParticipants ?? []).map((p) => p.id);
+    expect(declaredIds).toContain(PARTICIPANT_ID);
   });
 });
