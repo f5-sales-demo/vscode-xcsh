@@ -7,8 +7,13 @@ jest.mock('node:fs', () => ({ ...jest.requireActual('node:fs'), realpathSync: je
 
 // biome-ignore lint/style/useImportType: realpathSync is consumed as a runtime mock handle
 import { realpathSync } from 'node:fs';
+import * as path from 'node:path';
 
 const realpathSyncMock = realpathSync as unknown as jest.Mock;
+// Platform-native workspace root so path.resolve()-based containment behaves the
+// same on POSIX and Windows CI runners.
+const WS = path.resolve('/ws');
+const norm = (p: string): string => p.replace(/\\/g, '/');
 
 const win = vscode.window as unknown as {
   showOpenDialog: jest.Mock;
@@ -151,31 +156,31 @@ function setInstructionFilesConfig(files: string[]): void {
 
 describe('resolveAttachments — instructions', () => {
   beforeEach(() => {
-    setWorkspaceFolder('/ws');
+    setWorkspaceFolder(WS);
     setInstructionFilesConfig([]);
     realpathSyncMock.mockImplementation((p: string) => p);
   });
 
   it('lists existing candidate files and attaches the picked one', async () => {
     fsMock.stat.mockImplementation((uri: { fsPath: string }) =>
-      uri.fsPath.endsWith('CLAUDE.md')
+      path.basename(uri.fsPath) === 'CLAUDE.md'
         ? Promise.resolve({ type: vscode.FileType.File, size: 10 })
         : Promise.reject(new Error('ENOENT')),
     );
-    win.showQuickPick.mockResolvedValue({ label: 'CLAUDE.md', sourcePath: '/ws/CLAUDE.md' });
+    win.showQuickPick.mockImplementation((items: unknown[]) => Promise.resolve(items[0]));
     fsMock.readFile.mockResolvedValue(new TextEncoder().encode('# Instructions'));
 
     const result = await resolveAttachments('instructions');
     expect(result).toHaveLength(1);
     expect(result[0]?.kind).toBe('instructions');
-    expect(result[0]?.dedupKey).toBe('instructions:/ws/CLAUDE.md');
+    expect(result[0]?.dedupKey).toBe(`instructions:${path.join(WS, 'CLAUDE.md')}`);
     expect(result[0]?.content).toBe('# Instructions');
   });
 
   it('offers files from the xcsh.instructionFiles config', async () => {
     setInstructionFilesConfig(['docs/PROMPT.md']);
     fsMock.stat.mockImplementation((uri: { fsPath: string }) =>
-      uri.fsPath.endsWith('docs/PROMPT.md')
+      norm(uri.fsPath).endsWith('docs/PROMPT.md')
         ? Promise.resolve({ type: vscode.FileType.File, size: 5 })
         : Promise.reject(new Error('ENOENT')),
     );
@@ -211,8 +216,8 @@ describe('resolveAttachments — instructions', () => {
   it('rejects an in-workspace symlink that resolves outside the workspace', async () => {
     setInstructionFilesConfig(['docs/evil.md']);
     fsMock.stat.mockResolvedValue({ type: vscode.FileType.File, size: 10 });
-    // The lexical path stays inside /ws, but its realpath escapes via a symlink.
-    realpathSyncMock.mockImplementation((p: string) => (p.endsWith('docs/evil.md') ? '/etc/passwd' : p));
+    // The lexical path stays inside the workspace, but its realpath escapes via a symlink.
+    realpathSyncMock.mockImplementation((p: string) => (norm(p).endsWith('docs/evil.md') ? '/etc/passwd' : p));
     let offered: string[] = [];
     win.showQuickPick.mockImplementation((items: Array<{ label: string }>) => {
       offered = items.map((i) => i.label);
