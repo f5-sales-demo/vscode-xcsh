@@ -186,6 +186,20 @@ describe('resolveAttachments — instructions', () => {
     expect(win.showInformationMessage).toHaveBeenCalled();
   });
 
+  it('rejects instructionFiles entries that escape the workspace folder', async () => {
+    setInstructionFilesConfig(['../../etc/passwd']);
+    // Even if stat would succeed for anything, the escaping path must never be offered.
+    fsMock.stat.mockResolvedValue({ type: vscode.FileType.File, size: 10 });
+    let offered: string[] = [];
+    win.showQuickPick.mockImplementation((items: Array<{ label: string }>) => {
+      offered = items.map((i) => i.label);
+      return Promise.resolve(undefined);
+    });
+    await resolveAttachments('instructions');
+    expect(offered).not.toContain('../../etc/passwd');
+    expect(offered.some((l) => l.includes('passwd'))).toBe(false);
+  });
+
   it('returns empty when the quick pick is cancelled', async () => {
     fsMock.stat.mockResolvedValue({ type: vscode.FileType.File, size: 10 });
     win.showQuickPick.mockResolvedValue(undefined);

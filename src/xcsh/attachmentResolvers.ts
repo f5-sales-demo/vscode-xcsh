@@ -274,9 +274,16 @@ async function resolveInstructions(): Promise<Attachment[]> {
     sourcePath: string;
     size: number;
   }
+  const root = folder.uri.fsPath;
   const existing: InstructionPick[] = [];
   for (const rel of candidates) {
-    const uri = vscode.Uri.joinPath(folder.uri, rel);
+    // Config entries are workspace-supplied; resolve and confirm the result stays
+    // inside the workspace folder so a crafted `../` path cannot escape it.
+    const resolvedPath = path.resolve(root, rel);
+    if (resolvedPath !== root && !resolvedPath.startsWith(root + path.sep)) {
+      continue;
+    }
+    const uri = vscode.Uri.file(resolvedPath);
     try {
       const stat = await vscode.workspace.fs.stat(uri);
       if (stat.type === vscode.FileType.File) {
