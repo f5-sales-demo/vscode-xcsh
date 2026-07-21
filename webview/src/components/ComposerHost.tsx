@@ -22,7 +22,7 @@ import {
 } from '../lib/protocol';
 import { serializeSessionTranscript } from '../state/session';
 import { getActiveSession } from '../state/sessions';
-import { type Attachment, addAttachment, Composer, type SlashCommand, type ToolItem } from '../vendored/chat-ui';
+import { type Attachment, addAttachment, Composer, type ToolItem } from '../vendored/chat-ui';
 
 interface ComposerHostProps {
   onSubmit: (text: string) => void;
@@ -42,17 +42,20 @@ const CATEGORIES: { id: AttachCategory; label: () => string; description: () => 
   { id: 'tools', label: () => t('Tools'), description: () => t('Select tools to reference') },
 ];
 
-const SLASH_COMMANDS: SlashCommand[] = [
-  { command: '/status', label: t('Status'), description: t('Show integration health') },
-  { command: '/context', label: t('Context'), description: t('Show active xcsh context') },
-  { command: '/resources', label: t('Resources'), description: t('Browse current namespace') },
+// Labels are lazy (`() => t(...)`) and resolved at render — the l10n bundle
+// arrives asynchronously after module load, so evaluating t() eagerly here would
+// freeze every label to its English-key fallback. (Matches CATEGORIES above.)
+const SLASH_COMMANDS = [
+  { command: '/status', label: () => t('Status'), description: () => t('Show integration health') },
+  { command: '/context', label: () => t('Context'), description: () => t('Show active xcsh context') },
+  { command: '/resources', label: () => t('Resources'), description: () => t('Browse current namespace') },
 ];
 
 /** Permission modes map onto the shared Composer's `modes` list. */
 const MODES = [
-  { id: 'auto', label: t('Auto'), blurb: t('xcsh runs tools automatically') },
-  { id: 'confirm', label: t('Confirm'), blurb: t('Preference hint: ask before tool execution') },
-  { id: 'readonly', label: t('Read-only'), blurb: t('Preference hint: suggest read-only operations') },
+  { id: 'auto', label: () => t('Auto'), blurb: () => t('xcsh runs tools automatically') },
+  { id: 'confirm', label: () => t('Confirm'), blurb: () => t('Preference hint: ask before tool execution') },
+  { id: 'readonly', label: () => t('Read-only'), blurb: () => t('Preference hint: suggest read-only operations') },
 ];
 
 const THINKING_LEVELS = ['low', 'medium', 'high', 'xhigh'];
@@ -178,9 +181,13 @@ export function ComposerHost({ onSubmit, onInterrupt, busy }: ComposerHostProps)
       onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
       tools={toolItems}
       onToolsConfirm={handleToolsConfirm}
-      slashCommands={SLASH_COMMANDS}
+      slashCommands={SLASH_COMMANDS.map((c) => ({
+        command: c.command,
+        label: c.label(),
+        description: c.description(),
+      }))}
       onSlashSelect={handleSlashSelect}
-      modes={MODES}
+      modes={MODES.map((m) => ({ id: m.id, label: m.label(), blurb: m.blurb() }))}
       mode={permissionMode}
       onModeChange={handleModeChange}
       thinkingLevels={THINKING_LEVELS}
