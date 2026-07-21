@@ -37,7 +37,7 @@ describe('webview protocol', () => {
       sendAbort: () => void;
       sendSetMode: (mode: string) => void;
       sendSetThinking: (level: string) => void;
-      sendRequestFilePicker: () => void;
+      sendRequestAttachment: (category: string) => void;
     };
   }
 
@@ -92,10 +92,22 @@ describe('webview protocol', () => {
     expect(mockPostMessage).toHaveBeenCalledWith({ type: 'set_thinking', level: 'high' });
   });
 
-  it('sendRequestFilePicker sends correct message', () => {
-    const { initProtocol, sendRequestFilePicker } = loadProtocol();
+  it('sendRequestAttachment posts request_attachment with category', () => {
+    const { initProtocol, sendRequestAttachment } = loadProtocol();
     initProtocol();
-    sendRequestFilePicker();
-    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'request_file_picker' });
+    sendRequestAttachment('problems');
+    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'request_attachment', category: 'problems' });
+  });
+
+  it('on dispatches attachment_added payloads', () => {
+    const { initProtocol, on } = loadProtocol();
+    initProtocol();
+    const received: unknown[] = [];
+    on('attachment_added', (msg) => received.push(msg));
+    const attachment = { id: '1', kind: 'file', label: 'a.ts', dedupKey: 'file:a.ts', content: 'x', path: 'a.ts' };
+    messageHandler?.({
+      data: { type: 'from-extension', message: { type: 'attachment_added', attachment } },
+    } as unknown as MessageEvent);
+    expect(received).toEqual([{ type: 'attachment_added', attachment }]);
   });
 });

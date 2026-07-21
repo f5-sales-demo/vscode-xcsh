@@ -69,7 +69,7 @@ module.exports = {
       testMatch: ['**/__tests__/**/*.test.ts?(x)'],
       testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
       moduleFileExtensions: ['tsx', 'ts', 'js', 'json'],
-      setupFilesAfterEnv: ['@testing-library/jest-dom'],
+      setupFilesAfterEnv: ['@testing-library/jest-dom', '<rootDir>/webview/src/test-setup.ts'],
       transform: {
         '^.+\\.tsx?$': [
           'ts-jest',

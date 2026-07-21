@@ -1,0 +1,256 @@
+// src/xcsh/attachmentResolvers.ts
+// Copyright (c) 2026 Robin Mordasiewicz. MIT License.
+//
+// Resolves host-side attachment categories (Files/Folders, Problems, Symbols)
+// into typed `Attachment` objects. Each category drives its own VS Code picker,
+// then serializes the result to text (the agent path is text-only). Callers
+// post the returned attachments to the webview as `attachment_added` messages.
+
+import { randomUUID } from 'node:crypto';
+import * as path from 'node:path';
+import * as vscode from 'vscode';
+import { MAX_ATTACHMENT_BYTES } from './attachment';
+import type { Attachment, FileAttachment, FolderAttachment, HostAttachmentCategory } from './attachmentTypes';
+import { type DiagnosticFileEntry, formatDiagnostics } from './diagnosticsSerializer';
+import { formatWorkspaceSymbols, type WorkspaceSymbolLike } from './symbolSerializer';
+
+const FOLDER_ENTRY_CAP = 500;
+
+/** Path relative to the first workspace folder, or the absolute path. */
+function relPath(uri: vscode.Uri): string {
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (folder && uri.fsPath.startsWith(folder.uri.fsPath)) {
+    return uri.fsPath.slice(folder.uri.fsPath.length + 1);
+  }
+  return uri.fsPath;
+}
+
+function byteLength(s: string): number {
+  return Buffer.byteLength(s, 'utf8');
+}
+
+/** Reject an over-budget attachment with a warning; otherwise return it. */
+function sizeGuard(att: Attachment): Attachment[] {
+  const bytes = byteLength(att.content);
+  if (bytes > MAX_ATTACHMENT_BYTES) {
+    void vscode.window.showWarningMessage(
+      vscode.l10n.t(
+        'Attachment too large ({0}KB). Maximum is {1}KB.',
+        Math.round(bytes / 1024),
+        Math.round(MAX_ATTACHMENT_BYTES / 1024),
+      ),
+    );
+    return [];
+  }
+  return [att];
+}
+
+export async function resolveAttachments(category: HostAttachmentCategory): Promise<Attachment[]> {
+  switch (category) {
+    case 'files':
+      return resolveFiles();
+    case 'problems':
+      return resolveProblems();
+    case 'symbols':
+      return resolveSymbols();
+    default:
+      // 'instructions' and 'scm' arrive in Phase 2.
+      return [];
+  }
+}
+
+async function resolveFiles(): Promise<Attachment[]> {
+  const uris = await vscode.window.showOpenDialog({
+    canSelectMany: true,
+    canSelectFiles: true,
+    canSelectFolders: true,
+    openLabel: vscode.l10n.t('Attach'),
+  });
+  if (!uris || uris.length === 0) {
+    return [];
+  }
+  const out: Attachment[] = [];
+  for (const uri of uris) {
+    const stat = await vscode.workspace.fs.stat(uri);
+    if (stat.type === vscode.FileType.Directory) {
+      out.push(...(await buildFolderAttachment(uri)));
+    } else {
+      out.push(...(await buildFileAttachment(uri, stat.size)));
+    }
+  }
+  return out;
+}
+
+async function buildFileAttachment(uri: vscode.Uri, size: number): Promise<Attachment[]> {
+  if (size > MAX_ATTACHMENT_BYTES) {
+    void vscode.window.showWarningMessage(
+      vscode.l10n.t(
+        'File too large to attach ({0}KB). Maximum is {1}KB.',
+        Math.round(size / 1024),
+        Math.round(MAX_ATTACHMENT_BYTES / 1024),
+      ),
+    );
+    return [];
+  }
+  const bytes = await vscode.workspace.fs.readFile(uri);
+  const content = new TextDecoder().decode(bytes);
+  const att: FileAttachment = {
+    id: randomUUID(),
+    kind: 'file',
+    label: path.basename(uri.fsPath),
+    dedupKey: `file:${uri.fsPath}`,
+    content,
+    path: uri.fsPath,
+  };
+  return [att];
+}
+
+async function buildFolderAttachment(uri: vscode.Uri): Promise<Attachment[]> {
+  const files: string[] = [];
+  const walk = async (dir: vscode.Uri, prefix: string): Promise<void> => {
+    if (files.length >= FOLDER_ENTRY_CAP) {
+      return;
+    }
+    const entries = await vscode.workspace.fs.readDirectory(dir);
+    for (const [name, type] of entries) {
+      if (files.length >= FOLDER_ENTRY_CAP) {
+        break;
+      }
+      const rel = prefix ? `${prefix}/${name}` : name;
+      if (type === vscode.FileType.Directory) {
+        files.push(`${rel}/`);
+        await walk(vscode.Uri.joinPath(dir, name), rel);
+      } else {
+        files.push(rel);
+      }
+    }
+  };
+  await walk(uri, '');
+  const listing = files.join('\n');
+  const capped =
+    files.length >= FOLDER_ENTRY_CAP ? `${listing}\n… (truncated at ${FOLDER_ENTRY_CAP} entries)` : listing;
+  const att: FolderAttachment = {
+    id: randomUUID(),
+    kind: 'folder',
+    label: `${path.basename(uri.fsPath)}/`,
+    dedupKey: `folder:${uri.fsPath}`,
+    content: `Folder ${relPath(uri)} contents:\n${capped}`,
+    path: uri.fsPath,
+  };
+  return sizeGuard(att);
+}
+
+interface DiagnosticLikeSource {
+  severity: number;
+  message: string;
+  range: { start: { line: number; character: number } };
+  source?: string;
+}
+
+async function resolveProblems(): Promise<Attachment[]> {
+  const all = vscode.languages.getDiagnostics() as unknown as Array<[vscode.Uri, DiagnosticLikeSource[]]>;
+  const entries = all.filter(([, diags]) => diags.length > 0);
+  if (entries.length === 0) {
+    void vscode.window.showInformationMessage(vscode.l10n.t('No problems reported in the workspace.'));
+    return [];
+  }
+
+  const total = entries.reduce((sum, [, d]) => sum + d.length, 0);
+  interface ProblemPick extends vscode.QuickPickItem {
+    scope: string;
+  }
+  const items: ProblemPick[] = [
+    { label: `$(warning) ${vscode.l10n.t('Workspace')}`, description: `${total}`, scope: 'workspace' },
+    ...entries.map(([uri, diags]) => ({ label: relPath(uri), description: `${diags.length}`, scope: uri.fsPath })),
+  ];
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: vscode.l10n.t('Select problems to attach'),
+  });
+  if (!picked) {
+    return [];
+  }
+
+  const chosen = picked.scope === 'workspace' ? entries : entries.filter(([uri]) => uri.fsPath === picked.scope);
+  const fileEntries: DiagnosticFileEntry[] = chosen.map(([uri, diags]) => ({
+    path: relPath(uri),
+    diagnostics: diags.map((d) => ({
+      severity: d.severity,
+      message: d.message,
+      range: { start: { line: d.range.start.line, character: d.range.start.character } },
+      source: d.source,
+    })),
+  }));
+  const label = picked.scope === 'workspace' ? 'workspace' : relPath({ fsPath: picked.scope } as vscode.Uri);
+  const att: Attachment = {
+    id: randomUUID(),
+    kind: 'problems',
+    label,
+    dedupKey: `problems:${picked.scope}`,
+    content: formatDiagnostics(fileEntries),
+    scope: picked.scope,
+  };
+  return sizeGuard(att);
+}
+
+interface SymbolSource {
+  name: string;
+  kind: number;
+  containerName?: string;
+  location: { uri: vscode.Uri; range: { start: { line: number } } };
+}
+
+async function resolveSymbols(): Promise<Attachment[]> {
+  const query = await vscode.window.showInputBox({
+    prompt: vscode.l10n.t('Search workspace symbols'),
+    placeHolder: vscode.l10n.t('e.g. MyClass, handleSubmit'),
+    ignoreFocusOut: true,
+  });
+  if (!query) {
+    return [];
+  }
+  const symbols =
+    (await vscode.commands.executeCommand<SymbolSource[] | undefined>(
+      'vscode.executeWorkspaceSymbolProvider',
+      query,
+    )) ?? [];
+  if (symbols.length === 0) {
+    void vscode.window.showInformationMessage(vscode.l10n.t('No symbols matched "{0}".', query));
+    return [];
+  }
+
+  interface SymbolPick extends vscode.QuickPickItem {
+    index: number;
+  }
+  const items: SymbolPick[] = symbols.slice(0, 100).map((s, index) => ({
+    label: s.name,
+    description: `${s.containerName ?? ''} ${relPath(s.location.uri)}`.trim(),
+    index,
+  }));
+  const picked = await vscode.window.showQuickPick(items, {
+    canPickMany: true,
+    placeHolder: vscode.l10n.t('Select symbols to attach'),
+  });
+  if (!picked || picked.length === 0) {
+    return [];
+  }
+
+  const chosen: WorkspaceSymbolLike[] = picked.map((p) => {
+    const s = symbols[p.index] as SymbolSource;
+    return {
+      name: s.name,
+      kind: s.kind,
+      containerName: s.containerName,
+      path: relPath(s.location.uri),
+      line: s.location.range.start.line,
+    };
+  });
+  const att: Attachment = {
+    id: randomUUID(),
+    kind: 'symbols',
+    label: query,
+    dedupKey: `symbols:${query}`,
+    content: formatWorkspaceSymbols(chosen),
+    query,
+  };
+  return sizeGuard(att);
+}

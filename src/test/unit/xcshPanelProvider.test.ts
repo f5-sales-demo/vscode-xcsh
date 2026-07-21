@@ -2,8 +2,13 @@
 
 import type * as vscode from 'vscode';
 import { MAX_ATTACHMENT_BYTES } from '../../xcsh/attachment';
+import { resolveAttachments } from '../../xcsh/attachmentResolvers';
+import type { Attachment } from '../../xcsh/attachmentTypes';
 import { XcshPanelProvider } from '../../xcsh/panelProvider';
 import type { XcshRpcBridge } from '../../xcsh/rpcBridge';
+
+jest.mock('../../xcsh/attachmentResolvers', () => ({ resolveAttachments: jest.fn().mockResolvedValue([]) }));
+const resolveAttachmentsMock = resolveAttachments as jest.MockedFunction<typeof resolveAttachments>;
 
 function createMockBridge() {
   return {
@@ -119,10 +124,15 @@ describe('XcshPanelProvider', () => {
       expect(sendCommandMock).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'set_thinking_level' }));
     });
 
-    it('handles request_file_picker message without throwing', async () => {
-      const vscode = await import('vscode');
-      (vscode.window.showOpenDialog as jest.Mock).mockResolvedValue(undefined);
-      expect(() => dispatch({ type: 'request_file_picker' })).not.toThrow();
+    it('handles request_attachment message without throwing', () => {
+      resolveAttachmentsMock.mockResolvedValue([]);
+      expect(() => dispatch({ type: 'request_attachment', category: 'problems' })).not.toThrow();
+    });
+
+    it('ignores request_attachment with no category', () => {
+      resolveAttachmentsMock.mockClear();
+      dispatch({ type: 'request_attachment' });
+      expect(resolveAttachmentsMock).not.toHaveBeenCalled();
     });
 
     it('routes prompt with locale option from vscode.env.language', async () => {
@@ -187,30 +197,23 @@ describe('XcshPanelProvider', () => {
       expect(setLocaleMock).toHaveBeenCalledWith(vscode.env.language);
     });
 
-    it('request_file_picker posts file_attached message when file is selected', async () => {
-      const vscode = await import('vscode');
-      const mockUri = {
-        path: '/tmp/test.json',
-        fsPath: '/tmp/test.json',
-        scheme: 'file',
-        authority: '',
-        query: '',
-        fragment: '',
-        with: jest.fn(),
-        toString: () => 'file:///tmp/test.json',
+    it('request_attachment posts attachment_added for each resolved attachment', async () => {
+      const attachment: Attachment = {
+        id: 'p1',
+        kind: 'problems',
+        label: 'workspace',
+        dedupKey: 'problems:workspace',
+        content: '2 errors',
+        scope: 'workspace',
       };
-      (vscode.window.showOpenDialog as jest.Mock).mockResolvedValue([mockUri]);
-      const fileContent = new TextEncoder().encode('{"key":"value"}');
-      (vscode.workspace.fs.readFile as jest.Mock).mockResolvedValue(fileContent);
+      resolveAttachmentsMock.mockResolvedValue([attachment]);
+      dispatch({ type: 'webview_ready' });
+      dispatch({ type: 'request_attachment', category: 'problems' });
 
-      dispatch({ type: 'request_file_picker' });
-
-      // Allow async operations to complete
+      // Allow the async resolver + post to complete.
       await new Promise((resolve) => setTimeout(resolve, 10));
 
-      const { mockWebviewView } = createMockWebviewView();
-      void mockWebviewView;
-      // No throw is the main assertion; postMessage is on the internal webview
+      expect(resolveAttachmentsMock).toHaveBeenCalledWith('problems');
     });
   });
 
@@ -230,23 +233,26 @@ describe('XcshPanelProvider', () => {
       return { provider, postMessage, dispatch };
     }
 
-    function lastFileAttached(postMessage: jest.Mock): { name: string; content: string } | undefined {
+    function lastAttachmentAdded(postMessage: jest.Mock): Attachment | undefined {
       const call = [...postMessage.mock.calls]
         .reverse()
-        .find((c) => (c[0] as { message?: { type?: string } })?.message?.type === 'file_attached');
-      return call?.[0]?.message as { name: string; content: string } | undefined;
+        .find((c) => (c[0] as { message?: { type?: string } })?.message?.type === 'attachment_added');
+      return (call?.[0]?.message as { attachment?: Attachment } | undefined)?.attachment;
     }
 
-    it('posts file_attached immediately when the webview is ready', () => {
+    it('posts attachment_added immediately when the webview is ready', () => {
       const { provider, postMessage, dispatch } = setup();
       dispatch({ type: 'webview_ready' });
       postMessage.mockClear();
 
       provider.attachContext('lb.http_loadbalancers.json', '{"a":1}');
 
-      expect(postMessage).toHaveBeenCalledWith({
-        type: 'from-extension',
-        message: { type: 'file_attached', name: 'lb.http_loadbalancers.json', content: '{"a":1}' },
+      const attachment = lastAttachmentAdded(postMessage);
+      expect(attachment).toMatchObject({
+        kind: 'file',
+        label: 'lb.http_loadbalancers.json',
+        dedupKey: 'file:lb.http_loadbalancers.json',
+        content: '{"a":1}',
       });
     });
 
@@ -254,19 +260,20 @@ describe('XcshPanelProvider', () => {
       const { provider, postMessage, dispatch } = setup();
       // Not ready yet — nothing should be delivered.
       provider.attachContext('lb.http_loadbalancers.json', '{"a":1}');
-      expect(lastFileAttached(postMessage)).toBeUndefined();
+      expect(lastAttachmentAdded(postMessage)).toBeUndefined();
 
       // Readiness flushes the buffered attachment.
       dispatch({ type: 'webview_ready' });
-      expect(lastFileAttached(postMessage)).toMatchObject({
-        name: 'lb.http_loadbalancers.json',
+      expect(lastAttachmentAdded(postMessage)).toMatchObject({
+        kind: 'file',
+        label: 'lb.http_loadbalancers.json',
         content: '{"a":1}',
       });
 
       // A second readiness signal must not re-deliver a consumed attachment.
       postMessage.mockClear();
       dispatch({ type: 'webview_ready' });
-      expect(lastFileAttached(postMessage)).toBeUndefined();
+      expect(lastAttachmentAdded(postMessage)).toBeUndefined();
     });
 
     it('rejects an over-size payload with a warning and no post', async () => {
@@ -279,7 +286,7 @@ describe('XcshPanelProvider', () => {
       provider.attachContext('huge.json', 'x'.repeat(MAX_ATTACHMENT_BYTES + 1));
 
       expect(vscode.window.showWarningMessage).toHaveBeenCalled();
-      expect(lastFileAttached(postMessage)).toBeUndefined();
+      expect(lastAttachmentAdded(postMessage)).toBeUndefined();
     });
   });
 });
