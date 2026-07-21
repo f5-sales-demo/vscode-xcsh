@@ -8,8 +8,13 @@ import type { ExtensionMessage } from './lib/protocol';
 import { initProtocol, on } from './lib/protocol';
 import { createNewSession, getActiveSession } from './state/sessions';
 import './styles/webview.css';
+import { injectTokens, PANEL_CSS } from './vendored/chat-ui';
 
 // Initialize protocol and session
+injectTokens(document);
+const sharedStyle = document.createElement('style');
+sharedStyle.textContent = PANEL_CSS;
+document.head.append(sharedStyle);
 initProtocol();
 createNewSession();
 

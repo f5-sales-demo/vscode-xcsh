@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type { AssistantMessage, ChatMessage } from '../state/session';
-import { ContentBlockRenderer } from './ContentBlockRenderer';
+import { ContentBlockRenderer } from '../vendored/chat-ui';
 
 interface MessageListProps {
   messages: ChatMessage[];

@@ -5,8 +5,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useSyncExternalStore }
 import { t } from '../lib/i18n';
 import { sendAbort, sendPrompt } from '../lib/protocol';
 import type { Session } from '../state/session';
+import { ComposerHost } from './ComposerHost';
 import { EmptyState } from './EmptyState';
-import { InputBar } from './InputBar';
 import { MessageList } from './MessageList';
 
 interface ChatContainerProps {
@@ -89,7 +89,7 @@ export function ChatContainer({ session }: ChatContainerProps) {
         </div>
       )}
       <div className="inputContainer">
-        <InputBar onSubmit={handleSubmit} onInterrupt={handleInterrupt} busy={busy} />
+        <ComposerHost onSubmit={handleSubmit} onInterrupt={handleInterrupt} busy={busy} />
       </div>
     </div>
   );
