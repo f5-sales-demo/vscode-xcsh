@@ -94,6 +94,14 @@
           "default": true,
           "description": "%config.showPreviewApis.description%"
         },
+        "xcsh.instructionFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "%config.instructionFiles.description%"
+        },
         "xcsh.xcsh.enabled": {
           "type": "boolean",
           "default": true,
