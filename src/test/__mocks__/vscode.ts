@@ -529,6 +529,14 @@ export class CodeAction {
   }
 }
 
+// Mock FileType
+export enum FileType {
+  Unknown = 0,
+  File = 1,
+  Directory = 2,
+  SymbolicLink = 64,
+}
+
 // Mock SymbolKind
 export enum SymbolKind {
   File = 0,

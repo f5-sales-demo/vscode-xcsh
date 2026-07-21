@@ -1,11 +1,14 @@
 // src/xcsh/panelProvider.ts
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { getLogger } from '../utils/logger';
 import { MAX_ATTACHMENT_BYTES } from './attachment';
+import { resolveAttachments } from './attachmentResolvers';
+import type { Attachment, FileAttachment, HostAttachmentCategory } from './attachmentTypes';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './types';
 
@@ -19,11 +22,11 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
   /** True once the React app has mounted and registered its message listeners. */
   private webviewReady = false;
   /**
-   * An attachment awaiting delivery to the chat input. Buffered until the
-   * webview signals `webview_ready`, so an attachment injected while the panel
-   * is opening (focus → resolve → mount) is not lost to the load race.
+   * Attachments awaiting delivery to the chat input. Buffered until the webview
+   * signals `webview_ready`, so an attachment injected while the panel is
+   * opening (focus → resolve → mount) is not lost to the load race.
    */
-  private pendingAttachment: { name: string; content: string } | null = null;
+  private pendingAttachments: Attachment[] = [];
 
   constructor(
     private readonly extensionUri: vscode.Uri,
@@ -155,8 +158,11 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
         }
         break;
       }
-      case 'request_file_picker': {
-        void this.handleFilePicker();
+      case 'request_attachment': {
+        const category = msg.category as HostAttachmentCategory | undefined;
+        if (category) {
+          void this.handleAttachmentRequest(category);
+        }
         break;
       }
       case 'webview_ready': {
@@ -165,7 +171,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
         // (posted during resolve, it can race the listener registration).
         this.webviewReady = true;
         this.sendL10nBundle();
-        this.flushPendingAttachment();
+        this.flushPendingAttachments();
         break;
       }
       default:
@@ -175,10 +181,9 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
 
   /**
    * Inject content into the chat input as a context attachment (a removable
-   * chip that is folded into the next prompt). Used by the resource webview
-   * button and the tree "Add to xcsh chat" command. Callers should focus the
-   * panel first so the webview resolves; delivery is buffered until the webview
-   * is ready.
+   * chip folded into the next prompt). Used by the resource webview button and
+   * the tree "Add to xcsh chat" command. Callers should focus the panel first
+   * so the webview resolves; delivery is buffered until the webview is ready.
    */
   attachContext(name: string, content: string): void {
     const bytes = Buffer.byteLength(content, 'utf8');
@@ -192,94 +197,50 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       );
       return;
     }
-    this.pendingAttachment = { name, content };
-    this.flushPendingAttachment();
+    const attachment: FileAttachment = {
+      id: randomUUID(),
+      kind: 'file',
+      label: name,
+      dedupKey: `file:${name}`,
+      content,
+      path: name,
+    };
+    this.postAttachment(attachment);
   }
 
-  /** Post the buffered attachment to the webview once it is live and ready. */
-  private flushPendingAttachment(): void {
-    const view = this.webviewView;
-    const pending = this.pendingAttachment;
-    if (!view || !this.webviewReady || !pending) {
-      return;
-    }
-    void view.webview.postMessage({
-      type: 'from-extension',
-      message: { type: 'file_attached', name: pending.name, content: pending.content },
-    });
-    this.pendingAttachment = null;
+  /** Buffer an attachment and flush it to the webview once it is ready. */
+  private postAttachment(attachment: Attachment): void {
+    this.pendingAttachments.push(attachment);
+    this.flushPendingAttachments();
   }
 
-  private async handleFilePicker(): Promise<void> {
+  /** Post any buffered attachments to the webview once it is live and ready. */
+  private flushPendingAttachments(): void {
     const view = this.webviewView;
-    if (!view) {
+    if (!view || !this.webviewReady || this.pendingAttachments.length === 0) {
       return;
     }
-
-    const uris = await vscode.window.showOpenDialog({
-      canSelectMany: false,
-      openLabel: 'Attach',
-      filters: {
-        'Text Files': [
-          'ts',
-          'tsx',
-          'js',
-          'jsx',
-          'json',
-          'yaml',
-          'yml',
-          'md',
-          'txt',
-          'csv',
-          'xml',
-          'html',
-          'css',
-          'py',
-          'go',
-          'rs',
-          'sh',
-          'bash',
-          'zsh',
-          'toml',
-          'ini',
-          'cfg',
-          'conf',
-          'env',
-          'log',
-        ],
-        'All Files': ['*'],
-      },
-    });
-
-    if (!uris || uris.length === 0) {
-      return;
-    }
-
-    const uri = uris[0];
-    if (!uri) {
-      return;
-    }
-    try {
-      const stat = await vscode.workspace.fs.stat(uri);
-      const maxSize = MAX_ATTACHMENT_BYTES;
-      if (stat.size > maxSize) {
-        void vscode.window.showWarningMessage(
-          `File too large to attach (${Math.round(stat.size / 1024)}KB). Maximum is 512KB.`,
-        );
-        return;
-      }
-      const content = await vscode.workspace.fs.readFile(uri);
-      const name = path.basename(uri.fsPath);
+    const pending = this.pendingAttachments;
+    this.pendingAttachments = [];
+    for (const attachment of pending) {
       void view.webview.postMessage({
         type: 'from-extension',
-        message: {
-          type: 'file_attached',
-          name,
-          content: new TextDecoder().decode(content),
-        },
+        message: { type: 'attachment_added', attachment },
       });
-    } catch {
-      this.logger.error('Failed to read attached file');
+    }
+  }
+
+  /** Run the picker for a category and deliver each resolved attachment. */
+  private async handleAttachmentRequest(category: HostAttachmentCategory): Promise<void> {
+    try {
+      const attachments = await resolveAttachments(category);
+      for (const attachment of attachments) {
+        this.postAttachment(attachment);
+      }
+    } catch (err) {
+      this.logger.error(
+        `Failed to resolve ${category} attachment: ${err instanceof Error ? err.message : String(err)}`,
+      );
     }
   }
 

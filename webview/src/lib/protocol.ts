@@ -94,8 +94,16 @@ export function sendSetThinking(level: string): void {
   send({ type: 'set_thinking', level });
 }
 
-export function sendRequestFilePicker(): void {
-  send({ type: 'request_file_picker' });
+/** Categories resolved by the extension host (Files/Folders, Problems, Symbols, ...). */
+export type HostAttachmentCategory = 'files' | 'instructions' | 'scm' | 'problems' | 'symbols';
+
+/**
+ * Ask the host to run the attachment picker for a category. The host replies
+ * with one `attachment_added` message per resolved item. Categories handled
+ * entirely in the webview ('sessions', 'tools') are never sent here.
+ */
+export function sendRequestAttachment(category: HostAttachmentCategory): void {
+  send({ type: 'request_attachment', category });
 }
 
 /**

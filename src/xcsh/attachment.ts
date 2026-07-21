@@ -3,10 +3,11 @@
 /**
  * Shared helpers for attaching content to the xcsh chat as context.
  *
- * The chat's InputBar consumes a `file_attached { name, content }` message and
- * folds the content into the next prompt. These helpers are used by every path
- * that injects an attachment (the file picker, the resource webview button, and
- * the tree right-click command) so the size limit and naming stay consistent.
+ * The chat's InputBar consumes `attachment_added { attachment }` messages and
+ * folds each attachment's content into the next prompt. These helpers are used
+ * by every path that injects an attachment (the category pickers, the resource
+ * webview button, and the tree right-click command) so the size limit and
+ * naming stay consistent. Typed attachment shapes live in `./attachmentTypes`.
  */
 
 /** Maximum attachment payload size (bytes). Matches the file-picker guard. */

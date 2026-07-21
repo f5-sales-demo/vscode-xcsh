@@ -326,20 +326,33 @@ html {
 .slashMenuDescription { font-size: 11px; color: var(--app-secondary-foreground); }
 .slashBtn { font-weight: 700; font-size: 14px; }
 
-/* Attached file chip */
+/* Attached context chips (multiple) */
+.attachmentChipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 4px 12px;
+  position: relative;
+  z-index: 1;
+}
 .attachedFileChip {
   display: flex;
   align-items: center;
   gap: 4px;
-  margin: 4px 12px;
   padding: 2px 8px;
   background: var(--app-tool-background);
   border: 1px solid var(--app-primary-border-color);
   border-radius: var(--corner-radius-small);
   font-size: 11px;
   color: var(--app-secondary-foreground);
-  position: relative;
-  z-index: 1;
+  max-width: 100%;
+}
+.attachedFileKind {
+  font-size: 9px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--app-xcsh-red);
 }
 .attachedFileName {
   font-family: var(--app-monospace-font-family);
