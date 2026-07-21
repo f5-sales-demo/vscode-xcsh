@@ -5,9 +5,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { AttachMenu } from '../components/AttachMenu';
 
 describe('AttachMenu', () => {
-  it('renders the Phase 1 categories', () => {
+  it('renders all implemented categories', () => {
     render(<AttachMenu onSelect={jest.fn()} onClose={jest.fn()} />);
     expect(screen.getByText('Files & Folders')).toBeInTheDocument();
+    expect(screen.getByText('Instructions')).toBeInTheDocument();
+    expect(screen.getByText('Source Control')).toBeInTheDocument();
     expect(screen.getByText('Problems')).toBeInTheDocument();
     expect(screen.getByText('Symbols')).toBeInTheDocument();
   });
@@ -21,12 +23,16 @@ describe('AttachMenu', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('maps Problems and Symbols to their category ids', () => {
+  it('maps each label to its category id', () => {
     const onSelect = jest.fn();
     render(<AttachMenu onSelect={onSelect} onClose={jest.fn()} />);
     fireEvent.click(screen.getByText('Problems'));
     expect(onSelect).toHaveBeenCalledWith('problems');
     fireEvent.click(screen.getByText('Symbols'));
     expect(onSelect).toHaveBeenCalledWith('symbols');
+    fireEvent.click(screen.getByText('Instructions'));
+    expect(onSelect).toHaveBeenCalledWith('instructions');
+    fireEvent.click(screen.getByText('Source Control'));
+    expect(onSelect).toHaveBeenCalledWith('scm');
   });
 });

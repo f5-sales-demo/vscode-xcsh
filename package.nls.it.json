@@ -99,5 +99,6 @@
   "chat.xcsh.disambiguation.infrastructure": "Domande sui siti di F5 Distributed Cloud, integrità dei siti, connettori cloud, connettori di rete, gestione della flotta e stato dell'infrastruttura",
   "viewsWelcome.profiles": "Nessun contesto xcsh ancora. Aggiungi un contesto per connetterti a un tenant F5 Distributed Cloud.\n[Aggiungi contesto](command:xcsh.addContext)",
   "command.addToChat.title": "xcsh: Aggiungi alla chat",
-  "command.attachToChat.title": "xcsh: Allega contenuto alla chat"
+  "command.attachToChat.title": "xcsh: Allega contenuto alla chat",
+  "config.instructionFiles.description": "Workspace-relative instruction files offered in the chat attachment picker (in addition to the built-in candidates)."
 }

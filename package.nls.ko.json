@@ -99,5 +99,6 @@
   "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud 사이트, 사이트 상태, 클라우드 커넥터, 네트워크 커넥터, 플릿 관리 및 인프라 상태에 대한 질문",
   "viewsWelcome.profiles": "아직 xcsh 컨텍스트가 없습니다. F5 Distributed Cloud 테넌트에 연결하려면 컨텍스트를 추가하세요.\n[컨텍스트 추가](command:xcsh.addContext)",
   "command.addToChat.title": "xcsh: 채팅에 추가",
-  "command.attachToChat.title": "xcsh: 콘텐츠를 채팅에 첨부"
+  "command.attachToChat.title": "xcsh: 콘텐츠를 채팅에 첨부",
+  "config.instructionFiles.description": "Workspace-relative instruction files offered in the chat attachment picker (in addition to the built-in candidates)."
 }

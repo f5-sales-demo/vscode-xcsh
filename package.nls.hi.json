@@ -99,5 +99,6 @@
   "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud साइट, साइट स्वास्थ्य, क्लाउड कनेक्टर, नेटवर्क कनेक्टर, फ्लीट प्रबंधन और इंफ्रास्ट्रक्चर स्थिति के बारे में प्रश्न",
   "viewsWelcome.profiles": "अभी तक कोई xcsh संदर्भ नहीं है। F5 Distributed Cloud टेनेंट से कनेक्ट करने के लिए एक संदर्भ जोड़ें।\n[संदर्भ जोड़ें](command:xcsh.addContext)",
   "command.addToChat.title": "xcsh: चैट में जोड़ें",
-  "command.attachToChat.title": "xcsh: सामग्री को चैट में संलग्न करें"
+  "command.attachToChat.title": "xcsh: सामग्री को चैट में संलग्न करें",
+  "config.instructionFiles.description": "Workspace-relative instruction files offered in the chat attachment picker (in addition to the built-in candidates)."
 }
