@@ -97,6 +97,16 @@ export function sendSetThinking(level: string): void {
 /** Categories resolved by the extension host (Files/Folders, Problems, Symbols, ...). */
 export type HostAttachmentCategory = 'files' | 'instructions' | 'scm' | 'problems' | 'symbols';
 
+/** Every picker category, including the two resolved entirely in the webview. */
+export type AttachCategory = HostAttachmentCategory | 'tools' | 'sessions';
+
+/** A referenceable host tool, delivered via the `tools_available` message. */
+export interface ToolInfo {
+  name: string;
+  label: string;
+  description: string;
+}
+
 /**
  * Ask the host to run the attachment picker for a category. The host replies
  * with one `attachment_added` message per resolved item. Categories handled

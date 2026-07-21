@@ -506,5 +506,10 @@
   "The built-in Git extension is not available.": "The built-in Git extension is not available.",
   "No Git repository found in the workspace.": "No Git repository found in the workspace.",
   "No changes in the working tree.": "No changes in the working tree.",
-  "Select changed files to attach": "Select changed files to attach"
+  "Select changed files to attach": "Select changed files to attach",
+  "Sessions": "Sessions",
+  "Attach the current session transcript": "Attach the current session transcript",
+  "Tools": "Tools",
+  "Select tools to reference": "Select tools to reference",
+  "No tools available": "No tools available"
 }
