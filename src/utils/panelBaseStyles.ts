@@ -57,8 +57,8 @@ export function getF5LogoHtml(): string {
 export function getWebviewBaseStyles(): string {
   return `
     :root {
-      --f5-brand-red: #e01f27;
-      --f5-brand-red-dark: #8b0000;
+      --f5-brand-red: #ca260a;
+      --f5-brand-red-dark: #8a1a07;
     }
     body.vscode-light {
       --color-brand: #e4002b;

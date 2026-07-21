@@ -28,7 +28,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
     id: 'xcsh',
     name: 'xcsh',
     category: 'platform',
-    badge: { label: 'xcsh', color: '#e01f27' },
+    badge: { label: 'xcsh', color: '#ca260a' },
     binary: 'xcsh',
     installCommand: 'brew install f5-sales-demo/tap/xcsh',
   },
@@ -36,7 +36,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
     id: 'xcsh',
     name: 'F5 XC Context',
     category: 'platform',
-    badge: { label: 'F5', color: '#e01f27' },
+    badge: { label: 'F5', color: '#ca260a' },
   },
   {
     id: 'aws',
