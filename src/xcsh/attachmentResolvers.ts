@@ -8,6 +8,7 @@
 // `attachment_added` messages.
 
 import { randomUUID } from 'node:crypto';
+import { realpathSync } from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 import { MAX_ATTACHMENT_BYTES } from './attachment';
@@ -275,22 +276,37 @@ async function resolveInstructions(): Promise<Attachment[]> {
     size: number;
   }
   const root = folder.uri.fsPath;
+  let realRoot: string;
+  try {
+    realRoot = realpathSync(root);
+  } catch {
+    realRoot = root;
+  }
+  const withinRoot = (candidate: string, base: string): boolean =>
+    candidate === base || candidate.startsWith(base + path.sep);
+
   const existing: InstructionPick[] = [];
   for (const rel of candidates) {
-    // Config entries are workspace-supplied; resolve and confirm the result stays
-    // inside the workspace folder so a crafted `../` path cannot escape it.
+    // Config entries are workspace-supplied. First a lexical guard against `../`
+    // escapes, then a symlink-safe realpath check so an in-workspace symlink
+    // cannot point the read outside the workspace folder.
     const resolvedPath = path.resolve(root, rel);
-    if (resolvedPath !== root && !resolvedPath.startsWith(root + path.sep)) {
+    if (!withinRoot(resolvedPath, root)) {
       continue;
     }
     const uri = vscode.Uri.file(resolvedPath);
     try {
       const stat = await vscode.workspace.fs.stat(uri);
-      if (stat.type === vscode.FileType.File) {
-        existing.push({ label: rel, sourcePath: uri.fsPath, size: stat.size });
+      if (stat.type !== vscode.FileType.File) {
+        continue;
       }
+      const realResolved = realpathSync(resolvedPath);
+      if (!withinRoot(realResolved, realRoot)) {
+        continue;
+      }
+      existing.push({ label: rel, sourcePath: uri.fsPath, size: stat.size });
     } catch {
-      // Candidate not present — skip.
+      // Candidate absent or unreadable — skip.
     }
   }
   if (existing.length === 0) {

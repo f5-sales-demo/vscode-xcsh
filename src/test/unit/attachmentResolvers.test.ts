@@ -3,6 +3,13 @@
 import * as vscode from 'vscode';
 import { resolveAttachments } from '../../xcsh/attachmentResolvers';
 
+jest.mock('node:fs', () => ({ ...jest.requireActual('node:fs'), realpathSync: jest.fn((p: string) => p) }));
+
+// biome-ignore lint/style/useImportType: realpathSync is consumed as a runtime mock handle
+import { realpathSync } from 'node:fs';
+
+const realpathSyncMock = realpathSync as unknown as jest.Mock;
+
 const win = vscode.window as unknown as {
   showOpenDialog: jest.Mock;
   showQuickPick: jest.Mock;
@@ -146,6 +153,7 @@ describe('resolveAttachments — instructions', () => {
   beforeEach(() => {
     setWorkspaceFolder('/ws');
     setInstructionFilesConfig([]);
+    realpathSyncMock.mockImplementation((p: string) => p);
   });
 
   it('lists existing candidate files and attaches the picked one', async () => {
@@ -198,6 +206,20 @@ describe('resolveAttachments — instructions', () => {
     await resolveAttachments('instructions');
     expect(offered).not.toContain('../../etc/passwd');
     expect(offered.some((l) => l.includes('passwd'))).toBe(false);
+  });
+
+  it('rejects an in-workspace symlink that resolves outside the workspace', async () => {
+    setInstructionFilesConfig(['docs/evil.md']);
+    fsMock.stat.mockResolvedValue({ type: vscode.FileType.File, size: 10 });
+    // The lexical path stays inside /ws, but its realpath escapes via a symlink.
+    realpathSyncMock.mockImplementation((p: string) => (p.endsWith('docs/evil.md') ? '/etc/passwd' : p));
+    let offered: string[] = [];
+    win.showQuickPick.mockImplementation((items: Array<{ label: string }>) => {
+      offered = items.map((i) => i.label);
+      return Promise.resolve(undefined);
+    });
+    await resolveAttachments('instructions');
+    expect(offered).not.toContain('docs/evil.md');
   });
 
   it('returns empty when the quick pick is cancelled', async () => {
