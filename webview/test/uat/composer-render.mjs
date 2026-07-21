@@ -15,9 +15,9 @@
 // Run: npm run build:webview && npm run uat:webview
 // Exits non-zero on any assertion mismatch. Screenshot → webview/test/uat/.artifacts/.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { createServer } from 'node:http';
-import { dirname, extname, join, normalize } from 'node:path';
+import { dirname, extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
@@ -70,17 +70,34 @@ function findChrome() {
 // Serve dist/webview statically. Paths are confined to DIST (normalized + prefix
 // check) — this only ever serves our own build output.
 function serve() {
+  const root = realpathSync(DIST);
+  const under = (f) => f === root || f.startsWith(root + sep);
   const server = createServer((req, res) => {
     let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
     if (p === '/') p = '/index.html';
-    const file = normalize(join(DIST, p));
-    if (!file.startsWith(DIST) || !existsSync(file)) {
+    const file = normalize(join(root, p));
+    // Confine to DIST: reject lexical escape (normalize + separator-boundary
+    // prefix), then resolve symlinks and re-check the real path.
+    if (!under(file) || !existsSync(file)) {
       res.writeHead(404);
       res.end('not found');
       return;
     }
-    res.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' });
-    res.end(readFileSync(file));
+    let resolved;
+    try {
+      resolved = realpathSync(file);
+    } catch {
+      res.writeHead(404);
+      res.end('not found');
+      return;
+    }
+    if (!under(resolved)) {
+      res.writeHead(403);
+      res.end('forbidden');
+      return;
+    }
+    res.writeHead(200, { 'content-type': MIME[extname(resolved)] ?? 'application/octet-stream' });
+    res.end(readFileSync(resolved));
   });
   return new Promise((resolve) =>
     server.listen(0, '127.0.0.1', () => resolve({ server, port: server.address().port })),
