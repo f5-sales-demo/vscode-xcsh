@@ -3,8 +3,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PlusIcon, SendIcon, StopIcon } from '../assets/icons';
+import { type Attachment, addAttachment, serializeAttachments } from '../lib/attachmentTypes';
 import { t } from '../lib/i18n';
-import { on, sendReady, sendRequestFilePicker, sendSetMode, sendSetThinking } from '../lib/protocol';
+import {
+  type HostAttachmentCategory,
+  on,
+  sendReady,
+  sendRequestAttachment,
+  sendSetMode,
+  sendSetThinking,
+} from '../lib/protocol';
+import { AttachMenu } from './AttachMenu';
 import { ModesMenu } from './ModesMenu';
 import { SlashCommandMenu } from './SlashCommandMenu';
 
@@ -19,26 +28,26 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
   const [text, setText] = useState('');
   const [showModesMenu, setShowModesMenu] = useState(false);
   const [showSlashMenu, setShowSlashMenu] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const [permissionMode, setPermissionMode] = useState('auto');
   const [thinkingLevel, setThinkingLevel] = useState('medium');
-  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
 
   const handleSubmit = useCallback(() => {
     const currentText = inputRef.current?.textContent ?? text;
-    if (!currentText.trim() && !attachedFile) {
+    if (!currentText.trim() && attachments.length === 0) {
       return;
     }
-    let finalText = currentText.trim();
-    if (attachedFile) {
-      finalText = `[Attached: ${attachedFile.name}]\n\n${attachedFile.content}\n\n${finalText}`;
-      setAttachedFile(null);
-    }
+    const trimmed = currentText.trim();
+    const prefix = serializeAttachments(attachments);
+    const finalText = prefix ? (trimmed ? `${prefix}\n\n${trimmed}` : prefix) : trimmed;
     onSubmit(finalText);
+    setAttachments([]);
     if (inputRef.current) {
       inputRef.current.textContent = '';
     }
     setText('');
-  }, [text, onSubmit, attachedFile]);
+  }, [text, onSubmit, attachments]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -48,15 +57,16 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
       }
       if (e.key === 'Escape') {
         e.preventDefault();
-        if (showSlashMenu || showModesMenu) {
+        if (showSlashMenu || showModesMenu || showAttachMenu) {
           setShowSlashMenu(false);
           setShowModesMenu(false);
+          setShowAttachMenu(false);
         } else if (busy) {
           onInterrupt();
         }
       }
     },
-    [handleSubmit, busy, onInterrupt, showSlashMenu, showModesMenu],
+    [handleSubmit, busy, onInterrupt, showSlashMenu, showModesMenu, showAttachMenu],
   );
 
   const handleInput = useCallback(() => {
@@ -73,30 +83,34 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
     const handler = () => {
       setShowModesMenu(false);
       setShowSlashMenu(false);
+      setShowAttachMenu(false);
     };
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, []);
 
-  const handleAttachClick = useCallback(() => {
-    sendRequestFilePicker();
+  const handleCategorySelect = useCallback((category: HostAttachmentCategory) => {
+    setShowAttachMenu(false);
+    sendRequestAttachment(category);
   }, []);
 
   useEffect(() => {
-    const unsub = on('file_attached', (msg) => {
-      if (typeof msg.name === 'string' && typeof msg.content === 'string') {
-        setAttachedFile({ name: msg.name, content: msg.content });
+    const unsub = on('attachment_added', (msg) => {
+      const attachment = msg.attachment as Attachment | undefined;
+      if (!attachment || typeof attachment.dedupKey !== 'string' || typeof attachment.content !== 'string') {
+        return;
       }
+      setAttachments((prev) => addAttachment(prev, attachment).list);
     });
-    // The file_attached listener is now live — tell the extension it may flush
-    // any attachment buffered while the panel was opening.
+    // The attachment_added listener is now live — tell the extension it may
+    // flush any attachment buffered while the panel was opening.
     sendReady();
     return unsub;
   }, []);
 
   const handleSlashSelect = useCallback(
     (command: string) => {
-      setAttachedFile(null);
+      setAttachments([]);
       if (inputRef.current) {
         inputRef.current.textContent = '';
       }
@@ -118,6 +132,7 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
   }, []);
 
   const placeholder = busy ? t('xcsh is responding...') : t('Ask xcsh...');
+  const canSubmit = text.trim().length > 0 || attachments.length > 0;
 
   return (
     <fieldset className="inputBar">
@@ -138,18 +153,43 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
           suppressContentEditableWarning
         />
       </div>
-      {attachedFile && (
-        <div className="attachedFileChip">
-          <span className="attachedFileName">{attachedFile.name}</span>
-          <button type="button" className="attachedFileRemove" title="Remove" onClick={() => setAttachedFile(null)}>
-            ×
-          </button>
+      {attachments.length > 0 && (
+        <div className="attachmentChipList">
+          {attachments.map((a) => (
+            <div key={a.id} className="attachedFileChip">
+              <span className="attachedFileKind">{a.kind}</span>
+              <span className="attachedFileName">{a.label}</span>
+              <button
+                type="button"
+                className="attachedFileRemove"
+                title={t('Remove')}
+                onClick={() => setAttachments((prev) => prev.filter((x) => x.id !== a.id))}
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
       )}
       <div className="inputFooter">
-        <button type="button" className="footerBtn addBtn" title="Add file" onClick={handleAttachClick}>
-          <PlusIcon />
-        </button>
+        <div className="attachBtnContainer" style={{ position: 'relative' }}>
+          {showAttachMenu && (
+            <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 10 }}>
+              <AttachMenu onSelect={handleCategorySelect} onClose={() => setShowAttachMenu(false)} />
+            </div>
+          )}
+          <button
+            type="button"
+            className="footerBtn addBtn"
+            title={t('Add context')}
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowAttachMenu(!showAttachMenu);
+            }}
+          >
+            <PlusIcon />
+          </button>
+        </div>
         <div className="slashBtnContainer" style={{ position: 'relative' }}>
           {showSlashMenu && (
             <div style={{ position: 'absolute', bottom: '100%', left: 0, marginBottom: 4, zIndex: 10 }}>
@@ -205,7 +245,7 @@ export function InputBar({ onSubmit, onInterrupt, busy }: InputBarProps) {
             className="footerBtn sendBtn"
             title={t('Send (Enter)')}
             onClick={handleSubmit}
-            disabled={!text.trim() && !attachedFile}
+            disabled={!canSubmit}
           >
             <SendIcon />
           </button>
