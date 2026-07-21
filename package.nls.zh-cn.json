@@ -99,5 +99,6 @@
   "chat.xcsh.disambiguation.infrastructure": "关于 F5 Distributed Cloud 站点、站点健康状况、云连接器、网络连接器、集群管理和基础设施状态的问题",
   "viewsWelcome.profiles": "尚无 xcsh 上下文。添加一个上下文以连接到 F5 Distributed Cloud 租户。\n[添加上下文](command:xcsh.addContext)",
   "command.addToChat.title": "xcsh: 添加到聊天",
-  "command.attachToChat.title": "xcsh: 将内容附加到聊天"
+  "command.attachToChat.title": "xcsh: 将内容附加到聊天",
+  "config.instructionFiles.description": "Workspace-relative instruction files offered in the chat attachment picker (in addition to the built-in candidates)."
 }

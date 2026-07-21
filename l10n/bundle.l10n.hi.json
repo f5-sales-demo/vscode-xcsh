@@ -495,5 +495,16 @@
   "Search workspace symbols": "Search workspace symbols",
   "e.g. MyClass, handleSubmit": "e.g. MyClass, handleSubmit",
   "No symbols matched \"{0}\".": "No symbols matched \"{0}\".",
-  "Select symbols to attach": "Select symbols to attach"
+  "Select symbols to attach": "Select symbols to attach",
+  "Instructions": "Instructions",
+  "Attach an instruction file": "Attach an instruction file",
+  "Source Control": "Source Control",
+  "Attach changed-file diffs": "Attach changed-file diffs",
+  "No workspace folder is open.": "No workspace folder is open.",
+  "No instruction files found in the workspace.": "No instruction files found in the workspace.",
+  "Select an instruction file to attach": "Select an instruction file to attach",
+  "The built-in Git extension is not available.": "The built-in Git extension is not available.",
+  "No Git repository found in the workspace.": "No Git repository found in the workspace.",
+  "No changes in the working tree.": "No changes in the working tree.",
+  "Select changed files to attach": "Select changed files to attach"
 }

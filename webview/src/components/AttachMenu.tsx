@@ -17,6 +17,8 @@ interface AttachCategory {
 
 const CATEGORIES: AttachCategory[] = [
   { id: 'files', label: () => t('Files & Folders'), description: () => t('Attach workspace files or folders') },
+  { id: 'instructions', label: () => t('Instructions'), description: () => t('Attach an instruction file') },
+  { id: 'scm', label: () => t('Source Control'), description: () => t('Attach changed-file diffs') },
   { id: 'problems', label: () => t('Problems'), description: () => t('Attach workspace diagnostics') },
   { id: 'symbols', label: () => t('Symbols'), description: () => t('Search and attach workspace symbols') },
 ];

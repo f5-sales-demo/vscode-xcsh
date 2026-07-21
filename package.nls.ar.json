@@ -99,5 +99,6 @@
   "chat.xcsh.disambiguation.infrastructure": "أسئلة حول مواقع F5 Distributed Cloud، وسلامة المواقع، وموصلات السحابة، وموصلات الشبكة، وإدارة الأسطول، وحالة البنية التحتية",
   "viewsWelcome.profiles": "لا توجد سياقات xcsh بعد. أضف سياقًا للاتصال بمستأجر F5 Distributed Cloud.\n[إضافة سياق](command:xcsh.addContext)",
   "command.addToChat.title": "xcsh: إضافة إلى الدردشة",
-  "command.attachToChat.title": "xcsh: إرفاق المحتوى بالدردشة"
+  "command.attachToChat.title": "xcsh: إرفاق المحتوى بالدردشة",
+  "config.instructionFiles.description": "Workspace-relative instruction files offered in the chat attachment picker (in addition to the built-in candidates)."
 }

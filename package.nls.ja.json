@@ -99,5 +99,6 @@
   "chat.xcsh.disambiguation.infrastructure": "F5 Distributed Cloud のサイト、サイトヘルス、クラウドコネクタ、ネットワークコネクタ、フリート管理、インフラストラクチャステータスに関する質問",
   "viewsWelcome.profiles": "xcsh コンテキストはまだありません。F5 Distributed Cloud テナントに接続するにはコンテキストを追加してください。\n[コンテキストを追加](command:xcsh.addContext)",
   "command.addToChat.title": "xcsh: チャットに追加",
-  "command.attachToChat.title": "xcsh: コンテンツをチャットに添付"
+  "command.attachToChat.title": "xcsh: コンテンツをチャットに添付",
+  "config.instructionFiles.description": "Workspace-relative instruction files offered in the chat attachment picker (in addition to the built-in candidates)."
 }
