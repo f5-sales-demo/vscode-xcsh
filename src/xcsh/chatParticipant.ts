@@ -7,7 +7,11 @@ import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { IntegrationsResponse, ToolExecutionEnd, ToolExecutionStart } from './types';
 
-const PARTICIPANT_ID = 'xcsh.xcsh';
+// Must exactly match `contributes.chatParticipants[].id` in package.json — VS Code
+// binds this runtime handler to the static declaration (its @name, slash commands,
+// and disambiguation) by id. A mismatch means the participant fails to register /
+// loses its declared commands. `xcshChatParticipant.test.ts` guards this.
+export const PARTICIPANT_ID = 'xcsh.chat';
 
 interface FileContext {
   currentFile?: string;
