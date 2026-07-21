@@ -12,6 +12,8 @@ describe('AttachMenu', () => {
     expect(screen.getByText('Source Control')).toBeInTheDocument();
     expect(screen.getByText('Problems')).toBeInTheDocument();
     expect(screen.getByText('Symbols')).toBeInTheDocument();
+    expect(screen.getByText('Sessions')).toBeInTheDocument();
+    expect(screen.getByText('Tools')).toBeInTheDocument();
   });
 
   it('calls onSelect with the category id and closes on click', () => {
@@ -34,5 +36,9 @@ describe('AttachMenu', () => {
     expect(onSelect).toHaveBeenCalledWith('instructions');
     fireEvent.click(screen.getByText('Source Control'));
     expect(onSelect).toHaveBeenCalledWith('scm');
+    fireEvent.click(screen.getByText('Sessions'));
+    expect(onSelect).toHaveBeenCalledWith('sessions');
+    fireEvent.click(screen.getByText('Tools'));
+    expect(onSelect).toHaveBeenCalledWith('tools');
   });
 });

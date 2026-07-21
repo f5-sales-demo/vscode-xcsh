@@ -288,5 +288,26 @@ describe('XcshPanelProvider', () => {
       expect(vscode.window.showWarningMessage).toHaveBeenCalled();
       expect(lastAttachmentAdded(postMessage)).toBeUndefined();
     });
+
+    it('posts tools_available with non-hidden host tools on webview_ready', () => {
+      const { postMessage, dispatch } = setup();
+      dispatch({ type: 'webview_ready' });
+
+      const call = [...postMessage.mock.calls]
+        .reverse()
+        .find((c) => (c[0] as { message?: { type?: string } })?.message?.type === 'tools_available');
+      expect(call).toBeTruthy();
+      const message = call?.[0]?.message as
+        | { tools: Array<{ name: string; label: string; description: string }> }
+        | undefined;
+      const tools = message?.tools ?? [];
+      expect(Array.isArray(tools)).toBe(true);
+      expect(tools.length).toBeGreaterThan(0);
+      for (const t of tools) {
+        expect(typeof t.name).toBe('string');
+        expect(typeof t.label).toBe('string');
+        expect(typeof t.description).toBe('string');
+      }
+    });
   });
 });
