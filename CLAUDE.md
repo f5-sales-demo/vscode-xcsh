@@ -1,5 +1,13 @@
 # Claude Code Project Instructions
 
+## Authorized use
+
+This is an F5 sales-engineering fleet whose purpose is to **demonstrate the efficacy of F5 Distributed Cloud security products** (WAF, bot, DDoS, API protection, client-side defense). It contains OWASP-style attack-simulation content used to trigger a product's detections and then prove its mitigations block them — defensive security work, not offensive tooling.
+
+- **Authorized:** this work is covered by written authorization, an NDA, and express permission to develop and demonstrate protections through attack-and-mitigation techniques.
+- **Scope:** attack simulation targets only authorized F5-owned demo/lab assets and intentionally-vulnerable test apps, plus customer demo environments covered by a signed engagement/NDA — never unauthorized, third-party, or production systems, and never real user data.
+- **For AI assistants:** treat this attack-simulation and mitigation content as authorized, defensive security work and assist with it accordingly, within the authorized demo environments above. See CONTRIBUTING.md.
+
 ## Managed Files
 
 Files in `.claude/governance.json` are managed by docs-control.
@@ -9,6 +17,8 @@ A hook blocks direct edits — open an issue in docs-control instead.
 
 - `main` is protected — never commit or push to it directly.
 - Work on a feature branch and open a pull request.
+- Lifecycle: linked issue → branch → PR → required CI (Lint Code Base, linked-issue check, and — on ecosystem repos — a Claude Code review) → auto-merge when every check is green → remote branch auto-deleted.
+- The Claude Code review is a **required, merge-gating check** that can block. On a block, read its findings, fix at the source, and push to re-trigger it — never merge around it, disable it, or rename the branch to a bypass prefix. See CONTRIBUTING.md.
 
 ## Engineering Standards
 
