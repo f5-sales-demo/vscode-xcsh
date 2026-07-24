@@ -1,0 +1,45 @@
+name: Semgrep
+
+# Dedicated SAST (WS4 pilot): semantic static analysis for logic/security
+# defects beyond Biome/tsc. ADVISORY — the scan never fails the build; findings
+# surface in the repository Security tab (Code Scanning) via the SARIF upload.
+# Pilot repo for the fleet SAST rollout; promote to a required check per repo
+# once the finding volume is understood.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  security-events: write # required to upload SARIF to Code Scanning
+
+concurrency:
+  group: semgrep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # OSS rulesets (registry-hosted); advisory: `|| true` keeps the job green
+      # regardless of findings so this pilot never blocks a merge. Emits SARIF
+      # even on partial results.
+      - name: Semgrep scan (advisory)
+        run: |
+          pipx run semgrep scan \
+            --config p/default \
+            --config p/typescript \
+            --sarif --output semgrep.sarif || true
+
+      - name: Upload SARIF to Code Scanning
+        if: always() && hashFiles('semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
