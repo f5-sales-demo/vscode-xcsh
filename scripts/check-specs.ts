@@ -139,6 +139,10 @@ async function runSync(): Promise<boolean> {
   return new Promise((resolve) => {
     console.log('🔄 Syncing specs from upstream...');
 
+    // Args are fully static (a hardcoded script path, no untrusted input), and
+    // `shell: true` is needed for reliable cross-platform `npx` resolution
+    // (`npx.cmd` on Windows). Dev-only spec sync, not reachable from PR content.
+    // nosemgrep: javascript.lang.security.audit.spawn-shell-true.spawn-shell-true
     const child = spawn('npx', ['ts-node', path.join(__dirname, 'sync-specs.ts')], {
       cwd: PROJECT_ROOT,
       stdio: 'inherit',
