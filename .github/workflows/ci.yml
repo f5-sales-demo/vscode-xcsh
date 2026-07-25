@@ -15,6 +15,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege default for EVERY job. The org sets
+# default_workflow_permissions=write, so without this block each job — including the
+# read-only validate/test/build/security jobs — would receive a writable token.
+# The `release` job declares its own broader permissions; it is the only job that
+# writes (git push, gh pr create, gh release create).
+permissions:
+  contents: read
+
 jobs:
   # Validate that code generation is deterministic
   validate-generation:
@@ -22,12 +30,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # `github.event.action` and every `client_payload.*` field are supplied by the
+      # CALLER of repository_dispatch, so they are untrusted. Interpolating them into
+      # the shell body with ${{ }} lets a crafted payload inject commands. Pass them
+      # as environment variables and quote every expansion instead.
       - name: Log dispatch event
         if: github.event_name == 'repository_dispatch'
+        env:
+          DISPATCH_ACTION: ${{ github.event.action }}
+          DISPATCH_SOURCE: ${{ github.event.client_payload.trigger_source || github.event.client_payload.source_repo }}
+          DISPATCH_VERSION: ${{ github.event.client_payload.version || 'N/A' }}
         run: |
-          echo "::notice::Triggered by repository_dispatch (${{ github.event.action }})"
-          echo "Source: ${{ github.event.client_payload.trigger_source || github.event.client_payload.source_repo }}"
-          echo "Version: ${{ github.event.client_payload.version || 'N/A' }}"
+          echo "::notice::Triggered by repository_dispatch (${DISPATCH_ACTION})"
+          echo "Source: ${DISPATCH_SOURCE}"
+          echo "Version: ${DISPATCH_VERSION}"
 
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -179,14 +195,14 @@ jobs:
           name: generated-files
           path: src/generated/
 
-      - name: Install vsce
-        run: npm install -g @vscode/vsce
-
       - name: Build production bundle
         run: npm run package
 
+      # `npx vsce` resolves the @vscode/vsce devDependency pinned by package-lock.json,
+      # so the packaging tool's version is reproducible. A global `npm install -g` here
+      # would be unpinned and could drift between runs.
       - name: Package extension
-        run: vsce package --no-dependencies
+        run: npx vsce package --no-dependencies
 
       - name: Upload VSIX artifact
         uses: actions/upload-artifact@v7
@@ -265,10 +281,12 @@ jobs:
           echo "📦 Version: v$VERSION (semver: $SEMVER, upstream: $UPSTREAM)"
 
       - name: Create and push tag
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          TAG="v${{ steps.version.outputs.version }}"
+          TAG="v${VERSION}"
           git tag -a "$TAG" -m "Release $TAG"
           git push origin "$TAG"
           echo "🏷️ Created tag: $TAG"
@@ -280,9 +298,11 @@ jobs:
           # Stamp package.json to the exact version this release tagged (version.ts
           # reads RELEASE_TAG), so the bump PR matches the tag instead of regenerating.
           RELEASE_TAG: v${{ steps.version.outputs.version }}
+          VERSION_OUT: ${{ steps.version.outputs.version }}
+          SEMVER_OUT: ${{ steps.version.outputs.semver }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          SEMVER="${{ steps.version.outputs.semver }}"
+          VERSION="${VERSION_OUT}"
+          SEMVER="${SEMVER_OUT}"
           BRANCH="chore/release-v${VERSION}"
 
           git config user.name "github-actions[bot]"
@@ -327,14 +347,15 @@ jobs:
       - name: Build release VSIX
         run: |
           npm run package
-          npm install -g @vscode/vsce
-          vsce package --no-dependencies
+          npx vsce package --no-dependencies
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          VERSION_OUT: ${{ steps.version.outputs.version }}
+          UPSTREAM_OUT: ${{ steps.version.outputs.upstream }}
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
+          TAG="v${VERSION_OUT}"
           VSIX_FILE=$(ls ./*.vsix)
 
           # Generate release notes from recent commits
@@ -344,7 +365,7 @@ jobs:
             --title "Release $TAG" \
             --notes "## Changes
 
-          Based on F5 XC API version: ${{ steps.version.outputs.upstream }}
+          Based on F5 XC API version: ${UPSTREAM_OUT}
 
           ### Recent commits:
           $NOTES
