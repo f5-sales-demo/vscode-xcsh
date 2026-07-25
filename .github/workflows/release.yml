@@ -10,8 +10,12 @@ on:
       - v[0-9]+.[0-9]+.[0-9]+-[0-9]+-BETA
   workflow_dispatch:
 
+# Read-only: nothing here writes to the repository. Both jobs use GITHUB_TOKEN
+# solely for `npm run specs:sync`, which GETs the upstream release and writes to
+# the local filesystem. Publishing authenticates with OPEN_VSX_TOKEN and
+# VS_MARKETPLACE_TOKEN, so contents: write had no consumer.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
