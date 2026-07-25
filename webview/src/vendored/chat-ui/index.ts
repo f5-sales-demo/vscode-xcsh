@@ -10,7 +10,10 @@ export {
 	addAttachment,
 	type BaseAttachment,
 	byteLength,
+	type ImageAttachment,
+	isImageAttachment,
 	MAX_ATTACHMENT_BYTES,
+	MAX_IMAGE_BYTES,
 	serializeAttachment,
 	serializeAttachments,
 } from "./attachments/model";
@@ -23,10 +26,10 @@ export { ContextChip, type ContextChipProps } from "./components/ContextChip";
 export { EmptyState, type EmptyStateProps } from "./components/EmptyState";
 // ── Gateway config ────────────────────────────────────────────────────────
 export { GatewayConfigForm, type GatewayConfigFormProps } from "./components/GatewayConfigForm";
-export { GatewayGate, type GatewayGateProps } from "./components/GatewayGate";
+export { GatewayGate, type GatewayGateChildApi, type GatewayGateProps } from "./components/GatewayGate";
 // ── Shell (header / empty state / context chip / activation overlay) ───────
 export { HeaderBar, type HeaderBarProps } from "./components/HeaderBar";
-export { PlusIcon, SendIcon, StopIcon } from "./components/icons";
+export { HistoryIcon, MoreIcon, NewChatIcon, PlusIcon, SendIcon, StopIcon } from "./components/icons";
 export { MarkdownRenderer, type MarkdownRendererProps } from "./components/MarkdownRenderer";
 export { ModelSelector, type ModelSelectorProps } from "./components/ModelSelector";
 export { ModeToggle, type ModeToggleProps } from "./components/ModeToggle";
@@ -44,6 +47,8 @@ export {
 	UserMessage,
 	type UserMessageProps,
 } from "./components/messages";
+export { ReferenceChips, type ReferenceChipsProps } from "./components/ReferenceChips";
+export { SkillsMenu, type SkillsMenuProps } from "./components/SkillsMenu";
 export { SlashCommandMenu, type SlashCommandMenuProps } from "./components/SlashCommandMenu";
 export { StatusBar, type StatusBarProps } from "./components/StatusBar";
 export { ThinkingBlock, type ThinkingBlockProps } from "./components/ThinkingBlock";
@@ -63,6 +68,7 @@ export {
 	type ColorName,
 	cssVars,
 	FONT_FACES,
+	FONT_SANS,
 	FONT_STACK,
 	fontFaceCss,
 	GLYPHS,
@@ -70,12 +76,15 @@ export {
 	injectTokens,
 	UI_COLORS,
 } from "./theme/tokens";
+// ── Tool activity ─────────────────────────────────────────────────────────
+export { toolActivityLabel } from "./tools/activity-label";
 
 // ── View-model + prop types ───────────────────────────────────────────────
 export type {
 	ActivationGate,
 	AttachCategory,
 	ChatMessage,
+	ChatReference,
 	ChatRole,
 	ContentBlock,
 	GateStatus,
@@ -85,6 +94,7 @@ export type {
 	MenuItem,
 	ModelOption,
 	ReactNode,
+	SkillMenuItem,
 	SkillPill,
 	SlashCommand,
 	ToolItem,

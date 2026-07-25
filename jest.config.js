@@ -81,6 +81,14 @@ module.exports = {
           },
         ],
       },
+      moduleNameMapper: {
+        // The vendored chat-ui markdown renderer imports `marked`, whose "main"
+        // entry is ESM (`lib/marked.esm.js`). jest leaves node_modules
+        // untransformed and only transforms .tsx? here, so it chokes on the
+        // `export`. Point it at marked's UMD build, which require() can load.
+        // (Bundlers still take the ESM path — this affects tests only.)
+        '^marked$': '<rootDir>/node_modules/marked/lib/marked.umd.js',
+      },
     },
   ],
 };
