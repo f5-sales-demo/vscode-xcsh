@@ -1,10 +1,17 @@
+---
 name: Semgrep
 
-# Dedicated SAST (WS4 pilot): semantic static analysis for logic/security
-# defects beyond Biome/tsc. ADVISORY — the scan never fails the build; findings
-# surface in the repository Security tab (Code Scanning) via the SARIF upload.
-# Pilot repo for the fleet SAST rollout; promote to a required check per repo
-# once the finding volume is understood.
+# Dedicated SAST: semantic static analysis for logic/security defects that
+# Biome/tsc/Ruff cannot find (taint flow, injection classes, unsafe APIs).
+#
+# Managed by docs-control and synced ONLY to code-bearing repos — see the
+# managed_files entry with "only_repos" in .github/config/repo-settings.json.
+# Content/demo repos are excluded deliberately: they would produce noise, not signal.
+#
+# ADVISORY BY DESIGN: the scan never fails the build (`|| true`); findings surface in
+# the repository Security tab (Code Scanning) via the SARIF upload. Promote to a
+# required check per repo only AFTER its finding volume has been triaged — gating on
+# an untriaged SAST feed would block every merge on pre-existing findings.
 on:
   pull_request:
     branches: [main]
@@ -27,14 +34,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # OSS rulesets (registry-hosted); advisory: `|| true` keeps the job green
-      # regardless of findings so this pilot never blocks a merge. Emits SARIF
-      # even on partial results.
       - name: Semgrep scan (advisory)
         run: |
+          # Registry rulesets: p/default (curated, cross-language) plus language
+          # packs. A pack for a language a repo does not use simply yields no
+          # findings, so one template serves every code-bearing repo.
+          # `|| true` keeps the job green regardless of findings (advisory).
+          # Excluded rules (categorically inapplicable — exclude at config level
+          # rather than dismissing the same alert in every repo forever):
+          #   python3x-compatibility-* : flags Python 3.6+ APIs as "too new". Every
+          #     Python package in this fleet declares requires-python >= 3.11, so
+          #     these can only ever be false positives.
           pipx run semgrep scan \
             --config p/default \
             --config p/typescript \
+            --config p/golang \
+            --exclude-rule python.lang.compatibility.python36.python36-compatibility-Popen1 \
+            --exclude-rule python.lang.compatibility.python36.python36-compatibility-Popen2 \
             --sarif --output semgrep.sarif || true
 
       - name: Upload SARIF to Code Scanning
