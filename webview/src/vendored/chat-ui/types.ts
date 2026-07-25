@@ -25,10 +25,21 @@ export interface ChatMessage {
 	/** tool rows only: the tool name and whether it succeeded. */
 	tool?: string;
 	ok?: boolean;
+	/** tool rows only: the call is still in flight (renders a live spinner). */
+	running?: boolean;
 	/** Render this row as an error (system gutter, alert-red body). */
 	error?: boolean;
 	/** When set on the last message, the Transcript offers a Retry button. */
 	retryText?: string;
+	/** assistant rows only: cited sources, rendered as a "Sources" chip row. */
+	references?: ChatReference[];
+}
+
+/** A source the assistant cited — an F5 docs page or a tenant-console deep link. */
+export interface ChatReference {
+	kind: "doc" | "console";
+	title: string;
+	url: string;
 }
 
 /** A conversation-mode option (the mode LIST is a host-provided prop). */
@@ -67,6 +78,13 @@ export interface AttachCategory {
 	id: string;
 	label: string;
 	description?: string;
+	/**
+	 * Render this category as an on/off TOGGLE (a checkmark shows when `active`).
+	 * Picking a toggle fires `onSelect(id)` but does NOT close the menu, so the flip
+	 * is visible — used for the "Search the web" toggle.
+	 */
+	toggle?: boolean;
+	active?: boolean;
 }
 
 /**
@@ -88,6 +106,16 @@ export interface SlashCommand {
 export interface ToolItem {
 	name: string;
 	label: string;
+	description?: string;
+}
+
+/**
+ * A skill shown in the composer's Skills submenu (opened by the `skills` attach
+ * category). The host feeds the list (from the engine's loaded skills); picking
+ * one reports its `name` so the host can invoke it (e.g. prefill `/name`).
+ */
+export interface SkillMenuItem {
+	name: string;
 	description?: string;
 }
 
