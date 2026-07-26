@@ -11,7 +11,7 @@ import { resolveAttachments } from './attachmentResolvers';
 import type { Attachment, FileAttachment, HostAttachmentCategory } from './attachmentTypes';
 import { HOST_TOOL_DEFINITIONS } from './hostTools';
 import type { XcshRpcBridge } from './rpcBridge';
-import type { MessageUpdate, ToolExecutionEnd, ToolExecutionStart } from './types';
+import type { MessageUpdate, ReferencesEvent, ToolExecutionEnd, ToolExecutionStart } from './types';
 
 export class XcshPanelProvider implements vscode.WebviewViewProvider {
   static readonly viewType = 'xcsh.xcshPanel';
@@ -84,6 +84,17 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     );
 
     this.disposables.push(
+      this.rpcBridge.onEvent<ReferencesEvent>('references', (event) => {
+        // Citations for a SETTLED turn (xcsh #2420). Derived engine-side so this host
+        // never reimplements the extractor or the turn-boundary rule.
+        void webviewView.webview.postMessage({
+          type: 'from-extension',
+          message: { type: 'references', references: event.references },
+        });
+      }),
+    );
+
+    this.disposables.push(
       this.rpcBridge.onEvent('turn_end', () => {
         void webviewView.webview.postMessage({
           type: 'from-extension',
@@ -111,6 +122,25 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     this.rpcBridge.setLocale(vscode.env.language).catch(() => {
       this.logger.warn('Failed to set locale on xcsh (may not support set_locale yet)');
     });
+  }
+
+  /** Ask the engine for its loaded skills and hand them to the composer. Best-effort:
+   *  a session with none (or an older engine without the command) simply shows no
+   *  Skills category rather than surfacing an error the user cannot act on. */
+  private async sendSkills(): Promise<void> {
+    const view = this.webviewView;
+    if (!view) {
+      return;
+    }
+    try {
+      const skills = await this.rpcBridge.listSkills();
+      if (skills.length === 0) {
+        return;
+      }
+      void view.webview.postMessage({ type: 'from-extension', message: { type: 'skills', skills } });
+    } catch {
+      /* no skills available — the menu stays absent */
+    }
   }
 
   private sendL10nBundle(): void {
@@ -190,6 +220,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
         this.webviewReady = true;
         this.sendL10nBundle();
         this.sendToolsAvailable();
+        void this.sendSkills();
         this.flushPendingAttachments();
         break;
       }

@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type { AssistantMessage, ChatMessage } from '../state/session';
-import { ContentBlockRenderer } from '../vendored/chat-ui';
+import { ContentBlockRenderer, ReferenceChips } from '../vendored/chat-ui';
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -56,6 +56,9 @@ export function MessageList({ messages, busy }: MessageListProps) {
                     busy={busy}
                   />
                 ))}
+                {/* Sources this answer cited — attached per message, so an earlier
+                    turn keeps its own chips. */}
+                {msg.references && msg.references.length > 0 && <ReferenceChips references={msg.references} />}
               </div>
             );
           })}

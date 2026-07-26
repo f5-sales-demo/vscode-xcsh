@@ -74,3 +74,44 @@ describe('session state', () => {
     expect(calls).toEqual([]);
   });
 });
+
+describe('cited sources (xcsh #2420 references event)', () => {
+  it('attaches citations to the assistant message that cited them', () => {
+    const s = createSession();
+    s.addUserMessage('which LB?');
+    s.appendAssistantText('Use an HTTP LB.');
+    s.setReferences([{ kind: 'doc', title: 'HTTP LB', url: 'https://docs.cloud.f5.com/lb' }]);
+
+    const assistant = s.messages.find((m) => m.type === 'assistant');
+    expect(assistant?.type).toBe('assistant');
+    if (assistant?.type !== 'assistant') {
+      throw new Error('expected an assistant message');
+    }
+    expect(assistant.references).toEqual([{ kind: 'doc', title: 'HTTP LB', url: 'https://docs.cloud.f5.com/lb' }]);
+  });
+
+  it('attaches to the LATEST assistant message, so an earlier turn keeps its own sources', () => {
+    const s = createSession();
+    s.addUserMessage('first');
+    s.appendAssistantText('one');
+    s.setReferences([{ kind: 'doc', title: 'First', url: 'https://d/1' }]);
+    s.endTurn();
+    s.addUserMessage('second');
+    s.appendAssistantText('two');
+    s.setReferences([{ kind: 'doc', title: 'Second', url: 'https://d/2' }]);
+
+    const assistants = s.messages.filter((m) => m.type === 'assistant');
+    expect(assistants).toHaveLength(2);
+    if (assistants[0].type !== 'assistant' || assistants[1].type !== 'assistant') {
+      throw new Error('shape');
+    }
+    expect(assistants[0].references?.[0].title).toBe('First');
+    expect(assistants[1].references?.[0].title).toBe('Second');
+  });
+
+  it('is a no-op when there is no assistant message yet (a stray event cannot crash the view)', () => {
+    const s = createSession();
+    expect(() => s.setReferences([{ kind: 'doc', title: 'x', url: 'https://d/x' }])).not.toThrow();
+    expect(s.messages).toHaveLength(0);
+  });
+});
