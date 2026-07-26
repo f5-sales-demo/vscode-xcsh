@@ -78,6 +78,7 @@ export const KNOWN_INVISIBLE_MAP_RESOURCES: readonly string[] = [
   'ike2',
   'ike_phase1_profile',
   'ike_phase2_profile',
+  'infraprotect_packet_capture',
   'insight_query',
   'interface',
   'ip_prefix_set',
