@@ -14,6 +14,26 @@ const SPEC_ROOT = path.resolve(__dirname, '../../../docs/specifications/api');
 const DOMAINS_DIR = path.join(SPEC_ROOT, 'domains');
 
 /**
+ * Smoke-test floors for the synced spec corpus.
+ *
+ * These catch a truncated or empty sync. They deliberately do NOT pin the size of
+ * F5's published API surface, because that surface moves — sometimes sharply. On
+ * 2026-07-24 F5's published bundle went from ~520 specs to 283 and retired APM
+ * entirely, taking the schema total from 9018 to 8540. The previous floor of 9000
+ * sat 0.2% under the then-current total, so an ordinary upstream change became a
+ * repo-wide CI outage that blocked every pull request and read like data
+ * corruption. Generous floors keep the smoke test useful without that fragility:
+ * losing a third of the corpus is a real failure, losing 5% is Tuesday.
+ *
+ * `specs:sync` fetches the latest upstream release at test time, so these are
+ * asserted against live data, not a committed fixture.
+ *
+ * Observed at api-specs-enriched v2.1.196: 8540 schemas, 1676 paths.
+ */
+const MIN_TOTAL_PATHS = 1200;
+const MIN_TOTAL_SCHEMAS = 6000;
+
+/**
  * Minimal OpenAPI spec structure for validation
  */
 interface OpenAPISpec {
@@ -92,38 +112,25 @@ describe('Spec Directory Structure', () => {
   });
 
   describe('aggregate statistics', () => {
-    it('should have at least 1600 total API paths across all domain files', () => {
-      const domainFiles = fs.readdirSync(DOMAINS_DIR).filter((f) => f.endsWith('.json'));
-      let totalPaths = 0;
+    /** Total across every domain file of whatever `count` measures in one spec. */
+    function sumOverDomains(count: (spec: OpenAPISpec) => number): number {
+      return fs
+        .readdirSync(DOMAINS_DIR)
+        .filter((f) => f.endsWith('.json'))
+        .reduce((total, filename) => {
+          const content = fs.readFileSync(path.join(DOMAINS_DIR, filename), 'utf-8');
+          return total + count(JSON.parse(content) as OpenAPISpec);
+        }, 0);
+    }
 
-      for (const filename of domainFiles) {
-        const filePath = path.join(DOMAINS_DIR, filename);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const spec = JSON.parse(content) as OpenAPISpec;
-
-        if (spec.paths) {
-          totalPaths += Object.keys(spec.paths).length;
-        }
-      }
-
-      expect(totalPaths).toBeGreaterThanOrEqual(1600);
+    it(`should have at least ${MIN_TOTAL_PATHS} total API paths across all domain files`, () => {
+      expect(sumOverDomains((spec) => Object.keys(spec.paths ?? {}).length)).toBeGreaterThanOrEqual(MIN_TOTAL_PATHS);
     });
 
-    it('should have at least 9000 total schemas across all domain files', () => {
-      const domainFiles = fs.readdirSync(DOMAINS_DIR).filter((f) => f.endsWith('.json'));
-      let totalSchemas = 0;
-
-      for (const filename of domainFiles) {
-        const filePath = path.join(DOMAINS_DIR, filename);
-        const content = fs.readFileSync(filePath, 'utf-8');
-        const spec = JSON.parse(content) as OpenAPISpec;
-
-        if (spec.components?.schemas) {
-          totalSchemas += Object.keys(spec.components.schemas).length;
-        }
-      }
-
-      expect(totalSchemas).toBeGreaterThanOrEqual(9000);
+    it(`should have at least ${MIN_TOTAL_SCHEMAS} total schemas across all domain files`, () => {
+      expect(sumOverDomains((spec) => Object.keys(spec.components?.schemas ?? {}).length)).toBeGreaterThanOrEqual(
+        MIN_TOTAL_SCHEMAS,
+      );
     });
   });
 
