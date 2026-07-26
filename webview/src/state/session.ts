@@ -28,9 +28,28 @@ export interface UserMessage {
   text: string;
 }
 
+/** One skill the engine has loaded, as the composer's Skills submenu shows it.
+ *  Declared locally for the same reason as ChatReferenceWire below. */
+export interface SkillInfo {
+  name: string;
+  description: string;
+}
+
+/** A cited source, mirroring the extension's ReferencesEvent payload and the shared
+ *  chat-ui ChatReference the vendored chips render. Declared locally: the webview
+ *  bundle must not import from the extension host's `src/`. */
+export interface ChatReferenceWire {
+  kind: 'doc' | 'console';
+  title: string;
+  url: string;
+}
+
 export interface AssistantMessage {
   type: 'assistant';
   blocks: ContentBlock[];
+  /** Sources this answer cited, from xcsh's `references` event. Per-message, so an
+   *  earlier turn keeps its own chips instead of the transcript sharing one list. */
+  references?: ChatReferenceWire[];
 }
 
 export type ChatMessage = UserMessage | AssistantMessage;
@@ -47,6 +66,9 @@ export interface Session {
   appendAssistantText(text: string): void;
   addToolStart(toolName: string, toolCallId: string): void;
   endToolUse(toolCallId: string): void;
+  /** Attach citations to the latest assistant message (they arrive at turn end, after
+   *  its text). A stray event with no assistant message yet is ignored. */
+  setReferences(references: ChatReferenceWire[]): void;
   endTurn(): void;
 }
 
@@ -155,6 +177,20 @@ export function createSession(): Session {
         };
       });
       session.notify();
+    },
+
+    setReferences(references: ChatReferenceWire[]): void {
+      const msgs = [...session.messages];
+      for (let i = msgs.length - 1; i >= 0; i--) {
+        const m = msgs[i];
+        if (m.type === 'assistant') {
+          msgs[i] = { ...m, references };
+          session.messages = msgs;
+          session.notify();
+          return;
+        }
+      }
+      // No assistant message yet — nothing to attach to; drop it rather than crash.
     },
 
     endTurn(): void {

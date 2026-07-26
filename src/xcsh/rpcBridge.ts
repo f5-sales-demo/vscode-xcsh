@@ -13,6 +13,7 @@ import type {
   RpcEvent,
   RpcResponse,
   RpcSessionState,
+  SkillInfo,
 } from './types';
 
 const COMMAND_TIMEOUT_MS = 30_000;
@@ -139,6 +140,16 @@ export class XcshRpcBridge implements vscode.Disposable {
       throw new Error(response.error ?? 'Failed to get available models');
     }
     return (response.data as { models: ModelInfo[] }).models;
+  }
+
+  /** The session's loaded skills, for the composer's Skills submenu (xcsh #2407).
+   *  Enumeration only — invoking one is just a prompt beginning `/name`. */
+  async listSkills(): Promise<SkillInfo[]> {
+    const response = await this.sendCommand({ type: 'list_skills' });
+    if (!response.success) {
+      throw new Error(response.error ?? 'Failed to list skills');
+    }
+    return (response.data as { skills: SkillInfo[] }).skills;
   }
 
   async getIntegrations(): Promise<IntegrationsResponse> {

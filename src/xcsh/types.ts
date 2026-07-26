@@ -68,6 +68,28 @@ export interface RpcEvent {
   [key: string]: unknown;
 }
 
+/** One skill the engine has loaded, as the composer's Skills submenu shows it. */
+export interface SkillInfo {
+  name: string;
+  description: string;
+}
+
+/** A source an answer cited, for the transcript's Sources chips. Field-for-field with
+ *  the shared chat-ui `ChatReference` the vendored ReferenceChips renders. */
+export interface ChatReferenceWire {
+  kind: 'doc' | 'console';
+  title: string;
+  url: string;
+}
+
+/** xcsh -> host: the citations for a SETTLED assistant turn (xcsh #2420). Emitted on
+ *  the RPC stream rather than derived here: picking the terminal message out of the
+ *  event stream and scraping citations from its blocks is the engine's job, and
+ *  reimplementing it would drift from the one shared extractor. */
+export interface ReferencesEvent extends RpcEvent {
+  references: ChatReferenceWire[];
+}
+
 export interface MessageUpdate extends RpcEvent {
   type: 'message_update';
   text: string;

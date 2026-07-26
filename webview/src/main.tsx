@@ -6,6 +6,7 @@ import { SessionView } from './components/SessionView';
 import { setL10nBundle } from './lib/i18n';
 import type { ExtensionMessage } from './lib/protocol';
 import { initProtocol, on } from './lib/protocol';
+import type { ChatReferenceWire } from './state/session';
 import { createNewSession, getActiveSession } from './state/sessions';
 import './styles/webview.css';
 import { injectTokens, PANEL_CSS } from './vendored/chat-ui';
@@ -46,6 +47,13 @@ function handleTurnEnd(): void {
   }
 }
 
+function handleReferences(msg: ExtensionMessage): void {
+  const session = getActiveSession();
+  if (session && Array.isArray(msg.references)) {
+    session.setReferences(msg.references as ChatReferenceWire[]);
+  }
+}
+
 function handleL10nBundle(msg: ExtensionMessage): void {
   if (msg.strings && typeof msg.strings === 'object') {
     setL10nBundle(msg.strings as Record<string, string>);
@@ -56,6 +64,7 @@ on('message_update', handleMessageUpdate);
 on('tool_execution_start', handleToolStart);
 on('tool_execution_end', handleToolEnd);
 on('turn_end', handleTurnEnd);
+on('references', handleReferences);
 on('l10n_bundle', handleL10nBundle);
 
 const rootEl = document.getElementById('root');
