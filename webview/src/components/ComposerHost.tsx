@@ -8,7 +8,7 @@
 // props. The shared Composer renders the editor, chips, attach/slash/tools/mode
 // menus, and send/stop; this file supplies data + callbacks only.
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../lib/i18n';
 import {
   type AttachCategory,
@@ -20,9 +20,9 @@ import {
   sendSetThinking,
   type ToolInfo,
 } from '../lib/protocol';
-import { serializeSessionTranscript } from '../state/session';
+import { type SkillInfo, serializeSessionTranscript } from '../state/session';
 import { getActiveSession } from '../state/sessions';
-import { type Attachment, addAttachment, Composer, type ToolItem } from '../vendored/chat-ui';
+import { type Attachment, addAttachment, Composer, type ComposerHandle, type ToolItem } from '../vendored/chat-ui';
 
 interface ComposerHostProps {
   onSubmit: (text: string) => void;
@@ -65,6 +65,8 @@ export function ComposerHost({ onSubmit, onInterrupt, busy }: ComposerHostProps)
   const [tools, setTools] = useState<ToolInfo[]>([]);
   const [permissionMode, setPermissionMode] = useState('auto');
   const [thinkingLevel, setThinkingLevel] = useState('medium');
+  const [skills, setSkills] = useState<SkillInfo[]>([]);
+  const composerRef = useRef<ComposerHandle>(null);
 
   useEffect(() => {
     const unsubAttach = on('attachment_added', (msg) => {
@@ -73,6 +75,13 @@ export function ComposerHost({ onSubmit, onInterrupt, busy }: ComposerHostProps)
         return;
       }
       setAttachments((prev) => addAttachment(prev, attachment).list);
+    });
+    // The engine's loaded skills (requested by the extension once we are ready).
+    // Replaced wholesale, so the menu is never a stale or half list.
+    const unsubSkills = on('skills', (msg) => {
+      if (Array.isArray(msg.skills)) {
+        setSkills(msg.skills as SkillInfo[]);
+      }
     });
     const unsubTools = on('tools_available', (msg) => {
       const list = msg.tools as ToolInfo[] | undefined;
@@ -85,6 +94,7 @@ export function ComposerHost({ onSubmit, onInterrupt, busy }: ComposerHostProps)
     sendReady();
     return () => {
       unsubAttach();
+      unsubSkills();
       unsubTools();
     };
   }, []);
@@ -145,6 +155,12 @@ export function ComposerHost({ onSubmit, onInterrupt, busy }: ComposerHostProps)
     [onSubmit],
   );
 
+  /** A skill PREFILLS `/name ` for the user to add arguments — deliberately not the
+   *  submit-on-pick used for slash commands, which are complete as written. */
+  const handleSkillSelect = useCallback((name: string) => {
+    composerRef.current?.setText(`/${name} `);
+  }, []);
+
   const handleSlashSelect = useCallback(
     (command: string) => {
       setAttachments([]);
@@ -171,16 +187,25 @@ export function ComposerHost({ onSubmit, onInterrupt, busy }: ComposerHostProps)
 
   return (
     <Composer
+      ref={composerRef}
       streaming={busy}
       placeholder={busy ? t('xcsh is responding...') : t('Ask xcsh...')}
       onSend={handleSend}
       onStop={onInterrupt}
       attachments={attachments}
-      attachCategories={CATEGORIES.map((c) => ({ id: c.id, label: c.label(), description: c.description() }))}
+      attachCategories={[
+        ...CATEGORIES.map((c) => ({ id: c.id, label: c.label(), description: c.description() })),
+        // Appended only when the engine reported skills: the shared Composer opens its
+        // Skills submenu for a category with this id, and an always-present entry would
+        // offer an empty menu on a session that loaded none.
+        ...(skills.length > 0 ? [{ id: 'skills', label: t('Skills'), description: t('Run a workspace skill') }] : []),
+      ]}
       onRequestAttachment={handleCategory}
       onRemoveAttachment={(id) => setAttachments((prev) => prev.filter((a) => a.id !== id))}
       tools={toolItems}
       onToolsConfirm={handleToolsConfirm}
+      skills={skills.length > 0 ? skills : undefined}
+      onSkillSelect={handleSkillSelect}
       slashCommands={SLASH_COMMANDS.map((c) => ({
         command: c.command,
         label: c.label(),

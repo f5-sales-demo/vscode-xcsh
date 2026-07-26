@@ -86,6 +86,36 @@ describe('ComposerHost (shared Composer wiring)', () => {
     expect(mockSendRequestAttachment).toHaveBeenCalledWith('files');
   });
 
+  it('offers no Skills category until the engine reports skills (never an empty menu)', () => {
+    render(<ComposerHost onSubmit={jest.fn()} onInterrupt={jest.fn()} busy={false} />);
+    fireEvent.click(screen.getByRole('button', { name: /add context/i }));
+    expect(screen.queryByText('Skills')).not.toBeInTheDocument();
+  });
+
+  it('PREFILLS `/name ` for a picked skill rather than submitting it', () => {
+    const onSubmit = jest.fn();
+    render(<ComposerHost onSubmit={onSubmit} onInterrupt={jest.fn()} busy={false} />);
+    // The extension forwards the engine's list once our listeners are live.
+    act(() => {
+      mockState.listeners.skills?.({
+        type: 'skills',
+        skills: [
+          { name: 'competitive', description: 'F5 XC battlecards' },
+          { name: 'roi-calculator', description: 'ROI / TCO' },
+        ],
+      });
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /add context/i }));
+    fireEvent.click(screen.getByText('Skills'));
+    fireEvent.click(screen.getByText(/competitive/));
+
+    // A skill takes arguments, so it is prefilled for the user to finish — unlike a
+    // slash command, which the test above submits on pick.
+    expect(getEditor().textContent).toBe('/competitive ');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
   it('submits the selected slash command as the prompt', () => {
     const onSubmit = jest.fn();
     render(<ComposerHost onSubmit={onSubmit} onInterrupt={jest.fn()} busy={false} />);
