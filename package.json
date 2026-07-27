@@ -1081,7 +1081,8 @@
     "clean": "rimraf dist out coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck:webview",
+    "typecheck:webview": "tsc -p webview/tsconfig.json --noEmit",
     "prepare": "husky",
     "pre-commit": "lint-staged",
     "audit:security": "npm audit --audit-level=high"

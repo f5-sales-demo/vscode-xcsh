@@ -69,15 +69,21 @@ module.exports = {
       testMatch: ['**/__tests__/**/*.test.ts?(x)'],
       testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
       moduleFileExtensions: ['tsx', 'ts', 'js', 'json'],
-      setupFilesAfterEnv: ['@testing-library/jest-dom', '<rootDir>/webview/src/test-setup.ts'],
+      // test-setup.ts imports jest-dom itself, so the matchers are registered there
+      // rather than in two places — see the comment in that file.
+      setupFilesAfterEnv: ['<rootDir>/webview/src/test-setup.ts'],
       transform: {
         '^.+\\.tsx?$': [
           'ts-jest',
           {
+            // No `diagnostics.ignoreCodes` here: webview/tsconfig.json sets
+            // `isolatedModules`, so ts-jest transpiles per file and never produces
+            // semantic diagnostics — an ignore list for codes like TS2307/TS2554
+            // could never fire and only implied a suppression that wasn't happening.
+            // Verified: a TS2304 in either a component or a test file leaves this
+            // suite fully green. Type checking is gated by `npm run typecheck:webview`
+            // (a full-program `tsc`), not by jest. See #995.
             tsconfig: '<rootDir>/webview/tsconfig.test.json',
-            diagnostics: {
-              ignoreCodes: [151002, 2554, 2307, 7016, 7026, 17004, 7006],
-            },
           },
         ],
       },
