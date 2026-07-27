@@ -1054,7 +1054,7 @@
     "validate:i18n-coverage": "npx tsx scripts/validate-i18n-coverage.mts",
     "compile": "npm run generate && webpack",
     "watch": "npm run generate && webpack --watch",
-    "package": "npm run generate && npm run build:webview && webpack --mode production --devtool hidden-source-map",
+    "package": "npm run generate && npm run typecheck && npm run build:webview && webpack --mode production --devtool hidden-source-map",
     "build:webview": "cd webview && npx vite build",
     "uat:webview": "node webview/test/uat/composer-render.mjs",
     "dev:webview": "cd webview && npx vite",
@@ -1081,7 +1081,8 @@
     "clean": "rimraf dist out coverage",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && npm run typecheck:webview",
+    "typecheck:webview": "tsc -p webview/tsconfig.json --noEmit",
     "prepare": "husky",
     "pre-commit": "lint-staged",
     "audit:security": "npm audit --audit-level=high"
