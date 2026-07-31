@@ -37,7 +37,7 @@ function buildSections(
   const build = (provider as unknown as { extractSpecDrivenSections: SectionBuilder }).extractSpecDrivenSections.bind(
     provider,
   );
-  return build(resourceKey, metadata, systemMetadata, spec, 'r-mordasiewicz');
+  return build(resourceKey, metadata, systemMetadata, spec, 'demo-app');
 }
 
 // Fixture modelled on the example-corp-lb HTTP LB GET response from the console.
@@ -50,11 +50,9 @@ const HTTP_LB_SYSTEM_METADATA = { uid: 'abc-123', creator_id: 'dana@example.com'
 const HTTP_LB_SPEC: Record<string, unknown> = {
   domains: ['api.example.com'],
   http: { port: 80, dns_volterra_managed: false },
-  default_route_pools: [
-    { pool: { name: 'example-corp-pool', namespace: 'demo-app' }, weight: 1, priority: 1 },
-  ],
+  default_route_pools: [{ pool: { name: 'example-corp-pool', namespace: 'demo-app' }, weight: 1, priority: 1 }],
   app_firewall: { name: 'example-corp-waf' },
-  dns_info: [{ ip_address: '192.0.2.37' }],
+  dns_info: [{ ip_address: '203.0.113.10' }],
   host_name: 'ves-io-abc123.ac.vh.ves.io',
   auto_cert_info: { auto_cert_state: 'AutoCertEnabled' },
   cert_state: 'AutoCertPresent',
@@ -120,7 +118,11 @@ describe('App Firewall describe sections', () => {
     'app_firewall',
     { name: 'example-corp-app-fw' },
     {},
-    { blocking: {}, detection_settings: { signature_selection_setting: {} }, enable_ai_enhancements: {} },
+    {
+      blocking: {},
+      detection_settings: { signature_selection_setting: {} },
+      enable_ai_enhancements: {},
+    },
   );
   const titles = sections.map((s) => s.title);
 
@@ -165,7 +167,7 @@ describe('TCP Load Balancer describe sections', () => {
     { name: 'example-corp-tcp-lb' },
     {},
     {
-      domains: ['tcp.example-corp.example.com'],
+      domains: ['tcp.example.com'],
       listen_port: 8080,
       no_sni: {},
       origin_pools_weights: [{ pool: { name: 'tcp-pool' }, weight: 1 }],
@@ -174,7 +176,7 @@ describe('TCP Load Balancer describe sections', () => {
       service_policies_from_namespace: {},
       idle_timeout: 30000,
       host_name: 'ves-io-tcp.ac.vh.ves.io',
-      dns_info: [{ ip_address: '192.0.2.142' }],
+      dns_info: [{ ip_address: '203.0.113.20' }],
       auto_cert_info: { auto_cert_state: 'AutoCertEnabled' },
       cert_state: 'AutoCertPresent',
     },
@@ -199,7 +201,7 @@ describe('TCP Load Balancer describe sections', () => {
 
   it('Basic Configuration shows the domain and Origins by pool name', () => {
     const basic = findSection(sections, 'Basic Configuration');
-    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('tcp.example-corp.example.com');
+    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('tcp.example.com');
     const poolNames = (basic?.subGroups ?? []).flatMap((sg) => sg.fields.map((f) => f.key));
     expect(poolNames).toContain('tcp-pool');
   });
@@ -211,9 +213,9 @@ describe('CDN Load Balancer describe sections', () => {
     { name: 'example-corp-cdn' },
     {},
     {
-      domains: ['cdn.example-corp.example.com'],
+      domains: ['cdn.example.com'],
       https_auto_cert: {},
-      origin_pool: { public_name: { dns_name: 'origin.example-corp.example.com' } },
+      origin_pool: { public_name: { dns_name: 'origin.example.com' } },
       default_cache_action: { cache_ttl_mode: 'UseTTLfromOrigin' },
       app_firewall: { name: 'example-corp-waf' },
       host_name: 'ves-io-cdn.ac.vh.ves.io',
@@ -241,7 +243,7 @@ describe('CDN Load Balancer describe sections', () => {
 
   it('Basic Configuration shows the domain', () => {
     const basic = findSection(sections, 'Basic Configuration');
-    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('cdn.example-corp.example.com');
+    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('cdn.example.com');
   });
 });
 

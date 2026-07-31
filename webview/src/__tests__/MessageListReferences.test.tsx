@@ -6,7 +6,11 @@ import { MessageList } from '../components/MessageList';
 import type { ChatMessage } from '../state/session';
 
 function assistant(text: string, references?: { kind: 'doc' | 'console'; title: string; url: string }[]) {
-  return { type: 'assistant', blocks: [{ type: 'text', text }], ...(references ? { references } : {}) } as ChatMessage;
+  return {
+    type: 'assistant',
+    blocks: [{ type: 'text', text }],
+    ...(references ? { references } : {}),
+  } as ChatMessage;
 }
 
 describe('MessageList · cited sources', () => {
@@ -17,7 +21,11 @@ describe('MessageList · cited sources', () => {
           { type: 'user', text: 'which LB?' } as ChatMessage,
           assistant('Use an HTTP LB.', [
             { kind: 'doc', title: 'HTTP LB guide', url: 'https://docs.cloud.f5.com/lb' },
-            { kind: 'console', title: 'Load Balancers', url: 'https://example-corp.console.ves.volterra.io/lb' },
+            {
+              kind: 'console',
+              title: 'Load Balancers',
+              url: 'https://example-corp.console.ves.volterra.io/lb',
+            },
           ]),
         ]}
         busy={false}

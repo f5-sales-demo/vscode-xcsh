@@ -56,7 +56,10 @@ describe('xcsh.addToChat command', () => {
   });
 
   it('fetches the resource and forwards { name, content } to xcsh.attachToChat', async () => {
-    const resource = { metadata: { name: 'example-corp-lb' }, spec: { domains: ['api.example.com'] } };
+    const resource = {
+      metadata: { name: 'example-corp-lb' },
+      spec: { domains: ['api.example.com'] },
+    };
     const getWithOptions = jest.fn().mockResolvedValue(resource);
     const contextManager = {
       getClient: jest.fn().mockResolvedValue({ getWithOptions }),
@@ -68,7 +71,7 @@ describe('xcsh.addToChat command', () => {
 
     await addToChat?.(makeNode());
 
-    expect(getWithOptions).toHaveBeenCalledWith('r-mordasiewicz', 'http_loadbalancers', 'example-corp-lb', {
+    expect(getWithOptions).toHaveBeenCalledWith('demo-app', 'http_loadbalancers', 'example-corp-lb', {
       apiBase: 'config',
       customGetPath: undefined,
     });
@@ -87,7 +90,11 @@ describe('xcsh.addToChat command', () => {
     await handlers.get('xcsh.addToChat')?.(
       makeNode({
         name: 'cached-thing',
-        resourceType: { apiPath: 'service_policys', apiBase: 'config', useListDataForDescribe: true },
+        resourceType: {
+          apiPath: 'service_policys',
+          apiBase: 'config',
+          useListDataForDescribe: true,
+        },
         fullResourceData: cached,
       }),
     );

@@ -300,7 +300,10 @@ describe('Resource Types Registry', () => {
 
     // A VERIFIED tenant resource (enforced:true) — visible in user namespaces.
     const userProfile = {
-      constraint: { allowed: ['shared' as const, 'default' as const, 'custom' as const], enforced: true },
+      constraint: {
+        allowed: ['shared' as const, 'default' as const, 'custom' as const],
+        enforced: true,
+      },
       recommendation: { primary: 'custom' as const, rationale: 'User namespace resource' },
       classification: { category: 'general', multiTenantPattern: 'per-tenant' as const },
     };
@@ -308,7 +311,10 @@ describe('Resource Types Registry', () => {
     // An ADVISORY (unverified) tenant profile — allow-listed for tenant but not
     // yet CRUD-verified, so default-deny hides it from user namespaces.
     const advisoryTenantProfile = {
-      constraint: { allowed: ['shared' as const, 'default' as const, 'custom' as const], enforced: false },
+      constraint: {
+        allowed: ['shared' as const, 'default' as const, 'custom' as const],
+        enforced: false,
+      },
       recommendation: { primary: 'custom' as const, rationale: 'Unverified tenant guess' },
       classification: { category: 'general', multiTenantPattern: 'per-tenant' as const },
     };
@@ -999,7 +1005,7 @@ describe('Resource Types Registry', () => {
       expect(verified).toBeDefined();
       if (verified) {
         expect(isResourceTypeAvailableForNamespace(verified, 'system')).toBe(false);
-        expect(isResourceTypeAvailableForNamespace(verified, 'r-mordasiewicz')).toBe(true);
+        expect(isResourceTypeAvailableForNamespace(verified, 'demo-app')).toBe(true);
         expect(isResourceTypeAvailableForNamespace(verified, 'shared')).toBe(true);
       }
     });
