@@ -37,24 +37,22 @@ function buildSections(
   const build = (provider as unknown as { extractSpecDrivenSections: SectionBuilder }).extractSpecDrivenSections.bind(
     provider,
   );
-  return build(resourceKey, metadata, systemMetadata, spec, 'r-mordasiewicz');
+  return build(resourceKey, metadata, systemMetadata, spec, 'demo-app');
 }
 
-// Fixture modelled on the acme-bankexample-lb HTTP LB GET response from the console.
+// Fixture modelled on the example-corp-lb HTTP LB GET response from the console.
 const HTTP_LB_METADATA = {
-  name: 'acme-bankexample-lb',
-  description: 'ACME APISEC staging demo LB for acme.bankexample.com',
-  labels: { 'ves.io/app_type': 'ves-io-acme-api-def' },
+  name: 'example-corp-lb',
+  description: 'Example Corp API Security staging demo LB for api.example.com',
+  labels: { 'ves.io/app_type': 'ves-io-example-corp-api-def' },
 };
-const HTTP_LB_SYSTEM_METADATA = { uid: 'abc-123', creator_id: 'demo@f5.com' };
+const HTTP_LB_SYSTEM_METADATA = { uid: 'abc-123', creator_id: 'dana@example.com' };
 const HTTP_LB_SPEC: Record<string, unknown> = {
-  domains: ['acme.bankexample.com'],
+  domains: ['api.example.com'],
   http: { port: 80, dns_volterra_managed: false },
-  default_route_pools: [
-    { pool: { name: 'acme-bankexample-pool', namespace: 'r-mordasiewicz' }, weight: 1, priority: 1 },
-  ],
-  app_firewall: { name: 'acme-waf' },
-  dns_info: [{ ip_address: '1.2.3.4' }],
+  default_route_pools: [{ pool: { name: 'example-corp-pool', namespace: 'demo-app' }, weight: 1, priority: 1 }],
+  app_firewall: { name: 'example-corp-waf' },
+  dns_info: [{ ip_address: '203.0.113.10' }],
   host_name: 'ves-io-abc123.ac.vh.ves.io',
   auto_cert_info: { auto_cert_state: 'AutoCertEnabled' },
   cert_state: 'AutoCertPresent',
@@ -90,13 +88,13 @@ describe('HTTP Load Balancer describe sections', () => {
     const keys = metadata?.fields.map((f) => f.key) ?? [];
     expect(keys).toContain('Description');
     expect(keys).toContain('Labels');
-    expect(metadata?.fields.find((f) => f.key === 'Description')?.value).toContain('ACME APISEC');
+    expect(metadata?.fields.find((f) => f.key === 'Description')?.value).toContain('Example Corp API Security');
   });
 
   it('Origins section surfaces the origin pool by name', () => {
     const origins = findSection(sections, 'Origins');
     const itemLabels = (origins?.subGroups ?? []).flatMap((sg) => sg.fields.map((f) => f.key));
-    expect(itemLabels).toContain('acme-bankexample-pool');
+    expect(itemLabels).toContain('example-corp-pool');
   });
 
   it('Host Name and DNS Information carry their live values', () => {
@@ -111,16 +109,20 @@ describe('HTTP Load Balancer describe sections', () => {
   it('Domains and LB Type shows the domain and the active HTTP listener', () => {
     const domains = findSection(sections, 'Domains and LB Type');
     const domainField = domains?.fields.find((f) => f.key === 'Domains');
-    expect(domainField?.value).toContain('acme.bankexample.com');
+    expect(domainField?.value).toContain('api.example.com');
   });
 });
 
 describe('App Firewall describe sections', () => {
   const sections = buildSections(
     'app_firewall',
-    { name: 'acme-app-fw' },
+    { name: 'example-corp-app-fw' },
     {},
-    { blocking: {}, detection_settings: { signature_selection_setting: {} }, enable_ai_enhancements: {} },
+    {
+      blocking: {},
+      detection_settings: { signature_selection_setting: {} },
+      enable_ai_enhancements: {},
+    },
   );
   const titles = sections.map((s) => s.title);
 
@@ -162,10 +164,10 @@ describe('Service Policy describe sections', () => {
 describe('TCP Load Balancer describe sections', () => {
   const sections = buildSections(
     'tcp_loadbalancer',
-    { name: 'acme-tcp-lb' },
+    { name: 'example-corp-tcp-lb' },
     {},
     {
-      domains: ['tcp.acme.example.com'],
+      domains: ['tcp.example.com'],
       listen_port: 8080,
       no_sni: {},
       origin_pools_weights: [{ pool: { name: 'tcp-pool' }, weight: 1 }],
@@ -174,7 +176,7 @@ describe('TCP Load Balancer describe sections', () => {
       service_policies_from_namespace: {},
       idle_timeout: 30000,
       host_name: 'ves-io-tcp.ac.vh.ves.io',
-      dns_info: [{ ip_address: '2.2.2.2' }],
+      dns_info: [{ ip_address: '203.0.113.20' }],
       auto_cert_info: { auto_cert_state: 'AutoCertEnabled' },
       cert_state: 'AutoCertPresent',
     },
@@ -199,7 +201,7 @@ describe('TCP Load Balancer describe sections', () => {
 
   it('Basic Configuration shows the domain and Origins by pool name', () => {
     const basic = findSection(sections, 'Basic Configuration');
-    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('tcp.acme.example.com');
+    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('tcp.example.com');
     const poolNames = (basic?.subGroups ?? []).flatMap((sg) => sg.fields.map((f) => f.key));
     expect(poolNames).toContain('tcp-pool');
   });
@@ -208,14 +210,14 @@ describe('TCP Load Balancer describe sections', () => {
 describe('CDN Load Balancer describe sections', () => {
   const sections = buildSections(
     'cdn_loadbalancer',
-    { name: 'acme-cdn' },
+    { name: 'example-corp-cdn' },
     {},
     {
-      domains: ['cdn.acme.example.com'],
+      domains: ['cdn.example.com'],
       https_auto_cert: {},
-      origin_pool: { public_name: { dns_name: 'origin.acme.example.com' } },
+      origin_pool: { public_name: { dns_name: 'origin.example.com' } },
       default_cache_action: { cache_ttl_mode: 'UseTTLfromOrigin' },
-      app_firewall: { name: 'acme-waf' },
+      app_firewall: { name: 'example-corp-waf' },
       host_name: 'ves-io-cdn.ac.vh.ves.io',
       state: 'VIRTUAL_HOST_READY',
     },
@@ -241,7 +243,7 @@ describe('CDN Load Balancer describe sections', () => {
 
   it('Basic Configuration shows the domain', () => {
     const basic = findSection(sections, 'Basic Configuration');
-    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('cdn.acme.example.com');
+    expect(basic?.fields.find((f) => f.key === 'Domains')?.value).toContain('cdn.example.com');
   });
 });
 

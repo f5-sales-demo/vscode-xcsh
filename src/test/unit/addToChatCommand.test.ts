@@ -22,8 +22,8 @@ function captureCommands(): Map<string, CommandHandler> {
 function makeNode(overrides: Record<string, unknown> = {}): ResourceNode {
   const data = {
     profileName: 'ctx',
-    namespace: 'r-mordasiewicz',
-    name: 'acme-bankexample-lb',
+    namespace: 'demo-app',
+    name: 'example-corp-lb',
     resourceTypeKey: 'http_loadbalancer',
     resourceType: {
       apiPath: 'http_loadbalancers',
@@ -56,7 +56,10 @@ describe('xcsh.addToChat command', () => {
   });
 
   it('fetches the resource and forwards { name, content } to xcsh.attachToChat', async () => {
-    const resource = { metadata: { name: 'acme-bankexample-lb' }, spec: { domains: ['acme.bankexample.com'] } };
+    const resource = {
+      metadata: { name: 'example-corp-lb' },
+      spec: { domains: ['api.example.com'] },
+    };
     const getWithOptions = jest.fn().mockResolvedValue(resource);
     const contextManager = {
       getClient: jest.fn().mockResolvedValue({ getWithOptions }),
@@ -68,12 +71,12 @@ describe('xcsh.addToChat command', () => {
 
     await addToChat?.(makeNode());
 
-    expect(getWithOptions).toHaveBeenCalledWith('r-mordasiewicz', 'http_loadbalancers', 'acme-bankexample-lb', {
+    expect(getWithOptions).toHaveBeenCalledWith('demo-app', 'http_loadbalancers', 'example-corp-lb', {
       apiBase: 'config',
       customGetPath: undefined,
     });
     expect(vscode.commands.executeCommand).toHaveBeenCalledWith('xcsh.attachToChat', {
-      name: 'acme-bankexample-lb.http_loadbalancers.json',
+      name: 'example-corp-lb.http_loadbalancers.json',
       content: JSON.stringify(resource, null, 2),
     });
   });
@@ -87,7 +90,11 @@ describe('xcsh.addToChat command', () => {
     await handlers.get('xcsh.addToChat')?.(
       makeNode({
         name: 'cached-thing',
-        resourceType: { apiPath: 'service_policys', apiBase: 'config', useListDataForDescribe: true },
+        resourceType: {
+          apiPath: 'service_policys',
+          apiBase: 'config',
+          useListDataForDescribe: true,
+        },
         fullResourceData: cached,
       }),
     );

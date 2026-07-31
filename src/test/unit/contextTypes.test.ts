@@ -88,7 +88,7 @@ describe('Token health computation', () => {
 
 describe('deriveTenantFromUrl', () => {
   it('extracts first hostname label from a valid F5 XC console URL', () => {
-    expect(deriveTenantFromUrl('https://acme.console.ves.volterra.io')).toBe('acme');
+    expect(deriveTenantFromUrl('https://example-corp.console.ves.volterra.io')).toBe('example-corp');
   });
 
   it('returns null for a dotless hostname', () => {

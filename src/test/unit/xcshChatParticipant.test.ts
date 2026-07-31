@@ -14,7 +14,7 @@ import {
 describe('buildPromptWithContext', () => {
   const baseContext: XCSHContext = {
     name: 'prod-tenant',
-    apiUrl: 'https://acme.console.ves.volterra.io/api',
+    apiUrl: 'https://example-corp.console.ves.volterra.io/api',
     apiToken: 'secret-token',
     defaultNamespace: 'app-ns',
   };
@@ -118,22 +118,22 @@ describe('formatStatusResponse', () => {
 describe('formatContextResponse', () => {
   it('formats context as markdown', () => {
     const ctx: XCSHContext = {
-      name: 'prod-acme',
-      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      name: 'prod-example-corp',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
       apiToken: 'secret',
       defaultNamespace: 'app-ns',
     };
     const result = formatContextResponse(ctx);
-    expect(result).toContain('prod-acme');
-    expect(result).toContain('acme.console.ves.volterra.io');
+    expect(result).toContain('prod-example-corp');
+    expect(result).toContain('example-corp.console.ves.volterra.io');
     expect(result).toContain('app-ns');
     expect(result).not.toContain('secret');
   });
 
   it('shows web-console username in the clear and masks the password', () => {
     const ctx: XCSHContext = {
-      name: 'prod-acme',
-      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      name: 'prod-example-corp',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
       apiToken: 'secret',
       defaultNamespace: 'app-ns',
       env: {
