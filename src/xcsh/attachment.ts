@@ -15,7 +15,7 @@ export const MAX_ATTACHMENT_BYTES = 512 * 1024;
 
 /**
  * Build a descriptive attachment name for a resource JSON payload, e.g.
- * `("http_loadbalancers", "acme-bankexample-lb")` → `"acme-bankexample-lb.http_loadbalancers.json"`.
+ * `("http_loadbalancers", "example-corp-lb")` → `"example-corp-lb.http_loadbalancers.json"`.
  *
  * Characters outside the filename-safe set are collapsed to `-` so the chip
  * label reads cleanly regardless of the resource name.

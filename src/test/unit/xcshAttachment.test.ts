@@ -4,8 +4,8 @@ import { buildAttachmentName, MAX_ATTACHMENT_BYTES } from '../../xcsh/attachment
 
 describe('buildAttachmentName', () => {
   it('combines resource name and type into a .json filename', () => {
-    expect(buildAttachmentName('http_loadbalancers', 'acme-bankexample-lb')).toBe(
-      'acme-bankexample-lb.http_loadbalancers.json',
+    expect(buildAttachmentName('http_loadbalancers', 'example-corp-lb')).toBe(
+      'example-corp-lb.http_loadbalancers.json',
     );
   });
 

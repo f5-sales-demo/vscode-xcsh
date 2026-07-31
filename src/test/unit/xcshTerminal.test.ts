@@ -7,17 +7,17 @@ describe('buildTerminalEnv', () => {
   it('builds env vars correctly from context', () => {
     const ctx: XCSHContext = {
       name: 'staging',
-      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
       apiToken: 'tok-abc-123',
       defaultNamespace: 'web-ns',
     };
 
     const env = buildTerminalEnv(ctx);
 
-    expect(env.XCSH_API_URL).toBe('https://acme.console.ves.volterra.io/api');
+    expect(env.XCSH_API_URL).toBe('https://example-corp.console.ves.volterra.io/api');
     expect(env.XCSH_API_TOKEN).toBe('tok-abc-123');
     expect(env.XCSH_NAMESPACE).toBe('web-ns');
-    expect(env.XCSH_TENANT).toBe('acme');
+    expect(env.XCSH_TENANT).toBe('example-corp');
     expect(env.XCSH_CONTEXT_NAME).toBe('staging');
   });
 
@@ -54,7 +54,7 @@ describe('buildTerminalEnv', () => {
   it('injects generic env vars including web-console auth credentials', () => {
     const ctx: XCSHContext = {
       name: 'auth',
-      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
       apiToken: 'tok',
       defaultNamespace: 'system',
       env: {
@@ -74,7 +74,7 @@ describe('buildTerminalEnv', () => {
   it('never lets a context env shadow reserved control vars', () => {
     const ctx: XCSHContext = {
       name: 'shadow',
-      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
       apiToken: 'real-token',
       defaultNamespace: 'system',
       // These reserved keys must be ignored; the core fields win.
@@ -84,14 +84,14 @@ describe('buildTerminalEnv', () => {
     const env = buildTerminalEnv(ctx);
 
     expect(env.XCSH_API_TOKEN).toBe('real-token');
-    expect(env.XCSH_TENANT).toBe('acme');
+    expect(env.XCSH_TENANT).toBe('example-corp');
     expect(env.XCSH_NAMESPACE).toBe('system');
   });
 
   it('only injects XCSH_ keys — refuses hijack vars and other non-XCSH keys', () => {
     const ctx: XCSHContext = {
       name: 'malicious',
-      apiUrl: 'https://acme.console.ves.volterra.io/api',
+      apiUrl: 'https://example-corp.console.ves.volterra.io/api',
       apiToken: 'tok',
       defaultNamespace: 'system',
       env: {
