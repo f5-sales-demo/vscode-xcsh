@@ -3,7 +3,7 @@
 /**
  * API Spec Freshness Check Script
  *
- * Checks if local F5 XC API specifications are up-to-date with upstream.
+ * Checks local F5 XC API specifications against one pinned upstream release.
  * Can optionally auto-sync if outdated.
  *
  * Usage:
@@ -15,8 +15,14 @@
  */
 
 import * as fs from 'node:fs';
-import * as https from 'node:https';
 import * as path from 'node:path';
+
+import {
+  DISPATCH_EVENT_TYPE,
+  localSpecsMatchDelivery,
+  resolveSpecDelivery,
+  SPEC_STATE_FILENAME,
+} from './spec-delivery';
 
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 const OPENAPI_PATH = path.join(PROJECT_ROOT, 'docs/specifications/api/openapi.json');
@@ -24,19 +30,10 @@ const UPSTREAM_REPO = 'f5-sales-demo/api-specs-enriched';
 
 interface SpecStatus {
   currentVersion: string;
-  latestVersion: string;
+  expectedVersion: string;
   isUpToDate: boolean;
   upstreamUrl: string;
   error?: string;
-}
-
-interface GitHubRelease {
-  tag_name: string;
-  assets: Array<{
-    name: string;
-    browser_download_url: string;
-  }>;
-  html_url: string;
 }
 
 /**
@@ -58,73 +55,29 @@ function getCurrentVersion(): string {
 }
 
 /**
- * Fetch latest release info from GitHub API
+ * Check spec freshness against the resolved immutable delivery.
  */
-async function fetchLatestRelease(): Promise<GitHubRelease> {
-  return new Promise((resolve, reject) => {
-    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN;
-    const headers: Record<string, string> = {
-      'User-Agent': 'vscode-xcsh',
-      Accept: 'application/vnd.github.v3+json',
-    };
-    if (token) {
-      headers.Authorization = `token ${token}`;
-    }
-    const options = {
-      hostname: 'api.github.com',
-      path: `/repos/${UPSTREAM_REPO}/releases/latest`,
-      method: 'GET',
-      headers,
-    };
-
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', (chunk: Buffer) => {
-        data += chunk.toString();
-      });
-      res.on('end', () => {
-        if (res.statusCode === 200) {
-          try {
-            resolve(JSON.parse(data) as GitHubRelease);
-          } catch {
-            reject(new Error('Failed to parse GitHub API response'));
-          }
-        } else if (res.statusCode === 404) {
-          reject(new Error('No releases found in upstream repository'));
-        } else {
-          reject(new Error(`GitHub API error: ${res.statusCode}`));
-        }
-      });
-    });
-
-    req.on('error', reject);
-    req.end();
-  });
-}
-
-/**
- * Check spec freshness by comparing local and upstream versions
- */
-async function checkSpecFreshness(): Promise<SpecStatus> {
+function checkSpecFreshness(): SpecStatus {
   const currentVersion = getCurrentVersion();
 
   try {
-    const release = await fetchLatestRelease();
-    const latestVersion = release.tag_name.replace(/^v/, '');
+    const delivery = resolveSpecDelivery();
+    const stateFile = path.join(PROJECT_ROOT, 'docs', 'specifications', 'api', SPEC_STATE_FILENAME);
 
     return {
       currentVersion,
-      latestVersion,
-      isUpToDate: currentVersion === latestVersion,
-      upstreamUrl: release.html_url,
+      expectedVersion: delivery.version,
+      isUpToDate:
+        currentVersion === delivery.version && localSpecsMatchDelivery(path.dirname(OPENAPI_PATH), stateFile, delivery),
+      upstreamUrl: `https://github.com/${UPSTREAM_REPO}/releases/tag/${delivery.releaseTag}`,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return {
       currentVersion,
-      latestVersion: 'unknown',
+      expectedVersion: 'unknown',
       isUpToDate: false,
-      upstreamUrl: `https://github.com/${UPSTREAM_REPO}/releases/latest`,
+      upstreamUrl: `https://github.com/${UPSTREAM_REPO}/releases`,
       error: message,
     };
   }
@@ -191,7 +144,7 @@ Examples:
     return;
   }
 
-  const status = await checkSpecFreshness();
+  const status = checkSpecFreshness();
 
   if (jsonOutput) {
     console.log(JSON.stringify(status, null, 2));
@@ -203,26 +156,17 @@ Examples:
     console.log(`   Current version: ${status.currentVersion}`);
     console.log(`   Unable to check upstream version`);
 
-    // --warn explicitly means "never fail" — honor that contract.
-    if (warnOnly) {
+    // --warn is a developer-only escape hatch. It can never weaken an enriched
+    // release delivery, even if a caller mistakenly supplies it in CI.
+    const isSpecDispatch =
+      process.env.GITHUB_EVENT_NAME === 'repository_dispatch' &&
+      process.env.SPEC_DISPATCH_ACTION === DISPATCH_EVENT_TYPE;
+    if (warnOnly && !isSpecDispatch) {
       console.warn('⚠️  Proceeding despite unverifiable freshness (--warn).');
       process.exit(0);
     }
-
-    // Fail loudly only when there are no local specs to build against — a
-    // freshness re-check that we cannot complete (e.g. a transient API rate
-    // limit) must NOT fail a build whose specs are already present. The
-    // authoritative freshness gate is `specs:sync` (sync-specs.ts), which is
-    // always run before generation and exits non-zero on its own fetch errors.
-    const specsUnusable = status.currentVersion === 'none' || status.currentVersion === 'error';
-    if (specsUnusable) {
-      // No local specs to fall back on — generation would build against nothing.
-      console.error('❌ No local specs present and upstream is unreachable. Cannot proceed.');
-      process.exit(1);
-    }
-    // Specs are present; we just could not re-verify freshness. Proceed.
-    console.warn('⚠️  Proceeding with present local specs (freshness unverified).');
-    process.exit(0);
+    console.error('❌ Spec delivery cannot be verified. Refusing to use present or latest specs.');
+    process.exit(1);
   }
 
   if (status.isUpToDate) {
@@ -231,19 +175,19 @@ Examples:
   }
 
   // Specs are outdated
-  console.log(`📦 Specs outdated: ${status.currentVersion} → ${status.latestVersion}`);
+  console.log(`📦 Specs outdated: ${status.currentVersion} → ${status.expectedVersion}`);
 
   if (shouldSync) {
     const success = await runSync();
     if (success) {
-      console.log(`✅ Specs synced to version ${status.latestVersion}`);
+      console.log(`✅ Specs synced to version ${status.expectedVersion}`);
       process.exit(0);
     } else {
       console.error('❌ Failed to sync specs');
       process.exit(1);
     }
   } else if (warnOnly) {
-    console.warn(`⚠️  Warning: Specs are outdated. Run 'npm run specs:sync' to update.`);
+    console.warn(`⚠️  Warning: Specs differ from the pinned release. Run 'npm run specs:sync' to update.`);
     process.exit(0);
   } else {
     console.log(`   Run 'npm run specs:sync' to update`);
