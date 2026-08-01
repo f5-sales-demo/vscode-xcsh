@@ -12,22 +12,314 @@ on:
     types: [theme-updated, enriched-specs-updated]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Serialize deliveries so a duplicate cannot pass validation while the first
+  # run is still recording its receipt. Main publication must never be canceled
+  # after producing external side effects; only replace superseded PR validation.
+  group: ${{ github.workflow }}-${{ github.event_name == 'repository_dispatch' && 'spec-delivery' || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Least-privilege default for EVERY job. The org sets
 # default_workflow_permissions=write, so without this block each job — including the
 # read-only validate/test/build/security jobs — would receive a writable token.
-# The `release` job declares its own broader permissions; it is the only job that
-# writes (git push, gh pr create, gh release create).
+# Release and delivery-transition jobs declare narrowly documented write access.
 permissions:
   contents: read
 
 jobs:
+  spec-delivery:
+    name: Resolve Spec Delivery
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # inspect immutable delivery and receipt branches
+      pull-requests: read # distinguish active, merged, and abandoned delivery PRs
+    outputs:
+      bundle_sha256: ${{ steps.contract.outputs.bundle_sha256 }}
+      process: ${{ steps.pending.outputs.process }}
+      release_tag: ${{ steps.contract.outputs.release_tag }}
+      version: ${{ steps.contract.outputs.version }}
+      delivery_id: ${{ steps.contract.outputs.delivery_id }}
+      publication_epoch: ${{ steps.contract.outputs.publication_epoch }}
+      publication_tag: ${{ steps.contract.outputs.publication_tag }}
+      target_commit: ${{ steps.contract.outputs.target_commit }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Verify spec delivery workflow contract
+        run: bash tests/test-spec-delivery-contract.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate immutable release and delivery identity
+        id: contract
+        env:
+          SPEC_DISPATCH_ACTION: ${{ github.event.action }}
+          SPEC_DELIVERY_ID: ${{ github.event.client_payload.delivery_id }}
+          SPEC_RELEASE_TAG: ${{ github.event.client_payload.release_tag }}
+          SPEC_RELEASE_VERSION: ${{ github.event.client_payload.version }}
+          SPEC_TARGET_COMMIT: ${{ github.event.client_payload.target_commit }}
+          SPEC_TRIGGER_SOURCE: ${{ github.event.client_payload.trigger_source }}
+        run: npx ts-node scripts/spec-delivery.ts --github-output
+
+      - name: Enforce pending-delivery idempotency
+        id: pending
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROCESS: ${{ steps.contract.outputs.process }}
+          EVENT_ACTION: ${{ github.event.action }}
+          RELEASE_TAG: ${{ steps.contract.outputs.release_tag }}
+          DELIVERY_ID: ${{ steps.contract.outputs.delivery_id }}
+          BUNDLE_SHA256: ${{ steps.contract.outputs.bundle_sha256 }}
+          PUBLICATION_EPOCH: ${{ steps.contract.outputs.publication_epoch }}
+          PUBLICATION_TAG: ${{ steps.contract.outputs.publication_tag }}
+          RELEASE_VERSION: ${{ steps.contract.outputs.version }}
+          TARGET_COMMIT: ${{ steps.contract.outputs.target_commit }}
+        run: |
+          set -euo pipefail
+
+          verify_delivery_ref() {
+            local ref=$1
+            git show "${ref}:tools/spec-release.json" | jq -e \
+              --arg tag "$RELEASE_TAG" \
+              --arg commit "$TARGET_COMMIT" \
+              --arg version "$RELEASE_VERSION" \
+              '.release_tag == $tag and .target_commit == $commit and .version == $version and (.bundle_sha256 | test("^[0-9a-f]{64}$"))' \
+              >/dev/null
+            git show "${ref}:tools/spec-delivery-pending.json" | jq -e \
+              --arg id "$DELIVERY_ID" \
+              --arg tag "$RELEASE_TAG" \
+              --arg commit "$TARGET_COMMIT" \
+              --arg version "$RELEASE_VERSION" \
+              '.delivery_id == $id and (.publication_epoch | test("^[0-9]{1,12}$")) and
+               (.publication_tag | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]{12}$")) and .release_tag == $tag and
+               .target_commit == $commit and .trigger_source == "f5-sales-demo/api-specs-enriched" and
+               .version == $version and (.bundle_sha256 | test("^[0-9a-f]{64}$"))' \
+              >/dev/null
+            local release_bundle pending_bundle pending_epoch pending_tag expected_tag
+            local upstream_digest tag_object tag_sha tag_type
+            release_bundle=$(git show "${ref}:tools/spec-release.json" | jq -er '.bundle_sha256')
+            pending_bundle=$(git show "${ref}:tools/spec-delivery-pending.json" | jq -er '.bundle_sha256')
+            pending_epoch=$(git show "${ref}:tools/spec-delivery-pending.json" | jq -er '.publication_epoch')
+            pending_tag=$(git show "${ref}:tools/spec-delivery-pending.json" | jq -er '.publication_tag')
+            # shellcheck disable=SC2016
+            expected_tag=$(node -e '
+              const date = new Date(Number(process.argv[1]) * 1000);
+              if (Number.isNaN(date.getTime())) process.exit(1);
+              const part = (value) => String(value).padStart(2, "0");
+              const timestamp = `${String(date.getUTCFullYear()).slice(-2)}${part(date.getUTCMonth() + 1)}${part(date.getUTCDate())}${part(date.getUTCHours())}${part(date.getUTCMinutes())}${part(date.getUTCSeconds())}`;
+              process.stdout.write(`v${process.argv[2]}-${timestamp}`);
+            ' "$pending_epoch" "$RELEASE_VERSION")
+            if [ "$release_bundle" != "$pending_bundle" ] || [ "$pending_tag" != "$expected_tag" ]; then
+              echo "::error::Resumed delivery files disagree with each other"
+              return 1
+            fi
+            upstream_digest=$(gh api \
+              "repos/f5-sales-demo/api-specs-enriched/releases/tags/${RELEASE_TAG}" | \
+              jq -er --arg name "f5xc-api-specs-${RELEASE_TAG}.zip" \
+                '.assets[] | select(.name == $name) | .digest')
+            if [ "$upstream_digest" != "sha256:${pending_bundle}" ]; then
+              echo "::error::Resumed delivery bundle disagrees with the immutable release asset"
+              return 1
+            fi
+            tag_object=$(gh api "repos/f5-sales-demo/api-specs-enriched/git/ref/tags/${RELEASE_TAG}" | jq -c '.object')
+            for _ in {1..10}; do
+              tag_sha=$(jq -er '.sha' <<<"$tag_object")
+              tag_type=$(jq -er '.type' <<<"$tag_object")
+              if [ "$tag_type" = "commit" ]; then
+                break
+              fi
+              if [ "$tag_type" != "tag" ]; then
+                echo "::error::Immutable release tag resolves to an unsupported object"
+                return 1
+              fi
+              tag_object=$(gh api "repos/f5-sales-demo/api-specs-enriched/git/tags/${tag_sha}" | jq -c '.object')
+            done
+            if [ "$tag_type" != "commit" ] || [ "$tag_sha" != "$TARGET_COMMIT" ]; then
+              echo "::error::Resumed delivery tag disagrees with the immutable target commit"
+              return 1
+            fi
+          }
+
+          verify_receipt_ref() {
+            local ref=$1
+            local allow_other_pending=${2:-false}
+            if git cat-file -e "${ref}:tools/spec-delivery-pending.json" 2>/dev/null; then
+              local pending_id
+              pending_id=$(git show "${ref}:tools/spec-delivery-pending.json" | jq -er '.delivery_id')
+              if [ "$allow_other_pending" != "true" ] || [ "$pending_id" = "$DELIVERY_ID" ]; then
+                echo "::error::Receipt still contains its pending-delivery marker"
+                return 1
+              fi
+            fi
+            git show "${ref}:tools/spec-deliveries.json" | jq -e \
+              --arg id "$DELIVERY_ID" \
+              --arg tag "$RELEASE_TAG" \
+              --arg commit "$TARGET_COMMIT" \
+              --arg version "$RELEASE_VERSION" \
+              '.deliveries[$id] == {release_tag:$tag,target_commit:$commit,version:$version}' \
+              >/dev/null
+            git show "${ref}:tools/spec-publications.json" | jq -e \
+              --arg id "$DELIVERY_ID" \
+              '.publications[$id] as $receipt |
+               ($receipt.bundle_sha256 | test("^[0-9a-f]{64}$")) and
+               ($receipt.marketplace_sha256 | test("^[0-9a-f]{64}$")) and
+               ($receipt.open_vsx_sha256 | test("^[0-9a-f]{64}$")) and
+               ($receipt.vsix_sha256 | test("^[0-9a-f]{64}$")) and
+               ($receipt.publication_epoch | test("^[0-9]{1,12}$")) and
+               ($receipt.publication_tag | test("^v[0-9]+\\.[0-9]+\\.[0-9]+-[0-9]{12}$")) and
+               ($receipt.marketplace_version | test("^[0-9]+\\.[0-9]+\\.[0-9]+$")) and
+               ($receipt.vsix_name | test("^[A-Za-z0-9._-]+\\.vsix$")) and
+               $receipt.marketplace_sha256 == $receipt.vsix_sha256 and
+               $receipt.open_vsx_sha256 == $receipt.vsix_sha256 and
+               $receipt.marketplace_version == $receipt.open_vsx_version' \
+              >/dev/null
+            local receipt_bundle receipt_epoch receipt_tag receipt_marketplace_version
+            local expected_tag expected_marketplace_version
+            receipt_bundle=$(git show "${ref}:tools/spec-publications.json" | jq -er --arg id "$DELIVERY_ID" '.publications[$id].bundle_sha256')
+            receipt_epoch=$(git show "${ref}:tools/spec-publications.json" | jq -er --arg id "$DELIVERY_ID" '.publications[$id].publication_epoch')
+            receipt_tag=$(git show "${ref}:tools/spec-publications.json" | jq -er --arg id "$DELIVERY_ID" '.publications[$id].publication_tag')
+            receipt_marketplace_version=$(git show "${ref}:tools/spec-publications.json" | jq -er --arg id "$DELIVERY_ID" '.publications[$id].marketplace_version')
+            # shellcheck disable=SC2016
+            expected_tag=$(node -e '
+              const date = new Date(Number(process.argv[1]) * 1000);
+              if (Number.isNaN(date.getTime())) process.exit(1);
+              const part = (value) => String(value).padStart(2, "0");
+              const timestamp = `${String(date.getUTCFullYear()).slice(-2)}${part(date.getUTCMonth() + 1)}${part(date.getUTCDate())}${part(date.getUTCHours())}${part(date.getUTCMinutes())}${part(date.getUTCSeconds())}`;
+              process.stdout.write(`v${process.argv[2]}-${timestamp}`);
+            ' "$receipt_epoch" "$RELEASE_VERSION")
+            # shellcheck disable=SC2016
+            expected_marketplace_version=$(node -e '
+              const timestamp = process.argv[2].slice(process.argv[2].lastIndexOf("-") + 1);
+              const major = process.argv[1].split(".")[0];
+              process.stdout.write(`${major}.${Number.parseInt(timestamp.slice(0, 4), 10)}.${Number.parseInt(timestamp.slice(4), 10)}`);
+            ' "$RELEASE_VERSION" "$expected_tag")
+            if [ "$receipt_tag" != "$expected_tag" ] ||
+              [ "$receipt_marketplace_version" != "$expected_marketplace_version" ]; then
+              echo "::error::Receipt marketplace version disagrees with its immutable publication identity"
+              return 1
+            fi
+            if [ -n "$BUNDLE_SHA256" ] && [ "$receipt_bundle" != "$BUNDLE_SHA256" ]; then
+              echo "::error::Receipt bundle SHA-256 disagrees with the pending delivery"
+              return 1
+            fi
+            if [ -n "$PUBLICATION_EPOCH" ] && [ "$receipt_epoch" != "$PUBLICATION_EPOCH" ]; then
+              echo "::error::Receipt publication epoch disagrees with the pending delivery"
+              return 1
+            fi
+            if [ -n "$PUBLICATION_TAG" ] && [ "$receipt_tag" != "$PUBLICATION_TAG" ]; then
+              echo "::error::Receipt publication tag disagrees with the pending delivery"
+              return 1
+            fi
+          }
+
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ -n "$DELIVERY_ID" ]; then
+            RECEIPT_BRANCH="spec-receipt/${RELEASE_TAG#v}-${DELIVERY_ID}"
+            PR_STATE=$(gh pr list --state all --base main --head "$RECEIPT_BRANCH" --json state --jq '.[0].state // ""')
+            if [ "$PR_STATE" = "OPEN" ]; then
+              if ! git ls-remote --exit-code --heads origin "refs/heads/${RECEIPT_BRANCH}" >/dev/null 2>&1; then
+                echo "::error::Open receipt PR has no remote branch"
+                exit 1
+              fi
+              git fetch origin "refs/heads/${RECEIPT_BRANCH}:refs/remotes/origin/${RECEIPT_BRANCH}"
+              EXPECTED_PATHS=$(printf '%s\n' tools/spec-deliveries.json tools/spec-delivery-pending.json tools/spec-publications.json | LC_ALL=C sort)
+              BRANCH_BASE=$(git merge-base "$GITHUB_SHA" "origin/${RECEIPT_BRANCH}")
+              ACTUAL_PATHS=$(git diff --name-only "$BRANCH_BASE" "origin/${RECEIPT_BRANCH}" | LC_ALL=C sort)
+              if [ "$ACTUAL_PATHS" != "$EXPECTED_PATHS" ]; then
+                echo "::error::Existing receipt branch changes unexpected paths"
+                exit 1
+              fi
+              verify_receipt_ref "origin/${RECEIPT_BRANCH}"
+              echo "::notice::The exact publication receipt already has an OPEN PR"
+              echo "process=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            elif [ "$PR_STATE" = "MERGED" ]; then
+              git fetch origin main
+              verify_receipt_ref origin/main true
+              echo "::notice::The exact publication receipt is already MERGED"
+              echo "process=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            elif git ls-remote --exit-code --heads origin "refs/heads/${RECEIPT_BRANCH}" >/dev/null 2>&1; then
+              echo "::notice::Resuming receipt branch without an active PR: ${RECEIPT_BRANCH}"
+            fi
+          fi
+
+          if [ "$GITHUB_EVENT_NAME" != "repository_dispatch" ] ||
+            [ "$EVENT_ACTION" != "enriched-specs-updated" ] ||
+            [ "$PROCESS" != "true" ]; then
+            echo "process=$PROCESS" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BRANCH="spec-delivery/${RELEASE_TAG#v}-${DELIVERY_ID}"
+          PR_STATE=$(gh pr list --state all --base main --head "$BRANCH" --json state --jq '.[0].state // ""')
+          if [ "$PR_STATE" = "OPEN" ]; then
+            if ! git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+              echo "::error::Open delivery PR has no remote branch"
+              exit 1
+            fi
+            git fetch origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
+            EXPECTED_PATHS=$(printf '%s\n' tools/spec-delivery-pending.json tools/spec-release.json | LC_ALL=C sort)
+            BRANCH_BASE=$(git merge-base "$GITHUB_SHA" "origin/${BRANCH}")
+            ACTUAL_PATHS=$(git diff --name-only "$BRANCH_BASE" "origin/${BRANCH}" | LC_ALL=C sort)
+            if [ "$ACTUAL_PATHS" != "$EXPECTED_PATHS" ]; then
+              echo "::error::Existing delivery branch changes unexpected paths"
+              exit 1
+            fi
+            verify_delivery_ref "origin/${BRANCH}"
+            echo "::notice::Delivery ${DELIVERY_ID} already has an OPEN PR"
+            echo "process=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif [ "$PR_STATE" = "MERGED" ]; then
+            git fetch origin main
+            if git cat-file -e "origin/main:tools/spec-delivery-pending.json" 2>/dev/null; then
+              MAIN_PENDING_ID=$(git show "origin/main:tools/spec-delivery-pending.json" | jq -er '.delivery_id')
+              if [ "$MAIN_PENDING_ID" = "$DELIVERY_ID" ]; then
+                verify_delivery_ref origin/main
+                echo "::notice::Delivery ${DELIVERY_ID} is already pending publication on main"
+                echo "process=false" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+            fi
+            verify_receipt_ref origin/main true
+            echo "::notice::Delivery ${DELIVERY_ID} is already published and recorded"
+            echo "process=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          elif git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            echo "::notice::Resuming delivery from branch without a PR: ${BRANCH}"
+          fi
+
+          PENDING_DELIVERIES=$(gh pr list --state open --search 'in:title "apply enriched specs"' --json number --jq length)
+          if [ "$PENDING_DELIVERIES" -ne 0 ]; then
+            echo "::error::Another spec delivery is still pending publication"
+            exit 1
+          fi
+          echo "process=true" >> "$GITHUB_OUTPUT"
+
   # Validate that code generation is deterministic
   validate-generation:
     name: Validate Generation
     runs-on: ubuntu-latest
+    needs: spec-delivery
+    if: needs.spec-delivery.outputs.process == 'true'
+    outputs:
+      bundle_sha256: ${{ steps.resolved-spec.outputs.bundle_sha256 }}
+      target_commit: ${{ steps.resolved-spec.outputs.target_commit }}
+    env:
+      SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
+      SPEC_DISPATCH_ACTION: ${{ github.event.action }}
+      SPEC_RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+      SPEC_RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
+      SPEC_TARGET_COMMIT: ${{ needs.spec-delivery.outputs.target_commit }}
+      SPEC_TRIGGER_SOURCE: ${{ github.event.client_payload.trigger_source }}
 
     steps:
       # `github.event.action` and every `client_payload.*` field are supplied by the
@@ -38,8 +330,8 @@ jobs:
         if: github.event_name == 'repository_dispatch'
         env:
           DISPATCH_ACTION: ${{ github.event.action }}
-          DISPATCH_SOURCE: ${{ github.event.client_payload.trigger_source || github.event.client_payload.source_repo }}
-          DISPATCH_VERSION: ${{ github.event.client_payload.version || 'N/A' }}
+          DISPATCH_SOURCE: ${{ github.event.client_payload.trigger_source }}
+          DISPATCH_VERSION: ${{ needs.spec-delivery.outputs.version }}
         run: |
           echo "::notice::Triggered by repository_dispatch (${DISPATCH_ACTION})"
           echo "Source: ${DISPATCH_SOURCE}"
@@ -57,10 +349,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Ensure specs are up-to-date
-        run: npm run specs:ensure
+      - name: Resolve and sync the exact spec bundle
+        id: resolved-spec
+        run: |
+          npm run specs:sync
+          jq -r '"bundle_sha256=\(.bundle_sha256)", "target_commit=\(.target_commit)"' \
+            "$SPEC_RESOLUTION_OUTPUT" >> "$GITHUB_OUTPUT"
+          jq -r '"SPEC_EXPECTED_BUNDLE_SHA256=\(.bundle_sha256)"' \
+            "$SPEC_RESOLUTION_OUTPUT" >> "$GITHUB_ENV"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SPEC_RESOLUTION_OUTPUT: ${{ runner.temp }}/spec-resolution.json
 
       - name: Generate files
         run: npm run generate
@@ -99,7 +398,15 @@ jobs:
   test:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs: validate-generation
+    needs: [spec-delivery, validate-generation]
+    env:
+      SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
+      SPEC_DISPATCH_ACTION: ${{ github.event.action }}
+      SPEC_RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+      SPEC_RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
+      SPEC_TARGET_COMMIT: ${{ needs.spec-delivery.outputs.target_commit }}
+      SPEC_TRIGGER_SOURCE: ${{ github.event.client_payload.trigger_source }}
+      SPEC_EXPECTED_BUNDLE_SHA256: ${{ needs.validate-generation.outputs.bundle_sha256 }}
     strategy:
       fail-fast: false
       matrix:
@@ -169,7 +476,15 @@ jobs:
   build:
     name: Build VSIX
     runs-on: ubuntu-latest
-    needs: test
+    needs: [spec-delivery, validate-generation, test]
+    env:
+      SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
+      SPEC_DISPATCH_ACTION: ${{ github.event.action }}
+      SPEC_RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+      SPEC_RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
+      SPEC_TARGET_COMMIT: ${{ needs.spec-delivery.outputs.target_commit }}
+      SPEC_TRIGGER_SOURCE: ${{ github.event.client_payload.trigger_source }}
+      SPEC_EXPECTED_BUNDLE_SHA256: ${{ needs.validate-generation.outputs.bundle_sha256 }}
 
     steps:
       - name: Checkout repository
@@ -229,22 +544,35 @@ jobs:
         run: npm ci
 
       - name: Run security audit
-        run: npm audit --audit-level=high
-        continue-on-error: true
+        run: npm run audit:security
 
   # Create release after successful build (main branch only)
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: [test, build]
+    needs: [spec-delivery, test, build, security]
     if: >-
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push' &&
       !contains(github.event.head_commit.message, 'chore(release)')
+    outputs:
+      marketplace_sha256: ${{ steps.channels.outputs.marketplace_sha256 }}
+      marketplace_version: ${{ steps.channels.outputs.marketplace_version }}
+      open_vsx_sha256: ${{ steps.channels.outputs.open_vsx_sha256 }}
+      open_vsx_version: ${{ steps.channels.outputs.open_vsx_version }}
+      publication_tag: ${{ steps.publication.outputs.publication_tag }}
+      vsix_name: ${{ steps.publication.outputs.vsix_name }}
+      vsix_sha256: ${{ steps.publication.outputs.vsix_sha256 }}
     permissions:
-      contents: write
-      issues: write
-      pull-requests: write
+      # Create the immutable tag and GitHub Release asset.
+      contents: write # create the immutable tag and GitHub Release asset
+      # Open the version-bump tracking issue.
+      issues: write # open the version-bump tracking issue
+      # Open and enable auto-merge on the version-bump PR.
+      pull-requests: write # open and auto-merge the version-bump PR
+    env:
+      SPEC_RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+      SPEC_RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
 
     steps:
       - name: Checkout repository
@@ -268,11 +596,29 @@ jobs:
 
       - name: Generate version
         id: version
+        env:
+          PENDING_PUBLICATION_EPOCH: ${{ needs.spec-delivery.outputs.publication_epoch }}
+          PENDING_PUBLICATION_TAG: ${{ needs.spec-delivery.outputs.publication_tag }}
         run: |
+          export SOURCE_DATE_EPOCH
+          if [ -n "$PENDING_PUBLICATION_TAG" ] && [ -n "$PENDING_PUBLICATION_EPOCH" ]; then
+            export RELEASE_TAG="$PENDING_PUBLICATION_TAG"
+            SOURCE_DATE_EPOCH="$PENDING_PUBLICATION_EPOCH"
+          elif [ -z "$PENDING_PUBLICATION_TAG" ] && [ -z "$PENDING_PUBLICATION_EPOCH" ]; then
+            SOURCE_DATE_EPOCH=$(git show -s --format=%ct "$GITHUB_SHA")
+          else
+            echo "::error::Pending publication identity is incomplete"
+            exit 1
+          fi
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH" >> "$GITHUB_ENV"
           VERSION_JSON=$(npm run version:json --silent)
           VERSION=$(echo "$VERSION_JSON" | jq -r '.version')
           SEMVER=$(echo "$VERSION_JSON" | jq -r '.semver')
           UPSTREAM=$(echo "$VERSION_JSON" | jq -r '.upstream')
+          if [ -n "$PENDING_PUBLICATION_TAG" ] && [ "v${VERSION}" != "$PENDING_PUBLICATION_TAG" ]; then
+            echo "::error::Generated publication tag disagrees with the pending delivery"
+            exit 1
+          fi
           {
             echo "version=$VERSION"
             echo "semver=$SEMVER"
@@ -282,14 +628,39 @@ jobs:
 
       - name: Create and push tag
         env:
+          PENDING_PUBLICATION_TAG: ${{ needs.spec-delivery.outputs.publication_tag }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           TAG="v${VERSION}"
-          git tag -a "$TAG" -m "Release $TAG"
-          git push origin "$TAG"
-          echo "🏷️ Created tag: $TAG"
+          if git show-ref --verify --quiet "refs/tags/$TAG"; then
+            TAG_COMMIT=$(git rev-list -n 1 "$TAG")
+            if [ "$TAG_COMMIT" != "$GITHUB_SHA" ]; then
+              if [ -z "$PENDING_PUBLICATION_TAG" ]; then
+                echo "::error::Existing $TAG resolves to a different commit"
+                exit 1
+              fi
+              TAG_PENDING=$(mktemp)
+              TAG_PIN=$(mktemp)
+              git show "$TAG_COMMIT:tools/spec-delivery-pending.json" > "$TAG_PENDING"
+              git show "$TAG_COMMIT:tools/spec-release.json" > "$TAG_PIN"
+              if ! cmp -s "$TAG_PENDING" tools/spec-delivery-pending.json ||
+                ! cmp -s "$TAG_PIN" tools/spec-release.json; then
+                echo "::error::Existing publication tag belongs to different delivery content"
+                exit 1
+              fi
+              git checkout --detach "$TAG_COMMIT"
+              echo "::notice::Retrying the exact source commit already bound to $TAG"
+            else
+              echo "::notice::$TAG already resolves to this release commit"
+            fi
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "🏷️ Created tag: $TAG"
+          fi
+          echo "RELEASE_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
 
       - name: Create version bump PR
         env:
@@ -308,16 +679,55 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git checkout -b "$BRANCH"
-          npm run version:update
-          git add package.json
-          git commit -m "chore(release): v${VERSION}"
-          git push origin "$BRANCH"
+          PR_STATE=$(gh pr list --state all --head "$BRANCH" --json state --jq '.[0].state // ""')
+          REMOTE_EXISTS=false
+          if git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            REMOTE_EXISTS=true
+            git fetch origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
+            EXPECTED_PATHS=package.json
+            BRANCH_BASE=$(git merge-base "$RELEASE_SOURCE_SHA" "origin/${BRANCH}")
+            ACTUAL_PATHS=$(git diff --name-only "$BRANCH_BASE" "origin/${BRANCH}" | LC_ALL=C sort)
+            if [ "$ACTUAL_PATHS" != "$EXPECTED_PATHS" ]; then
+              echo "::error::Existing version bump branch changes unexpected paths"
+              exit 1
+            fi
+            BASE_PACKAGE=$(mktemp)
+            EXPECTED_PACKAGE=$(mktemp)
+            REMOTE_PACKAGE=$(mktemp)
+            git show "${RELEASE_SOURCE_SHA}:package.json" > "$BASE_PACKAGE"
+            jq -S --arg version "$SEMVER" '.version = $version' "$BASE_PACKAGE" > "$EXPECTED_PACKAGE"
+            git show "origin/${BRANCH}:package.json" | jq -S . > "$REMOTE_PACKAGE"
+            if ! cmp -s "$EXPECTED_PACKAGE" "$REMOTE_PACKAGE"; then
+              echo "::error::Existing version bump branch contains different package content"
+              exit 1
+            fi
+          fi
+
+          if [ "$PR_STATE" = "MERGED" ]; then
+            echo "::notice::Version bump PR is already merged"
+            exit 0
+          fi
+          if [ "$PR_STATE" = "OPEN" ]; then
+            if [ "$REMOTE_EXISTS" != "true" ]; then
+              echo "::error::Open version bump PR has no remote branch"
+              exit 1
+            fi
+            gh pr merge "$BRANCH" --auto --squash
+            exit 0
+          fi
+
+          if [ "$REMOTE_EXISTS" != "true" ]; then
+            git checkout -b "$BRANCH"
+            npm run version:update
+            git add package.json
+            git commit -m "chore(release): v${VERSION}"
+            git push origin "$BRANCH"
+          fi
 
           ISSUE_URL=$(gh issue create \
             --title "chore(release): v${VERSION}" \
-            --body "Automated version bump to v${VERSION}." 2>&1) || true
-          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
+            --body "Automated version bump to v${VERSION}.")
+          ISSUE_NUMBER=${ISSUE_URL##*/}
 
           PR_BODY="Closes #${ISSUE_NUMBER}
 
@@ -332,7 +742,7 @@ jobs:
             --title "chore(release): v${VERSION}" \
             --body "$PR_BODY"
 
-          gh pr merge "$BRANCH" --auto --squash || echo "Auto-merge enabled (will merge when checks pass)"
+          gh pr merge "$BRANCH" --auto --squash
 
           echo "✅ Version bump PR created for v${VERSION}"
 
@@ -349,21 +759,37 @@ jobs:
           npm run package
           npx vsce package --no-dependencies
 
+      - name: Find VSIX file
+        id: vsix
+        run: echo "filename=$(ls ./*.vsix)" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
           VERSION_OUT: ${{ steps.version.outputs.version }}
           UPSTREAM_OUT: ${{ steps.version.outputs.upstream }}
+          VSIX_FILE: ${{ steps.vsix.outputs.filename }}
         run: |
           TAG="v${VERSION_OUT}"
-          VSIX_FILE=$(ls ./*.vsix)
 
           # Generate release notes from recent commits
           NOTES=$(git log --oneline -10 --no-merges --format="- %s")
 
-          gh release create "$TAG" \
-            --title "Release $TAG" \
-            --notes "## Changes
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            VSIX_NAME=$(basename "$VSIX_FILE")
+            EXISTING_DIGEST=$(gh api \
+              "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" | \
+              jq -r --arg name "$VSIX_NAME" '.assets[] | select(.name == $name) | .digest')
+            if [ -z "$EXISTING_DIGEST" ] || [ "$EXISTING_DIGEST" = "null" ]; then
+              gh release upload "$TAG" "$VSIX_FILE"
+              echo "::notice::Uploaded the missing exact asset to existing release $TAG"
+            else
+              echo "::notice::GitHub Release $TAG already exists; verifying its exact asset"
+            fi
+          else
+            gh release create "$TAG" \
+              --title "Release $TAG" \
+              --notes "## Changes
 
           Based on F5 XC API version: ${UPSTREAM_OUT}
 
@@ -372,13 +798,33 @@ jobs:
 
           ---
           📦 Download the \`.vsix\` file and install manually, or wait for VS Code Marketplace sync." \
-            "$VSIX_FILE"
+              "$VSIX_FILE"
+          fi
 
           echo "✅ Release created: $TAG"
 
-      - name: Find VSIX file
-        id: vsix
-        run: echo "filename=$(ls ./*.vsix)" >> "$GITHUB_OUTPUT"
+      - name: Verify published VSIX identity
+        id: publication
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          PUBLICATION_TAG: v${{ steps.version.outputs.version }}
+          VSIX_FILE: ${{ steps.vsix.outputs.filename }}
+        run: |
+          set -euo pipefail
+          VSIX_NAME=$(basename "$VSIX_FILE")
+          VSIX_SHA256=$(shasum -a 256 "$VSIX_FILE" | awk '{print $1}')
+          REMOTE_DIGEST=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${PUBLICATION_TAG}" | \
+            jq -r --arg name "$VSIX_NAME" '.assets[] | select(.name == $name) | .digest')
+          if [ "$REMOTE_DIGEST" != "sha256:${VSIX_SHA256}" ]; then
+            echo "::error::Published VSIX digest does not match the locally built artifact"
+            exit 1
+          fi
+          {
+            echo "publication_tag=$PUBLICATION_TAG"
+            echo "vsix_name=$VSIX_NAME"
+            echo "vsix_sha256=$VSIX_SHA256"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Publish to Open VSX Registry
         if: ${{ !contains(github.ref, 'BETA') }}
@@ -387,7 +833,6 @@ jobs:
           pat: ${{ secrets.OPEN_VSX_TOKEN }}
           extensionFile: ${{ steps.vsix.outputs.filename }}
           skipDuplicate: true
-        continue-on-error: true
 
       - name: Publish to VS Code Marketplace
         if: ${{ !contains(github.ref, 'BETA') }}
@@ -397,4 +842,485 @@ jobs:
           registryUrl: https://marketplace.visualstudio.com
           extensionFile: ${{ steps.vsix.outputs.filename }}
           skipDuplicate: true
-        continue-on-error: true
+
+      - name: Verify required marketplace artifacts
+        id: channels
+        env:
+          EXPECTED_SHA256: ${{ steps.publication.outputs.vsix_sha256 }}
+          EXTENSION_VERSION: ${{ steps.version.outputs.semver }}
+        run: |
+          set -euo pipefail
+          VERIFY_DIR=$(mktemp -d)
+          trap 'rm -rf "$VERIFY_DIR"' EXIT
+
+          OPEN_VSX_URL="https://open-vsx.org/api/f5-sales-demo/xcsh/${EXTENSION_VERSION}"
+          OPEN_VSX_SHA256=""
+          for attempt in {1..12}; do
+            if curl -fsSL "$OPEN_VSX_URL" -o "$VERIFY_DIR/open-vsx.json"; then
+              DOWNLOAD_URL=$(jq -er '.files.download' "$VERIFY_DIR/open-vsx.json")
+              if [[ "$DOWNLOAD_URL" == https://open-vsx.org/* ]] &&
+                curl -fsSL "$DOWNLOAD_URL" -o "$VERIFY_DIR/open-vsx.vsix"; then
+                OPEN_VSX_SHA256=$(shasum -a 256 "$VERIFY_DIR/open-vsx.vsix" | awk '{print $1}')
+                if [ "$OPEN_VSX_SHA256" = "$EXPECTED_SHA256" ]; then
+                  break
+                fi
+              fi
+            fi
+            OPEN_VSX_SHA256=""
+            if [ "$attempt" -lt 12 ]; then sleep 5; fi
+          done
+          if [ "$OPEN_VSX_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::Open VSX did not serve the exact published VSIX"
+            exit 1
+          fi
+
+          MARKETPLACE_URL="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/f5-sales-demo/vsextensions/xcsh/${EXTENSION_VERSION}/vspackage"
+          MARKETPLACE_SHA256=""
+          for attempt in {1..12}; do
+            if curl -fsSL "$MARKETPLACE_URL" -o "$VERIFY_DIR/marketplace.download"; then
+              if gzip -t "$VERIFY_DIR/marketplace.download" >/dev/null 2>&1; then
+                gzip -dc "$VERIFY_DIR/marketplace.download" > "$VERIFY_DIR/marketplace.vsix"
+              else
+                command cp -f "$VERIFY_DIR/marketplace.download" "$VERIFY_DIR/marketplace.vsix"
+              fi
+              MARKETPLACE_SHA256=$(shasum -a 256 "$VERIFY_DIR/marketplace.vsix" | awk '{print $1}')
+              if [ "$MARKETPLACE_SHA256" = "$EXPECTED_SHA256" ]; then
+                break
+              fi
+            fi
+            MARKETPLACE_SHA256=""
+            if [ "$attempt" -lt 12 ]; then sleep 5; fi
+          done
+          if [ "$MARKETPLACE_SHA256" != "$EXPECTED_SHA256" ]; then
+            echo "::error::VS Code Marketplace did not serve the exact published VSIX"
+            exit 1
+          fi
+
+          {
+            echo "marketplace_sha256=$MARKETPLACE_SHA256"
+            echo "marketplace_version=$EXTENSION_VERSION"
+            echo "open_vsx_sha256=$OPEN_VSX_SHA256"
+            echo "open_vsx_version=$EXTENSION_VERSION"
+          } >> "$GITHUB_OUTPUT"
+
+  stage-spec-delivery:
+    name: Stage Spec Delivery
+    runs-on: ubuntu-latest
+    needs: [spec-delivery, validate-generation, test, build, security]
+    if: >-
+      github.event_name == 'repository_dispatch' &&
+      github.event.action == 'enriched-specs-updated' &&
+      needs.spec-delivery.outputs.process == 'true' &&
+      needs.test.result == 'success' &&
+      needs.build.result == 'success' &&
+      needs.security.result == 'success'
+    permissions:
+      # Push the reviewed delivery-pin branch.
+      contents: write # push the reviewed delivery-pin branch
+      # Open the delivery tracking issue.
+      issues: write # open the delivery tracking issue
+      # Open and enable auto-merge on the delivery PR.
+      pull-requests: write # open and auto-merge the delivery PR
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Persist exact release pin through a reviewed main-branch PR
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
+          BUNDLE_SHA256: ${{ needs.validate-generation.outputs.bundle_sha256 }}
+          RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+          RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
+          TARGET_COMMIT: ${{ needs.spec-delivery.outputs.target_commit }}
+          VERIFIED_TARGET_COMMIT: ${{ needs.validate-generation.outputs.target_commit }}
+        run: |
+          set -euo pipefail
+          BRANCH="spec-delivery/${RELEASE_TAG#v}-${DELIVERY_ID}"
+
+          if [ "$TARGET_COMMIT" != "$VERIFIED_TARGET_COMMIT" ]; then
+            echo "::error::Verified tag commit disagrees with the dispatch"
+            exit 1
+          fi
+          if ! [[ "$BUNDLE_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::Verified bundle SHA-256 is malformed"
+            exit 1
+          fi
+
+          UPSTREAM_COMMIT_DATE=$(gh api \
+            "repos/f5-sales-demo/api-specs-enriched/commits/${TARGET_COMMIT}" \
+            --jq '.commit.committer.date')
+          # shellcheck disable=SC2016
+          # The single-quoted program is JavaScript; its template literals must reach Node intact.
+          PUBLICATION_IDENTITY=$(node -e '
+            const date = new Date(process.argv[1]);
+            if (Number.isNaN(date.getTime())) process.exit(1);
+            const part = (value) => String(value).padStart(2, "0");
+            const timestamp = `${String(date.getUTCFullYear()).slice(-2)}${part(date.getUTCMonth() + 1)}${part(date.getUTCDate())}${part(date.getUTCHours())}${part(date.getUTCMinutes())}${part(date.getUTCSeconds())}`;
+            process.stdout.write(`${Math.floor(date.getTime() / 1000)} ${timestamp}`);
+          ' "$UPSTREAM_COMMIT_DATE")
+          read -r PUBLICATION_EPOCH PUBLICATION_TIMESTAMP <<< "$PUBLICATION_IDENTITY"
+          PUBLICATION_TAG="v${RELEASE_VERSION}-${PUBLICATION_TIMESTAMP}"
+
+          RELEASE_TMP=$(mktemp)
+          jq -n \
+            --arg bundle "$BUNDLE_SHA256" \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$TARGET_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            '{bundle_sha256:$bundle,release_tag:$tag,target_commit:$commit,version:$version}' \
+            > "$RELEASE_TMP"
+          mv "$RELEASE_TMP" tools/spec-release.json
+
+          PENDING_TMP=$(mktemp)
+          jq -n \
+            --arg bundle "$BUNDLE_SHA256" \
+            --arg id "$DELIVERY_ID" \
+            --arg publication_epoch "$PUBLICATION_EPOCH" \
+            --arg publication_tag "$PUBLICATION_TAG" \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$TARGET_COMMIT" \
+            --arg source "f5-sales-demo/api-specs-enriched" \
+            --arg version "$RELEASE_VERSION" \
+            '{bundle_sha256:$bundle,delivery_id:$id,publication_epoch:$publication_epoch,publication_tag:$publication_tag,release_tag:$tag,target_commit:$commit,trigger_source:$source,version:$version}' \
+            > "$PENDING_TMP"
+          mv "$PENDING_TMP" tools/spec-delivery-pending.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          PR_STATE=$(gh pr list --state all --base main --head "$BRANCH" --json state --jq '.[0].state // ""')
+          if [ "$PR_STATE" = "MERGED" ]; then
+            git fetch origin main
+            if git cat-file -e "origin/main:tools/spec-delivery-pending.json" 2>/dev/null; then
+              MAIN_PENDING_ID=$(git show "origin/main:tools/spec-delivery-pending.json" | jq -er '.delivery_id')
+              if [ "$MAIN_PENDING_ID" = "$DELIVERY_ID" ]; then
+                if ! git diff --quiet origin/main -- \
+                  tools/spec-release.json tools/spec-delivery-pending.json; then
+                  echo "::error::Merged delivery PR does not contain this exact pending delivery"
+                  exit 1
+                fi
+                echo "::notice::The exact delivery PR is already merged and pending publication"
+                exit 0
+              fi
+            fi
+            git show "origin/main:tools/spec-deliveries.json" | jq -e \
+              --arg id "$DELIVERY_ID" \
+              --arg tag "$RELEASE_TAG" \
+              --arg commit "$TARGET_COMMIT" \
+              --arg version "$RELEASE_VERSION" \
+              '.deliveries[$id] == {release_tag:$tag,target_commit:$commit,version:$version}' \
+              >/dev/null
+            git show "origin/main:tools/spec-publications.json" | jq -e \
+              --arg bundle "$BUNDLE_SHA256" \
+              --arg id "$DELIVERY_ID" \
+              '.publications[$id].bundle_sha256 == $bundle' \
+              >/dev/null
+            echo "::notice::The exact delivery is already published and recorded"
+            exit 0
+          fi
+          if [ "$PR_STATE" = "OPEN" ] &&
+            ! git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            echo "::error::Open delivery PR has no remote branch"
+            exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            git fetch origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
+            EXPECTED_PATHS=$(printf '%s\n' tools/spec-delivery-pending.json tools/spec-release.json | LC_ALL=C sort)
+            BRANCH_BASE=$(git merge-base "$GITHUB_SHA" "origin/${BRANCH}")
+            ACTUAL_PATHS=$(git diff --name-only "$BRANCH_BASE" "origin/${BRANCH}" | LC_ALL=C sort)
+            if [ "$ACTUAL_PATHS" != "$EXPECTED_PATHS" ]; then
+              echo "::error::Existing delivery branch changes unexpected paths"
+              exit 1
+            fi
+            if ! git diff --quiet "origin/${BRANCH}" -- \
+              tools/spec-release.json tools/spec-delivery-pending.json; then
+              echo "::error::Existing delivery branch does not contain this exact delivery"
+              exit 1
+            fi
+          else
+            git checkout -b "$BRANCH"
+            git add tools/spec-release.json tools/spec-delivery-pending.json
+            git commit -m "fix(specs): apply enriched specs ${RELEASE_TAG}"
+            git push origin "$BRANCH"
+          fi
+
+          if [ "$PR_STATE" = "CLOSED" ]; then
+            echo "::notice::Replacing a closed, unmerged delivery PR"
+            PR_STATE=""
+          fi
+          if [ -z "$PR_STATE" ]; then
+            ISSUE_URL=$(gh issue create \
+              --title "chore(specs): apply enriched specs ${RELEASE_TAG}" \
+              --body "Track the verified downstream delivery of enriched specs ${RELEASE_TAG}.")
+            ISSUE_NUMBER=${ISSUE_URL##*/}
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "fix(specs): apply enriched specs ${RELEASE_TAG}" \
+              --body "Closes #${ISSUE_NUMBER}
+
+            Applies the verified ${RELEASE_TAG} delivery after exact-tag generation and tests passed."
+            PR_STATE="OPEN"
+          fi
+          if [ "$PR_STATE" = "OPEN" ]; then
+            gh pr merge "$BRANCH" --auto --squash --delete-branch
+          elif [ "$PR_STATE" != "MERGED" ]; then
+            echo "::error::Delivery PR is in unexpected state $PR_STATE"
+            exit 1
+          fi
+
+  record-spec-delivery:
+    name: Record Published Spec Delivery
+    runs-on: ubuntu-latest
+    needs: [spec-delivery, test, build, release]
+    if: >-
+      github.event_name == 'push' &&
+      github.ref == 'refs/heads/main' &&
+      needs.spec-delivery.outputs.delivery_id != '' &&
+      needs.release.result == 'success'
+    permissions:
+      # Push the durable receipt branch.
+      contents: write # push the durable receipt branch
+      # Open the publication-receipt tracking issue.
+      issues: write # open the publication-receipt tracking issue
+      # Open and enable auto-merge on the receipt PR.
+      pull-requests: write # open and auto-merge the receipt PR
+    steps:
+      - name: Checkout published release state
+        uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.RELEASE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Commit applied-delivery receipt after publication
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          BUNDLE_SHA256: ${{ needs.spec-delivery.outputs.bundle_sha256 }}
+          DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
+          MARKETPLACE_SHA256: ${{ needs.release.outputs.marketplace_sha256 }}
+          MARKETPLACE_VERSION: ${{ needs.release.outputs.marketplace_version }}
+          OPEN_VSX_SHA256: ${{ needs.release.outputs.open_vsx_sha256 }}
+          OPEN_VSX_VERSION: ${{ needs.release.outputs.open_vsx_version }}
+          PENDING_PUBLICATION_EPOCH: ${{ needs.spec-delivery.outputs.publication_epoch }}
+          PENDING_PUBLICATION_TAG: ${{ needs.spec-delivery.outputs.publication_tag }}
+          PUBLICATION_TAG: ${{ needs.release.outputs.publication_tag }}
+          RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+          RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
+          TARGET_COMMIT: ${{ needs.spec-delivery.outputs.target_commit }}
+          VSIX_NAME: ${{ needs.release.outputs.vsix_name }}
+          VSIX_SHA256: ${{ needs.release.outputs.vsix_sha256 }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$BUNDLE_SHA256" =~ ^[0-9a-f]{64}$ ]] ||
+            ! [[ "$VSIX_SHA256" =~ ^[0-9a-f]{64}$ ]] ||
+            [ "$MARKETPLACE_SHA256" != "$VSIX_SHA256" ] ||
+            [ "$OPEN_VSX_SHA256" != "$VSIX_SHA256" ] ||
+            [ "$MARKETPLACE_VERSION" != "$OPEN_VSX_VERSION" ] ||
+            [ "$PUBLICATION_TAG" != "$PENDING_PUBLICATION_TAG" ] ||
+            ! [[ "$VSIX_NAME" =~ ^[A-Za-z0-9._-]+\.vsix$ ]]; then
+            echo "::error::Publication evidence is malformed"
+            exit 1
+          fi
+
+          REMOTE_DIGEST=$(gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${PUBLICATION_TAG}" | \
+            jq -r --arg name "$VSIX_NAME" '.assets[] | select(.name == $name) | .digest')
+          if [ "$REMOTE_DIGEST" != "sha256:${VSIX_SHA256}" ]; then
+            echo "::error::Published VSIX no longer matches the verified release artifact"
+            exit 1
+          fi
+
+          VERIFY_DIR=$(mktemp -d)
+          trap 'rm -rf "$VERIFY_DIR"' EXIT
+          OPEN_VSX_METADATA="https://open-vsx.org/api/f5-sales-demo/xcsh/${OPEN_VSX_VERSION}"
+          curl -fsSL "$OPEN_VSX_METADATA" -o "$VERIFY_DIR/open-vsx.json"
+          OPEN_VSX_URL=$(jq -er '.files.download' "$VERIFY_DIR/open-vsx.json")
+          if [[ "$OPEN_VSX_URL" != https://open-vsx.org/* ]]; then
+            echo "::error::Open VSX returned an unexpected download origin"
+            exit 1
+          fi
+          curl -fsSL "$OPEN_VSX_URL" -o "$VERIFY_DIR/open-vsx.vsix"
+          RECORDED_OPEN_VSX_SHA256=$(shasum -a 256 "$VERIFY_DIR/open-vsx.vsix" | awk '{print $1}')
+          if [ "$RECORDED_OPEN_VSX_SHA256" != "$OPEN_VSX_SHA256" ]; then
+            echo "::error::Open VSX artifact changed before receipt recording"
+            exit 1
+          fi
+
+          MARKETPLACE_URL="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/f5-sales-demo/vsextensions/xcsh/${MARKETPLACE_VERSION}/vspackage"
+          curl -fsSL "$MARKETPLACE_URL" -o "$VERIFY_DIR/marketplace.download"
+          if gzip -t "$VERIFY_DIR/marketplace.download" >/dev/null 2>&1; then
+            gzip -dc "$VERIFY_DIR/marketplace.download" > "$VERIFY_DIR/marketplace.vsix"
+          else
+            command cp -f "$VERIFY_DIR/marketplace.download" "$VERIFY_DIR/marketplace.vsix"
+          fi
+          RECORDED_MARKETPLACE_SHA256=$(shasum -a 256 "$VERIFY_DIR/marketplace.vsix" | awk '{print $1}')
+          if [ "$RECORDED_MARKETPLACE_SHA256" != "$MARKETPLACE_SHA256" ]; then
+            echo "::error::VS Code Marketplace artifact changed before receipt recording"
+            exit 1
+          fi
+
+          jq -e \
+            --arg bundle "$BUNDLE_SHA256" \
+            --arg id "$DELIVERY_ID" \
+            --arg publication_epoch "$PENDING_PUBLICATION_EPOCH" \
+            --arg publication_tag "$PENDING_PUBLICATION_TAG" \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$TARGET_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            '. == {
+              bundle_sha256:$bundle,
+              delivery_id:$id,
+              publication_epoch:$publication_epoch,
+              publication_tag:$publication_tag,
+              release_tag:$tag,
+              target_commit:$commit,
+              trigger_source:"f5-sales-demo/api-specs-enriched",
+              version:$version
+            }' tools/spec-delivery-pending.json >/dev/null
+
+          LEDGER_TMP=$(mktemp)
+          jq -e --arg id "$DELIVERY_ID" \
+            '.version == 1 and (.deliveries | type == "object") and (.deliveries | has($id) | not)' \
+            tools/spec-deliveries.json >/dev/null
+          jq \
+            --arg id "$DELIVERY_ID" \
+            --arg tag "$RELEASE_TAG" \
+            --arg commit "$TARGET_COMMIT" \
+            --arg version "$RELEASE_VERSION" \
+            '.deliveries[$id] = {release_tag:$tag,target_commit:$commit,version:$version}' \
+            tools/spec-deliveries.json | jq -S . > "$LEDGER_TMP"
+          mv "$LEDGER_TMP" tools/spec-deliveries.json
+
+          PUBLICATIONS_TMP=$(mktemp)
+          jq -e --arg id "$DELIVERY_ID" \
+            '.version == 1 and (.publications | type == "object") and (.publications | has($id) | not)' \
+            tools/spec-publications.json >/dev/null
+          jq \
+            --arg bundle "$BUNDLE_SHA256" \
+            --arg id "$DELIVERY_ID" \
+            --arg marketplace_sha256 "$MARKETPLACE_SHA256" \
+            --arg marketplace_version "$MARKETPLACE_VERSION" \
+            --arg open_vsx_sha256 "$OPEN_VSX_SHA256" \
+            --arg open_vsx_version "$OPEN_VSX_VERSION" \
+            --arg publication_epoch "$PENDING_PUBLICATION_EPOCH" \
+            --arg publication_tag "$PUBLICATION_TAG" \
+            --arg vsix_name "$VSIX_NAME" \
+            --arg vsix_sha256 "$VSIX_SHA256" \
+            '.publications[$id] = {
+              bundle_sha256:$bundle,
+              marketplace_sha256:$marketplace_sha256,
+              marketplace_version:$marketplace_version,
+              open_vsx_sha256:$open_vsx_sha256,
+              open_vsx_version:$open_vsx_version,
+              publication_epoch:$publication_epoch,
+              publication_tag:$publication_tag,
+              vsix_name:$vsix_name,
+              vsix_sha256:$vsix_sha256
+            }' tools/spec-publications.json | jq -S . > "$PUBLICATIONS_TMP"
+          mv "$PUBLICATIONS_TMP" tools/spec-publications.json
+          rm tools/spec-delivery-pending.json
+
+          BRANCH="spec-receipt/${RELEASE_TAG#v}-${DELIVERY_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          PR_STATE=$(gh pr list --state all --base main --head "$BRANCH" --json state --jq '.[0].state // ""')
+          if [ "$PR_STATE" = "MERGED" ]; then
+            git fetch origin main
+            if git cat-file -e "origin/main:tools/spec-delivery-pending.json" 2>/dev/null; then
+              MAIN_PENDING_ID=$(git show "origin/main:tools/spec-delivery-pending.json" | jq -er '.delivery_id')
+              if [ "$MAIN_PENDING_ID" = "$DELIVERY_ID" ]; then
+                echo "::error::Merged receipt still has its pending-delivery marker"
+                exit 1
+              fi
+            fi
+            git show "origin/main:tools/spec-deliveries.json" | jq -e \
+              --arg id "$DELIVERY_ID" \
+              --arg tag "$RELEASE_TAG" \
+              --arg commit "$TARGET_COMMIT" \
+              --arg version "$RELEASE_VERSION" \
+              '.deliveries[$id] == {release_tag:$tag,target_commit:$commit,version:$version}' \
+              >/dev/null
+            git show "origin/main:tools/spec-publications.json" | jq -e \
+              --arg bundle "$BUNDLE_SHA256" \
+              --arg id "$DELIVERY_ID" \
+              --arg marketplace_sha256 "$MARKETPLACE_SHA256" \
+              --arg marketplace_version "$MARKETPLACE_VERSION" \
+              --arg open_vsx_sha256 "$OPEN_VSX_SHA256" \
+              --arg open_vsx_version "$OPEN_VSX_VERSION" \
+              --arg publication_epoch "$PENDING_PUBLICATION_EPOCH" \
+              --arg publication_tag "$PUBLICATION_TAG" \
+              --arg vsix_name "$VSIX_NAME" \
+              --arg vsix_sha256 "$VSIX_SHA256" \
+              '.publications[$id] == {
+                bundle_sha256:$bundle,
+                marketplace_sha256:$marketplace_sha256,
+                marketplace_version:$marketplace_version,
+                open_vsx_sha256:$open_vsx_sha256,
+                open_vsx_version:$open_vsx_version,
+                publication_epoch:$publication_epoch,
+                publication_tag:$publication_tag,
+                vsix_name:$vsix_name,
+                vsix_sha256:$vsix_sha256
+              }' \
+              >/dev/null
+            echo "::notice::The exact publication receipt PR is already merged"
+            exit 0
+          fi
+          if [ "$PR_STATE" = "OPEN" ] &&
+            ! git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            echo "::error::Open receipt PR has no remote branch"
+            exit 1
+          fi
+          if git ls-remote --exit-code --heads origin "refs/heads/${BRANCH}" >/dev/null 2>&1; then
+            git fetch origin "refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}"
+            EXPECTED_PATHS=$(printf '%s\n' tools/spec-deliveries.json tools/spec-delivery-pending.json tools/spec-publications.json | LC_ALL=C sort)
+            BRANCH_BASE=$(git merge-base "$GITHUB_SHA" "origin/${BRANCH}")
+            ACTUAL_PATHS=$(git diff --name-only "$BRANCH_BASE" "origin/${BRANCH}" | LC_ALL=C sort)
+            if [ "$ACTUAL_PATHS" != "$EXPECTED_PATHS" ]; then
+              echo "::error::Existing receipt branch changes unexpected paths"
+              exit 1
+            fi
+            if ! git diff --quiet "origin/${BRANCH}" -- \
+              tools/spec-deliveries.json \
+              tools/spec-delivery-pending.json \
+              tools/spec-publications.json; then
+              echo "::error::Existing receipt branch contains different publication evidence"
+              exit 1
+            fi
+          else
+            git checkout -b "$BRANCH"
+            git add \
+              tools/spec-deliveries.json \
+              tools/spec-delivery-pending.json \
+              tools/spec-publications.json
+            git commit -m "chore(release): record spec delivery ${RELEASE_TAG}"
+            git push origin "$BRANCH"
+          fi
+
+          if [ "$PR_STATE" = "CLOSED" ]; then
+            echo "::notice::Replacing a closed, unmerged receipt PR"
+            PR_STATE=""
+          fi
+          if [ -z "$PR_STATE" ]; then
+            ISSUE_URL=$(gh issue create \
+              --title "chore(release): record spec delivery ${RELEASE_TAG}" \
+              --body "Record the successfully published downstream delivery for ${RELEASE_TAG}.")
+            ISSUE_NUMBER=${ISSUE_URL##*/}
+            gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title "chore(release): record spec delivery ${RELEASE_TAG}" \
+              --body "Closes #${ISSUE_NUMBER}
+
+            Records the delivery only after exact-tag generation, packaging, and publication succeeded."
+            PR_STATE="OPEN"
+          fi
+          if [ "$PR_STATE" = "OPEN" ]; then
+            gh pr merge "$BRANCH" --auto --squash --delete-branch
+          elif [ "$PR_STATE" != "MERGED" ]; then
+            echo "::error::Receipt PR is in unexpected state $PR_STATE"
+            exit 1
+          fi

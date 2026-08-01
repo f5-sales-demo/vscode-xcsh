@@ -12,6 +12,8 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
+import { type ParsedSpecInfo, parseAllDomainFiles } from './generators/spec-parser';
+
 interface SpecInfo {
   schemaId: string;
   resourceType: string;
@@ -36,8 +38,27 @@ interface OpenAPISpec {
 }
 
 const SPEC_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api');
+const DOMAIN_DIR = path.join(SPEC_DIR, 'domains');
 const OUTPUT_FILE = path.join(__dirname, '..', 'src', 'generated', 'documentationUrls.ts');
 const API_REFERENCE_BASE_URL = 'https://f5-sales-demo.github.io/api-specs-enriched/api-reference';
+
+/**
+ * Build both singular resource-key and plural API-path lookups from the enriched
+ * domain bundle. Runtime callers have historically used both forms, and both
+ * must resolve to the immutable release's domain documentation.
+ */
+export function buildDomainDocumentationUrls(specs: ParsedSpecInfo[]): Record<string, string> {
+  const urls: Record<string, string> = {};
+  for (const spec of specs) {
+    if (!spec.domain) {
+      continue;
+    }
+    const documentationUrl = spec.documentationUrl ?? `${API_REFERENCE_BASE_URL}/${spec.domain}/`;
+    urls[spec.resourceKey] = documentationUrl;
+    urls[spec.apiPath] = documentationUrl;
+  }
+  return urls;
+}
 
 /**
  * Extract schema identifier from spec filename.
@@ -152,6 +173,17 @@ function main(): void {
   const urlMap: Record<string, string> = {};
   const processed: SpecInfo[] = [];
 
+  if (!fs.existsSync(DOMAIN_DIR)) {
+    console.error(`Domain spec directory not found: ${DOMAIN_DIR}`);
+    process.exit(1);
+  }
+  const domainSpecs = parseAllDomainFiles(DOMAIN_DIR);
+  const domainUrls = buildDomainDocumentationUrls(domainSpecs);
+  for (const [resourceType, docUrl] of Object.entries(domainUrls)) {
+    urlMap[resourceType] = docUrl;
+    processed.push({ schemaId: resourceType, resourceType, docUrl });
+  }
+
   for (const filename of specFiles) {
     const specPath = path.join(SPEC_DIR, filename);
 
@@ -255,4 +287,6 @@ export function getDocumentationUrl(resourceType: string): string {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}

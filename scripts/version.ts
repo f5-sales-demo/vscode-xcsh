@@ -6,12 +6,12 @@
  * Generates version strings based on upstream API version and timestamp.
  *
  * Formats:
- * - Git tag: v{upstream}-YYMMDDHHMM (e.g., v1.0.82-2601010516)
- * - Package.json (semver): {major}.{YYMM}.{DDHHMM} (e.g., 1.2601.10516)
- * - Beta: v{upstream}-YYMMDDHHMM-BETA
+ * - Git tag: v{upstream}-YYMMDDHHMMSS (e.g., v1.0.82-260101051607)
+ * - Package.json (semver): {major}.{YYMM}.{DDHHMMSS} (e.g., 1.2601.1051607)
+ * - Beta: v{upstream}-YYMMDDHHMMSS-BETA
  *
  * The 3-segment semver format is required by VS Code marketplace.
- * Each segment must be ≤ 2,147,483,647 (YYMM max=9912, DDHHMM max=312359).
+ * Each segment must be ≤ 2,147,483,647 (YYMM max=9912, DDHHMMSS max=31235959).
  *
  * Usage:
  *   npx ts-node scripts/version.ts           # Output current version
@@ -68,17 +68,29 @@ function getUpstreamVersion(): string {
 }
 
 /**
- * Generate timestamp in YYMMDDHHMM format (UTC)
+ * Generate timestamp in YYMMDDHHMMSS format (UTC)
  */
-function generateTimestamp(): string {
-  const now = new Date();
+export function generateTimestamp(sourceDateEpoch = process.env.SOURCE_DATE_EPOCH): string {
+  let now: Date;
+  if (sourceDateEpoch !== undefined) {
+    if (!/^\d+$/.test(sourceDateEpoch)) {
+      throw new Error('SOURCE_DATE_EPOCH must be non-negative integer seconds');
+    }
+    now = new Date(Number(sourceDateEpoch) * 1000);
+    if (Number.isNaN(now.getTime())) {
+      throw new Error('SOURCE_DATE_EPOCH is outside the supported date range');
+    }
+  } else {
+    now = new Date();
+  }
   const yy = String(now.getUTCFullYear()).slice(-2);
   const mm = String(now.getUTCMonth() + 1).padStart(2, '0');
   const dd = String(now.getUTCDate()).padStart(2, '0');
   const hh = String(now.getUTCHours()).padStart(2, '0');
   const min = String(now.getUTCMinutes()).padStart(2, '0');
+  const sec = String(now.getUTCSeconds()).padStart(2, '0');
 
-  return `${yy}${mm}${dd}${hh}${min}`;
+  return `${yy}${mm}${dd}${hh}${min}${sec}`;
 }
 
 /**
@@ -86,40 +98,40 @@ function generateTimestamp(): string {
  * VS Code requires standard 3-segment semver (major.minor.patch)
  * Each segment must be ≤ 2,147,483,647
  *
- * Format: {upstream_major}.{YYMM}.{DDHHMM}
- * Example: 1.2601.10516 (upstream 1.x, Jan 2026, day 01 05:16)
+ * Format: {upstream_major}.{YYMM}.{DDHHMMSS}
+ * Example: 1.2601.1051607 (upstream 1.x, Jan 2026, day 01 05:16:07)
  *
  * This provides:
  * - Major: Upstream API major version (1)
  * - Minor: Year-month (YYMM, max 9912, well under limit)
- * - Patch: Day-hour-minute (DDHHMM, max 312359, well under limit)
+ * - Patch: Day-hour-minute-second (DDHHMMSS, max 31235959, well under limit)
  */
 function toSemver(upstream: string, timestamp: string): string {
   // upstream is like "1.0.82"
-  // timestamp is like "2601010516" (YYMMDDHHMM)
+  // timestamp is like "260101051607" (YYMMDDHHMMSS)
   const parts = upstream.split('.');
   const major = parts[0] || '0';
 
   // Extract YYMM for minor version
-  // timestamp: 2601010516 → YYMM: 2601
+  // timestamp: 260101051607 → YYMM: 2601
   const yymm = parseInt(timestamp.slice(0, 4), 10);
 
-  // Extract DDHHMM for patch version
-  // timestamp: 2601010516 → DDHHMM: 010516 → integer: 10516
-  const ddhhmm = parseInt(timestamp.slice(4), 10);
+  // Extract DDHHMMSS for patch version
+  // timestamp: 260101051607 → DDHHMMSS: 01051607 → integer: 1051607
+  const ddhhmmss = parseInt(timestamp.slice(4), 10);
 
-  // Use 3-segment format: major.YYMM.DDHHMM
-  return `${major}.${yymm}.${ddhhmm}`;
+  // Use 3-segment format: major.YYMM.DDHHMMSS
+  return `${major}.${yymm}.${ddhhmmss}`;
 }
 
 /**
- * Parse a release tag (`v{upstream}-YYMMDDHHMM[-BETA]`) into its parts, so a release
+ * Parse a release tag (`v{upstream}-YYMMDDHHMMSS[-BETA]`) into its parts, so a release
  * can stamp the exact version its tag represents rather than generating a fresh
  * timestamp (which caused published-version drift/collisions). Returns null when the
  * tag does not match the expected format.
  */
 export function parseTag(tag: string): { upstream: string; timestamp: string; isBeta: boolean } | null {
-  const match = tag.match(/^v(.+)-(\d{10})(-BETA)?$/);
+  const match = tag.match(/^v(.+)-(\d{12})(-BETA)?$/);
   if (!match) {
     return null;
   }
@@ -192,8 +204,8 @@ Options:
   --help    Show this help message
 
 Examples:
-  npx ts-node scripts/version.ts           # Output: 1.0.82-2601010516
-  npx ts-node scripts/version.ts --beta    # Output: 1.0.82-2601010516-BETA
+  npx ts-node scripts/version.ts           # Output: 1.0.82-260101051607
+  npx ts-node scripts/version.ts --beta    # Output: 1.0.82-260101051607-BETA
   npx ts-node scripts/version.ts --update  # Updates package.json to 1.2601.10516
   npx ts-node scripts/version.ts --json    # Shows version, semver, upstream, etc.
 `);
@@ -208,7 +220,7 @@ Examples:
   if (fromTagArg) {
     const parsed = parseTag(fromTagArg);
     if (!parsed) {
-      console.error(`Invalid release tag: "${fromTagArg}" (expected v{upstream}-YYMMDDHHMM[-BETA])`);
+      console.error(`Invalid release tag: "${fromTagArg}" (expected v{upstream}-YYMMDDHHMMSS[-BETA])`);
       process.exit(1);
     }
     override = { upstream: parsed.upstream, timestamp: parsed.timestamp };
