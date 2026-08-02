@@ -127,7 +127,7 @@ export class XCSHDescribeProvider {
     cachedData?: Record<string, unknown>,
   ): Promise<void> {
     try {
-      logger.debug(`Describing resource: ${resourceName} (${resourceType})`);
+      logger.debug('resource.operation.started');
 
       const resourceTypeInfo = this.findResourceTypeInfo(resourceType);
       const displayName = resourceTypeInfo ? getLocalizedDisplayName(resourceTypeInfo.displayName) : resourceType;
@@ -136,7 +136,7 @@ export class XCSHDescribeProvider {
 
       // Use cached data if available (for resources that don't have a GET endpoint)
       if (resourceTypeInfo?.useListDataForDescribe && cachedData) {
-        logger.debug(`Using cached list data for ${resourceName} (no GET endpoint available)`);
+        logger.debug('resource.operation.started');
         resource = cachedData;
       } else {
         const client = await this.contextManager.getClient(profileName);
@@ -202,7 +202,7 @@ export class XCSHDescribeProvider {
       let quotaInfo: QuotaItem | undefined;
       try {
         const client = await this.contextManager.getClient(profileName);
-        logger.info(`Fetching quota for resourceType: ${resourceType}, namespace: ${namespace}`);
+        logger.info('subscription.operation.started');
 
         // First try the resource's namespace
         quotaInfo = await getQuotaForResourceType(client, resourceType, namespace);
@@ -210,18 +210,17 @@ export class XCSHDescribeProvider {
         // If not found and namespace isn't 'system', fall back to 'system' namespace
         // (quotas are often tenant-wide and stored in system namespace)
         if (!quotaInfo && namespace !== 'system') {
-          logger.info(`No quota in ${namespace}, trying system namespace...`);
+          logger.info('subscription.operation.started');
           quotaInfo = await getQuotaForResourceType(client, resourceType, 'system');
         }
 
         if (quotaInfo) {
-          logger.info(`Found quota info: ${quotaInfo.displayName} - ${quotaInfo.usage}/${quotaInfo.limit}`);
+          logger.info('subscription.operation.completed');
         } else {
-          logger.info(`No quota info found for ${resourceType}`);
+          logger.info('subscription.operation.completed');
         }
-      } catch (quotaError) {
-        const errorMessage = quotaError instanceof Error ? quotaError.message : String(quotaError);
-        logger.warn(`Failed to fetch quota info for ${resourceType}: ${errorMessage}`);
+      } catch {
+        logger.warn('subscription.operation.failed');
       }
 
       this.panel.webview.html = this.getWebviewContent(
@@ -235,7 +234,7 @@ export class XCSHDescribeProvider {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to describe resource: ${message}`);
+      logger.error('resource.operation.failed');
       void vscode.window.showErrorMessage(`Failed to describe resource: ${message}`);
     }
   }
@@ -247,7 +246,7 @@ export class XCSHDescribeProvider {
    */
   async showNamespaceDescribe(profileName: string, namespaceName: string): Promise<void> {
     try {
-      logger.debug(`Describing namespace: ${namespaceName}`);
+      logger.debug('resource.operation.started');
 
       const client = await this.contextManager.getClient(profileName);
       const resource = await client.customRequest<Record<string, unknown>>(
@@ -281,7 +280,7 @@ export class XCSHDescribeProvider {
       );
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to describe namespace: ${message}`);
+      logger.error('resource.operation.failed');
       void vscode.window.showErrorMessage(`Failed to describe namespace: ${message}`);
     }
   }

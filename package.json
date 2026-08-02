@@ -257,18 +257,6 @@
         "icon": "$(symbol-namespace)"
       },
       {
-        "command": "xcsh.exportContexts",
-        "title": "%command.exportContexts.title%",
-        "category": "xcsh",
-        "icon": "$(save)"
-      },
-      {
-        "command": "xcsh.importContexts",
-        "title": "%command.importContexts.title%",
-        "category": "xcsh",
-        "icon": "$(folder-opened)"
-      },
-      {
         "command": "xcsh.renameContext",
         "title": "%command.renameContext.title%",
         "category": "xcsh",
@@ -584,16 +572,6 @@
           "group": "navigation"
         },
         {
-          "command": "xcsh.exportContexts",
-          "when": "view == xcsh.profiles",
-          "group": "1_io@1"
-        },
-        {
-          "command": "xcsh.importContexts",
-          "when": "view == xcsh.profiles",
-          "group": "1_io@2"
-        },
-        {
           "command": "xcsh.cloudStatus.refresh",
           "when": "view == xcsh.cloudStatus",
           "group": "navigation@1"
@@ -687,17 +665,17 @@
         },
         {
           "command": "xcsh.selectActiveNamespace",
-          "when": "view == xcsh.explorer && viewItem == namespace:active",
+          "when": "view == xcsh.explorer && viewItem == namespace.active",
           "group": "inline"
         },
         {
           "command": "xcsh.deleteNamespace",
-          "when": "view == xcsh.explorer && viewItem == namespace:active",
+          "when": "view == xcsh.explorer && viewItem == namespace.active",
           "group": "1_namespace@1"
         },
         {
           "command": "xcsh.describeNamespace",
-          "when": "view == xcsh.explorer && viewItem =~ /namespace:/",
+          "when": "view == xcsh.explorer && viewItem =~ /namespace./",
           "group": "1_namespace@2"
         },
         {

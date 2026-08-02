@@ -148,7 +148,8 @@ export class HealthcheckFormProvider {
       const namespaces = await client.listNamespaces();
       return namespaces.map((ns) => ns.name);
     } catch (error) {
-      logger.warn('Failed to load namespaces', error);
+      void error;
+      logger.warn('resource.operation.failed');
       return ['default'];
     }
   }
@@ -171,7 +172,8 @@ export class HealthcheckFormProvider {
       }
       return quota;
     } catch (error) {
-      logger.warn('Failed to load quota info', error);
+      void error;
+      logger.warn('resource.operation.failed');
       return undefined;
     }
   }
@@ -361,8 +363,7 @@ export class HealthcheckFormProvider {
 
       // Build and validate payload
       const payload = this.buildApiPayload(data);
-      logger.info(`Creating healthcheck: ${data.name} in namespace ${data.namespace}`);
-      logger.debug('Healthcheck payload:', JSON.stringify(payload, null, 2));
+      logger.info('resource.operation.started');
 
       // Show progress
       await vscode.window.withProgress(
@@ -385,7 +386,7 @@ export class HealthcheckFormProvider {
       await this.describeProvider.showDescribe(activeContext.name, data.namespace, 'healthchecks', data.name);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to create healthcheck: ${message}`);
+      logger.error('resource.operation.failed');
 
       // Send error to webview
       if (this.panel) {

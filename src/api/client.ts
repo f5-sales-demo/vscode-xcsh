@@ -173,9 +173,7 @@ export class XCSHClient {
     apiBase: ApiBase = 'config',
     serviceSegment?: string,
   ): Promise<T> {
-    this.logger.debug(
-      `Creating ${resourceType} in namespace ${namespace} (apiBase: ${apiBase}, serviceSegment: ${serviceSegment || 'none'})`,
-    );
+    this.logger.debug('api.request.started');
 
     return this.request<T>({
       method: 'POST',
@@ -195,9 +193,7 @@ export class XCSHClient {
     apiBase: ApiBase = 'config',
     serviceSegment?: string,
   ): Promise<T> {
-    this.logger.debug(
-      `Getting ${resourceType}/${name} from namespace ${namespace} (apiBase: ${apiBase}, serviceSegment: ${serviceSegment || 'none'})`,
-    );
+    this.logger.debug('api.request.started');
 
     const queryParams: Record<string, string> = {};
     if (responseFormat) {
@@ -227,9 +223,7 @@ export class XCSHClient {
   ): Promise<T> {
     const { apiBase = 'config', serviceSegment, customGetPath, responseFormat } = options;
 
-    this.logger.debug(
-      `Getting ${resourceType}/${name} from namespace ${namespace} (apiBase: ${apiBase}, customGetPath: ${customGetPath || 'none'})`,
-    );
+    this.logger.debug('api.request.started');
 
     // Build the path
     let path: string;
@@ -282,9 +276,7 @@ export class XCSHClient {
       labelFilter,
     } = options;
 
-    this.logger.debug(
-      `Listing ${resourceType} in namespace ${namespace} (apiBase: ${apiBase}, serviceSegment: ${serviceSegment || 'none'}, tenantLevel: ${tenantLevel}, method: ${listMethod})`,
-    );
+    this.logger.debug('api.request.started');
 
     // Build the path
     let path: string;
@@ -343,9 +335,7 @@ export class XCSHClient {
     apiBase: ApiBase = 'config',
     serviceSegment?: string,
   ): Promise<T> {
-    this.logger.debug(
-      `Replacing ${resourceType}/${name} in namespace ${namespace} (apiBase: ${apiBase}, serviceSegment: ${serviceSegment || 'none'})`,
-    );
+    this.logger.debug('api.request.started');
 
     return this.request<T>({
       method: 'PUT',
@@ -365,9 +355,7 @@ export class XCSHClient {
     apiBase: ApiBase = 'config',
     serviceSegment?: string,
   ): Promise<void> {
-    this.logger.debug(
-      `Deleting ${resourceType}/${name} from namespace ${namespace} (apiBase: ${apiBase}, serviceSegment: ${serviceSegment || 'none'})`,
-    );
+    this.logger.debug('api.request.started');
 
     const queryParams: Record<string, string> = {};
     if (failIfReferred) {
@@ -385,7 +373,7 @@ export class XCSHClient {
    * List all namespaces
    */
   async listNamespaces(): Promise<Array<{ name: string; metadata: ResourceMetadata }>> {
-    this.logger.debug('Listing namespaces');
+    this.logger.debug('api.request.started');
 
     const response = await this.request<ListResponse<{ name: string; metadata: ResourceMetadata }>>({
       method: 'GET',
@@ -412,7 +400,7 @@ export class XCSHClient {
    * Get all sites from the system namespace
    */
   async getSites(): Promise<Site[]> {
-    this.logger.debug('Fetching sites from system namespace');
+    this.logger.debug('api.request.started');
     return this.list<Site>('system', 'sites');
   }
 
@@ -458,7 +446,7 @@ export class XCSHClient {
    * @returns Promise resolving to true if ALL operations are permitted
    */
   async checkApiAccess(namespace: string, items: Array<{ method: string; path: string }>): Promise<boolean> {
-    this.logger.debug(`Checking API access for ${items.length} operations in namespace ${namespace}`);
+    this.logger.debug('api.request.started');
 
     const request = {
       namespace,
@@ -489,13 +477,10 @@ export class XCSHClient {
       // Check if all operations are permitted
       const itemList = response.item_lists?.[0];
       const result = itemList?.result ?? false;
-      this.logger.debug(`API access check result: ${result}`, {
-        namespace,
-        items: itemList?.items,
-      });
+      this.logger.debug('api.request.completed');
       return result;
-    } catch (error) {
-      this.logger.warn('API access check failed, assuming no permission', error);
+    } catch {
+      this.logger.warn('api.access-check.failed');
       return false;
     }
   }
@@ -507,7 +492,7 @@ export class XCSHClient {
    * @param namespaceName - Name of the namespace to delete
    */
   async cascadeDeleteNamespace(namespaceName: string): Promise<void> {
-    this.logger.debug(`Cascade deleting namespace: ${namespaceName}`);
+    this.logger.debug('api.request.started');
 
     await this.request<void>({
       method: 'POST',
@@ -572,13 +557,15 @@ export class XCSHClient {
       }
     }
 
-    // Log detailed auth context on 401 errors for debugging
     if (response.statusCode === 401) {
-      const authContext = `apiUrl=${this.baseUrl}, authType=${this.authProvider.type}, tokenFingerprint=${this.getTokenFingerprint()}`;
-      this.logger.error(`Authentication failed (401) for ${method} ${fullPath} [${authContext}]`);
+      this.logger.error('api.request.unauthorized');
     }
 
-    throw new XCSHApiError(response.statusCode, response.body, fullPath);
+    const classification =
+      response.statusCode === 404 && /API Group could not be determined/i.test(response.body)
+        ? 'api_group_not_found'
+        : 'http_error';
+    throw new XCSHApiError(response.statusCode, classification);
   }
 
   /**
@@ -609,9 +596,9 @@ export class XCSHClient {
         });
       });
 
-      req.on('error', (error) => {
-        this.logger.error('HTTP request failed', error);
-        reject(error);
+      req.on('error', () => {
+        this.logger.error('api.request.failed');
+        reject(new Error('API request failed'));
       });
 
       req.on('timeout', () => {
@@ -626,23 +613,5 @@ export class XCSHClient {
 
       req.end();
     });
-  }
-
-  /**
-   * Get a fingerprint of the current auth token for debugging
-   * Returns first 4 and last 4 characters of the token (e.g., "+K7Z...SAk=")
-   */
-  private getTokenFingerprint(): string {
-    try {
-      const headers = this.authProvider.getHeaders();
-      const auth = headers.Authorization || '';
-      const token = auth.replace('APIToken ', '');
-      if (token.length < 12) {
-        return 'invalid-length';
-      }
-      return `${token.substring(0, 4)}...${token.substring(token.length - 4)}`;
-    } catch {
-      return 'unknown';
-    }
   }
 }

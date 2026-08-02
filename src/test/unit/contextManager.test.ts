@@ -13,6 +13,7 @@ describe('ContextManager', () => {
   let tmpDir: string;
   let configDir: string;
   let contextsDir: string;
+  let secretStorage: ReturnType<typeof createSecretStorage>;
   const originalEnv = process.env;
 
   beforeEach(() => {
@@ -30,6 +31,7 @@ describe('ContextManager', () => {
 
     const authMod = require('../../api/auth/tokenAuth');
     TokenAuthProvider = authMod.TokenAuthProvider;
+    secretStorage = createSecretStorage();
   });
 
   afterEach(() => {
@@ -48,17 +50,76 @@ describe('ContextManager', () => {
     };
   }
 
+  function createSecretStorage(): {
+    values: Map<string, string>;
+    get(key: string): Promise<string | undefined>;
+    store(key: string, value: string): Promise<void>;
+    delete(key: string): Promise<void>;
+  } {
+    const values = new Map<string, string>();
+    return {
+      values,
+      get: (key) => Promise.resolve(values.get(key)),
+      store: (key, value) => {
+        values.set(key, value);
+        return Promise.resolve();
+      },
+      delete: (key) => {
+        values.delete(key);
+        return Promise.resolve();
+      },
+    };
+  }
+
+  it('persists credentials and environment values only in secret storage', async () => {
+    const secretStorage = createSecretStorage();
+    const mgr = new ContextManager(secretStorage);
+    const apiToken = 'TEST_ONLY_TOKEN_VALUE';
+    const envValue = 'TEST_ONLY_ENV_VALUE';
+
+    await mgr.addContext(
+      makeContext({
+        name: 'secure-storage',
+        apiToken,
+        env: { XCSH_PRIVATE_VALUE: envValue },
+      }),
+    );
+
+    const raw = fs.readFileSync(path.join(contextsDir, 'secure-storage.json'), 'utf-8');
+    expect(raw).not.toContain(apiToken);
+    expect(raw).not.toContain(envValue);
+    expect([...secretStorage.values.values()].join('\n')).toContain(apiToken);
+    expect([...secretStorage.values.values()].join('\n')).toContain(envValue);
+
+    const hydrated = await mgr.getContext('secure-storage');
+    expect(hydrated?.apiToken).toBe(apiToken);
+    expect(hydrated?.env?.XCSH_PRIVATE_VALUE).toBe(envValue);
+    mgr.dispose();
+  });
+
+  it('deletes the secret payload when a context is deleted', async () => {
+    const secretStorage = createSecretStorage();
+    const mgr = new ContextManager(secretStorage);
+    await mgr.addContext(makeContext({ name: 'delete-secret' }));
+    expect(secretStorage.values.size).toBe(1);
+
+    await mgr.deleteContext('delete-secret');
+
+    expect(secretStorage.values.size).toBe(0);
+    mgr.dispose();
+  });
+
   // --------------- read operations ---------------
 
   it('returns empty list when no contexts exist', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const list = await mgr.getContexts();
     expect(list).toEqual([]);
     mgr.dispose();
   });
 
   it('adds a context and retrieves it', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const ctx = makeContext({ name: 'prod' });
     await mgr.addContext(ctx);
 
@@ -71,7 +132,7 @@ describe('ContextManager', () => {
   });
 
   it('normalizes a pasted full URL to its origin on save', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'pasted', apiUrl: 'https://host.example.com/web/home?iss=x' }));
 
     const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'pasted.json'), 'utf-8')) as XCSHContext;
@@ -79,8 +140,7 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
-  it('heals a pre-existing path/trailing-slash apiUrl to its origin on read', async () => {
-    // Simulate a context file written before origin normalization existed.
+  it('rejects a plaintext legacy context file', async () => {
     fs.mkdirSync(contextsDir, { recursive: true });
     const legacy: XCSHContext = {
       name: 'legacy',
@@ -91,14 +151,14 @@ describe('ContextManager', () => {
     };
     fs.writeFileSync(path.join(contextsDir, 'legacy.json'), JSON.stringify(legacy, null, 2));
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const retrieved = await mgr.getContext('legacy');
-    expect(retrieved?.apiUrl).toBe('https://host.example.com');
+    expect(retrieved).toBeNull();
     mgr.dispose();
   });
 
   it('writes context file with 0o600 permissions', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'secure' }));
 
     const filePath = path.join(contextsDir, 'secure.json');
@@ -112,7 +172,7 @@ describe('ContextManager', () => {
   });
 
   it('sets first added context as active', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'first' }));
 
     const activeName = await mgr.getActiveContextName();
@@ -121,7 +181,7 @@ describe('ContextManager', () => {
   });
 
   it('updates an existing context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'up' }));
     await mgr.updateContext('up', { defaultNamespace: 'new-ns' });
 
@@ -133,7 +193,7 @@ describe('ContextManager', () => {
   });
 
   it('deletes a context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'del' }));
     await mgr.deleteContext('del');
 
@@ -144,7 +204,7 @@ describe('ContextManager', () => {
   });
 
   it('switches active context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'alpha' }));
     await mgr.addContext(makeContext({ name: 'beta' }));
     await mgr.setActiveContext('beta');
@@ -154,7 +214,7 @@ describe('ContextManager', () => {
   });
 
   it('clears active when active context is deleted', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'gone' }));
     expect(await mgr.getActiveContextName()).toBe('gone');
 
@@ -164,7 +224,7 @@ describe('ContextManager', () => {
   });
 
   it('preserves unknown fields (knowledgeSources) for xcsh compat', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const ctx = makeContext({
       name: 'compat',
       knowledgeSources: [{ url: 'https://example.com/llms.txt', label: 'docs', type: 'llms-txt' }],
@@ -183,7 +243,7 @@ describe('ContextManager', () => {
   });
 
   it('rejects invalid context names', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.addContext(makeContext({ name: '../evil' }))).rejects.toThrow(/invalid/i);
     await expect(mgr.addContext(makeContext({ name: '' }))).rejects.toThrow(/invalid/i);
     await expect(mgr.addContext(makeContext({ name: 'list' }))).rejects.toThrow(/invalid/i);
@@ -191,14 +251,14 @@ describe('ContextManager', () => {
   });
 
   it('rejects duplicate names', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'dup' }));
     await expect(mgr.addContext(makeContext({ name: 'dup' }))).rejects.toThrow(/already exists/i);
     mgr.dispose();
   });
 
   it('lists contexts sorted alphabetically', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'charlie' }));
     await mgr.addContext(makeContext({ name: 'alpha' }));
     await mgr.addContext(makeContext({ name: 'bravo' }));
@@ -211,7 +271,7 @@ describe('ContextManager', () => {
   // --------------- getActiveContext ---------------
 
   it('getActiveContext returns the full active context object', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const ctx = makeContext({ name: 'active-one' });
     await mgr.addContext(ctx);
 
@@ -223,7 +283,7 @@ describe('ContextManager', () => {
   });
 
   it('getActiveContext returns null when no active set', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const active = await mgr.getActiveContext();
     expect(active).toBeNull();
     mgr.dispose();
@@ -233,13 +293,13 @@ describe('ContextManager', () => {
 
   it('does not auto-load a persisted active context in a fresh session', async () => {
     // Session 1: create + activate, leaving a persisted active_context pointer on disk.
-    const mgr1 = new ContextManager();
+    const mgr1 = new ContextManager(secretStorage);
     await mgr1.addContext(makeContext({ name: 'prod' }));
     expect(await mgr1.getActiveContextName()).toBe('prod');
     mgr1.dispose();
 
     // Session 2: a fresh manager must NOT auto-load the persisted pointer.
-    const mgr2 = new ContextManager();
+    const mgr2 = new ContextManager(secretStorage);
     expect(await mgr2.getActiveContextName()).toBeNull();
     expect(await mgr2.getActiveContext()).toBeNull();
     // The context still exists and is listable — only "active" is gated.
@@ -255,14 +315,14 @@ describe('ContextManager', () => {
   });
 
   it('isSessionActivated reflects the gate state', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     expect(mgr.isSessionActivated()).toBe(false);
     await mgr.addContext(makeContext({ name: 'prod' }));
     expect(mgr.isSessionActivated()).toBe(true);
     mgr.dispose();
 
     // A fresh session (new manager) starts un-activated even with a persisted pointer.
-    const mgr2 = new ContextManager();
+    const mgr2 = new ContextManager(secretStorage);
     expect(mgr2.isSessionActivated()).toBe(false);
     await mgr2.setActiveContext('prod');
     expect(mgr2.isSessionActivated()).toBe(true);
@@ -270,7 +330,7 @@ describe('ContextManager', () => {
   });
 
   it('creating any context activates it in the current session', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'alpha' }));
     expect(await mgr.getActiveContextName()).toBe('alpha');
     // A second create switches active to the newest (create = activate, any create).
@@ -282,7 +342,7 @@ describe('ContextManager', () => {
   // --------------- getTokenHealth ---------------
 
   it('getTokenHealth returns correct health for context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const ctx = makeContext({
       name: 'healthy',
       metadata: { expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() },
@@ -300,7 +360,7 @@ describe('ContextManager', () => {
   });
 
   it('getTokenHealth returns expiring for context expiring within 7 days', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const ctx = makeContext({
       name: 'expiring-soon',
       metadata: { expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString() },
@@ -322,7 +382,7 @@ describe('ContextManager', () => {
   it('getClient returns the same cached instance on repeated calls', async () => {
     // TokenAuthProvider and XCSHClient constructors do not make network calls,
     // so no https stubbing is needed — only getClient caching behaviour is tested.
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'test-ctx' }));
 
     const client1 = await mgr.getClient('test-ctx');
@@ -339,7 +399,7 @@ describe('ContextManager', () => {
     // Spy on TokenAuthProvider.prototype.validate to avoid real network calls
     const validateSpy = jest.spyOn(TokenAuthProvider.prototype, 'validate').mockResolvedValue(true);
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'test-ctx' }));
 
     const result = await mgr.validateContext('test-ctx');
@@ -350,7 +410,7 @@ describe('ContextManager', () => {
   });
 
   it('validateContext throws when context does not exist', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.validateContext('no-such-ctx')).rejects.toThrow(/not found/i);
     mgr.dispose();
   });
@@ -358,7 +418,7 @@ describe('ContextManager', () => {
   // --------------- atomic writes ---------------
 
   it('uses atomic writes (no partial files left behind)', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'atomic' }));
 
     // Verify no .tmp files remain
@@ -371,7 +431,7 @@ describe('ContextManager', () => {
   // --------------- directory permissions ---------------
 
   it('creates contexts directory with 0o700 permissions', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'dirperms' }));
 
     const stat = fs.statSync(contextsDir);
@@ -385,7 +445,7 @@ describe('ContextManager', () => {
   // --------------- update nonexistent ---------------
 
   it('throws when updating a context that does not exist', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.updateContext('ghost', { defaultNamespace: 'ns' })).rejects.toThrow(/not found/i);
     mgr.dispose();
   });
@@ -393,7 +453,7 @@ describe('ContextManager', () => {
   // --------------- setActiveContext with bad name ---------------
 
   it('throws when setting active to a nonexistent context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.setActiveContext('nope')).rejects.toThrow(/not found/i);
     mgr.dispose();
   });
@@ -401,17 +461,19 @@ describe('ContextManager', () => {
   // --------------- env var management ---------------
 
   it('sets a new env var on a context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'env-ctx' }));
     await mgr.setContextEnv('env-ctx', 'XCSH_LB_NAME', 'my-lb');
 
     const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'env-ctx.json'), 'utf-8')) as XCSHContext;
-    expect(onDisk.env).toEqual({ XCSH_LB_NAME: 'my-lb' });
+    expect(onDisk.env).not.toEqual({ XCSH_LB_NAME: 'my-lb' });
+    expect(JSON.stringify(onDisk)).not.toContain('my-lb');
+    expect([...secretStorage.values.values()].join('\n')).toContain('my-lb');
     mgr.dispose();
   });
 
   it('overwrites an existing env var and preserves the others', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'env-ctx', env: { A: '1', B: '2' } }));
     await mgr.setContextEnv('env-ctx', 'A', '99');
 
@@ -421,7 +483,7 @@ describe('ContextManager', () => {
   });
 
   it('unsets an env var without touching the rest', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'env-ctx', env: { A: '1', B: '2' } }));
     await mgr.unsetContextEnv('env-ctx', 'A');
 
@@ -431,7 +493,7 @@ describe('ContextManager', () => {
   });
 
   it('unset is a no-op for an absent key', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'env-ctx', env: { A: '1' } }));
     await mgr.unsetContextEnv('env-ctx', 'MISSING');
 
@@ -441,14 +503,14 @@ describe('ContextManager', () => {
   });
 
   it('rejects reserved env keys', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'env-ctx' }));
     await expect(mgr.setContextEnv('env-ctx', 'XCSH_API_TOKEN', 'x')).rejects.toThrow(/reserved/i);
     mgr.dispose();
   });
 
   it('rejects malformed env keys', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'env-ctx' }));
     await expect(mgr.setContextEnv('env-ctx', '1BAD', 'x')).rejects.toThrow(/invalid/i);
     await expect(mgr.setContextEnv('env-ctx', 'has space', 'x')).rejects.toThrow(/invalid/i);
@@ -456,48 +518,15 @@ describe('ContextManager', () => {
   });
 
   it('throws when setting env on a nonexistent context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.setContextEnv('nope', 'A', '1')).rejects.toThrow(/not found/i);
-    mgr.dispose();
-  });
-
-  it('auto-marks a secret-looking env var (console password) as sensitive', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'auth-ctx' }));
-    await mgr.setContextEnv('auth-ctx', 'XCSH_CONSOLE_PASSWORD', 's3cret');
-
-    const ctx = await mgr.getContext('auth-ctx');
-    expect(ctx?.env).toEqual({ XCSH_CONSOLE_PASSWORD: 's3cret' });
-    expect(ctx?.sensitiveKeys).toEqual(['XCSH_CONSOLE_PASSWORD']);
-    mgr.dispose();
-  });
-
-  it('does not mark a non-secret env var (username) as sensitive', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'auth-ctx' }));
-    await mgr.setContextEnv('auth-ctx', 'XCSH_USERNAME', 'console-user@example.com');
-
-    const ctx = await mgr.getContext('auth-ctx');
-    expect(ctx?.sensitiveKeys).toBeUndefined();
-    mgr.dispose();
-  });
-
-  it('prunes a removed key from sensitiveKeys on unset', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'auth-ctx' }));
-    await mgr.setContextEnv('auth-ctx', 'XCSH_CONSOLE_PASSWORD', 's3cret');
-    await mgr.unsetContextEnv('auth-ctx', 'XCSH_CONSOLE_PASSWORD');
-
-    const ctx = await mgr.getContext('auth-ctx');
-    expect(ctx?.sensitiveKeys).toEqual([]);
-    expect(ctx?.env ?? {}).toEqual({});
     mgr.dispose();
   });
 
   // --------------- namespace switch ---------------
 
   it('switches the default namespace', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'ns-ctx', defaultNamespace: 'old' }));
     await mgr.setContextNamespace('ns-ctx', 'new-ns');
 
@@ -507,7 +536,7 @@ describe('ContextManager', () => {
   });
 
   it('trims the namespace before saving', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'ns-ctx' }));
     await mgr.setContextNamespace('ns-ctx', '  spaced  ');
 
@@ -517,138 +546,22 @@ describe('ContextManager', () => {
   });
 
   it('rejects an empty namespace', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'ns-ctx' }));
     await expect(mgr.setContextNamespace('ns-ctx', '   ')).rejects.toThrow(/empty/i);
     mgr.dispose();
   });
 
   it('throws when switching namespace on a nonexistent context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.setContextNamespace('nope', 'ns')).rejects.toThrow(/not found/i);
-    mgr.dispose();
-  });
-
-  // --------------- export / import ---------------
-
-  it('exports with tokens masked by default', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'exp', apiToken: 'supersecrettoken' }));
-    const bundle = await mgr.exportContexts({ includeTokens: false });
-
-    expect(bundle.version).toBe(1);
-    expect(bundle.tokensMasked).toBe(true);
-    expect(bundle.contexts).toHaveLength(1);
-    expect(bundle.contexts[0]?.apiToken).not.toBe('supersecrettoken');
-    expect(typeof bundle.exportedAt).toBe('string');
-    mgr.dispose();
-  });
-
-  it('exports real tokens when includeTokens is set', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'exp', apiToken: 'supersecrettoken' }));
-    const bundle = await mgr.exportContexts({ includeTokens: true });
-
-    expect(bundle.tokensMasked).toBe(false);
-    expect(bundle.contexts[0]?.apiToken).toBe('supersecrettoken');
-    mgr.dispose();
-  });
-
-  it('masks secret-looking env values (console password) on masked export, keeps username', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(
-      makeContext({
-        name: 'exp',
-        env: { XCSH_USERNAME: 'console-user@example.com', XCSH_CONSOLE_PASSWORD: 'supersecretpass' },
-      }),
-    );
-    const bundle = await mgr.exportContexts({ includeTokens: false });
-
-    const exported = bundle.contexts[0];
-    expect(exported?.env?.XCSH_CONSOLE_PASSWORD).not.toBe('supersecretpass');
-    // Username is not secret-looking, so it round-trips in the clear.
-    expect(exported?.env?.XCSH_USERNAME).toBe('console-user@example.com');
-    mgr.dispose();
-  });
-
-  it('exports real env secrets when includeTokens is set', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'exp', env: { XCSH_CONSOLE_PASSWORD: 'supersecretpass' } }));
-    const bundle = await mgr.exportContexts({ includeTokens: true });
-
-    expect(bundle.contexts[0]?.env?.XCSH_CONSOLE_PASSWORD).toBe('supersecretpass');
-    mgr.dispose();
-  });
-
-  it('round-trips export (with tokens) then import into a clean store', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'a', apiToken: 'tok-a' }));
-    await mgr.addContext(makeContext({ name: 'b', apiToken: 'tok-b' }));
-    const bundle = await mgr.exportContexts({ includeTokens: true });
-
-    // Wipe and re-import
-    await mgr.deleteContext('a');
-    await mgr.deleteContext('b');
-    const result = await mgr.importContexts(bundle, { overwrite: false });
-
-    expect(result.imported.sort()).toEqual(['a', 'b']);
-    expect(result.skipped).toEqual([]);
-    expect((await mgr.getContext('a'))?.apiToken).toBe('tok-a');
-    mgr.dispose();
-  });
-
-  it('skips existing contexts on import unless overwrite is set', async () => {
-    const mgr = new ContextManager();
-    await mgr.addContext(makeContext({ name: 'keep', apiToken: 'original' }));
-    const bundle = {
-      version: 1,
-      exportedAt: 'x',
-      tokensMasked: false,
-      contexts: [makeContext({ name: 'keep', apiToken: 'replaced' })],
-    };
-
-    const skip = await mgr.importContexts(bundle, { overwrite: false });
-    expect(skip.skipped).toEqual(['keep']);
-    expect((await mgr.getContext('keep'))?.apiToken).toBe('original');
-
-    const over = await mgr.importContexts(bundle, { overwrite: true });
-    expect(over.imported).toEqual(['keep']);
-    expect((await mgr.getContext('keep'))?.apiToken).toBe('replaced');
-    mgr.dispose();
-  });
-
-  it('rejects a token-masked bundle on import', async () => {
-    const mgr = new ContextManager();
-    const bundle = { version: 1, exportedAt: 'x', tokensMasked: true, contexts: [] };
-    await expect(mgr.importContexts(bundle, { overwrite: false })).rejects.toThrow(/masked/i);
-    mgr.dispose();
-  });
-
-  it('rejects a malformed bundle on import', async () => {
-    const mgr = new ContextManager();
-    await expect(mgr.importContexts({ nope: true }, { overwrite: false })).rejects.toThrow(/invalid/i);
-    await expect(mgr.importContexts('notjson', { overwrite: false })).rejects.toThrow(/invalid/i);
-    mgr.dispose();
-  });
-
-  it('skips invalid context names within a bundle', async () => {
-    const mgr = new ContextManager();
-    const bundle = {
-      version: 1,
-      exportedAt: 'x',
-      tokensMasked: false,
-      contexts: [makeContext({ name: 'good' }), makeContext({ name: '../evil' })],
-    };
-    const result = await mgr.importContexts(bundle, { overwrite: false });
-    expect(result.imported).toEqual(['good']);
-    expect(result.skipped).toEqual(['../evil']);
     mgr.dispose();
   });
 
   // --------------- rename ---------------
 
   it('renames a context, preserving fields and removing the old name', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'old', defaultNamespace: 'keep-ns', env: { A: '1' } }));
     await mgr.renameContext('old', 'fresh');
 
@@ -661,7 +574,7 @@ describe('ContextManager', () => {
   });
 
   it('moves the active pointer when renaming the active context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'active1' }));
     await mgr.addContext(makeContext({ name: 'other' }));
     await mgr.setActiveContext('active1');
@@ -672,7 +585,7 @@ describe('ContextManager', () => {
   });
 
   it('leaves the active pointer alone when renaming a non-active context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'act' }));
     await mgr.addContext(makeContext({ name: 'idle' }));
     await mgr.setActiveContext('act');
@@ -683,7 +596,7 @@ describe('ContextManager', () => {
   });
 
   it('rejects an invalid or duplicate new name', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'src' }));
     await mgr.addContext(makeContext({ name: 'taken' }));
 
@@ -695,7 +608,7 @@ describe('ContextManager', () => {
   });
 
   it('throws when renaming a nonexistent context', async () => {
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     await expect(mgr.renameContext('nope', 'whatever')).rejects.toThrow(/not found/i);
     mgr.dispose();
   });

@@ -55,11 +55,11 @@ export class XCSHSchemaProvider implements vscode.TextDocumentContentProvider {
     }
 
     if (!resourceType) {
-      logger.warn(`Invalid schema URI format: ${uri.toString()}, authority: ${uri.authority}, path: ${uri.path}`);
+      logger.warn('schema.unavailable');
       return this.getErrorSchema(uri.toString());
     }
 
-    logger.debug(`Providing schema for resource type: ${resourceType}`);
+    logger.debug('schema.generated');
 
     const registry = getSchemaRegistry();
     return registry.getSchemaContent(resourceType);
@@ -87,7 +87,7 @@ export class XCSHSchemaProvider implements vscode.TextDocumentContentProvider {
   notifySchemaChanged(resourceType: string): void {
     const uri = vscode.Uri.parse(`xcsh-schema://schemas/${resourceType}.json`);
     this._onDidChange.fire(uri);
-    logger.debug(`Schema change notified for: ${resourceType}`);
+    logger.debug('schema.generated');
   }
 
   /**
@@ -99,7 +99,7 @@ export class XCSHSchemaProvider implements vscode.TextDocumentContentProvider {
       this.notifySchemaChanged(resourceType);
     }
     this.notifySchemaChanged('generic');
-    logger.debug('All schema changes notified');
+    logger.debug('schema.generated');
   }
 }
 
@@ -142,7 +142,7 @@ export function configureJsonSchemaAssociations(): void {
 
   // Note: VSCode's json.schemas setting is workspace-specific and read-only
   // We use the jsonValidation contribution in package.json instead
-  logger.debug(`Schema associations configured for ${resourceTypes.length} resource types`);
+  logger.debug('schema.registered');
 }
 
 /**

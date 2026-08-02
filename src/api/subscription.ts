@@ -314,7 +314,7 @@ function parseApiRateLimits(items: Record<string, ApiLimitItem | null>): ApiRate
  * Get current subscription plan information
  */
 export async function getCurrentPlan(client: XCSHClient): Promise<PlanInfo> {
-  logger.debug('Fetching current usage plan');
+  logger.debug('subscription.operation.started');
 
   const response = await client.customRequest<UsagePlanResponse>('/api/web/namespaces/system/usage_plans/current');
 
@@ -353,7 +353,7 @@ export async function getCurrentPlan(client: XCSHClient): Promise<PlanInfo> {
  * Get quota usage for a namespace
  */
 export async function getQuotaUsage(client: XCSHClient, namespace: string = 'system'): Promise<QuotaUsage> {
-  logger.debug(`Fetching quota usage for namespace: ${namespace}`);
+  logger.debug('subscription.operation.started');
 
   const response = await client.customRequest<QuotaUsageResponse>(`/api/web/namespaces/${namespace}/quota/usage`);
 
@@ -416,22 +416,18 @@ export async function getQuotaForResourceType(
   // Combine all quota items for search
   const allItems = [...quotaUsage.objects, ...quotaUsage.resources];
 
-  logger.info(`Looking for quota match for key: ${resourceTypeKey}`);
-  logger.info(
-    `Available quota items (${allItems.length}): ${allItems.map((i) => `${i.key}(${i.displayName})`).join(', ')}`,
-  );
+  logger.debug('subscription.operation.started');
 
   // First, try static mapping for known resource types
   const mappedKeys = QUOTA_KEY_MAPPINGS[resourceTypeKey.toLowerCase()];
   if (mappedKeys) {
-    logger.info(`Using static mapping for ${resourceTypeKey}: [${mappedKeys.join(', ')}]`);
     const staticMatch = allItems.find((item) => {
       const itemKeyLower = item.key.toLowerCase();
       const itemDisplayLower = item.displayName.toLowerCase();
       return mappedKeys.some((k) => itemKeyLower.includes(k)) || mappedKeys.some((k) => itemDisplayLower.includes(k));
     });
     if (staticMatch) {
-      logger.info(`Found quota via static mapping: ${staticMatch.key} (${staticMatch.displayName})`);
+      logger.debug('subscription.operation.completed');
       return staticMatch;
     }
   }
@@ -443,10 +439,6 @@ export async function getQuotaForResourceType(
   const keyWithSpaces = keyLower.replace(/_/g, ' '); // http loadbalancers
   const keySingular = keyWithSpaces.replace(/s$/, ''); // http loadbalancer
   const keyNoSpacesSingular = keyNoUnderscores.replace(/s$/, ''); // httploadbalancer
-
-  logger.info(
-    `Fuzzy matching with variants: [${keyNoUnderscores}, ${keyWithSpaces}, ${keySingular}, ${keyNoSpacesSingular}]`,
-  );
 
   // Search with fuzzy matching
   const match = allItems.find((item) => {
@@ -472,14 +464,10 @@ export async function getQuotaForResourceType(
       itemDisplayNoSpaces.includes(keyNoSpacesSingular);
 
     if (matches) {
-      logger.info(`Found quota via fuzzy match: ${item.key} (${item.displayName})`);
+      logger.debug('subscription.operation.completed');
     }
     return matches;
   });
-
-  if (!match) {
-    logger.info(`No quota match found for ${resourceTypeKey}`);
-  }
 
   return match;
 }
@@ -588,7 +576,7 @@ export async function getAddonActivationStatus(
   client: XCSHClient,
   addonServiceName: string,
 ): Promise<ActivationStatus> {
-  logger.debug(`Fetching activation status for addon: ${addonServiceName}`);
+  logger.debug('subscription.operation.started');
 
   try {
     // First try the all-activation-status endpoint for more detailed info
@@ -622,8 +610,8 @@ export async function getAddonActivationStatus(
     return {
       state: (response.state as ActivationState) || 'AS_NONE',
     };
-  } catch (error) {
-    logger.warn(`Failed to get activation status for ${addonServiceName}:`, error);
+  } catch {
+    logger.warn('subscription.operation.failed');
     return {
       state: 'AS_NONE',
     };
@@ -639,7 +627,7 @@ export async function createAddonSubscription(
   addonServiceName: string,
   namespace: string = 'system',
 ): Promise<SubscriptionResponse> {
-  logger.info(`Creating addon subscription for: ${addonServiceName}`);
+  logger.info('subscription.operation.started');
 
   // Generate a unique subscription name based on addon service name
   const subscriptionName = `${addonServiceName.replace(/[^a-z0-9-]/gi, '-').toLowerCase()}-subscription`;
@@ -665,7 +653,7 @@ export async function createAddonSubscription(
     },
   );
 
-  logger.info(`Addon subscription created: ${response.metadata?.name}, status: ${response.spec?.status}`);
+  logger.info('subscription.operation.completed');
 
   return response;
 }

@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -14,6 +15,7 @@ let ContextManager: typeof import('../../config/contextManager').ContextManager;
 
 describe('ContextProvider with local contexts', () => {
   let tmpDir: string;
+  let secretStorage: ReturnType<typeof createSecretStorage>;
   const originalEnv = process.env;
 
   function makeContext(name: string, url = 'https://test.console.ves.volterra.io'): XCSHContext {
@@ -26,8 +28,40 @@ describe('ContextProvider with local contexts', () => {
     };
   }
 
+  function createSecretStorage(): {
+    values: Map<string, string>;
+    get(key: string): Promise<string | undefined>;
+    store(key: string, value: string): Promise<void>;
+    delete(key: string): Promise<void>;
+  } {
+    const values = new Map<string, string>();
+    return {
+      values,
+      get: (key) => Promise.resolve(values.get(key)),
+      store: (key, value) => {
+        values.set(key, value);
+        return Promise.resolve();
+      },
+      delete: (key) => {
+        values.delete(key);
+        return Promise.resolve();
+      },
+    };
+  }
+
+  function storedContext(name: string, url?: string): Record<string, unknown> {
+    const context = makeContext(name, url);
+    const credentialId = randomUUID();
+    secretStorage.values.set(
+      `xcsh.context.credentials.${credentialId}`,
+      JSON.stringify({ apiToken: context.apiToken, env: {} }),
+    );
+    return { ...context, apiToken: '<SECRET_STORAGE>', credentialId };
+  }
+
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'xcsh-tree-'));
+    secretStorage = createSecretStorage();
     process.env = { ...originalEnv, XDG_CONFIG_HOME: path.join(tmpDir, 'global') };
 
     // Ensure global contexts directory exists
@@ -55,9 +89,9 @@ describe('ContextProvider with local contexts', () => {
   it('returns flat ContextTreeItem list when no workspaceFolder is set', async () => {
     // Write a global context
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(makeContext('prod')), { mode: 0o600 });
+    fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(storedContext('prod')), { mode: 0o600 });
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
 
     const children = await provider.getChildren();
@@ -72,7 +106,7 @@ describe('ContextProvider with local contexts', () => {
   it('returns two ContextGroupItem nodes when workspaceFolder has local contexts', async () => {
     // Create a global context
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'global-prod.json'), JSON.stringify(makeContext('global-prod')), {
+    fs.writeFileSync(path.join(globalCtxDir, 'global-prod.json'), JSON.stringify(storedContext('global-prod')), {
       mode: 0o600,
     });
 
@@ -82,11 +116,11 @@ describe('ContextProvider with local contexts', () => {
     fs.mkdirSync(localCtxDir, { recursive: true, mode: 0o700 });
     fs.writeFileSync(
       path.join(localCtxDir, 'local-dev.json'),
-      JSON.stringify(makeContext('local-dev', 'https://local.example.com')),
+      JSON.stringify(storedContext('local-dev', 'https://local.example.com')),
       { mode: 0o600 },
     );
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
     provider.setWorkspaceFolder(projDir);
 
@@ -110,7 +144,7 @@ describe('ContextProvider with local contexts', () => {
 
   it('returns project contexts as children of the project group', async () => {
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'global-prod.json'), JSON.stringify(makeContext('global-prod')), {
+    fs.writeFileSync(path.join(globalCtxDir, 'global-prod.json'), JSON.stringify(storedContext('global-prod')), {
       mode: 0o600,
     });
 
@@ -119,11 +153,11 @@ describe('ContextProvider with local contexts', () => {
     fs.mkdirSync(localCtxDir, { recursive: true, mode: 0o700 });
     fs.writeFileSync(
       path.join(localCtxDir, 'local-dev.json'),
-      JSON.stringify(makeContext('local-dev', 'https://local.example.com')),
+      JSON.stringify(storedContext('local-dev', 'https://local.example.com')),
       { mode: 0o600 },
     );
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
     provider.setWorkspaceFolder(projDir);
 
@@ -140,17 +174,17 @@ describe('ContextProvider with local contexts', () => {
 
   it('returns global contexts as children of the global group', async () => {
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'g1.json'), JSON.stringify(makeContext('g1')), { mode: 0o600 });
-    fs.writeFileSync(path.join(globalCtxDir, 'g2.json'), JSON.stringify(makeContext('g2')), { mode: 0o600 });
+    fs.writeFileSync(path.join(globalCtxDir, 'g1.json'), JSON.stringify(storedContext('g1')), { mode: 0o600 });
+    fs.writeFileSync(path.join(globalCtxDir, 'g2.json'), JSON.stringify(storedContext('g2')), { mode: 0o600 });
 
     const projDir = path.join(tmpDir, 'project');
     const localCtxDir = path.join(projDir, '.xcsh', 'contexts');
     fs.mkdirSync(localCtxDir, { recursive: true, mode: 0o700 });
-    fs.writeFileSync(path.join(localCtxDir, 'local-dev.json'), JSON.stringify(makeContext('local-dev')), {
+    fs.writeFileSync(path.join(localCtxDir, 'local-dev.json'), JSON.stringify(storedContext('local-dev')), {
       mode: 0o600,
     });
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
     provider.setWorkspaceFolder(projDir);
 
@@ -168,7 +202,7 @@ describe('ContextProvider with local contexts', () => {
 
   it('shows pointer description for pointer contexts', async () => {
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'shared-prod.json'), JSON.stringify(makeContext('shared-prod')), {
+    fs.writeFileSync(path.join(globalCtxDir, 'shared-prod.json'), JSON.stringify(storedContext('shared-prod')), {
       mode: 0o600,
     });
 
@@ -180,7 +214,7 @@ describe('ContextProvider with local contexts', () => {
     const pointer = { context: 'shared-prod' };
     fs.writeFileSync(path.join(localCtxDir, 'shared-prod.json'), JSON.stringify(pointer), { mode: 0o600 });
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
     provider.setWorkspaceFolder(projDir);
 
@@ -200,9 +234,9 @@ describe('ContextProvider with local contexts', () => {
 
   it('returns empty array for ContextTreeItem children', async () => {
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(makeContext('prod')), { mode: 0o600 });
+    fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(storedContext('prod')), { mode: 0o600 });
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
 
     const children = await provider.getChildren();
@@ -218,13 +252,13 @@ describe('ContextProvider with local contexts', () => {
 
   it('falls back to flat list when workspaceFolder is set but .xcsh/contexts does not exist', async () => {
     const globalCtxDir = path.join(tmpDir, 'global', 'xcsh', 'contexts');
-    fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(makeContext('prod')), { mode: 0o600 });
+    fs.writeFileSync(path.join(globalCtxDir, 'prod.json'), JSON.stringify(storedContext('prod')), { mode: 0o600 });
 
     const projDir = path.join(tmpDir, 'project');
     fs.mkdirSync(projDir, { recursive: true });
     // Note: no .xcsh/contexts/ directory
 
-    const mgr = new ContextManager();
+    const mgr = new ContextManager(secretStorage);
     const provider = new ContextProvider(mgr);
     provider.setWorkspaceFolder(projDir);
 

@@ -89,8 +89,7 @@ export function registerCrudCommands(
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc, { preview: false });
 
-        const viewMode = getViewMode();
-        logger.info(`Viewing resource: ${data.name} (view mode: ${viewMode})`);
+        logger.info('resource.operation.started');
       }, 'View resource');
     }),
   );
@@ -109,7 +108,7 @@ export function registerCrudCommands(
           data.fullResourceData,
         );
 
-        logger.info(`Describing resource: ${data.name}`);
+        logger.info('resource.operation.started');
       }, 'Describe resource');
     }),
   );
@@ -168,7 +167,7 @@ export function registerCrudCommands(
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc, { preview: false });
 
-        logger.info(`Editing resource: ${data.name}`);
+        logger.info('resource.operation.started');
         showInfo(vscode.l10n.t('Editing {0}. Press Cmd+S to save changes.', data.name));
       }, 'Edit resource');
     }),
@@ -635,7 +634,7 @@ export function registerCrudCommands(
           },
         );
 
-        showInfo(vscode.l10n.t('Deleted namespace: {0}', data.name));
+        showInfo(vscode.l10n.t('Namespace deleted: {0}', data.name));
         explorer.refresh();
       }, 'Delete namespace');
     }),
@@ -649,7 +648,7 @@ export function registerCrudCommands(
 
         await describeProvider.showNamespaceDescribe(data.profileName, data.name);
 
-        logger.info(`Describing namespace: ${data.name}`);
+        logger.info('resource.operation.started');
       }, 'Describe namespace');
     }),
   );
@@ -818,7 +817,7 @@ export function registerCrudCommands(
         const name = buildAttachmentName(rt.apiPath, data.name);
         const content = JSON.stringify(resource, null, 2);
         await vscode.commands.executeCommand('xcsh.attachToChat', { name, content });
-        logger.info(`Added ${data.name} to xcsh chat as context`);
+        logger.info('resource.operation.completed');
       }, 'Add to xcsh chat');
     }),
   );
@@ -856,7 +855,7 @@ export function registerCrudCommands(
           ? vscode.l10n.t('Console View (clean, filtered output)')
           : vscode.l10n.t('Full API View (complete response)');
       showInfo(vscode.l10n.t('Switched to {0}', modeDescription));
-      logger.info(`View mode changed to: ${newMode}`);
+      logger.info('resource.operation.completed');
     }),
   );
 }

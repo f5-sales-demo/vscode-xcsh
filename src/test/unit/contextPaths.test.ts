@@ -8,14 +8,7 @@ jest.mock('node:os', () => ({
   platform: jest.fn(() => 'darwin'),
 }));
 
-import {
-  getActiveContextPath,
-  getActiveProfilePath,
-  getConfigDir,
-  getContextPath,
-  getContextsDir,
-  getProfilesDir,
-} from '../../config/contextPaths';
+import { getActiveContextPath, getConfigDir, getContextPath, getContextsDir } from '../../config/contextPaths';
 
 describe('Context paths', () => {
   const originalEnv = process.env;
@@ -50,13 +43,5 @@ describe('Context paths', () => {
 
   it('returns active context file path', () => {
     expect(getActiveContextPath()).toBe(path.join('/mock/home', '.config', 'xcsh', 'active_context'));
-  });
-
-  it('returns profiles directory', () => {
-    expect(getProfilesDir()).toBe(path.join('/mock/home', '.config', 'xcsh', 'profiles'));
-  });
-
-  it('returns active profile file path', () => {
-    expect(getActiveProfilePath()).toBe(path.join('/mock/home', '.config', 'xcsh', 'active_profile'));
   });
 });

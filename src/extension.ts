@@ -9,7 +9,6 @@ import { registerExportCommands } from './commands/exportResource';
 import { registerFileOperationCommands } from './commands/fileOperations';
 import { registerObservabilityCommands } from './commands/observability';
 import { ContextManager } from './config/contextManager';
-import { migrateProfilesToContexts } from './config/contextMigration';
 import { CloudStatusDashboardProvider } from './providers/cloudStatusDashboardProvider';
 import { HealthcheckFormProvider } from './providers/healthcheckFormProvider';
 import { OnboardingProvider } from './providers/onboardingProvider';
@@ -36,16 +35,9 @@ let logger: Logger;
 
 export function activate(context: vscode.ExtensionContext): void {
   logger = getLogger();
-  logger.info('xcsh extension is activating...');
+  logger.info('extension.activation.started');
 
-  // Run one-time profile-to-context migration
-  const migrationResult = migrateProfilesToContexts();
-  if (migrationResult.migrated > 0) {
-    logger.info(`Migrated ${migrationResult.migrated} profiles to contexts`);
-  }
-
-  // Initialize context manager with file-based storage
-  const contextManager = new ContextManager();
+  const contextManager = new ContextManager(context.secrets);
   contextManager.initFileWatcher();
   context.subscriptions.push(contextManager);
 
@@ -91,17 +83,16 @@ export function activate(context: vscode.ExtensionContext): void {
   // Initialize and register the schema provider for JSON IntelliSense
   const schemaProvider = new XCSHSchemaProvider();
   context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider('xcsh-schema', schemaProvider));
-  logger.debug('Schema provider registered');
+  logger.debug('extension.provider.registered');
 
   // Pre-warm schema cache for commonly used resource types
   const schemaRegistry = getSchemaRegistry();
   schemaRegistry.prewarmCache(['http_loadbalancer', 'origin_pool', 'healthcheck', 'app_firewall']);
-  const cacheStats = schemaRegistry.getCacheStats();
-  logger.debug(`Schema cache: ${cacheStats.cachedCount}/${cacheStats.availableCount}`);
+  logger.debug('extension.cache.ready');
 
   // Register completion providers for enhanced IntelliSense
   try {
-    logger.info('Registering completion providers');
+    logger.info('extension.provider.registered');
 
     // Document selectors for F5 XC JSON files
     const xcshDocumentSelector: vscode.DocumentSelector = [
@@ -132,9 +123,9 @@ export function activate(context: vscode.ExtensionContext): void {
       }),
     );
 
-    logger.info('Completion and hover providers registered successfully');
-  } catch (error) {
-    logger.error('Failed to register language providers', error as Error);
+    logger.info('extension.provider.registered');
+  } catch {
+    logger.error('extension.activation.failed');
     // Continue extension activation even if providers fail
   }
 
@@ -219,7 +210,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('xcsh.refresh', () => {
       explorerProvider.refresh();
-      logger.info('Explorer refreshed');
+      logger.info('extension.explorer.refreshed');
     }),
   );
 
@@ -292,10 +283,10 @@ export function activate(context: vscode.ExtensionContext): void {
   // Ensure the Resources view is the default focused view on initial activation
   vscode.commands.executeCommand('xcsh.explorer.focus').then(
     () => {
-      logger.debug('Focused Resources view (xcsh.explorer) as default');
+      logger.debug('extension.provider.registered');
     },
-    (error) => {
-      logger.warn('Failed to focus Resources view (xcsh.explorer)', error as Error);
+    () => {
+      logger.warn('extension.activation.failed');
     },
   );
 
@@ -313,9 +304,9 @@ export function activate(context: vscode.ExtensionContext): void {
   // Register conflict diagnostics provider
   registerConflictDiagnostics(context);
 
-  logger.info('xcsh extension activated successfully');
+  logger.info('extension.activation.completed');
 }
 
 export function deactivate(): void {
-  logger?.info('xcsh extension deactivated');
+  logger?.dispose();
 }

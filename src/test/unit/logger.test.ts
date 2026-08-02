@@ -49,7 +49,7 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('info'),
       });
 
-      logger.debug('Debug message');
+      logger.debug('api.request.started');
       expect(mockOutputChannel.appendLine).not.toHaveBeenCalled();
     });
 
@@ -58,17 +58,20 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('debug'),
       });
 
-      logger.debug('Debug message');
+      logger.debug('api.request.started');
       expect(mockOutputChannel.appendLine).toHaveBeenCalled();
     });
 
-    it('should log arguments when provided', () => {
+    it('ignores unexpected arguments at runtime', () => {
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn().mockReturnValue('debug'),
       });
 
-      logger.debug('Debug message', { key: 'value' });
-      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(2);
+      const unsafeLogger = logger as unknown as {
+        debug(event: string, ...unexpected: unknown[]): void;
+      };
+      unsafeLogger.debug('api.request.started', { key: 'value' });
+      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -78,7 +81,7 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('info'),
       });
 
-      logger.info('Info message');
+      logger.info('extension.activation.started');
       expect(mockOutputChannel.appendLine).toHaveBeenCalled();
     });
 
@@ -87,17 +90,20 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('warn'),
       });
 
-      logger.info('Info message');
+      logger.info('extension.activation.started');
       expect(mockOutputChannel.appendLine).not.toHaveBeenCalled();
     });
 
-    it('should log arguments when provided', () => {
+    it('ignores unexpected arguments at runtime', () => {
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn().mockReturnValue('info'),
       });
 
-      logger.info('Info message', { data: 'test' });
-      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(2);
+      const unsafeLogger = logger as unknown as {
+        info(event: string, ...unexpected: unknown[]): void;
+      };
+      unsafeLogger.info('extension.activation.started', { data: 'test' });
+      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -107,7 +113,7 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('warn'),
       });
 
-      logger.warn('Warning message');
+      logger.warn('process.binary.missing');
       expect(mockOutputChannel.appendLine).toHaveBeenCalled();
     });
 
@@ -116,7 +122,7 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('info'),
       });
 
-      logger.warn('Warning message');
+      logger.warn('process.binary.missing');
       expect(mockOutputChannel.appendLine).toHaveBeenCalled();
     });
 
@@ -125,7 +131,7 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('error'),
       });
 
-      logger.warn('Warning message');
+      logger.warn('process.binary.missing');
       expect(mockOutputChannel.appendLine).not.toHaveBeenCalled();
     });
   });
@@ -136,7 +142,7 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('error'),
       });
 
-      logger.error('Error message');
+      logger.error('ui.operation.failed');
       expect(mockOutputChannel.appendLine).toHaveBeenCalled();
     });
 
@@ -145,38 +151,68 @@ describe('Logger', () => {
         get: jest.fn().mockReturnValue('error'),
       });
 
-      logger.error('Error message');
+      logger.error('ui.operation.failed');
       expect(mockOutputChannel.appendLine).toHaveBeenCalled();
     });
 
-    it('should log error with Error object', () => {
+    it('ignores an unexpected Error object at runtime', () => {
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn().mockReturnValue('error'),
       });
 
-      const error = new Error('Test error');
-      logger.error('Error occurred', error);
-      expect(mockOutputChannel.appendLine).toHaveBeenCalledWith(`Error: ${error.message}`);
+      const error = new Error('PRIVATE_RUNTIME_CONTENT');
+      const unsafeLogger = logger as unknown as {
+        error(event: string, ...unexpected: unknown[]): void;
+      };
+      unsafeLogger.error('ui.operation.failed', error);
+      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(1);
     });
 
-    it('should log error stack when available', () => {
+    it('does not log an unexpected error stack at runtime', () => {
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn().mockReturnValue('error'),
       });
 
-      const error = new Error('Test error');
-      error.stack = 'Error stack trace';
-      logger.error('Error occurred', error);
-      expect(mockOutputChannel.appendLine).toHaveBeenCalledWith('Error stack trace');
+      const error = new Error('PRIVATE_RUNTIME_CONTENT');
+      error.stack = 'PRIVATE_RUNTIME_STACK';
+      const unsafeLogger = logger as unknown as {
+        error(event: string, ...unexpected: unknown[]): void;
+      };
+      unsafeLogger.error('ui.operation.failed', error);
+      const written = mockOutputChannel.appendLine.mock.calls.flat().join('\n');
+      expect(written).not.toContain('PRIVATE_RUNTIME_STACK');
     });
 
-    it('should log additional arguments', () => {
+    it('does not log unexpected structured arguments at runtime', () => {
       (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
         get: jest.fn().mockReturnValue('error'),
       });
 
-      logger.error('Error message', undefined, { context: 'test' });
-      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(2);
+      const unsafeLogger = logger as unknown as {
+        error(event: string, ...unexpected: unknown[]): void;
+      };
+      unsafeLogger.error('ui.operation.failed', undefined, { context: 'PRIVATE_RUNTIME_CONTENT' });
+      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not record raw exceptions, stacks, or structured values', () => {
+      (vscode.workspace.getConfiguration as jest.Mock).mockReturnValue({
+        get: jest.fn().mockReturnValue('error'),
+      });
+
+      const privateMarker = 'PRIVATE_RUNTIME_CONTENT';
+      const error = new Error(privateMarker);
+      error.stack = `stack:${privateMarker}`;
+
+      const unsafeLogger = logger as unknown as {
+        error(event: string, ...unexpected: unknown[]): void;
+      };
+      unsafeLogger.error('ui.operation.failed', error, { detail: privateMarker });
+
+      const written = mockOutputChannel.appendLine.mock.calls.flat().join('\n');
+      expect(written).toContain('ui.operation.failed');
+      expect(written).not.toContain(privateMarker);
+      expect(mockOutputChannel.appendLine).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import type { ContextManagerInterface, XCSHContext } from '../config/contextTypes';
-import { AUTH_ENV_KEYS, isSensitiveEnvKey, maskToken } from '../config/contextTypes';
+import { AUTH_ENV_KEYS } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { IntegrationsResponse, ToolExecutionEnd, ToolExecutionStart } from './types';
@@ -19,18 +19,11 @@ interface FileContext {
 }
 
 /**
- * Build a prompt string enriched with F5 XC context information.
- *
- * When context is available, the prompt includes the active context name,
- * namespace, and optional file/selection info so xcsh can give
- * context-aware responses.
+ * Build the local engine prompt with only the user-selected editor context.
+ * Context identity and absolute workstation paths are intentionally omitted.
  */
-export function buildPromptWithContext(userPrompt: string, ctx: XCSHContext | null, fileContext?: FileContext): string {
+export function buildPromptWithContext(userPrompt: string, fileContext?: FileContext): string {
   const parts: string[] = [];
-
-  if (ctx) {
-    parts.push(`[xcsh Context: ${ctx.name} | Namespace: ${ctx.defaultNamespace}]`);
-  }
 
   if (fileContext?.currentFile) {
     parts.push(`Current file: ${fileContext.currentFile}`);
@@ -71,21 +64,13 @@ export function formatContextResponse(ctx: XCSHContext | null): string {
   if (!ctx) {
     return vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
   }
-  const maskedUrl = ctx.apiUrl.replace(/\/api$/, '');
   const lines = [
-    `**${vscode.l10n.t('Active Context')}:** ${ctx.name}`,
-    `**${vscode.l10n.t('Console')}:** ${maskedUrl}`,
-    `**${vscode.l10n.t('Namespace')}:** ${ctx.defaultNamespace}`,
+    `**${vscode.l10n.t('Active Context')}:** ${vscode.l10n.t('Configured')}`,
+    `**${vscode.l10n.t('API credentials')}:** ${vscode.l10n.t('Configured')}`,
+    `**${vscode.l10n.t('Namespace name')}:** ${vscode.l10n.t('Configured')}`,
   ];
-  // Auth section: recognized web-console credentials, console password masked.
-  const env = ctx.env;
-  if (env) {
-    for (const key of AUTH_ENV_KEYS) {
-      const value = env[key];
-      if (value) {
-        lines.push(`**${key}:** ${isSensitiveEnvKey(key) ? maskToken(value) : value}`);
-      }
-    }
+  if (AUTH_ENV_KEYS.some((key) => Boolean(ctx.env?.[key]))) {
+    lines.push(`**${vscode.l10n.t('Web-console credentials')}:** ${vscode.l10n.t('Configured')}`);
   }
   return lines.join('\n\n');
 }
@@ -168,12 +153,9 @@ export function registerChatParticipant(
           vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.'),
         );
       } else {
-        const maskedUrl = activeCtx.apiUrl.replace(/\/api$/, '');
         stream.markdown(
           [
-            `**${vscode.l10n.t('Resources for')}:** ${activeCtx.name}`,
-            `**${vscode.l10n.t('Console')}:** ${maskedUrl}`,
-            `**${vscode.l10n.t('Namespace')}:** ${activeCtx.defaultNamespace}`,
+            `**${vscode.l10n.t('Resources')}:** ${vscode.l10n.t('Active context configured')}`,
             '',
             vscode.l10n.t(
               'Browse resources in the **xcsh** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
@@ -195,10 +177,9 @@ export function registerChatParticipant(
   ): Promise<vscode.ChatResult> => {
     if (request.command) {
       const prompt = request.prompt.trim();
-      logger.info(`Chat handler: command=${request.command}, prompt="${prompt}"`);
+      logger.info('chat.request.started');
       if (prompt) {
         const matched = FOLLOWUP_PATTERNS.find((fp) => fp.pattern.test(prompt));
-        logger.info(`Chat handler: matched=${matched ? matched.command : 'none'}`);
         if (matched) {
           return runSlashCommand(matched.command, stream);
         }
@@ -206,34 +187,26 @@ export function registerChatParticipant(
       return runSlashCommand(request.command, stream);
     }
 
-    const activeCtx = await contextManager.getActiveContext();
-
     // Gather file context from active editor
     const editor = vscode.window.activeTextEditor;
     const fileContext: FileContext = {};
     if (editor) {
-      fileContext.currentFile = editor.document.uri.fsPath;
+      fileContext.currentFile = vscode.workspace.asRelativePath(editor.document.uri, false);
       const selection = editor.document.getText(editor.selection);
       if (selection) {
         fileContext.selection = selection;
       }
     }
 
-    const enrichedPrompt = buildPromptWithContext(request.prompt, activeCtx, fileContext);
-    logger.info(`Chat participant: sending prompt (${enrichedPrompt.length} chars)`);
+    const enrichedPrompt = buildPromptWithContext(request.prompt, fileContext);
+    logger.info('chat.request.started');
 
     const disposables: vscode.Disposable[] = [];
-    let receivedAnyEvent = false;
-    let textChunkCount = 0;
-    let resolveReason = 'unknown';
     const STREAM_TIMEOUT_MS = 120_000;
 
     const messagePromise = new Promise<void>((resolve, reject) => {
       const timeout = setTimeout(() => {
-        resolveReason = 'timeout';
-        logger.warn(
-          `Chat participant stream timed out after ${String(STREAM_TIMEOUT_MS)}ms (receivedAnyEvent=${String(receivedAnyEvent)}, textChunks=${String(textChunkCount)})`,
-        );
+        logger.warn('chat.request.timed-out');
         resolve();
       }, STREAM_TIMEOUT_MS);
 
@@ -241,35 +214,27 @@ export function registerChatParticipant(
 
       disposables.push(
         rpcBridge.onMessageStream((event) => {
-          receivedAnyEvent = true;
-          textChunkCount++;
-          if (textChunkCount <= 3) {
-            logger.info(`Chat participant: text chunk #${String(textChunkCount)} (${event.text.length} chars)`);
-          }
+          logger.info('chat.event.received');
           stream.markdown(event.text);
         }),
       );
 
       disposables.push(
         rpcBridge.onEvent<ToolExecutionStart>('tool_execution_start', (event) => {
-          receivedAnyEvent = true;
-          logger.info(`Chat participant: tool_execution_start ${event.toolName}`);
+          logger.info('chat.event.received');
           stream.progress(`Running ${event.toolName}...`);
         }),
       );
 
       disposables.push(
-        rpcBridge.onEvent<ToolExecutionEnd>('tool_execution_end', (event) => {
-          receivedAnyEvent = true;
-          logger.info(`Chat participant: tool_execution_end ${event.toolCallId}`);
+        rpcBridge.onEvent<ToolExecutionEnd>('tool_execution_end', (_event) => {
+          logger.info('chat.event.received');
         }),
       );
 
       disposables.push(
         rpcBridge.onEvent('turn_end', () => {
-          receivedAnyEvent = true;
-          resolveReason = 'turn_end';
-          logger.info(`Chat participant: turn_end (textChunks=${String(textChunkCount)})`);
+          logger.info('chat.event.received');
           clearTimeout(timeout);
           resolve();
         }),
@@ -277,9 +242,7 @@ export function registerChatParticipant(
 
       disposables.push(
         rpcBridge.onEvent('result', () => {
-          receivedAnyEvent = true;
-          resolveReason = 'result';
-          logger.info(`Chat participant: result event (textChunks=${String(textChunkCount)})`);
+          logger.info('chat.event.received');
           clearTimeout(timeout);
           resolve();
         }),
@@ -287,17 +250,14 @@ export function registerChatParticipant(
 
       disposables.push(
         rpcBridge.onEvent('error', (event) => {
-          receivedAnyEvent = true;
-          resolveReason = 'error';
           clearTimeout(timeout);
-          const errorMsg = (event as Record<string, unknown>).message;
-          logger.error(`Chat participant: error event: ${String(errorMsg)}`);
-          reject(new Error(typeof errorMsg === 'string' ? errorMsg : 'xcsh error'));
+          void event;
+          logger.error('chat.request.failed');
+          reject(new Error('xcsh request failed'));
         }),
       );
 
       token.onCancellationRequested(() => {
-        resolveReason = 'cancelled';
         rpcBridge.abort();
         clearTimeout(timeout);
         resolve();
@@ -308,14 +268,11 @@ export function registerChatParticipant(
 
     try {
       await messagePromise;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      logger.error(`Chat participant error: ${message}`);
-      stream.markdown(`\n\n**Error:** ${message}`);
+    } catch {
+      logger.error('chat.request.failed');
+      stream.markdown(`\n\n**${vscode.l10n.t('Error')}:** ${vscode.l10n.t('Request failed')}`);
     } finally {
-      logger.info(
-        `Chat participant: done (reason=${resolveReason}, events=${String(receivedAnyEvent)}, textChunks=${String(textChunkCount)})`,
-      );
+      logger.info('chat.request.completed');
       for (const d of disposables) {
         d.dispose();
       }
@@ -334,13 +291,13 @@ export function registerChatParticipant(
     },
   };
 
-  participant.onDidReceiveFeedback((feedback: vscode.ChatResultFeedback) => {
-    logger.info(`Chat feedback: ${String(feedback.kind)}`);
+  participant.onDidReceiveFeedback((_feedback: vscode.ChatResultFeedback) => {
+    logger.info('chat.event.received');
   });
 
   extensionContext.subscriptions.push(participant);
 
-  logger.info('Registered @xcsh chat participant');
+  logger.info('chat.registered');
 
   return participant;
 }

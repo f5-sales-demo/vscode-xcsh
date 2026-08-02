@@ -4,7 +4,6 @@ import {
   computeTokenHealth,
   deriveTenantFromUrl,
   isValidContextName,
-  maskToken,
   normalizeApiUrl,
   RESERVED_CONTEXT_NAMES,
 } from '../../config/contextTypes';
@@ -47,21 +46,6 @@ describe('Context name validation', () => {
     expect(RESERVED_CONTEXT_NAMES.has('list')).toBe(true);
     expect(RESERVED_CONTEXT_NAMES.has('wizard')).toBe(true);
     expect(RESERVED_CONTEXT_NAMES.has('help')).toBe(true);
-  });
-});
-
-describe('Token masking', () => {
-  it('masks tokens showing last 4 characters', () => {
-    expect(maskToken('abcdefghijklmnop')).toBe('...mnop');
-  });
-
-  it('fully masks short tokens', () => {
-    expect(maskToken('abcd')).toBe('****');
-    expect(maskToken('ab')).toBe('****');
-  });
-
-  it('handles empty token', () => {
-    expect(maskToken('')).toBe('****');
   });
 });
 

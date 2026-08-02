@@ -156,7 +156,7 @@ export function registerLanguageModelProvider(
   const disposable = vscode.lm.registerLanguageModelChatProvider('xcsh', provider);
   extensionContext.subscriptions.push(disposable);
 
-  logger.info(`Registered language model provider: ${MODEL_NAME}`);
+  logger.info('integration.activation.completed');
 
   return disposable;
 }

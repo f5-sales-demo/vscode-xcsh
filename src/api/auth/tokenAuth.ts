@@ -39,7 +39,7 @@ export class TokenAuthProvider implements AuthProvider {
   }
 
   async validate(): Promise<boolean> {
-    this.logger.debug('Validating API token...');
+    this.logger.debug('auth.validation.started');
 
     try {
       const headers = this.getHeaders();
@@ -58,13 +58,13 @@ export class TokenAuthProvider implements AuthProvider {
 
         const req = https.request(options, (res) => {
           if (res.statusCode === 200) {
-            this.logger.info('API token validated successfully');
+            this.logger.info('auth.validation.succeeded');
             resolve(true);
           } else if (res.statusCode === 401 || res.statusCode === 403) {
-            this.logger.warn(`API token validation failed: ${res.statusCode}`);
+            this.logger.warn('auth.validation.failed');
             resolve(false);
           } else {
-            this.logger.warn(`Unexpected status during validation: ${res.statusCode}`);
+            this.logger.warn('auth.validation.failed');
             resolve(false);
           }
 
@@ -73,12 +73,13 @@ export class TokenAuthProvider implements AuthProvider {
         });
 
         req.on('error', (error) => {
-          this.logger.error('Token validation request failed', error);
+          void error;
+          this.logger.error('auth.validation.failed');
           resolve(false);
         });
 
         req.on('timeout', () => {
-          this.logger.warn('Token validation request timed out');
+          this.logger.warn('auth.validation.timed-out');
           req.destroy();
           resolve(false);
         });
@@ -86,7 +87,8 @@ export class TokenAuthProvider implements AuthProvider {
         req.end();
       });
     } catch (error) {
-      this.logger.error('Token validation failed', error as Error);
+      void error;
+      this.logger.error('auth.validation.failed');
       return false;
     }
   }

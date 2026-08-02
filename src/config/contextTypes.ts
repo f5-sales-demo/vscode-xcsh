@@ -7,9 +7,9 @@ export interface XCSHContext {
   name: string;
   apiUrl: string;
   apiToken: string;
+  credentialId?: string;
   defaultNamespace: string;
   env?: Record<string, string>;
-  sensitiveKeys?: string[];
   knowledgeSources?: KnowledgeSource[];
   includeSkills?: string[];
   excludeSkills?: string[];
@@ -37,6 +37,7 @@ export interface ContextManagerInterface {
   getActiveContext(): Promise<XCSHContext | null>;
   getContexts(): Promise<XCSHContext[]>;
   getClient(contextName: string): Promise<XCSHClient>;
+  resolveContext(workspaceFolder: string | undefined): Promise<import('./contextResolver').ResolvedContext | null>;
   /** Whether the user has explicitly activated a context this session (session gate). */
   isSessionActivated(): boolean;
   onDidChangeContext: vscode.Event<void>;
@@ -130,28 +131,6 @@ export function isValidEnvKey(key: string): boolean {
 
 export function isReservedEnvKey(key: string): boolean {
   return RESERVED_ENV_KEYS.has(key);
-}
-
-/** Export-bundle format version — distinct from per-context XCSHContext.version. */
-export const CURRENT_EXPORT_VERSION = 1;
-
-/**
- * Portable bundle of contexts, byte-compatible with the xcsh shell's
- * `/context export|import`. When `tokensMasked` is true the bundle is for
- * sharing structure only and import must reject it (tokens are unusable).
- */
-export interface ExportBundle {
-  version: number;
-  exportedAt: string;
-  tokensMasked: boolean;
-  contexts: XCSHContext[];
-}
-
-export function maskToken(token: string): string {
-  if (token.length <= 4) {
-    return '****';
-  }
-  return `...${token.slice(-4)}`;
 }
 
 export function computeTokenHealth(expiresAt: string | undefined): TokenHealth {

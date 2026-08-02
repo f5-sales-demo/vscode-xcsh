@@ -140,9 +140,9 @@ export function registerTerminalIntegration(
       });
 
       terminal.show();
-      logger.info('Opened xcsh terminal');
+      logger.info('integration.activation.completed');
     }),
   );
 
-  logger.info('Registered xcsh terminal integration');
+  logger.info('integration.activation.completed');
 }

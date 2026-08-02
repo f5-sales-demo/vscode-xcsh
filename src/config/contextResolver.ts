@@ -37,8 +37,6 @@ import type { XCSHContext } from './contextTypes';
 
 export interface ContextOverrides {
   defaultNamespace?: string;
-  env?: Record<string, string>;
-  sensitiveKeys?: string[];
   knowledgeSources?: Array<{ url: string; label?: string; type?: string }>;
   includeSkills?: string[];
   excludeSkills?: string[];

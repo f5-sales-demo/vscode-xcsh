@@ -160,13 +160,7 @@ class XCSHTransport implements HttpTransport {
       return { httpStatus: 200, body: result ?? {} };
     } catch (err) {
       if (err instanceof XCSHApiError) {
-        let body: Record<string, unknown> | undefined;
-        try {
-          body = JSON.parse(err.body) as Record<string, unknown>;
-        } catch {
-          body = { message: err.body };
-        }
-        return { httpStatus: err.statusCode, body };
+        return { httpStatus: err.statusCode, body: { message: err.userFriendlyMessage } };
       }
       throw err;
     }

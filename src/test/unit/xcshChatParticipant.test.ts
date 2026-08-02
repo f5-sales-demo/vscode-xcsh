@@ -12,40 +12,29 @@ import {
 } from '../../xcsh/chatParticipant';
 
 describe('buildPromptWithContext', () => {
-  const baseContext: XCSHContext = {
-    name: 'prod-tenant',
-    apiUrl: 'https://example-corp.console.ves.volterra.io/api',
-    apiToken: 'secret-token',
-    defaultNamespace: 'app-ns',
-  };
-
-  it('includes context name and namespace', () => {
-    const result = buildPromptWithContext('Deploy my app', baseContext);
-    expect(result).toContain('prod-tenant');
-    expect(result).toContain('app-ns');
+  it('omits context identity', () => {
+    const result = buildPromptWithContext('Deploy my app');
+    expect(result).toBe('Deploy my app');
   });
 
-  it('includes file context when provided', () => {
-    const result = buildPromptWithContext('Explain this config', baseContext, {
-      currentFile: '/workspace/lb.json',
+  it('includes relative file context when provided', () => {
+    const result = buildPromptWithContext('Explain this config', {
+      currentFile: 'configs/lb.json',
       selection: '{"name": "my-lb"}',
     });
-    expect(result).toContain('/workspace/lb.json');
+    expect(result).toContain('configs/lb.json');
     expect(result).toContain('{"name": "my-lb"}');
   });
 
-  it('works without optional context', () => {
-    const result = buildPromptWithContext('Hello world', null);
+  it('works without optional file context', () => {
+    const result = buildPromptWithContext('Hello world');
     expect(result).toContain('Hello world');
     expect(typeof result).toBe('string');
   });
 
-  it('works with context but no file info', () => {
-    const result = buildPromptWithContext('List my load balancers', baseContext);
-    expect(result).toContain('List my load balancers');
-    expect(result).toContain('prod-tenant');
-    // Should not contain file-related sections when no file info provided
-    expect(result).not.toContain('Current file:');
+  it('does not add file sections when no file is selected', () => {
+    const result = buildPromptWithContext('List my load balancers');
+    expect(result).toBe('List my load balancers');
   });
 });
 
@@ -116,7 +105,7 @@ describe('formatStatusResponse', () => {
 });
 
 describe('formatContextResponse', () => {
-  it('formats context as markdown', () => {
+  it('reports configured state without context values', () => {
     const ctx: XCSHContext = {
       name: 'prod-example-corp',
       apiUrl: 'https://example-corp.console.ves.volterra.io/api',
@@ -124,13 +113,16 @@ describe('formatContextResponse', () => {
       defaultNamespace: 'app-ns',
     };
     const result = formatContextResponse(ctx);
-    expect(result).toContain('prod-example-corp');
-    expect(result).toContain('example-corp.console.ves.volterra.io');
-    expect(result).toContain('app-ns');
-    expect(result).not.toContain('secret');
+    expect(result).toContain('Active Context:** Configured');
+    expect(result).toContain('API credentials:** Configured');
+    expect(result).toContain('Namespace name:** Configured');
+    expect(result).not.toContain(ctx.name);
+    expect(result).not.toContain(ctx.apiUrl);
+    expect(result).not.toContain(ctx.apiToken);
+    expect(result).not.toContain(ctx.defaultNamespace);
   });
 
-  it('shows web-console username in the clear and masks the password', () => {
+  it('reports web-console credentials without environment values', () => {
     const ctx: XCSHContext = {
       name: 'prod-example-corp',
       apiUrl: 'https://example-corp.console.ves.volterra.io/api',
@@ -143,12 +135,10 @@ describe('formatContextResponse', () => {
       },
     };
     const result = formatContextResponse(ctx);
-    expect(result).toContain('console-user@example.com');
-    // Password value must never appear verbatim.
-    expect(result).not.toContain('supersecretpass');
-    expect(result).toContain('XCSH_CONSOLE_PASSWORD');
-    // Only recognized auth keys are surfaced here, not arbitrary env like email.
-    expect(result).not.toContain('XCSH_EMAIL');
+    expect(result).toContain('Web-console credentials:** Configured');
+    for (const value of Object.values(ctx.env ?? {})) {
+      expect(result).not.toContain(value);
+    }
   });
 
   it('returns message when no context active', () => {

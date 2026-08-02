@@ -39,7 +39,7 @@ export function registerDiagramCommands(context: vscode.ExtensionContext, contex
           return;
         }
 
-        logger.info(`Generating diagram for ${data.name} in ${data.namespace}`);
+        logger.info('resource.operation.started');
 
         await vscode.window.withProgress(
           {

@@ -243,7 +243,7 @@ describe('XcshRpcBridge', () => {
     };
     stdout.write(`${JSON.stringify(response)}\n`);
 
-    await expect(promise).rejects.toThrow('Not supported');
+    await expect(promise).rejects.toThrow('Failed to get integrations');
   });
 
   it('setPermissionMode sends set_permission_mode command', async () => {
@@ -284,7 +284,7 @@ describe('XcshRpcBridge', () => {
     };
     stdout.write(`${JSON.stringify(response)}\n`);
 
-    await expect(promise).rejects.toThrow('Invalid mode');
+    await expect(promise).rejects.toThrow('Failed to set permission mode');
   });
 
   it('setThinkingLevel sends set_thinking_level command', async () => {
@@ -325,7 +325,7 @@ describe('XcshRpcBridge', () => {
     };
     stdout.write(`${JSON.stringify(response)}\n`);
 
-    await expect(promise).rejects.toThrow('Unknown level');
+    await expect(promise).rejects.toThrow('Failed to set thinking level');
   });
 
   it('setLocale sends set_locale command with locale string', async () => {
@@ -366,7 +366,7 @@ describe('XcshRpcBridge', () => {
     };
     stdout.write(`${JSON.stringify(response)}\n`);
 
-    await expect(promise).rejects.toThrow('Invalid locale');
+    await expect(promise).rejects.toThrow('Failed to set locale');
   });
 
   it('prompt includes locale option in serialized JSON when provided', () => {
