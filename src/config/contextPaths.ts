@@ -27,14 +27,6 @@ export function getActiveContextPath(): string {
   return path.join(getConfigDir(), 'active_context');
 }
 
-export function getProfilesDir(): string {
-  return path.join(getConfigDir(), 'profiles');
-}
-
-export function getActiveProfilePath(): string {
-  return path.join(getConfigDir(), 'active_profile');
-}
-
 export function getLocalContextsDir(workspaceFolder: string): string {
   return path.join(workspaceFolder, '.xcsh', 'contexts');
 }

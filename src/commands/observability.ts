@@ -118,7 +118,7 @@ export function registerObservabilityCommands(context: vscode.ExtensionContext, 
               });
 
               await vscode.window.showTextDocument(doc, { preview: false });
-              logger.info(`Displayed ${logs.length} logs for ${data.name}`);
+              logger.info('resource.operation.completed');
             } catch (error) {
               // If the API endpoint doesn't exist or returns an error, provide helpful message
               const err = error as Error;
@@ -185,7 +185,7 @@ export function registerObservabilityCommands(context: vscode.ExtensionContext, 
               });
 
               await vscode.window.showTextDocument(doc, { preview: false });
-              logger.info(`Displayed metrics for ${data.name}`);
+              logger.info('resource.operation.completed');
             } catch (error) {
               // If the API endpoint doesn't exist or returns an error, provide helpful message
               const err = error as Error;

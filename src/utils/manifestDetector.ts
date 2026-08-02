@@ -150,7 +150,7 @@ export class ManifestDetector implements vscode.Disposable {
     void vscode.commands.executeCommand('setContext', 'xcsh.isManifestFile', isManifest);
 
     if (isManifest) {
-      logger.debug(`Detected XC manifest: ${document.uri.fsPath}`);
+      logger.debug('resource.operation.completed');
     }
   }
 

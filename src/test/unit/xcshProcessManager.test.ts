@@ -132,13 +132,13 @@ describe('XcshProcessManager', () => {
     });
     mockedExistsSync.mockImplementation((p) => p === '/usr/local/bin/xcsh');
 
-    manager.setCwd('/Users/robin/project');
+    manager.setCwd('/Users/user/project');
     manager.start();
 
     expect(mockedSpawn).toHaveBeenCalledWith(
       '/usr/local/bin/xcsh',
       ['--mode', 'rpc'],
-      expect.objectContaining({ cwd: '/Users/robin/project' }),
+      expect.objectContaining({ cwd: '/Users/user/project' }),
     );
   });
 

@@ -18,7 +18,7 @@ describe('generated view layouts', () => {
   });
 
   it('captures x-displayname labels where the spec provides them', () => {
-    const layout = GENERATED_VIEW_LAYOUTS['http_loadbalancer'];
+    const layout = GENERATED_VIEW_LAYOUTS.http_loadbalancer;
     const byKey = new Map((layout?.fields ?? []).map((f) => [f.key, f]));
     expect(byKey.get('default_route_pools')?.label).toBe('Origin Pools');
     expect(byKey.get('dns_info')?.label).toBe('DNS Information');

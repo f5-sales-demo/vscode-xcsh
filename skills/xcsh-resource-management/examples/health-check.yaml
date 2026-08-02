@@ -1,6 +1,6 @@
 metadata:
   name: example-app-hc
-  namespace: app-ns
+  namespace: demo-app
 spec:
   http_health_check:
     path: /healthz

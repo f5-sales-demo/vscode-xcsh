@@ -29,9 +29,8 @@ describe('webview protocol', () => {
   });
 
   function loadProtocol() {
-    return require('../lib/protocol') as {
+    return require('../protocol') as {
       initProtocol: () => void;
-      send: (msg: unknown) => void;
       on: (type: string, callback: (msg: Record<string, unknown>) => void) => () => void;
       sendPrompt: (text: string) => void;
       sendAbort: () => void;
@@ -41,10 +40,10 @@ describe('webview protocol', () => {
     };
   }
 
-  it('send posts message via vscode API', () => {
-    const { initProtocol, send } = loadProtocol();
+  it('sendPrompt posts message via vscode API', () => {
+    const { initProtocol, sendPrompt } = loadProtocol();
     initProtocol();
-    send({ type: 'prompt', text: 'hello' });
+    sendPrompt('hello');
     expect(mockPostMessage).toHaveBeenCalledWith({ type: 'prompt', text: 'hello' });
   });
 

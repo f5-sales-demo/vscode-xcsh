@@ -148,7 +148,7 @@ describe('XCSHClient request URL host safety', () => {
   const httpsMock = https.request as unknown as jest.Mock;
   const auth = new TokenAuthProvider({
     apiUrl: 'https://tenant.console.ves.volterra.io/api',
-    apiToken: 'tok-abc123def456',
+    apiToken: '<XC_API_TOKEN>',
   });
 
   // Capture the options handed to https.request, and drive a minimal 200 response so

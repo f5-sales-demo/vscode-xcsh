@@ -27,11 +27,7 @@ export class XCSHCompletionProvider implements vscode.CompletionItemProvider {
     _token: vscode.CancellationToken,
     _context: vscode.CompletionContext,
   ): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList> {
-    logger.debug('Completion provider triggered', {
-      uri: document.uri.toString(),
-      language: document.languageId,
-      position: `${position.line}:${position.character}`,
-    });
+    logger.debug('schema.generated');
 
     // Check if this is an F5 XC JSON file
     const isXCSHFile = CompletionHelper.isXCSHJsonFile(document);
@@ -42,7 +38,7 @@ export class XCSHCompletionProvider implements vscode.CompletionItemProvider {
     // Get resource type and schema
     const resourceType = CompletionHelper.detectResourceType(document);
     if (!resourceType) {
-      logger.debug('No resource type detected for completion');
+      logger.debug('schema.unavailable');
       return undefined;
     }
 
@@ -55,7 +51,7 @@ export class XCSHCompletionProvider implements vscode.CompletionItemProvider {
     // Get current JSON context
     const jsonContext = CompletionHelper.getCurrentJsonContext(document, position);
 
-    logger.debug(`Completion triggered at path: ${jsonContext.path.join('.')}`);
+    logger.debug('schema.generated');
 
     // Generate completions based on context
     const completions: vscode.CompletionItem[] = [];
@@ -342,7 +338,7 @@ export class XCSHCompletionProvider implements vscode.CompletionItemProvider {
       lines.push(`${indent2}"name": "\${${tabStop++}:resource-name}",`);
 
       // Optional but common: namespace
-      lines.push(`${indent2}"namespace": "\${${tabStop++}:default}",`);
+      lines.push(`${indent2}"namespace": "<XC_NAMESPACE>",`);
 
       // Optional: labels, annotations
       lines.push(`${indent2}"labels": {},`);

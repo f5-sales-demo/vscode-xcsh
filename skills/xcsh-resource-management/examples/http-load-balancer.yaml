@@ -1,6 +1,6 @@
 metadata:
   name: example-app-lb
-  namespace: app-ns
+  namespace: demo-app
 spec:
   domains:
     - my-app.example.com
@@ -9,5 +9,5 @@ spec:
   default_route_pools:
     - pool:
         name: example-app-pool
-        namespace: app-ns
+        namespace: demo-app
       weight: 1

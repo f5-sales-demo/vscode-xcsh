@@ -33,8 +33,6 @@
   "command.manageContextEnv.title": "xcsh: Gestisci le variabili d'ambiente del contesto",
   "command.switchNamespace.title": "xcsh: Cambia namespace",
   "command.selectActiveNamespace.title": "xcsh: Seleziona namespace attivo",
-  "command.exportContexts.title": "xcsh: Esporta contesti",
-  "command.importContexts.title": "xcsh: Importa contesti",
   "command.renameContext.title": "xcsh: Rinomina contesto",
   "command.validateContext.title": "xcsh: Convalida contesto",
   "command.deleteContext.title": "xcsh: Elimina contesto",

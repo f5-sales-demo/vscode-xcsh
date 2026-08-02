@@ -17,7 +17,7 @@
 
 import { RESOURCE_TYPES } from './resourceTypes';
 
-export interface AddonResource {
+interface AddonResource {
   key: string;
   displayName: string;
 }

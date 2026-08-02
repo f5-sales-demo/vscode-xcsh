@@ -7,7 +7,6 @@ import type { ContextManager } from '../config/contextManager';
 import type { XCSHContext } from '../config/contextTypes';
 import {
   isReservedEnvKey,
-  isSensitiveEnvKey,
   isValidContextName,
   isValidEnvKey,
   XCSH_CONSOLE_PASSWORD,
@@ -238,10 +237,6 @@ export function registerContextCommands(
         }
         if (Object.keys(env).length > 0) {
           newContext.env = env;
-          const sensitiveKeys = Object.keys(env).filter(isSensitiveEnvKey);
-          if (sensitiveKeys.length > 0) {
-            newContext.sensitiveKeys = sensitiveKeys;
-          }
         }
 
         // Check if workspace has .xcsh/ directory — offer local vs global choice
@@ -437,14 +432,6 @@ export function registerContextCommands(
 
             const nextEnv = setOrClearEnv(ctx.env, XCSH_CONSOLE_PASSWORD, newPassword);
             updates.env = nextEnv;
-            // Keep sensitiveKeys in sync: mark the password when set, drop when cleared.
-            const sensitive = new Set(ctx.sensitiveKeys ?? []);
-            if (nextEnv[XCSH_CONSOLE_PASSWORD]) {
-              sensitive.add(XCSH_CONSOLE_PASSWORD);
-            } else {
-              sensitive.delete(XCSH_CONSOLE_PASSWORD);
-            }
-            updates.sensitiveKeys = [...sensitive].filter((k) => k in nextEnv);
             break;
           }
         }
@@ -619,107 +606,6 @@ export function registerContextCommands(
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Select active namespace');
-    }),
-  );
-
-  // EXPORT CONTEXTS
-  context.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.exportContexts', async () => {
-      await withErrorHandling(async () => {
-        const contexts = await contextManager.getContexts();
-        if (contexts.length === 0) {
-          showWarning(vscode.l10n.t('No contexts to export'));
-          return;
-        }
-
-        const includeLabel = vscode.l10n.t('Include tokens');
-        const maskLabel = vscode.l10n.t('Mask tokens');
-        const choice = await vscode.window.showWarningMessage(
-          vscode.l10n.t('Include API tokens in the export? The exported file would then contain secrets.'),
-          { modal: true },
-          includeLabel,
-          maskLabel,
-        );
-        if (!choice) {
-          return;
-        }
-        const includeTokens = choice === includeLabel;
-
-        const uri = await vscode.window.showSaveDialog({
-          saveLabel: vscode.l10n.t('Export'),
-          filters: { JSON: ['json'] },
-          defaultUri: vscode.Uri.file('xcsh-contexts.json'),
-        });
-        if (!uri) {
-          return;
-        }
-
-        const bundle = await contextManager.exportContexts({ includeTokens });
-        // Write owner-only (0o600): an include-tokens export contains live
-        // credentials, so the file must not be world-readable. writeFileSync's
-        // mode only applies on create, so chmod afterwards to also tighten an
-        // existing target the user chose to overwrite. (chmod is a no-op on Windows.)
-        fs.writeFileSync(uri.fsPath, `${JSON.stringify(bundle, null, 2)}\n`, { mode: 0o600 });
-        try {
-          fs.chmodSync(uri.fsPath, 0o600);
-        } catch {
-          /* Windows may not support chmod */
-        }
-        showInfo(
-          includeTokens
-            ? vscode.l10n.t('Exported {0} context(s)', bundle.contexts.length)
-            : vscode.l10n.t('Exported {0} context(s) with tokens masked', bundle.contexts.length),
-        );
-      }, 'Export contexts');
-    }),
-  );
-
-  // IMPORT CONTEXTS
-  context.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.importContexts', async () => {
-      await withErrorHandling(async () => {
-        const uris = await vscode.window.showOpenDialog({
-          canSelectMany: false,
-          openLabel: vscode.l10n.t('Import'),
-          filters: { JSON: ['json'] },
-        });
-        const fileUri = uris?.[0];
-        if (!fileUri) {
-          return;
-        }
-
-        const raw = await vscode.workspace.fs.readFile(fileUri);
-        let bundle: unknown;
-        try {
-          bundle = JSON.parse(Buffer.from(raw).toString('utf8'));
-        } catch {
-          showWarning(vscode.l10n.t('Selected file is not valid JSON'));
-          return;
-        }
-
-        const overwriteLabel = vscode.l10n.t('Overwrite existing');
-        const choice = await vscode.window.showQuickPick(
-          [
-            {
-              label: vscode.l10n.t('Skip existing'),
-              description: vscode.l10n.t('Keep current contexts when a name already exists'),
-            },
-            {
-              label: overwriteLabel,
-              description: vscode.l10n.t('Replace current contexts when a name already exists'),
-            },
-          ],
-          { placeHolder: vscode.l10n.t('On name conflict'), ignoreFocusOut: true },
-        );
-        if (!choice) {
-          return;
-        }
-
-        const result = await contextManager.importContexts(bundle, { overwrite: choice.label === overwriteLabel });
-        contextProvider.refresh();
-        explorerProvider.refresh();
-        showInfo(vscode.l10n.t('Imported {0} context(s), skipped {1}', result.imported.length, result.skipped.length));
-      }, 'Import contexts');
     }),
   );
 

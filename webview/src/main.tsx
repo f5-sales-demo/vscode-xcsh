@@ -4,8 +4,8 @@
 import ReactDOM from 'react-dom/client';
 import { SessionView } from './components/SessionView';
 import { setL10nBundle } from './lib/i18n';
-import type { ExtensionMessage } from './lib/protocol';
-import { initProtocol, on } from './lib/protocol';
+import type { ExtensionMessage } from './protocol';
+import { initProtocol, on } from './protocol';
 import type { ChatReferenceWire } from './state/session';
 import { createNewSession, getActiveSession } from './state/sessions';
 import './styles/webview.css';

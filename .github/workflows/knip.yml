@@ -1,15 +1,9 @@
 ---
 name: Knip
 
-# Cross-module dead-code report: unused files, exports and dependencies. Biome only
+# Cross-module dead-code gate: unused files, exports and dependencies. Biome only
 # flags unused symbols WITHIN a file, so orphaned modules are invisible to it.
-#
-# ADVISORY (`|| true`): this repo has a real existing backlog (see the tracking
-# issue), so gating now would block every merge on pre-existing findings. Promote to
-# a gate by dropping `|| true` once the backlog is cleared.
-#
-# Kept as its own workflow (like semgrep.yml) rather than a step in ci.yml: it is an
-# independent report, and it keeps this change from touching an unrelated workflow.
+# Kept as its own workflow (like semgrep.yml) because it is an independent gate.
 on:
   pull_request:
     branches: [main]
@@ -25,14 +19,14 @@ concurrency:
 
 jobs:
   knip:
-    name: Dead-code report
+    name: Dead-code gate
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: "lts/*"
 
@@ -42,5 +36,5 @@ jobs:
       # Config in knip.json declares the true entry points (extension main, the Vite
       # webview entry loaded from index.html, the test runners) and excludes
       # vendored/generated trees.
-      - name: Knip (advisory)
-        run: npx --yes knip@6.29.0 || true
+      - name: Knip
+        run: npx --yes knip@6.29.0

@@ -116,7 +116,7 @@ export class XcshProcessManager implements vscode.Disposable {
 
     if (!binary) {
       this.setStatus('not-installed');
-      this.logger.warn('xcsh binary not found. Install via: brew install f5-sales-demo/tap/xcsh');
+      this.logger.warn('process.binary.missing');
       return;
     }
 
@@ -129,14 +129,14 @@ export class XcshProcessManager implements vscode.Disposable {
         cwd: this.cwd,
       });
 
-      child.on('error', (err) => {
-        this.logger.error('xcsh process error', err);
+      child.on('error', () => {
+        this.logger.error('process.spawn.failed');
         this.setStatus('error');
         this.scheduleRestart();
       });
 
-      child.on('exit', (code) => {
-        this.logger.info(`xcsh process exited with code ${String(code ?? 'null')}`);
+      child.on('exit', () => {
+        this.logger.info('process.exited');
         if (this.status !== 'stopped' && !this.disposed) {
           this.setStatus('error');
           this.scheduleRestart();
@@ -147,8 +147,8 @@ export class XcshProcessManager implements vscode.Disposable {
       this.retryCount = 0;
       this.setStatus('running');
       this.startHealthCheck();
-    } catch (err) {
-      this.logger.error('Failed to spawn xcsh', err instanceof Error ? err : new Error(String(err)));
+    } catch {
+      this.logger.error('process.spawn.failed');
       this.setStatus('error');
       this.scheduleRestart();
     }
@@ -195,7 +195,7 @@ export class XcshProcessManager implements vscode.Disposable {
 
   private checkHealth(): void {
     if (!this.process || this.process.exitCode !== null) {
-      this.logger.warn('xcsh health check failed: process not running');
+      this.logger.warn('process.health.failed');
       this.setStatus('error');
       this.scheduleRestart();
     }
@@ -205,15 +205,13 @@ export class XcshProcessManager implements vscode.Disposable {
 
   private scheduleRestart(): void {
     if (this.disposed || this.retryCount >= MAX_RETRIES) {
-      this.logger.error(`xcsh auto-restart exhausted after ${String(this.retryCount)} retries`);
+      this.logger.error('process.restart.exhausted');
       return;
     }
 
     const delay = Math.min(1000 * 2 ** this.retryCount, MAX_BACKOFF_MS);
     this.retryCount++;
-    this.logger.info(
-      `Scheduling xcsh restart in ${String(delay)}ms (attempt ${String(this.retryCount)}/${String(MAX_RETRIES)})`,
-    );
+    this.logger.info('process.restart.scheduled');
 
     setTimeout(() => {
       if (!this.disposed && this.status !== 'running') {

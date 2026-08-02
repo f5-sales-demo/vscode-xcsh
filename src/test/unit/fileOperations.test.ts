@@ -141,6 +141,14 @@ describe('registerFileOperationCommands', () => {
   let mockExplorer: XCSHExplorerProvider;
   let mockContextManager: ContextManager;
 
+  function getRegisteredCommand(id: string): (...args: unknown[]) => Promise<void> {
+    const handler = registeredCommands.get(id);
+    if (!handler) {
+      throw new Error(`Command was not registered: ${id}`);
+    }
+    return handler;
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
     registeredCommands = new Map();
@@ -169,7 +177,7 @@ describe('registerFileOperationCommands', () => {
   describe('xcsh.fileApply', () => {
     it('warns when no file is selected or open', async () => {
       const { showWarning } = require('../../utils/errors');
-      const handler = registeredCommands.get('xcsh.fileApply')!;
+      const handler = getRegisteredCommand('xcsh.fileApply');
       // No URI arg, no active editor
       (vscode.window as Record<string, unknown>).activeTextEditor = undefined;
       await handler(undefined);
@@ -194,7 +202,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileApply')!;
+      const handler = getRegisteredCommand('xcsh.fileApply');
       await handler(undefined);
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('not a valid XC manifest'));
@@ -211,7 +219,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileApply')!;
+      const handler = getRegisteredCommand('xcsh.fileApply');
       await handler(undefined);
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('No active context'));
@@ -232,7 +240,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileApply')!;
+      const handler = getRegisteredCommand('xcsh.fileApply');
       await handler(undefined);
 
       expect(mockResourceService.applyManifest).toHaveBeenCalledWith('test-ctx', validManifestContent);
@@ -255,7 +263,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileApply')!;
+      const handler = getRegisteredCommand('xcsh.fileApply');
       await handler(undefined);
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('Server error'));
@@ -274,7 +282,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileDiff')!;
+      const handler = getRegisteredCommand('xcsh.fileDiff');
       await handler(undefined);
 
       expect(mockShowInformationMessage).toHaveBeenCalledWith(expect.stringContaining('not found remotely'));
@@ -298,7 +306,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileDelete')!;
+      const handler = getRegisteredCommand('xcsh.fileDelete');
       await handler(undefined);
 
       expect(mockResourceService.deleteFromManifest).toHaveBeenCalled();
@@ -316,7 +324,7 @@ describe('registerFileOperationCommands', () => {
         },
       };
 
-      const handler = registeredCommands.get('xcsh.fileDelete')!;
+      const handler = getRegisteredCommand('xcsh.fileDelete');
       await handler(undefined);
 
       expect(mockResourceService.deleteFromManifest).not.toHaveBeenCalled();

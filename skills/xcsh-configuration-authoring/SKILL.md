@@ -23,7 +23,7 @@ Every xcsh resource configuration follows this structure:
 ```yaml
 metadata:
   name: resource-name # Required: kebab-case identifier
-  namespace: namespace-name # Required: target namespace
+  namespace: demo-app # Required: target namespace
   labels: {} # Optional: key-value labels
   annotations: {} # Optional: key-value annotations
 spec:

@@ -15,7 +15,7 @@ const mockSendReady = jest.fn();
 const mockSendSetMode = jest.fn();
 const mockSendSetThinking = jest.fn();
 
-jest.mock('../lib/protocol', () => ({
+jest.mock('../protocol', () => ({
   on: (type: string, cb: (msg: Record<string, unknown>) => void) => {
     mockState.listeners[type] = cb;
     return () => {

@@ -541,7 +541,7 @@ export enum FileType {
 export enum SymbolKind {
   File = 0,
   Module = 1,
-  Namespace = 2,
+  Namespace = Module + 1,
   Package = 3,
   Class = 4,
   Method = 5,

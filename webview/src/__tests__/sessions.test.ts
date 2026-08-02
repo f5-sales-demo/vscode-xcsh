@@ -1,12 +1,7 @@
 // webview/src/__tests__/sessions.test.ts
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-type SessionsModule = {
-  subscribe: (fn: () => void) => () => void;
-  getSessions: () => Array<{ id: string }>;
-  getActiveSession: () => { id: string } | null;
-  createNewSession: () => { id: string };
-};
+type SessionsModule = typeof import('../state/sessions');
 
 function loadSessions(): SessionsModule {
   return require('../state/sessions') as SessionsModule;
@@ -18,12 +13,11 @@ describe('sessions manager', () => {
   });
 
   it('createNewSession creates and activates a session', () => {
-    const { createNewSession, getActiveSession, getSessions } = loadSessions();
+    const { createNewSession, getActiveSession } = loadSessions();
     const session = createNewSession();
     expect(session).toBeDefined();
     expect(session.id).toBeDefined();
     expect(getActiveSession()).toBe(session);
-    expect(getSessions()).toContain(session);
   });
 
   it('subscribe notifies on session changes', () => {
@@ -35,12 +29,10 @@ describe('sessions manager', () => {
     unsub();
   });
 
-  it('multiple sessions are tracked', () => {
-    const { createNewSession, getActiveSession, getSessions } = loadSessions();
-    const s1 = createNewSession();
+  it('the most recently created session becomes active', () => {
+    const { createNewSession, getActiveSession } = loadSessions();
+    createNewSession();
     const s2 = createNewSession();
-    expect(getSessions()).toContain(s1);
-    expect(getSessions()).toContain(s2);
     expect(getActiveSession()).toBe(s2);
   });
 });

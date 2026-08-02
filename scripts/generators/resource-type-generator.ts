@@ -84,7 +84,7 @@ function applyDisplayNameOverrides(specs: ParsedSpecInfo[], overrides: DisplayNa
 }
 
 // Re-export types for use by other modules
-export { NamespaceProfile, NamespaceType, ParsedSpecInfo } from './spec-parser';
+export type { NamespaceProfile, NamespaceType, ParsedSpecInfo } from './spec-parser';
 
 /**
  * Serializable field metadata for generated output.
@@ -344,7 +344,15 @@ export function generateResourceTypesContent(specs: ParsedSpecInfo[]): string {
   // Pretty print with proper TypeScript formatting
   // Keep double quotes for values since they're properly escaped by JSON.stringify
   // Only remove quotes from keys that are valid JS identifiers (no dots, dashes, etc.)
-  const resourceTypesJson = JSON.stringify(resourceTypes, null, 2).replace(/"([a-zA-Z_$][a-zA-Z0-9_$]*)":/g, '$1:');
+  const resourceTypesJson = JSON.stringify(resourceTypes, null, 2)
+    // Render strings containing literal NGINX-style ${variable} text as escaped
+    // template literals. The runtime text stays exact and linters can see that
+    // interpolation is intentionally disabled.
+    .replace(/"((?:\\.|[^"\\])*\$\{(?:\\.|[^"\\])*)"/g, (_match, contents: string) => {
+      const escapedContents = contents.replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+      return `\`${escapedContents}\``;
+    })
+    .replace(/"([a-zA-Z_$][a-zA-Z0-9_$]*)":/g, '$1:');
 
   const apiPathToKeyJson = JSON.stringify(apiPathToKey, null, 2).replace(/"([^"]+)":/g, "'$1':"); // Use single quotes for keys in reverse lookup
 

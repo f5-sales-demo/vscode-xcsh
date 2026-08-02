@@ -29,5 +29,3 @@ export const CloudStatusContext = {
   MAINTENANCE: 'cloudStatusMaintenance',
   ERROR: 'cloudStatusError',
 } as const;
-
-export type CloudStatusContextType = (typeof CloudStatusContext)[keyof typeof CloudStatusContext];

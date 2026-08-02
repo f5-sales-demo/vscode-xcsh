@@ -5,7 +5,6 @@ import { resolveAttachments } from '../../xcsh/attachmentResolvers';
 
 jest.mock('node:fs', () => ({ ...jest.requireActual('node:fs'), realpathSync: jest.fn((p: string) => p) }));
 
-// biome-ignore lint/style/useImportType: realpathSync is consumed as a runtime mock handle
 import { realpathSync } from 'node:fs';
 import * as path from 'node:path';
 

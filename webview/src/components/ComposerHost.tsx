@@ -19,7 +19,7 @@ import {
   sendSetMode,
   sendSetThinking,
   type ToolInfo,
-} from '../lib/protocol';
+} from '../protocol';
 import { type SkillInfo, serializeSessionTranscript } from '../state/session';
 import { getActiveSession } from '../state/sessions';
 import { type Attachment, addAttachment, Composer, type ComposerHandle, type ToolItem } from '../vendored/chat-ui';

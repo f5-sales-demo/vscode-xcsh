@@ -7,7 +7,7 @@
 // JSON mapping in `hostTools.ts`, which feeds the agent's tool-response path.
 
 /** Minimal diagnostic shape (maps 1:1 from `vscode.Diagnostic`). */
-export interface DiagnosticLike {
+interface DiagnosticLike {
   /** vscode.DiagnosticSeverity: 0=Error, 1=Warning, 2=Information, 3=Hint. */
   severity: number;
   message: string;

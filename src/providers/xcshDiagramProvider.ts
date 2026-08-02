@@ -189,7 +189,7 @@ export class XCSHDiagramProvider {
    */
   async showDiagram(profileName: string, namespace: string, resourceName: string): Promise<void> {
     try {
-      logger.debug(`Generating diagram for: ${resourceName}`);
+      logger.debug('resource.operation.started');
 
       const client = await this.contextManager.getClient(profileName);
 
@@ -205,9 +205,8 @@ export class XCSHDiagramProvider {
         try {
           const poolConfig = (await client.get(ref.namespace, 'origin_pools', ref.name)) as OriginPoolConfig;
           originPools.set(`${ref.namespace}/${ref.name}`, poolConfig);
-        } catch (error) {
-          const errMessage = error instanceof Error ? error.message : String(error);
-          logger.warn(`Failed to fetch origin pool ${ref.namespace}/${ref.name}: ${errMessage}`);
+        } catch {
+          logger.warn('resource.operation.failed');
           // Store a placeholder for failed fetches
           originPools.set(`${ref.namespace}/${ref.name}`, {
             metadata: { name: ref.name },
@@ -262,7 +261,7 @@ export class XCSHDiagramProvider {
       this.panel.webview.html = this.getWebviewContent(mermaidCode, resourceName);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to generate diagram: ${message}`);
+      logger.error('resource.operation.failed');
       void vscode.window.showErrorMessage(`Failed to generate diagram: ${message}`);
     }
   }

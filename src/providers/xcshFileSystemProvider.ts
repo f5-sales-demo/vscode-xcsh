@@ -183,7 +183,7 @@ export class XCSHFileSystemProvider implements vscode.FileSystemProvider {
 
       // If we couldn't find metadata/spec, fail gracefully
       if (!metadata || !spec) {
-        logger.error(`Failed to extract metadata/spec from API response`);
+        logger.error('resource.operation.failed');
         throw new Error('API response does not contain expected metadata and spec fields');
       }
 
@@ -199,9 +199,8 @@ export class XCSHFileSystemProvider implements vscode.FileSystemProvider {
       this.fileMeta.set(key, { ctime: now, mtime: now });
 
       return data;
-    } catch (error) {
-      const err = error as Error;
-      logger.error(`Failed to read resource: ${err.message}`);
+    } catch {
+      logger.error('resource.operation.failed');
       throw vscode.FileSystemError.FileNotFound(uri);
     }
   }
@@ -279,12 +278,12 @@ export class XCSHFileSystemProvider implements vscode.FileSystemProvider {
     const metadataNamespace = metadata.namespace as string | undefined;
 
     if (metadataName && metadataName !== resourceName) {
-      showError(`Resource name in JSON (${metadataName}) does not match file name (${resourceName})`);
+      showError('Resource name in JSON does not match the file name');
       throw vscode.FileSystemError.NoPermissions('Resource name mismatch');
     }
 
     if (metadataNamespace && metadataNamespace !== namespace) {
-      showError(`Namespace in JSON (${metadataNamespace}) does not match file path (${namespace})`);
+      showError('Namespace in JSON does not match the file path');
       throw vscode.FileSystemError.NoPermissions('Namespace mismatch');
     }
 
@@ -319,7 +318,7 @@ export class XCSHFileSystemProvider implements vscode.FileSystemProvider {
       });
 
       showInfo(vscode.l10n.t('Saved {0}: {1}', getLocalizedDisplayName(resourceTypeInfo.displayName), resourceName));
-      logger.info(`Saved resource to F5 XC: ${resourceName}`);
+      logger.info('resource.operation.completed');
 
       // Notify that resource was updated (for tree refresh)
       if (this.onResourceUpdated) {
@@ -327,8 +326,8 @@ export class XCSHFileSystemProvider implements vscode.FileSystemProvider {
       }
     } catch (error) {
       const err = error as Error;
-      logger.error(`Failed to save resource: ${err.message}`);
-      showError(`Failed to save: ${err.message}`);
+      logger.error('resource.operation.failed');
+      showError('Failed to save resource');
       throw vscode.FileSystemError.NoPermissions(err.message);
     }
   }

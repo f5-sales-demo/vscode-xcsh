@@ -39,7 +39,7 @@ export class SubscriptionDashboardProvider {
    */
   async showPlan(profileName: string): Promise<void> {
     try {
-      logger.debug(`Showing plan dashboard for profile: ${profileName}`);
+      logger.debug('subscription.operation.started');
 
       const client = await this.contextManager.getClient(profileName);
       const planInfo = await getCurrentPlan(client);
@@ -89,7 +89,7 @@ export class SubscriptionDashboardProvider {
       this.planPanel.webview.html = this.getPlanWebviewContent(planInfo, accessStatuses);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to show plan dashboard: ${message}`);
+      logger.error('subscription.operation.failed');
       void vscode.window.showErrorMessage(`Failed to load subscription plan: ${message}`);
     }
   }
@@ -99,7 +99,7 @@ export class SubscriptionDashboardProvider {
    */
   async showQuotas(profileName: string): Promise<void> {
     try {
-      logger.debug(`Showing quotas dashboard for profile: ${profileName}`);
+      logger.debug('subscription.operation.started');
 
       const client = await this.contextManager.getClient(profileName);
       const quotaUsage = await getQuotaUsage(client, 'system');
@@ -133,7 +133,7 @@ export class SubscriptionDashboardProvider {
       this.quotasPanel.webview.html = this.getQuotasWebviewContent(quotaUsage);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to show quotas dashboard: ${message}`);
+      logger.error('subscription.operation.failed');
       void vscode.window.showErrorMessage(`Failed to load quota usage: ${message}`);
     }
   }
@@ -164,8 +164,8 @@ export class SubscriptionDashboardProvider {
           cancellable: false,
         },
         async () => {
-          const response = await createAddonSubscription(client, addonName, 'system');
-          logger.info(`Addon subscription created: ${response.metadata?.name}`);
+          await createAddonSubscription(client, addonName, 'system');
+          logger.info('subscription.operation.completed');
         },
       );
 
@@ -177,7 +177,7 @@ export class SubscriptionDashboardProvider {
       await this.showPlan(profileName);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to activate addon ${addonName}: ${errorMessage}`);
+      logger.error('subscription.operation.failed');
       void vscode.window.showErrorMessage(`Failed to activate addon: ${errorMessage}`);
     }
   }
@@ -209,7 +209,8 @@ export class SubscriptionDashboardProvider {
         accessStatuses.set(name, accessStatus);
       });
     } catch (error) {
-      logger.warn('Failed to fetch addon access statuses:', error);
+      void error;
+      logger.warn('subscription.operation.failed');
     }
 
     return accessStatuses;

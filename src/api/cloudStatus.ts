@@ -8,7 +8,7 @@
 const CLOUD_STATUS_BASE_URL = 'https://www.f5cloudstatus.com/api/v2';
 const DEFAULT_CACHE_TTL_MS = 60000; // 60 seconds
 
-export type StatusIndicator = 'none' | 'minor' | 'major' | 'critical' | 'maintenance';
+type StatusIndicator = 'none' | 'minor' | 'major' | 'critical' | 'maintenance';
 export type ComponentStatus =
   | 'operational'
   | 'degraded_performance'
@@ -16,7 +16,7 @@ export type ComponentStatus =
   | 'major_outage'
   | 'under_maintenance';
 
-export interface PageInfo {
+interface PageInfo {
   id: string;
   name: string;
   url: string;
@@ -49,7 +49,7 @@ export interface Component {
   components?: string[]; // For groups, IDs of child components
 }
 
-export interface IncidentUpdate {
+interface IncidentUpdate {
   id: string;
   status: string;
   body: string;

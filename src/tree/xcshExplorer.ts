@@ -69,31 +69,6 @@ export class XCSHExplorerProvider implements vscode.TreeDataProvider<XCSHTreeIte
     this._onDidChangeTreeData.fire(undefined);
   }
 
-  /**
-   * Convert error to user-friendly message
-   */
-  private getErrorMessage(error: Error): string {
-    const message = error.message.toLowerCase();
-
-    if (message.includes('timeout')) {
-      return 'Connection timed out. Check your network connection or VPN status.';
-    }
-    if (message.includes('socket hang up') || message.includes('econnrefused')) {
-      return 'Could not connect to API. The endpoint may be unreachable or VPN may be required.';
-    }
-    if (message.includes('401') || message.includes('unauthorized')) {
-      return 'Authentication failed. Your API token may be invalid or expired.';
-    }
-    if (message.includes('403') || message.includes('forbidden')) {
-      return 'Access denied. You may not have permission to access this resource.';
-    }
-    if (message.includes('certificate')) {
-      return 'Certificate error. Check your P12 certificate configuration.';
-    }
-
-    return error.message || 'An unknown error occurred';
-  }
-
   private async getRootItems(): Promise<XCSHTreeItem[]> {
     const activeContext = await this.contextManager.getActiveContext();
 
@@ -133,10 +108,9 @@ export class XCSHExplorerProvider implements vscode.TreeDataProvider<XCSHTreeIte
       );
 
       return nodes;
-    } catch (error) {
-      this.logger.error('Failed to load namespaces', error as Error);
-      const errorMessage = this.getErrorMessage(error as Error);
-      return [new ErrorNode(vscode.l10n.t('Failed to load namespaces'), errorMessage)];
+    } catch {
+      this.logger.error('resource.operation.failed');
+      return [new ErrorNode(vscode.l10n.t('Failed to load namespaces'), vscode.l10n.t('Request failed'))];
     }
   }
 }
@@ -198,7 +172,7 @@ export class NamespaceNode implements XCSHTreeItem {
       ? TreeItemContext.NAMESPACE_ACTIVE
       : TreeItemContext.NAMESPACE_BUILTIN;
     item.iconPath = new vscode.ThemeIcon(this.data.isActiveSelector ? 'folder-active' : 'folder');
-    item.tooltip = `${vscode.l10n.t('Namespace')}: ${this.data.name}`;
+    item.tooltip = `${vscode.l10n.t('Namespace name')}: ${this.data.name}`;
     return item;
   }
 
@@ -467,13 +441,10 @@ class ResourceTypeNode implements XCSHTreeItem {
               (getSpec?.namespace as string) ||
               null; // No fallback - if we can't find it, we'll log and exclude
 
-            // Debug: log namespace detection for troubleshooting
-            this.logger.debug(
-              `Resource "${name}" namespace detection: found="${resourceNamespace}", expected="${this.data.namespace}", keys=[${Object.keys(resourceAny).join(', ')}]`,
-            );
+            this.logger.debug('resource.operation.completed');
 
             if (name === 'unknown') {
-              this.logger.warn(`Could not extract name from resource. Keys: ${Object.keys(resourceAny).join(', ')}`);
+              this.logger.warn('resource.operation.failed');
             }
 
             return {
@@ -505,9 +476,9 @@ class ResourceTypeNode implements XCSHTreeItem {
             });
           })
       );
-    } catch (error) {
-      this.logger.error(`Failed to load ${this.data.resourceType.displayName}`, error as Error);
-      return [new ErrorNode(vscode.l10n.t('Failed to load resources'), (error as Error).message)];
+    } catch {
+      this.logger.error('resource.operation.failed');
+      return [new ErrorNode(vscode.l10n.t('Failed to load resources'), vscode.l10n.t('Request failed'))];
     }
   }
 
@@ -535,7 +506,7 @@ export class ResourceNode implements XCSHTreeItem {
     // Use MarkdownString for richer tooltip
     const tooltip = new vscode.MarkdownString();
     tooltip.appendMarkdown(`**${getLocalizedDisplayName(this.data.resourceType.displayName)}**: ${this.data.name}\n\n`);
-    tooltip.appendMarkdown(`**${vscode.l10n.t('Namespace')}**: ${this.data.namespace}\n\n`);
+    tooltip.appendMarkdown(`**${vscode.l10n.t('Namespace name')}**: ${this.data.namespace}\n\n`);
     tooltip.appendMarkdown(`**${vscode.l10n.t('Category')}**: ${vscode.l10n.t(this.data.resourceType.category)}\n\n`);
     tooltip.appendMarkdown(`---\n\n`);
     tooltip.appendMarkdown(`**${vscode.l10n.t('Operations')}:**\n\n`);

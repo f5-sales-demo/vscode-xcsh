@@ -95,7 +95,7 @@ export class XCSHViewProvider implements vscode.TextDocumentContentProvider {
     try {
       const { profileName, namespace, resourceType, resourceName } = this.parseUri(uri);
 
-      logger.debug(`Loading view content for: ${resourceName} (${resourceType})`);
+      logger.debug('resource.operation.started');
 
       const client = await this.contextManager.getClient(profileName);
       const resourceTypeInfo = this.findResourceTypeInfo(resourceType);
@@ -119,7 +119,7 @@ export class XCSHViewProvider implements vscode.TextDocumentContentProvider {
       return content;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.error(`Failed to load view content: ${message}`);
+      logger.error('resource.operation.failed');
       return JSON.stringify({ error: `Failed to load resource: ${message}` }, null, 2);
     }
   }

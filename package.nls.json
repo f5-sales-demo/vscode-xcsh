@@ -33,8 +33,6 @@
   "command.manageContextEnv.title": "xcsh: Manage Context Environment Variables",
   "command.switchNamespace.title": "xcsh: Switch Namespace",
   "command.selectActiveNamespace.title": "xcsh: Select Active Namespace",
-  "command.exportContexts.title": "xcsh: Export Contexts",
-  "command.importContexts.title": "xcsh: Import Contexts",
   "command.renameContext.title": "xcsh: Rename Context",
   "command.validateContext.title": "xcsh: Validate Context",
   "command.deleteContext.title": "xcsh: Delete Context",

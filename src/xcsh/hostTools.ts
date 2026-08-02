@@ -679,10 +679,9 @@ export async function handleHostToolCall(call: RpcHostToolCall): Promise<RpcHost
       default:
         return makeErrorResult(id, `Unknown host tool: ${toolName}`);
     }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    logger.error(`Host tool ${toolName} failed: ${message}`);
-    return makeErrorResult(id, message);
+  } catch {
+    logger.error('host-tool.failed');
+    return makeErrorResult(id, 'Host tool failed');
   }
 }
 

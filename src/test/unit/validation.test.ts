@@ -429,7 +429,7 @@ describe('Validation Utilities', () => {
       const payload = {
         metadata: { name: 'test' },
         spec: {
-          origin_servers: [{ public_ip: { ip: '1.2.3.4' } }],
+          origin_servers: [{ public_ip: { ip: '198.51.100.10' } }],
           port: 443,
           loadbalancer_algorithm: 'LB_OVERRIDE',
         },
@@ -446,7 +446,7 @@ describe('Validation Utilities', () => {
       const payload = {
         metadata: { name: 'test' },
         spec: {
-          origin_servers: [{ public_ip: { ip: '1.2.3.4' } }],
+          origin_servers: [{ public_ip: { ip: '198.51.100.10' } }],
           port: 443,
           loadbalancer_algorithm: 'LB_OVERRIDE',
         },
@@ -464,7 +464,7 @@ describe('Validation Utilities', () => {
       const payload = {
         metadata: { name: 'test' },
         spec: {
-          origin_servers: [{ public_ip: { ip: '1.2.3.4' } }],
+          origin_servers: [{ public_ip: { ip: '198.51.100.10' } }],
           port: 443,
           loadbalancer_algorithm: 'LB_OVERRIDE',
         },
@@ -482,7 +482,7 @@ describe('Validation Utilities', () => {
       const payload = {
         metadata: { name: 'test' },
         spec: {
-          origin_servers: [{ public_ip: { ip: '1.2.3.4' } }],
+          origin_servers: [{ public_ip: { ip: '198.51.100.10' } }],
           port: 443,
           loadbalancer_algorithm: 'ROUND_ROBIN',
         },
@@ -499,7 +499,7 @@ describe('Validation Utilities', () => {
       const payload = {
         metadata: { name: 'test' },
         spec: {
-          origin_servers: [{ public_ip: { ip: '1.2.3.4' } }],
+          origin_servers: [{ public_ip: { ip: '198.51.100.10' } }],
           port: 443,
         },
       };

@@ -70,7 +70,7 @@ export class XCSHInlineCompletionProvider implements vscode.InlineCompletionItem
       return undefined;
     }
 
-    logger.debug(`Inline completion for property: ${jsonContext.propertyName} at path: ${jsonContext.path.join('.')}`);
+    logger.debug('schema.generated');
 
     // Find the schema for this property
     const propertyPath = [...jsonContext.path, jsonContext.propertyName];
@@ -121,7 +121,7 @@ export class XCSHInlineCompletionProvider implements vscode.InlineCompletionItem
     const item = new vscode.InlineCompletionItem(formattedValue);
     item.range = new vscode.Range(position, position);
 
-    logger.debug(`Providing inline completion: ${formattedValue}`);
+    logger.debug('schema.generated');
 
     return [item];
   }

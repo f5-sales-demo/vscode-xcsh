@@ -32,7 +32,7 @@ export async function geocodeLocation(query: string): Promise<Coordinates | null
     });
 
     if (!response.ok) {
-      logger.warn(`Nominatim geocoding failed with status ${response.status} for query: ${query}`);
+      logger.warn('geocoder.request.failed');
       return null;
     }
 
@@ -43,14 +43,14 @@ export async function geocodeLocation(query: string): Promise<Coordinates | null
         latitude: parseFloat(firstResult.lat),
         longitude: parseFloat(firstResult.lon),
       };
-      logger.debug(`Geocoded "${query}" to ${coords.latitude}, ${coords.longitude}`);
+      logger.debug('geocoder.request.completed');
       return coords;
     }
 
-    logger.debug(`No geocoding results for query: ${query}`);
+    logger.debug('geocoder.request.empty');
     return null;
-  } catch (error) {
-    logger.warn(`Geocoding error for "${query}":`, error);
+  } catch {
+    logger.warn('geocoder.request.failed');
     return null;
   }
 }

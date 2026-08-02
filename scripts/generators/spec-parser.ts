@@ -1405,7 +1405,10 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     if (seen.has(resourceKey)) {
       const existingIdx = results.findIndex((r) => r.resourceKey === resourceKey);
       if (existingIdx >= 0) {
-        const existing = results[existingIdx]!;
+        const existing = results[existingIdx];
+        if (!existing) {
+          continue;
+        }
         const existingFields = existing.fieldMetadata ? Object.keys(existing.fieldMetadata.fields).length : 0;
         const candidateFields = extractResourceFieldMetadata(spec, resourceKey);
         const candidateCount = candidateFields ? Object.keys(candidateFields.fields).length : 0;
@@ -1608,7 +1611,7 @@ export function parseAllDomainFiles(domainDir: string): ParsedSpecInfo[] {
   // Sort domain files alphabetically for deterministic processing order
   const domainFiles = fs
     .readdirSync(domainDir)
-    .filter((f) => f.endsWith('.json'))
+    .filter((f) => f.endsWith('.json') && f !== 'namespace_profiles.json' && f !== 'validation.json')
     .sort();
   console.log(`Found ${domainFiles.length} domain files`);
 
@@ -1626,7 +1629,10 @@ export function parseAllDomainFiles(domainDir: string): ParsedSpecInfo[] {
       } else {
         const existingIdx = results.findIndex((r) => r.resourceKey === info.resourceKey);
         if (existingIdx >= 0) {
-          const existing = results[existingIdx]!;
+          const existing = results[existingIdx];
+          if (!existing) {
+            continue;
+          }
           const existingFieldCount = existing.fieldMetadata ? Object.keys(existing.fieldMetadata.fields).length : 0;
           const candidateFieldCount = info.fieldMetadata ? Object.keys(info.fieldMetadata.fields).length : 0;
           if (candidateFieldCount > existingFieldCount) {

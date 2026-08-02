@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
-import { checkGitTracking, resolveContext } from '../config/contextResolver';
+import { checkGitTracking } from '../config/contextResolver';
 import type { ContextManagerInterface } from '../config/contextTypes';
 import { CURRENT_SCHEMA_VERSION, deriveTenantFromUrl, isInjectableContextEnvKey } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
@@ -25,20 +25,17 @@ function registerHostToolsOnBridge(bridge: XcshRpcBridge): void {
       tools: HOST_TOOL_DEFINITIONS,
     })
     .then(() => {
-      logger.info(`Registered ${String(HOST_TOOL_DEFINITIONS.length)} host tools with xcsh`);
+      logger.info('integration.activation.completed');
     })
-    .catch((err: unknown) => {
-      logger.warn(
-        'Failed to register host tools (xcsh may not support set_host_tools yet)',
-        err instanceof Error ? err : new Error(String(err)),
-      );
+    .catch(() => {
+      logger.warn('integration.activation.failed');
     });
 
   bridge.onEvent('host_tool_call', (event) => {
     const call = event as unknown as RpcHostToolCall;
     void handleHostToolCall(call).then((result) => {
-      bridge.sendCommand(result as unknown as RpcCommand).catch((err: unknown) => {
-        logger.error('Failed to send host tool result', err instanceof Error ? err : new Error(String(err)));
+      bridge.sendCommand(result as unknown as RpcCommand).catch(() => {
+        logger.error('host-tool.failed');
       });
     });
   });
@@ -61,11 +58,11 @@ export async function activateXcsh(
 
   // Check if xcsh is enabled
   if (!config.get<boolean>('xcsh.enabled', true)) {
-    logger.info('xcsh integration is disabled');
+    logger.info('integration.activation.disabled');
     return;
   }
 
-  logger.info('Activating xcsh integration...');
+  logger.info('integration.activation.started');
 
   // Detect secondary sidebar support (VS Code >= 1.106)
   const versionParts = vscode.version.split('.').map(Number);
@@ -84,7 +81,7 @@ export async function activateXcsh(
 
   const setEnvFromContext = async (): Promise<void> => {
     // Use three-tier context resolution (env > local > global)
-    const resolved = await resolveContext(getWorkspaceCwd());
+    const resolved = await contextManager.resolveContext(getWorkspaceCwd());
     if (!resolved) {
       return;
     }
@@ -94,7 +91,7 @@ export async function activateXcsh(
     // the user has explicitly activated one this session. The env tier
     // (XCSH_API_URL/XCSH_API_TOKEN) is an explicit user choice and is always honored.
     if (resolved.source !== 'env' && !contextManager.isSessionActivated()) {
-      logger.info('No context activated this session; starting xcsh without a context.');
+      logger.info('integration.context.unavailable');
       return;
     }
 
@@ -103,10 +100,7 @@ export async function activateXcsh(
     // Schema-version gate: refuse a context written by a newer schema this build
     // can't safely interpret (mirrors the shell's compatible-version check).
     if (typeof ctx.version === 'number' && ctx.version > CURRENT_SCHEMA_VERSION) {
-      logger.warn(
-        `Context "${ctx.name}" uses schema version ${String(ctx.version)}, newer than supported ` +
-          `(${String(CURRENT_SCHEMA_VERSION)}); not applying it. Update the extension.`,
-      );
+      logger.warn('integration.context.unavailable');
       return;
     }
 
@@ -141,10 +135,7 @@ export async function activateXcsh(
       checkGitTracking(resolved.sourcePath)
         .then((tracked) => {
           if (tracked) {
-            logger.warn(
-              `${resolved.sourcePath} is tracked by git and may contain credentials. ` +
-                `Run: git rm --cached "${resolved.sourcePath}"`,
-            );
+            logger.warn('integration.context.unavailable');
           }
         })
         .catch(() => {
@@ -162,7 +153,7 @@ export async function activateXcsh(
   // Wait for the process to be running before setting up RPC
   const childProcess = processManager.getProcess();
   if (!childProcess?.stdin || !childProcess?.stdout) {
-    logger.warn('xcsh process not available, skipping RPC setup');
+    logger.warn('integration.process.unavailable');
     return;
   }
 
@@ -174,7 +165,7 @@ export async function activateXcsh(
   // Listen for context changes and restart
   extensionContext.subscriptions.push(
     contextManager.onDidChangeContext(async () => {
-      logger.info('Context changed, restarting xcsh...');
+      logger.info('context.changed');
       await setEnvFromContext();
       processManager.setCwd(getWorkspaceCwd());
       processManager.restart();
@@ -190,7 +181,7 @@ export async function activateXcsh(
 
   extensionContext.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      logger.info('Workspace folders changed, restarting xcsh...');
+      logger.info('context.changed');
       processManager.setCwd(getWorkspaceCwd());
       processManager.restart();
 
@@ -208,7 +199,7 @@ export async function activateXcsh(
 
   // Set locale so xcsh responds in the user's display language
   rpcBridge.setLocale(vscode.env.language).catch(() => {
-    logger.warn('Failed to set locale on xcsh');
+    logger.warn('integration.locale.failed');
   });
 
   // Register Language Model Tools for agent mode
@@ -218,11 +209,8 @@ export async function activateXcsh(
   if (config.get<boolean>('xcsh.chatParticipantEnabled', true)) {
     try {
       registerChatParticipant(extensionContext, rpcBridge, contextManager);
-    } catch (err) {
-      logger.warn(
-        'Failed to register chat participant (API may not be available)',
-        err instanceof Error ? err : new Error(String(err)),
-      );
+    } catch {
+      logger.warn('integration.activation.failed');
     }
   }
 
@@ -230,11 +218,8 @@ export async function activateXcsh(
   if (config.get<boolean>('xcsh.languageModelEnabled', true)) {
     try {
       registerLanguageModelProvider(extensionContext, rpcBridge);
-    } catch (err) {
-      logger.warn(
-        'Failed to register language model provider (API may not be available)',
-        err instanceof Error ? err : new Error(String(err)),
-      );
+    } catch {
+      logger.warn('integration.activation.failed');
     }
   }
 
@@ -273,7 +258,7 @@ export async function activateXcsh(
   extensionContext.subscriptions.push(
     vscode.commands.registerCommand('xcsh.attachToChat', async (arg?: { name?: string; content?: string }) => {
       if (typeof arg?.name !== 'string' || typeof arg?.content !== 'string') {
-        logger.warn('xcsh.attachToChat called without { name, content }');
+        logger.warn('webview.attachment.failed');
         return;
       }
       await vscode.commands.executeCommand(focusPanelCommand);
@@ -300,15 +285,15 @@ export async function activateXcsh(
       }
 
       void vscode.window.showInformationMessage('xcsh restarted');
-      logger.info('xcsh restarted via command');
+      logger.info('integration.activation.completed');
     }),
   );
 
   // Auto-start if configured
   if (config.get<boolean>('xcsh.autoStart', true)) {
     // Process already started above; this is a no-op confirmation
-    logger.info('xcsh auto-start enabled, process is running');
+    logger.info('integration.activation.completed');
   }
 
-  logger.info('xcsh integration activated');
+  logger.info('integration.activation.completed');
 }

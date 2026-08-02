@@ -95,7 +95,7 @@ export class XcshRpcBridge implements vscode.Disposable {
         if (err) {
           clearTimeout(timer);
           this.pendingCommands.delete(id);
-          reject(err);
+          reject(new Error('Command write failed'));
         }
       });
     });
@@ -122,7 +122,7 @@ export class XcshRpcBridge implements vscode.Disposable {
   async getState(): Promise<RpcSessionState> {
     const response = await this.sendCommand({ type: 'get_state' });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to get state');
+      throw new Error('Failed to get state');
     }
     return response.data as RpcSessionState;
   }
@@ -130,14 +130,14 @@ export class XcshRpcBridge implements vscode.Disposable {
   async setModel(provider: string, modelId: string): Promise<void> {
     const response = await this.sendCommand({ type: 'set_model', provider, modelId });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to set model');
+      throw new Error('Failed to set model');
     }
   }
 
   async getAvailableModels(): Promise<ModelInfo[]> {
     const response = await this.sendCommand({ type: 'get_available_models' });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to get available models');
+      throw new Error('Failed to get available models');
     }
     return (response.data as { models: ModelInfo[] }).models;
   }
@@ -147,7 +147,7 @@ export class XcshRpcBridge implements vscode.Disposable {
   async listSkills(): Promise<SkillInfo[]> {
     const response = await this.sendCommand({ type: 'list_skills' });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to list skills');
+      throw new Error('Failed to list skills');
     }
     return (response.data as { skills: SkillInfo[] }).skills;
   }
@@ -155,7 +155,7 @@ export class XcshRpcBridge implements vscode.Disposable {
   async getIntegrations(): Promise<IntegrationsResponse> {
     const response = await this.sendCommand({ type: 'get_integrations' });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to get integrations');
+      throw new Error('Failed to get integrations');
     }
     return response.data as IntegrationsResponse;
   }
@@ -163,21 +163,21 @@ export class XcshRpcBridge implements vscode.Disposable {
   async setPermissionMode(mode: string): Promise<void> {
     const response = await this.sendCommand({ type: 'set_permission_mode', mode });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to set permission mode');
+      throw new Error('Failed to set permission mode');
     }
   }
 
   async setThinkingLevel(level: string): Promise<void> {
     const response = await this.sendCommand({ type: 'set_thinking_level', level });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to set thinking level');
+      throw new Error('Failed to set thinking level');
     }
   }
 
   async setLocale(locale: string): Promise<void> {
     const response = await this.sendCommand({ type: 'set_locale', locale });
     if (!response.success) {
-      throw new Error(response.error ?? 'Failed to set locale');
+      throw new Error('Failed to set locale');
     }
   }
 
@@ -234,7 +234,7 @@ export class XcshRpcBridge implements vscode.Disposable {
         return;
       }
 
-      this.logger.debug(`Unrecognised message_update format: ${JSON.stringify(obj).slice(0, 200)}`);
+      this.logger.debug('rpc.message.invalid');
     });
   }
 
@@ -250,7 +250,7 @@ export class XcshRpcBridge implements vscode.Disposable {
     try {
       parsed = JSON.parse(trimmed);
     } catch {
-      this.logger.debug(`Ignoring non-JSON line: ${trimmed.slice(0, 100)}`);
+      this.logger.debug('rpc.message.invalid');
       return;
     }
 
@@ -284,8 +284,8 @@ export class XcshRpcBridge implements vscode.Disposable {
       for (const handler of handlers) {
         try {
           handler(event);
-        } catch (err) {
-          this.logger.error('Event handler error', err instanceof Error ? err : new Error(String(err)));
+        } catch {
+          this.logger.error('rpc.handler.failed');
         }
       }
     }
