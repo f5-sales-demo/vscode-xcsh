@@ -11,7 +11,7 @@
 
 export type ProcessStatus = 'starting' | 'running' | 'stopped' | 'error' | 'not-installed';
 
-export type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
+type ThinkingLevel = 'off' | 'minimal' | 'low' | 'medium' | 'high' | 'xhigh';
 
 export interface ModelInfo {
   provider: string;
@@ -47,9 +47,9 @@ export interface RpcResponse {
 
 // ───────── Integration Health ─────────
 
-export type ServiceState = 'connected' | 'unauthenticated' | 'unavailable';
+type ServiceState = 'connected' | 'unauthenticated' | 'unavailable';
 
-export interface ServiceStatus {
+interface ServiceStatus {
   name: string;
   state: ServiceState;
   hint?: string;
@@ -76,7 +76,7 @@ export interface SkillInfo {
 
 /** A source an answer cited, for the transcript's Sources chips. Field-for-field with
  *  the shared chat-ui `ChatReference` the vendored ReferenceChips renders. */
-export interface ChatReferenceWire {
+interface ChatReferenceWire {
   kind: 'doc' | 'console';
   title: string;
   url: string;
@@ -132,12 +132,6 @@ export interface RpcHostToolResult {
   isError?: boolean;
 }
 
-export interface RpcHostToolCancel {
-  type: 'host_tool_cancel';
-  id: string;
-  targetId: string;
-}
-
 // ───────── Tool Calling (LM Provider) ─────────
 
 export interface RpcToolCall extends RpcEvent {
@@ -152,21 +146,4 @@ export interface RpcToolResult {
   toolCallId: string;
   result: unknown;
   isError?: boolean;
-}
-
-// ───────── Extension UI ─────────
-
-export interface ExtensionUIRequest {
-  type: 'extension_ui_request';
-  id: string;
-  method: string;
-  [key: string]: unknown;
-}
-
-export interface ExtensionUIResponse {
-  type: 'extension_ui_response';
-  id: string;
-  value?: unknown;
-  confirmed?: boolean;
-  cancelled?: boolean;
 }

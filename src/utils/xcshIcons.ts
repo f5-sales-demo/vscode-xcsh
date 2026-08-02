@@ -317,7 +317,7 @@ export function getToolbarIconSvg(iconName: string): string {
   return `<div class="toolbar-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${icon.w} ${icon.h}" width="24" height="24">${icon.body}</svg></div>`;
 }
 
-export const CATEGORY_ICON_MAP: Record<string, string> = {
+const CATEGORY_ICON_MAP: Record<string, string> = {
   [ResourceCategory.LoadBalancing]: 'distributed-apps',
   [ResourceCategory.Security]: 'web-app-and-api-protection',
   [ResourceCategory.Networking]: 'multi-cloud-network-connect',

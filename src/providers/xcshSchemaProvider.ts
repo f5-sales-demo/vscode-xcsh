@@ -104,48 +104,6 @@ export class XCSHSchemaProvider implements vscode.TextDocumentContentProvider {
 }
 
 /**
- * Configure JSON schema associations for the xcsh:// file system.
- * This function sets up VSCode's JSON language service to use our schemas.
- */
-export function configureJsonSchemaAssociations(): void {
-  // Get the JSON extension's configuration
-  const jsonConfig = vscode.workspace.getConfiguration('json');
-
-  // Get existing schema associations
-  const existingSchemas = jsonConfig.get<Record<string, string | string[]>>('schemas') || {};
-
-  // Build schema associations for xcsh:// URIs
-  const registry = getSchemaRegistry();
-  const resourceTypes = registry.getAvailableResourceTypes();
-
-  // Create schema associations for each resource type
-  const schemaAssociations: Record<string, string[]> = { ...existingSchemas } as Record<string, string[]>;
-
-  for (const resourceType of resourceTypes) {
-    const schemaUri = `xcsh-schema://schemas/${resourceType}.json`;
-    // Match pattern: xcsh://*/{namespace}/{resourceType}/*.json
-    const fileMatch = `xcsh://*/*/${resourceType}/*.json`;
-
-    if (!schemaAssociations[schemaUri]) {
-      schemaAssociations[schemaUri] = [];
-    }
-    if (!schemaAssociations[schemaUri].includes(fileMatch)) {
-      schemaAssociations[schemaUri].push(fileMatch);
-    }
-  }
-
-  // Add generic schema for unrecognized resource types
-  const genericSchemaUri = 'xcsh-schema://schemas/generic.json';
-  if (!schemaAssociations[genericSchemaUri]) {
-    schemaAssociations[genericSchemaUri] = ['xcsh://**/*.json'];
-  }
-
-  // Note: VSCode's json.schemas setting is workspace-specific and read-only
-  // We use the jsonValidation contribution in package.json instead
-  logger.debug('schema.registered');
-}
-
-/**
  * Get the schema URI for a specific xcsh:// document URI.
  * Extracts the resource type from the document URI and returns the schema URI.
  *

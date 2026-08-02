@@ -39,7 +39,7 @@ export interface JsonContext {
 /**
  * Property information for snippet generation
  */
-export interface PropertyInfo {
+interface PropertyInfo {
   name: string;
   type: string | string[];
   required: boolean;
@@ -364,23 +364,6 @@ export function navigateSchemaPath(schema: SchemaProperty, path: string[]): Sche
 }
 
 /**
- * Extract recommended value from schema node
- */
-export function extractRecommendedValue(schemaNode: SchemaProperty): unknown {
-  // Check custom extension first
-  if (schemaNode['x-f5xc-recommended-value'] !== undefined) {
-    return schemaNode['x-f5xc-recommended-value'];
-  }
-
-  // Fall back to default value
-  if (schemaNode.default !== undefined) {
-    return schemaNode.default;
-  }
-
-  return undefined;
-}
-
-/**
  * Format a value for JSON insertion (with proper quotes, escaping, etc.)
  */
 export function formatValueForJson(value: unknown, type?: string | string[]): string {
@@ -428,7 +411,7 @@ export function formatValueForJson(value: unknown, type?: string | string[]): st
  * Create a snippet string with tab stops for multiple properties.
  * Tab stops allow user to navigate with Tab key.
  */
-export function createSnippetWithTabStops(properties: PropertyInfo[], indentString: string): string {
+function createSnippetWithTabStops(properties: PropertyInfo[], indentString: string): string {
   const lines: string[] = [];
   let tabStop = 1;
 

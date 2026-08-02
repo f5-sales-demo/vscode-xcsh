@@ -6,7 +6,7 @@ export interface TextBlock {
   text: string;
 }
 
-export interface ToolUseBlock {
+interface ToolUseBlock {
   type: 'tool_use';
   toolName: string;
   toolCallId: string;
@@ -15,15 +15,15 @@ export interface ToolUseBlock {
   output?: string;
 }
 
-export interface ThinkingBlock {
+interface ThinkingBlock {
   type: 'thinking';
   thinking: string;
   durationMs?: number;
 }
 
-export type ContentBlock = TextBlock | ToolUseBlock | ThinkingBlock;
+type ContentBlock = TextBlock | ToolUseBlock | ThinkingBlock;
 
-export interface UserMessage {
+interface UserMessage {
   type: 'user';
   text: string;
 }

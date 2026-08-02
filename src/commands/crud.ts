@@ -985,7 +985,7 @@ function createResourceTemplate(resourceTypeKey: string, namespace: string): obj
           origin_servers: [
             {
               public_ip: {
-                ip: '1.2.3.4',
+                ip: '198.51.100.10',
               },
             },
           ],

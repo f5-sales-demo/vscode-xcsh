@@ -84,6 +84,14 @@ import type { XCSHExplorerProvider } from '../../tree/xcshExplorer';
 describe('registerExportCommands', () => {
   let registeredCommands: Map<string, (...args: unknown[]) => Promise<void>>;
 
+  function getRegisteredCommand(id: string): (...args: unknown[]) => Promise<void> {
+    const handler = registeredCommands.get(id);
+    if (!handler) {
+      throw new Error(`Command was not registered: ${id}`);
+    }
+    return handler;
+  }
+
   beforeEach(() => {
     jest.clearAllMocks();
     registeredCommands = new Map();
@@ -112,7 +120,7 @@ describe('registerExportCommands', () => {
   describe('xcsh.exportJson', () => {
     it('warns when argument is not a resource node', async () => {
       const { showWarning } = require('../../utils/errors');
-      const handler = registeredCommands.get('xcsh.exportJson')!;
+      const handler = getRegisteredCommand('xcsh.exportJson');
       await handler('not a node');
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('Select a resource'));
@@ -137,7 +145,7 @@ describe('registerExportCommands', () => {
         }),
       };
 
-      const handler = registeredCommands.get('xcsh.exportJson')!;
+      const handler = getRegisteredCommand('xcsh.exportJson');
       await handler(node);
 
       expect(mockWriteFile).toHaveBeenCalled();
@@ -158,7 +166,7 @@ describe('registerExportCommands', () => {
         }),
       };
 
-      const handler = registeredCommands.get('xcsh.exportJson')!;
+      const handler = getRegisteredCommand('xcsh.exportJson');
       await handler(node);
 
       expect(mockShowWarningMessage).toHaveBeenCalledWith(
@@ -173,7 +181,7 @@ describe('registerExportCommands', () => {
   describe('xcsh.exportAllJson', () => {
     it('warns when argument is not a resource type node', async () => {
       const { showWarning } = require('../../utils/errors');
-      const handler = registeredCommands.get('xcsh.exportAllJson')!;
+      const handler = getRegisteredCommand('xcsh.exportAllJson');
       await handler('not a node');
 
       expect(showWarning).toHaveBeenCalledWith(expect.stringContaining('Select a resource type'));
@@ -195,7 +203,7 @@ describe('registerExportCommands', () => {
         }),
       };
 
-      const handler = registeredCommands.get('xcsh.exportAllJson')!;
+      const handler = getRegisteredCommand('xcsh.exportAllJson');
       await handler(node);
 
       expect(mockWriteFile).toHaveBeenCalled();

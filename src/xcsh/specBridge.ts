@@ -86,7 +86,3 @@ export function getKindResolver(): KindResolver {
   }
   return _resolver;
 }
-
-export function getSpecIndex(): ApiSpecIndex {
-  return buildSpecIndex();
-}

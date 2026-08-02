@@ -70,7 +70,7 @@ export interface RequestOptions {
 /**
  * List response structure from F5 XC API
  */
-export interface ListResponse<T> {
+interface ListResponse<T> {
   items: T[];
   errors?: Array<{ message: string }>;
 }
@@ -101,26 +101,12 @@ export interface Resource<TSpec = unknown> {
 /**
  * Site type enumeration from F5 XC API
  */
-export type SiteType = 'INVALID' | 'REGIONAL_EDGE' | 'CUSTOMER_EDGE' | 'NGINX_ONE';
-
-/**
- * Site state enumeration
- */
-export type SiteState =
-  | 'ONLINE'
-  | 'OFFLINE'
-  | 'STANDBY'
-  | 'REGISTRATION_APPROVAL_REQUIRED'
-  | 'REGISTRATION_REJECTED'
-  | 'DECOMMISSIONING'
-  | 'WAITING_FOR_REGISTRATION'
-  | 'UPGRADING'
-  | 'PROVISIONING';
+type SiteType = 'INVALID' | 'REGIONAL_EDGE' | 'CUSTOMER_EDGE' | 'NGINX_ONE';
 
 /**
  * Geographic coordinates
  */
-export interface Coordinates {
+interface Coordinates {
   latitude?: number;
   longitude?: number;
 }
@@ -128,7 +114,7 @@ export interface Coordinates {
 /**
  * Site specification from F5 XC Sites API
  */
-export interface SiteSpec {
+interface SiteSpec {
   site_type?: SiteType;
   address?: string;
   region?: string;

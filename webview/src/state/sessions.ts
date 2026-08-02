@@ -3,7 +3,6 @@
 
 import { createSession, type Session } from './session';
 
-const sessions: Session[] = [];
 let activeSession: Session | null = null;
 const listeners = new Set<() => void>();
 
@@ -18,23 +17,13 @@ export function subscribe(fn: () => void): () => void {
   return () => listeners.delete(fn);
 }
 
-export function getSessions(): Session[] {
-  return sessions;
-}
-
 export function getActiveSession(): Session | null {
   return activeSession;
 }
 
 export function createNewSession(): Session {
   const session = createSession();
-  sessions.unshift(session);
   activeSession = session;
   notify();
   return session;
-}
-
-export function activateSession(session: Session): void {
-  activeSession = session;
-  notify();
 }

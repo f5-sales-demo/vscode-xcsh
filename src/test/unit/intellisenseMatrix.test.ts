@@ -122,7 +122,7 @@ describe('parseJsonPath correctness', () => {
   "spec": {
     "servers": [
       {
-        "public_ip": { "ip": "1.2.3.4" },
+        "public_ip": { "ip": "198.51.100.10" },
         "labels": {}
       }
     ],

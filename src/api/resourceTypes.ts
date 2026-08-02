@@ -15,12 +15,11 @@ import {
   GENERATED_RESOURCE_TYPES,
   type GeneratedResourceTypeInfo,
   type OperationMetadata,
-  type ResourceOperationMetadata,
   type SideEffects,
 } from '../generated/resourceTypesBase';
 
 // Re-export operation metadata types for use by other modules
-export type { CommonError, DangerLevel, OperationMetadata, ResourceOperationMetadata, SideEffects };
+export type { CommonError, DangerLevel, OperationMetadata, SideEffects };
 
 /**
  * CRUD operation types for metadata lookup
@@ -32,24 +31,18 @@ import {
   BUILT_IN_NAMESPACES,
   isBuiltInNamespace as generatedIsBuiltInNamespace,
 } from '../generated/constants';
-import {
-  getDomainComplexity,
-  getDomainTierRequirement,
-  getDomainUseCases,
-  getLocalCategoryForDomain,
-  isPreviewDomain,
-} from '../generated/domainCategories';
+import { getDomainTierRequirement, getLocalCategoryForDomain, isPreviewDomain } from '../generated/domainCategories';
 import { resolveNamespaceProfileForKey } from '../generated/namespaceProfiles';
 
 /**
  * Namespace type classification for F5 XC namespaces.
  */
-export type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
+type NamespaceType = 'system' | 'shared' | 'default' | 'custom';
 
 /**
  * Namespace profile - rich metadata about which namespaces a resource type supports.
  */
-export interface NamespaceProfile {
+interface NamespaceProfile {
   constraint: {
     allowed: NamespaceType[];
     enforced: boolean;
@@ -68,7 +61,7 @@ export interface NamespaceProfile {
 /**
  * Determine the namespace type for a given namespace name.
  */
-export function namespaceTypeOf(namespaceName: string): NamespaceType {
+function namespaceTypeOf(namespaceName: string): NamespaceType {
   if (namespaceName === 'system') {
     return 'system';
   }
@@ -91,36 +84,6 @@ export function namespaceTypeOf(namespaceName: string): NamespaceType {
  * shape, terraform, scim, secret_management, and others.
  */
 export type ApiBase = string;
-
-/**
- * Known API bases for F5 XC APIs.
- * This list is informational and not exhaustive - new API bases may be added.
- */
-export const KNOWN_API_BASES = [
-  'config',
-  'web',
-  'ai_data',
-  'bigipconnector',
-  'data',
-  'data-intelligence',
-  'discovery',
-  'gen-ai',
-  'gia',
-  'infraprotect',
-  'maurice',
-  'mobile',
-  'nginx',
-  'object_store',
-  'observability',
-  'operate',
-  'register',
-  'report',
-  'scim',
-  'secret_management',
-  'shape',
-  'terraform',
-  'tpm',
-] as const;
 
 /**
  * Resource categories for organizing the tree view
@@ -1272,11 +1235,7 @@ export function getCommonErrors(resourceKey: string, operation: CrudOperation): 
  * @param statusCode - The HTTP status code
  * @returns The solution message or undefined if no match found
  */
-export function getSmartErrorMessage(
-  resourceKey: string,
-  operation: CrudOperation,
-  statusCode: number,
-): string | undefined {
+function getSmartErrorMessage(resourceKey: string, operation: CrudOperation, statusCode: number): string | undefined {
   const errors = getCommonErrors(resourceKey, operation);
   const match = errors.find((e) => e.code === statusCode);
   return match?.solution;
@@ -1312,17 +1271,6 @@ export function getPrerequisites(resourceKey: string, operation: CrudOperation):
   return metadata?.prerequisites ?? [];
 }
 
-/**
- * Get all operation metadata for a resource type.
- *
- * @param resourceKey - The resource type key
- * @returns The full ResourceOperationMetadata or undefined
- */
-export function getAllOperationMetadata(resourceKey: string): ResourceOperationMetadata | undefined {
-  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
-  return generated?.operationMetadata;
-}
-
 // =====================================================
 // Domain and Preview Status Helper Functions
 // =====================================================
@@ -1336,36 +1284,6 @@ export function getAllOperationMetadata(resourceKey: string): ResourceOperationM
 export function getResourceDomain(resourceKey: string): string | undefined {
   const generated = GENERATED_RESOURCE_TYPES[resourceKey];
   return generated?.domain;
-}
-
-/**
- * Get use cases for a resource type's domain.
- * Convenience wrapper that looks up the domain and retrieves its use cases.
- *
- * @param resourceKey - The resource type key
- * @returns Array of use case descriptions or empty array
- */
-export function getDomainUseCasesForResource(resourceKey: string): string[] {
-  const domain = getResourceDomain(resourceKey);
-  if (!domain) {
-    return [];
-  }
-  return getDomainUseCases(domain);
-}
-
-/**
- * Get complexity level for a resource type's domain.
- * Convenience wrapper that looks up the domain and retrieves its complexity.
- *
- * @param resourceKey - The resource type key
- * @returns Complexity level (e.g., "simple", "advanced", "expert") or undefined
- */
-export function getDomainComplexityForResource(resourceKey: string): string | undefined {
-  const domain = getResourceDomain(resourceKey);
-  if (!domain) {
-    return undefined;
-  }
-  return getDomainComplexity(domain);
 }
 
 /**
@@ -1423,19 +1341,6 @@ export function getFieldDefaults(resourceKey: string): Record<string, unknown> {
     }
   }
   return defaults;
-}
-
-/**
- * Get the default value for a specific field.
- *
- * @param resourceKey - The resource type key
- * @param fieldPath - The dot-separated field path (e.g., 'spec.monitoring')
- * @returns The default value or undefined if not set
- */
-export function getFieldDefault(resourceKey: string, fieldPath: string): unknown {
-  const generated = GENERATED_RESOURCE_TYPES[resourceKey];
-  const fieldMeta = generated?.fieldMetadata?.fields[fieldPath];
-  return fieldMeta?.default;
 }
 
 /**

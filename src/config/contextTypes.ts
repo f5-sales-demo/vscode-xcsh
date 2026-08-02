@@ -17,13 +17,13 @@ export interface XCSHContext {
   metadata?: ContextMetadata;
 }
 
-export interface KnowledgeSource {
+interface KnowledgeSource {
   url: string;
   label?: string;
   type?: 'llms-txt' | 'skill-dir' | 'docs-site';
 }
 
-export interface ContextMetadata {
+interface ContextMetadata {
   createdAt?: string;
   expiresAt?: string;
   lastRotatedAt?: string;
@@ -31,7 +31,6 @@ export interface ContextMetadata {
 }
 
 export type TokenHealth = 'ok' | 'expiring' | 'expired';
-export type AuthStatus = 'connected' | 'auth_error' | 'offline' | 'unknown';
 
 export interface ContextManagerInterface {
   getActiveContext(): Promise<XCSHContext | null>;
@@ -90,7 +89,6 @@ interface SharedEnvNamesModule {
   readonly XCSH_CONSOLE_PASSWORD: string;
   readonly AUTH_ENV_KEYS: readonly string[];
   readonly RESERVED_ENV_KEYS: ReadonlySet<string>;
-  isSensitiveEnvKey(key: string): boolean;
   isInjectableContextEnvKey(key: string): boolean;
 }
 
@@ -109,10 +107,7 @@ export const AUTH_ENV_KEYS = sharedEnvNames.AUTH_ENV_KEYS;
  * they would be ignored or clobbered by the resolver. Shared with xcsh so both
  * hosts reject the same keys.
  */
-export const RESERVED_ENV_KEYS = sharedEnvNames.RESERVED_ENV_KEYS;
-
-/** True iff an env var NAME looks like it holds a secret (e.g. XCSH_CONSOLE_PASSWORD). */
-export const isSensitiveEnvKey = (key: string): boolean => sharedEnvNames.isSensitiveEnvKey(key);
+const RESERVED_ENV_KEYS = sharedEnvNames.RESERVED_ENV_KEYS;
 
 /**
  * True iff a context's `env` entry may be injected into a spawned subprocess.

@@ -8,26 +8,6 @@ import * as vscode from 'vscode';
 import { TreeItemContext, type XCSHTreeItem } from './treeTypes';
 
 /**
- * Top-level Subscription group node
- * Contains Plan and Quotas sub-nodes
- */
-export class SubscriptionGroupNode implements XCSHTreeItem {
-  constructor(private readonly profileName: string) {}
-
-  getTreeItem(): vscode.TreeItem {
-    const item = new vscode.TreeItem(vscode.l10n.t('Subscription'), vscode.TreeItemCollapsibleState.Collapsed);
-    item.contextValue = TreeItemContext.SUBSCRIPTION_GROUP;
-    item.iconPath = new vscode.ThemeIcon('credit-card');
-    item.tooltip = vscode.l10n.t('View subscription plan and quota usage');
-    return item;
-  }
-
-  getChildren(): Promise<XCSHTreeItem[]> {
-    return Promise.resolve([new PlanNode(this.profileName), new QuotasNode(this.profileName)]);
-  }
-}
-
-/**
  * Plan node - displays current subscription tier and addons
  * Opens Plan dashboard webview on click
  */

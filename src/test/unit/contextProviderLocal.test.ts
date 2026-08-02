@@ -224,7 +224,11 @@ describe('ContextProvider with local contexts', () => {
 
     // The pointer context should show the global reference in description
     expect(projectChildren.length).toBe(1);
-    const treeItem = projectChildren[0]!.getTreeItem();
+    const projectChild = projectChildren[0];
+    if (!projectChild) {
+      throw new Error('Expected the project context group to contain the pointer context');
+    }
+    const treeItem = projectChild.getTreeItem();
     expect(treeItem.description).toContain('global:shared-prod');
 
     mgr.dispose();

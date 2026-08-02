@@ -1,10 +1,8 @@
-// webview/src/lib/protocol.ts
+// webview/src/protocol.ts
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 interface VsCodeApi {
   postMessage(msg: unknown): void;
-  getState(): Record<string, unknown>;
-  setState(state: Record<string, unknown>): void;
 }
 
 export interface ExtensionMessage {
@@ -30,7 +28,7 @@ export function initProtocol(): void {
 
   window.addEventListener('message', (event: MessageEvent) => {
     const data = event.data as ExtensionEnvelope | undefined;
-    if (!data || data.type !== 'from-extension') {
+    if (data?.type !== 'from-extension') {
       return;
     }
     const msg = data.message;
@@ -54,7 +52,7 @@ export function initProtocol(): void {
   });
 }
 
-export function send(msg: unknown): void {
+function send(msg: unknown): void {
   if (!vscodeApi) {
     throw new Error('Protocol not initialized');
   }
@@ -68,14 +66,6 @@ export function on(type: string, callback: (msg: ExtensionMessage) => void): () 
   // biome-ignore lint/style/noNonNullAssertion: map.get after map.has is safe
   listeners.get(type)!.add(callback);
   return () => listeners.get(type)?.delete(callback);
-}
-
-export function getState(): Record<string, unknown> {
-  return vscodeApi?.getState() ?? {};
-}
-
-export function setState(state: Record<string, unknown>): void {
-  vscodeApi?.setState(state);
 }
 
 export function sendPrompt(text: string): void {

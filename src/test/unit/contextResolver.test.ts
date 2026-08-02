@@ -52,8 +52,8 @@ describe('contextResolver', () => {
 
     const result = await resolveContext(projectDir);
     expect(result).not.toBeNull();
-    expect(result!.source).toBe('local');
-    expect(result!.context.name).toBe('local-dev');
+    expect(result?.source).toBe('local');
+    expect(result?.context.name).toBe('local-dev');
   });
 
   it('resolves pointer context through to global', async () => {
@@ -82,9 +82,9 @@ describe('contextResolver', () => {
 
     const result = await resolveContext(projectDir);
     expect(result).not.toBeNull();
-    expect(result!.source).toBe('local');
-    expect(result!.context.defaultNamespace).toBe('my-ns');
-    expect(result!.context.env).toEqual({ G: 'val', L: 'local' });
+    expect(result?.source).toBe('local');
+    expect(result?.context.defaultNamespace).toBe('my-ns');
+    expect(result?.context.env).toEqual({ G: 'val', L: 'local' });
   });
 
   it('returns env source when XCSH_API_URL and XCSH_API_TOKEN are set', async () => {
@@ -95,9 +95,9 @@ describe('contextResolver', () => {
 
     const result = await resolveContext(projectDir);
     expect(result).not.toBeNull();
-    expect(result!.source).toBe('env');
-    expect(result!.context.apiUrl).toBe('https://env.example.com');
-    expect(result!.context.apiToken).toBe('env-token');
+    expect(result?.source).toBe('env');
+    expect(result?.context.apiUrl).toBe('https://env.example.com');
+    expect(result?.context.apiToken).toBe('env-token');
   });
 
   it('falls back to global when no local context exists', async () => {
@@ -117,8 +117,8 @@ describe('contextResolver', () => {
 
     const result = await resolveContext(projectDir);
     expect(result).not.toBeNull();
-    expect(result!.source).toBe('global');
-    expect(result!.context.name).toBe('global-ctx');
+    expect(result?.source).toBe('global');
+    expect(result?.context.name).toBe('global-ctx');
   });
 
   it('returns null when nothing is configured', async () => {

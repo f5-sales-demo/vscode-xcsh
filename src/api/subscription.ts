@@ -23,7 +23,7 @@ const logger = getLogger();
 /**
  * Subscription tier - F5 XC has Standard and Advanced tiers
  */
-export type SubscriptionTier = 'standard' | 'advanced';
+type SubscriptionTier = 'standard' | 'advanced';
 
 /**
  * Addon service information
@@ -40,7 +40,7 @@ export interface AddonService {
 /**
  * Addon service categories
  */
-export type AddonCategory = 'bot_defense' | 'waap' | 'securemesh' | 'appstack' | 'dns' | 'observability' | 'other';
+type AddonCategory = 'bot_defense' | 'waap' | 'securemesh' | 'appstack' | 'dns' | 'observability' | 'other';
 
 /**
  * Current plan information from /api/web/namespaces/system/usage_plans/current
@@ -323,7 +323,10 @@ export async function getCurrentPlan(client: XCSHClient): Promise<PlanInfo> {
     throw new Error('Unexpected API response: usage_plans/current returned no plans array');
   }
 
-  const plan = response.plans.find((p) => p.current === true) || response.plans[0]!;
+  const plan = response.plans.find((p) => p.current === true) ?? response.plans[0];
+  if (!plan) {
+    throw new Error('Unexpected API response: usage_plans/current returned no plans array');
+  }
 
   // Determine tier from tenant_type or plan name
   let tier: SubscriptionTier = 'standard';
@@ -479,7 +482,7 @@ export async function getQuotaForResourceType(
 /**
  * Addon service activation state
  */
-export type ActivationState = 'AS_NONE' | 'AS_PENDING' | 'AS_SUBSCRIBED' | 'AS_ERROR';
+type ActivationState = 'AS_NONE' | 'AS_PENDING' | 'AS_SUBSCRIBED' | 'AS_ERROR';
 
 /**
  * Access status - determines if user can activate addon
@@ -495,7 +498,7 @@ export type AccessStatus =
 /**
  * Subscription state
  */
-export type SubscriptionState =
+type SubscriptionState =
   | 'SUBSCRIPTION_PENDING'
   | 'SUBSCRIPTION_ENABLED'
   | 'SUBSCRIPTION_DISABLE_PENDING'

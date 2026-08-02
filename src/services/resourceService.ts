@@ -299,11 +299,11 @@ export class ResourceService {
     const resolver = getKindResolver();
     const manifests = piResourceManagement.parseManifests(parseContentToObjects(content), 'vscode');
 
-    if (manifests.length === 0) {
+    const manifest = manifests[0];
+    if (!manifest) {
       return { status: 'error', error: { kind: 'validation', message: 'No valid manifests found in file' } };
     }
 
-    const manifest = manifests[0]!;
     const resolved = resolver.resolveKind(manifest.kind) as ResolvedKind;
     return resourceClient.apply(manifest, resolved, namespaceOverride);
   }
@@ -313,11 +313,11 @@ export class ResourceService {
     const resolver = getKindResolver();
     const manifests = piResourceManagement.parseManifests(parseContentToObjects(content), 'vscode');
 
-    if (manifests.length === 0) {
+    const manifest = manifests[0];
+    if (!manifest) {
       return { status: 'error', error: { kind: 'validation', message: 'No valid manifests found in file' } };
     }
 
-    const manifest = manifests[0]!;
     const resolved = resolver.resolveKind(manifest.kind) as ResolvedKind;
     const namespace = namespaceOverride ?? manifest.metadata.namespace;
 
@@ -346,11 +346,11 @@ export class ResourceService {
     const resolver = getKindResolver();
     const manifests = piResourceManagement.parseManifests(parseContentToObjects(content), 'vscode');
 
-    if (manifests.length === 0) {
+    const manifest = manifests[0];
+    if (!manifest) {
       return { isNew: false, error: 'No valid manifests found in file' };
     }
 
-    const manifest = manifests[0]!;
     const resolved = resolver.resolveKind(manifest.kind) as ResolvedKind;
     const namespace = namespaceOverride ?? manifest.metadata.namespace;
 
@@ -376,11 +376,11 @@ export class ResourceService {
     const resolver = getKindResolver();
     const manifests = piResourceManagement.parseManifests(parseContentToObjects(content), 'vscode');
 
-    if (manifests.length === 0) {
+    const manifest = manifests[0];
+    if (!manifest) {
       return { status: 'error', error: { kind: 'validation', message: 'No valid manifests found in file' } };
     }
 
-    const manifest = manifests[0]!;
     const resolved = resolver.resolveKind(manifest.kind) as ResolvedKind;
     const namespace = namespaceOverride ?? manifest.metadata.namespace;
     return resourceClient.delete(manifest.kind, manifest.metadata.name, resolved, namespace);

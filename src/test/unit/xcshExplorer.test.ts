@@ -61,14 +61,14 @@ describe('buildNamespacePickChoices', () => {
 
 describe('XCSHExplorerProvider root items', () => {
   it('renders system, shared, then the active namespace node', async () => {
-    const provider = makeProvider('a-franklin');
+    const provider = makeProvider('demo-app');
     const roots = await provider.getChildren();
     const items = roots.map((node) => node.getTreeItem());
 
-    expect(items.map((i) => i.label)).toEqual(['system', 'shared', 'a-franklin']);
-    expect(items[0].contextValue).toBe('namespace:builtin');
-    expect(items[1].contextValue).toBe('namespace:builtin');
-    expect(items[2].contextValue).toBe('namespace:active');
+    expect(items.map((i) => i.label)).toEqual(['system', 'shared', 'demo-app']);
+    expect(items[0]?.contextValue).toBe('namespace:builtin');
+    expect(items[1]?.contextValue).toBe('namespace:builtin');
+    expect(items[2]?.contextValue).toBe('namespace:active');
   });
 
   it('falls back to the default namespace when the context has none', async () => {
@@ -77,7 +77,7 @@ describe('XCSHExplorerProvider root items', () => {
     const items = roots.map((node) => node.getTreeItem());
 
     expect(items.map((i) => i.label)).toEqual(['system', 'shared', 'default']);
-    expect(items[2].contextValue).toBe('namespace:active');
+    expect(items[2]?.contextValue).toBe('namespace:active');
   });
 
   it('returns no items when there is no active context', async () => {

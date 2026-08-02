@@ -47,7 +47,7 @@ export interface PointerContext {
   overrides?: ContextOverrides;
 }
 
-export type ContextSource = 'env' | 'local' | 'global';
+type ContextSource = 'env' | 'local' | 'global';
 
 export interface ResolvedContext {
   context: XCSHContext;

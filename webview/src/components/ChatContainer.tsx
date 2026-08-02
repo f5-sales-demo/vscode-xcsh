@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useSyncExternalStore } from 'react';
 import { t } from '../lib/i18n';
-import { sendAbort, sendPrompt } from '../lib/protocol';
+import { sendAbort, sendPrompt } from '../protocol';
 import type { Session } from '../state/session';
 import { ComposerHost } from './ComposerHost';
 import { EmptyState } from './EmptyState';
