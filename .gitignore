@@ -157,7 +157,6 @@ docs/_data/
 # API spec pipeline
 specs/
 docs/specifications/api/
-docs/specifications/.api-sync-*/
 docs/api-reference/
 .version
 .etag
