@@ -48,7 +48,7 @@ authoritative scope did not; **wrongly excluded from custom** when the reverse h
 ## Results
 
 | | Count |
-|---|---|
+| --- | --- |
 | Total resource types | 241 |
 | **Before — misclassified vs authoritative** | **27** |
 | &nbsp;&nbsp;• wrongly available in custom (system/shared-only leaking in) | 11 |
