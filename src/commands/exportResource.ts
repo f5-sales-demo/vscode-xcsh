@@ -77,7 +77,7 @@ async function exportSingleResource(
   const doc = await vscode.workspace.openTextDocument(fileUri);
   await vscode.window.showTextDocument(doc, { preview: false });
 
-  logger.info(`Exported ${data.resourceTypeKey}/${data.name} as ${format} to ${filename}`);
+  logger.info('resource.operation.completed');
   void vscode.window.showInformationMessage(vscode.l10n.t('Exported "{0}" to {1}', data.name, filename));
 }
 
@@ -150,7 +150,7 @@ async function exportAllResources(
         );
       }
 
-      logger.info(`Exported ${exportCount} ${data.resourceTypeKey} resources as ${format}`);
+      logger.info('resource.operation.completed');
     },
   );
 }

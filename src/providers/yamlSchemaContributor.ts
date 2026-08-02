@@ -22,7 +22,7 @@ export async function registerYamlSchemaContributor(context: vscode.ExtensionCon
   const yamlExtension = vscode.extensions.getExtension(YAML_EXTENSION_ID);
 
   if (!yamlExtension) {
-    logger.info('YAML extension not installed, skipping YAML schema registration');
+    logger.info('schema.unavailable');
     showInstallSuggestion(context);
     return;
   }
@@ -30,19 +30,19 @@ export async function registerYamlSchemaContributor(context: vscode.ExtensionCon
   try {
     const api = (await yamlExtension.activate()) as YamlExtensionApi | undefined;
     if (!api?.registerContributor) {
-      logger.warn('YAML extension API does not support registerContributor');
+      logger.warn('schema.unavailable');
       return;
     }
 
     const registered = api.registerContributor(SCHEMA_PREFIX, requestSchemaUri, requestSchemaContent);
 
     if (registered) {
-      logger.info('YAML schema contributor registered successfully');
+      logger.info('schema.registered');
     } else {
-      logger.warn('YAML schema contributor registration returned false');
+      logger.warn('schema.unavailable');
     }
-  } catch (error) {
-    logger.error('Failed to register YAML schema contributor', error as Error);
+  } catch {
+    logger.error('schema.generation.failed');
   }
 }
 

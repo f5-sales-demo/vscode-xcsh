@@ -1,13 +1,18 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "src/extension.ts",
     "webview/src/main.tsx",
     "webview/vite.config.ts",
     ".vscode-test.mjs",
-    "src/test/integration/index.ts",
     "src/test/**/*.test.ts",
     "scripts/**/*.ts"
+  ],
+  "project": [
+    "*.{js,cjs,mjs,ts}",
+    "scripts/**/*.ts",
+    "src/**/*.{ts,tsx}",
+    "webview/*.{js,cjs,mjs,ts}",
+    "webview/src/**/*.{ts,tsx}"
   ],
   "ignore": ["webview/src/vendored/**", "**/*.generated.ts"]
 }

@@ -223,8 +223,12 @@ describe('immutable spec delivery contract', () => {
     const publications = JSON.parse(fs.readFileSync(files.publications, 'utf8')) as {
       publications: Record<string, { marketplace_version: string; open_vsx_version: string }>;
     };
-    publications.publications[EXPECTED_DELIVERY_ID]!.marketplace_version = '2.2608.1120001';
-    publications.publications[EXPECTED_DELIVERY_ID]!.open_vsx_version = '2.2608.1120001';
+    const publication = publications.publications[EXPECTED_DELIVERY_ID];
+    if (!publication) {
+      throw new Error('Expected publication fixture to contain the delivery ID');
+    }
+    publication.marketplace_version = '2.2608.1120001';
+    publication.open_vsx_version = '2.2608.1120001';
     fs.writeFileSync(files.publications, JSON.stringify(publications));
 
     expect(() =>

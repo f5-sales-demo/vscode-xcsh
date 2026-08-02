@@ -9,13 +9,13 @@ import { getQuotaForResourceType, getQuotaUsage } from '../../api/subscription';
 // (synthetic values — no live data/credentials)
 const QUOTA_RESPONSE = {
   objects: {
-    namespace_role: { limit: { maximum: 500 }, usage: { current: 2387 }, display_name: 'Dana R.' },
-    virtual_host: { limit: { maximum: 500 }, usage: { current: 446 }, display_name: 'Dana R.' },
-    dns_load_balancer: { limit: { maximum: 50 }, usage: { current: 50 }, display_name: 'Dana R.' },
-    unlimited_thing: { limit: { maximum: -1 }, usage: { current: 5 }, display_name: 'Dana R.' },
+    namespace_role: { limit: { maximum: 500 }, usage: { current: 2387 }, display_name: 'example-namespace-role' },
+    virtual_host: { limit: { maximum: 500 }, usage: { current: 446 }, display_name: 'example-virtual-host' },
+    dns_load_balancer: { limit: { maximum: 50 }, usage: { current: 50 }, display_name: 'example-dns-load-balancer' },
+    unlimited_thing: { limit: { maximum: -1 }, usage: { current: 5 }, display_name: 'example-unlimited' },
     broken_null: null,
     // usage not tracked by the API (real limit, usage.current == -1)
-    data_type: { limit: { maximum: 50 }, usage: { current: -1 }, display_name: 'Dana R.' },
+    data_type: { limit: { maximum: 50 }, usage: { current: -1 }, display_name: 'example-data-type' },
     // no display_name -> title-cased key fallback
     known_label_key: { limit: { maximum: 10 }, usage: { current: 3 } },
   },
@@ -23,7 +23,7 @@ const QUOTA_RESPONSE = {
     active_customer_support_tickets: {
       limit: { maximum: 50 },
       usage: { current: 13 },
-      display_name: 'Dana R.',
+      display_name: 'example-support-tickets',
     },
   },
   apis: {
@@ -31,18 +31,18 @@ const QUOTA_RESPONSE = {
       limit: null,
       usage: null,
       api_limit: { rate: 60, burst: 15, unit: 'per-minute' },
-      display_name: 'Dana R.',
+      display_name: 'example-ai-query',
     },
     // Generic method names shared across services — disambiguated by the key's domain.
     'ves.io.schema.oidc_provider.CustomAPI.Create': {
       api_limit: { rate: 20, burst: 2, unit: 'per-hour' },
-      display_name: 'Dana R.',
+      display_name: 'example-api',
     },
     'ves.io.schema.known_label.CustomAPI.Create': {
       api_limit: { rate: 20, burst: 5, unit: 'per-minute' },
-      display_name: 'Dana R.',
+      display_name: 'example-api',
     },
-    no_rate_limit: { api_limit: null, display_name: 'Dana R.' },
+    no_rate_limit: { api_limit: null, display_name: 'example-no-rate-limit' },
   },
 };
 
@@ -88,7 +88,7 @@ describe('getQuotaUsage', () => {
 
   it('uses display_name, falling back to a title-cased key', async () => {
     const usage = await getQuotaUsage(mockClient(QUOTA_RESPONSE));
-    expect(usage.objects.find((o) => o.key === 'namespace_role')?.displayName).toBe('Namespace Role');
+    expect(usage.objects.find((o) => o.key === 'namespace_role')?.displayName).toBe('example-namespace-role');
     expect(usage.objects.find((o) => o.key === 'known_label_key')?.displayName).toBe('Known Label Key');
   });
 
@@ -109,7 +109,7 @@ describe('getQuotaUsage', () => {
     expect(usage.apis).toHaveLength(3); // 3 with api_limit; no_rate_limit dropped
     expect(usage.apis.find((a) => a.key.endsWith('AIAssistantQuery'))).toEqual({
       key: 'ves.io.schema.ai_assistant.SahayaAPI.AIAssistantQuery',
-      displayName: 'AI Assistant Query',
+      displayName: 'example-ai-query',
       description: undefined,
       group: 'Ai Assistant',
       rate: 60,
@@ -120,7 +120,7 @@ describe('getQuotaUsage', () => {
 
   it('disambiguates generic API method names by service group and sorts by it', async () => {
     const usage = await getQuotaUsage(mockClient(QUOTA_RESPONSE));
-    const creates = usage.apis.filter((a) => a.displayName === 'Create');
+    const creates = usage.apis.filter((a) => a.displayName === 'example-api');
     expect(creates.map((a) => a.group).sort()).toEqual(['Known Label', 'Oidc Provider']);
     // sorted by (group, displayName): Ai Assistant < Known Label < Oidc Provider
     expect(usage.apis.map((a) => a.group)).toEqual(['Ai Assistant', 'Known Label', 'Oidc Provider']);
@@ -142,7 +142,7 @@ describe('getQuotaForResourceType', () => {
   it('maps a resource-type key to its object quota (http_loadbalancers -> virtual_host)', async () => {
     const item = await getQuotaForResourceType(mockClient(QUOTA_RESPONSE), 'http_loadbalancers');
     expect(item?.key).toBe('virtual_host');
-    expect(item?.displayName).toBe('Virtual Host');
+    expect(item?.displayName).toBe('example-virtual-host');
   });
 
   it('returns undefined when no quota matches', async () => {

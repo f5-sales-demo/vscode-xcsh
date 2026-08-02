@@ -14,5 +14,3 @@ export interface TokenAuthConfig {
   apiUrl: string;
   apiToken: string;
 }
-
-export { TokenAuthProvider } from './tokenAuth';

@@ -4,7 +4,7 @@ import { execFile } from 'node:child_process';
 import type { ContextManager } from '../config/contextManager';
 import { findXcshBinary } from '../xcsh/processManager';
 
-export type IntegrationState = 'connected' | 'unauthenticated' | 'unavailable' | 'unknown';
+type IntegrationState = 'connected' | 'unauthenticated' | 'unavailable' | 'unknown';
 
 export interface IntegrationDef {
   id: string;

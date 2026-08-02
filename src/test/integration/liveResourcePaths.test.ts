@@ -34,12 +34,9 @@ beforeAll(() => {
   client = new XCSHClient(API_URL, new TokenAuthProvider({ apiUrl: API_URL, apiToken: API_TOKEN }));
 });
 
-/** True if the error is the "API Group could not be determined" 404 that this change fixes. */
+/** True if the client classified the response as the API-group 404 this change fixes. */
 function isApiGroup404(e: unknown): boolean {
-  if (e instanceof XCSHApiError) {
-    return e.statusCode === 404 && /API Group could not be determined/i.test(e.message);
-  }
-  return /API Group could not be determined/i.test((e as Error)?.message ?? String(e));
+  return e instanceof XCSHApiError && e.isApiGroupNotFound;
 }
 
 // The previously-orphaned-now-fixed resource types (all namespace-scoped).

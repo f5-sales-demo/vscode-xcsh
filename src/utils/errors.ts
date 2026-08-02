@@ -7,17 +7,17 @@ import { getLogger } from './logger';
 /**
  * Custom error class for F5 XC API errors
  */
+export type ApiErrorClassification = 'api_group_not_found' | 'http_error';
+
 export class XCSHApiError extends Error {
   public readonly statusCode: number;
-  public readonly body: string;
-  public readonly resourcePath?: string;
+  public readonly classification: ApiErrorClassification;
 
-  constructor(statusCode: number, body: string, resourcePath?: string) {
-    super(`API Error ${statusCode}: ${body}`);
+  constructor(statusCode: number, classification: ApiErrorClassification = 'http_error') {
+    super(`API request failed with status ${statusCode}`);
     this.name = 'XCSHApiError';
     this.statusCode = statusCode;
-    this.body = body;
-    this.resourcePath = resourcePath;
+    this.classification = classification === 'api_group_not_found' ? classification : 'http_error';
   }
 
   get isUnauthorized(): boolean {
@@ -34,6 +34,10 @@ export class XCSHApiError extends Error {
 
   get isNotFound(): boolean {
     return this.statusCode === 404;
+  }
+
+  get isApiGroupNotFound(): boolean {
+    return this.statusCode === 404 && this.classification === 'api_group_not_found';
   }
 
   get isRateLimited(): boolean {
@@ -68,40 +72,7 @@ export class XCSHApiError extends Error {
       return vscode.l10n.t('Server error. Please try again later.');
     }
 
-    // Try to parse error body for more details
-    try {
-      const parsed = JSON.parse(this.body) as { message?: string; error?: string };
-      if (parsed.message) {
-        return parsed.message;
-      }
-      if (parsed.error) {
-        return parsed.error;
-      }
-    } catch {
-      // Body is not JSON
-    }
-
-    return this.message;
-  }
-}
-
-/**
- * Custom error for configuration errors
- */
-export class ConfigurationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ConfigurationError';
-  }
-}
-
-/**
- * Custom error for authentication errors
- */
-export class AuthenticationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'AuthenticationError';
+    return vscode.l10n.t('API request failed. Please try again.');
   }
 }
 
@@ -131,7 +102,7 @@ export async function withErrorHandling<T>(
   try {
     return await operation();
   } catch (error) {
-    logger.error(`${context} failed`, error as Error);
+    logger.error('ui.operation.failed');
 
     if (error instanceof XCSHApiError) {
       // Try to get a smart error message if we have resource context
@@ -169,18 +140,6 @@ export async function withErrorHandling<T>(
         const message = smartMessage || error.userFriendlyMessage;
         void vscode.window.showErrorMessage(`${context}: ${message}`);
       }
-    } else if (error instanceof ConfigurationError) {
-      const action = await vscode.window.showErrorMessage(error.message, vscode.l10n.t('Open Settings'));
-      if (action === vscode.l10n.t('Open Settings')) {
-        await vscode.commands.executeCommand('workbench.action.openSettings', 'xcsh');
-      }
-    } else if (error instanceof AuthenticationError) {
-      const action = await vscode.window.showErrorMessage(error.message, vscode.l10n.t('Configure Context'));
-      if (action === vscode.l10n.t('Configure Context')) {
-        await vscode.commands.executeCommand('xcsh.addContext');
-      }
-    } else if (error instanceof Error) {
-      void vscode.window.showErrorMessage(`${context}: ${error.message}`);
     } else {
       void vscode.window.showErrorMessage(vscode.l10n.t('{0}: An unexpected error occurred', context));
     }
@@ -194,18 +153,16 @@ export async function withErrorHandling<T>(
  */
 export function showError(message: string, error?: Error): void {
   const logger = getLogger();
-  logger.error(message, error);
+  logger.error('ui.operation.failed');
 
-  const displayMessage = error ? `${message}: ${error.message}` : message;
-  void vscode.window.showErrorMessage(displayMessage);
+  void error;
+  void vscode.window.showErrorMessage(message);
 }
 
 /**
  * Show warning notification
  */
 export function showWarning(message: string): void {
-  const logger = getLogger();
-  logger.warn(message);
   void vscode.window.showWarningMessage(message);
 }
 
@@ -213,7 +170,5 @@ export function showWarning(message: string): void {
  * Show info notification
  */
 export function showInfo(message: string): void {
-  const logger = getLogger();
-  logger.info(message);
   void vscode.window.showInformationMessage(message);
 }

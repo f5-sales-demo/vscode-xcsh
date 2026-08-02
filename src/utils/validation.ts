@@ -19,14 +19,14 @@ import {
   isFieldServerDefaulted,
 } from '../api/resourceTypes';
 
-export interface ConstraintViolation {
+interface ConstraintViolation {
   fieldPath: string;
   value: unknown;
   constraint: string;
   message: string;
 }
 
-export interface FieldConflict {
+interface FieldConflict {
   field: string;
   conflictsWith: string;
   message: string;

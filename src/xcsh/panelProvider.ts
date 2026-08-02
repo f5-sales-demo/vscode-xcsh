@@ -115,12 +115,12 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       this.disposables.length = 0;
     });
 
-    this.logger.info('xcsh panel resolved');
+    this.logger.info('webview.resolved');
   }
 
   private sendLocale(): void {
     this.rpcBridge.setLocale(vscode.env.language).catch(() => {
-      this.logger.warn('Failed to set locale on xcsh (may not support set_locale yet)');
+      this.logger.warn('webview.locale.failed');
     });
   }
 
@@ -155,7 +155,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
         strings = JSON.parse(fs.readFileSync(bundlePath, 'utf-8')) as Record<string, string>;
       }
     } catch {
-      this.logger.warn('Failed to load l10n bundle for webview');
+      this.logger.warn('webview.bundle.failed');
     }
     void view.webview.postMessage({
       type: 'from-extension',
@@ -287,10 +287,8 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       for (const attachment of attachments) {
         this.postAttachment(attachment);
       }
-    } catch (err) {
-      this.logger.error(
-        `Failed to resolve ${category} attachment: ${err instanceof Error ? err.message : String(err)}`,
-      );
+    } catch {
+      this.logger.error('webview.attachment.failed');
     }
   }
 

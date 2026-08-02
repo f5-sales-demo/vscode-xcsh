@@ -5,6 +5,7 @@ const sharedTransform = {
     'ts-jest',
     {
       tsconfig: 'tsconfig.test.json',
+      useESM: false,
       diagnostics: {
         ignoreCodes: [151002, 2554, 2307, 7016, 7026, 17004, 7006],
       },

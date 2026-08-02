@@ -152,7 +152,7 @@ export function registerFileOperationCommands(
         }
 
         explorer.refresh();
-        logger.info(`Applied manifest from ${vscode.workspace.asRelativePath(doc.uri)}: ${result.status}`);
+        logger.info('resource.operation.completed');
       }, 'Apply manifest');
     }),
   );
@@ -207,7 +207,7 @@ export function registerFileOperationCommands(
         const resourceName = getResourceName(doc.content) ?? kind ?? 'resource';
         void vscode.window.showInformationMessage(vscode.l10n.t('{0} created', resourceName));
         explorer.refresh();
-        logger.info(`Created ${resourceName} from ${vscode.workspace.asRelativePath(doc.uri)}`);
+        logger.info('resource.operation.completed');
       }, 'Create resource');
     }),
   );
@@ -272,7 +272,7 @@ export function registerFileOperationCommands(
           }
         }
 
-        logger.info(`Diff completed for ${vscode.workspace.asRelativePath(doc.uri)}`);
+        logger.info('resource.operation.completed');
       }, 'Diff manifest');
     }),
   );
@@ -319,7 +319,7 @@ export function registerFileOperationCommands(
 
         void vscode.window.showInformationMessage(vscode.l10n.t('"{0}" deleted', resourceName));
         explorer.refresh();
-        logger.info(`Deleted ${resourceName} from manifest ${vscode.workspace.asRelativePath(doc.uri)}`);
+        logger.info('resource.operation.completed');
       }, 'Delete resource');
     }),
   );

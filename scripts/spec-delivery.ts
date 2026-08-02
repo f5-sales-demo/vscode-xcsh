@@ -428,9 +428,7 @@ export function resolveSpecDelivery(
     if (!evidence) {
       throw new Error(`delivery ${identifier} has no durable publication evidence`);
     }
-    if (
-      evidence.publication_tag !== publicationTagFor(ledger.deliveries[identifier]!.version, evidence.publication_epoch)
-    ) {
+    if (evidence.publication_tag !== publicationTagFor(delivery.version, evidence.publication_epoch)) {
       throw new Error(`delivery ${identifier} has inconsistent publication identity`);
     }
     const marketplaceVersion = marketplaceVersionForPublication(delivery.version, evidence.publication_epoch);

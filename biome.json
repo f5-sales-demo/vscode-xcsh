@@ -21,7 +21,7 @@
     }
   },
   "files": {
-    "maxSize": 5242880,
+    "maxSize": 16777216,
     "includes": ["**", "!packages/*/icons.json"]
   },
   "overrides": [

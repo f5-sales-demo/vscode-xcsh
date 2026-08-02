@@ -1606,7 +1606,8 @@ export class CloudStatusDashboardProvider {
       } catch (error) {
         // Log error and fall back to Cloud Status data only
         const logger = getLogger();
-        logger.error(`[showPoPDetails] Error fetching XC data`, error instanceof Error ? error : undefined);
+        void error;
+        logger.error('resource.operation.failed');
         xcSite = null;
       }
     }

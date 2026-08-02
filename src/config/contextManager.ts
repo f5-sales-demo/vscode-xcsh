@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
+import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
@@ -17,22 +18,42 @@ import {
   getLocalContextPath,
   getLocalContextsDir,
 } from './contextPaths';
-import type { ContextOverrides, PointerContext } from './contextResolver';
+import {
+  type ContextOverrides,
+  isPointerContext,
+  mergePointerOverrides,
+  type PointerContext,
+  type ResolvedContext,
+  resolveContext as resolveStoredContext,
+} from './contextResolver';
 import {
   type ContextManagerInterface,
-  CURRENT_EXPORT_VERSION,
   CURRENT_SCHEMA_VERSION,
   computeTokenHealth,
-  type ExportBundle,
   isReservedEnvKey,
-  isSensitiveEnvKey,
   isValidContextName,
   isValidEnvKey,
-  maskToken,
   normalizeApiUrl,
   type TokenHealth,
   type XCSHContext,
 } from './contextTypes';
+
+const SECRET_SENTINEL = '<SECRET_STORAGE>';
+const SECRET_KEY_PREFIX = 'xcsh.context.credentials.';
+const CREDENTIAL_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type ContextSecretStorage = Pick<vscode.SecretStorage, 'delete' | 'get' | 'store'>;
+
+interface ContextSecretPayload {
+  apiToken: string;
+  env: Record<string, string>;
+}
+
+interface StoredContext extends Omit<XCSHContext, 'apiToken' | 'credentialId' | 'env'> {
+  apiToken: typeof SECRET_SENTINEL;
+  credentialId: string;
+  env?: Record<string, typeof SECRET_SENTINEL>;
+}
 
 /**
  * Manages F5 XC context files stored in ~/.config/xcsh/contexts/.
@@ -62,6 +83,8 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
    * pointer file is never cleared, so the TUI (which shares it) is unaffected.
    */
   private sessionActivated = false;
+
+  constructor(private readonly secretStorage: ContextSecretStorage) {}
 
   /** Whether the user has explicitly activated a context this session. */
   isSessionActivated(): boolean {
@@ -122,12 +145,144 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     return normalized === ctx.apiUrl ? ctx : { ...ctx, apiUrl: normalized };
   }
 
+  private secretKey(credentialId: string): string {
+    return `${SECRET_KEY_PREFIX}${credentialId}`;
+  }
+
+  private toStoredContext(ctx: XCSHContext, credentialId: string): StoredContext {
+    const { apiToken: _apiToken, credentialId: _credentialId, env, ...nonSecret } = this.normalizeContext(ctx);
+    void _apiToken;
+    void _credentialId;
+    const storedEnv = env
+      ? Object.fromEntries(Object.keys(env).map((key) => [key, SECRET_SENTINEL] as const))
+      : undefined;
+    return {
+      ...nonSecret,
+      apiToken: SECRET_SENTINEL,
+      credentialId,
+      ...(storedEnv ? { env: storedEnv } : {}),
+    };
+  }
+
+  private toSecretPayload(ctx: XCSHContext): ContextSecretPayload {
+    return { apiToken: ctx.apiToken, env: { ...(ctx.env ?? {}) } };
+  }
+
+  private isStringRecord(value: unknown): value is Record<string, string> {
+    return (
+      typeof value === 'object' &&
+      value !== null &&
+      !Array.isArray(value) &&
+      Object.values(value).every((entry) => typeof entry === 'string')
+    );
+  }
+
+  private parseStoredContext(value: unknown, expectedName?: string): StoredContext | null {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      return null;
+    }
+    const candidate = value as Record<string, unknown>;
+    if (
+      typeof candidate.name !== 'string' ||
+      !isValidContextName(candidate.name) ||
+      (expectedName !== undefined && candidate.name !== expectedName) ||
+      typeof candidate.apiUrl !== 'string' ||
+      !candidate.apiUrl.startsWith('https://') ||
+      candidate.apiToken !== SECRET_SENTINEL ||
+      typeof candidate.credentialId !== 'string' ||
+      !CREDENTIAL_ID_PATTERN.test(candidate.credentialId) ||
+      typeof candidate.defaultNamespace !== 'string'
+    ) {
+      return null;
+    }
+    if (candidate.env !== undefined) {
+      if (!this.isStringRecord(candidate.env)) {
+        return null;
+      }
+      for (const [key, entry] of Object.entries(candidate.env)) {
+        if (!isValidEnvKey(key) || isReservedEnvKey(key) || entry !== SECRET_SENTINEL) {
+          return null;
+        }
+      }
+    }
+    return this.normalizeContext(candidate as unknown as StoredContext) as StoredContext;
+  }
+
+  private parseSecretPayload(raw: string, expectedEnvKeys: readonly string[]): ContextSecretPayload | null {
+    try {
+      const value: unknown = JSON.parse(raw);
+      if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+        return null;
+      }
+      const candidate = value as Record<string, unknown>;
+      if (
+        typeof candidate.apiToken !== 'string' ||
+        candidate.apiToken.trim().length === 0 ||
+        !this.isStringRecord(candidate.env)
+      ) {
+        return null;
+      }
+      const actualKeys = Object.keys(candidate.env).sort();
+      const expectedKeys = [...expectedEnvKeys].sort();
+      if (actualKeys.length !== expectedKeys.length || actualKeys.some((key, index) => key !== expectedKeys[index])) {
+        return null;
+      }
+      return { apiToken: candidate.apiToken, env: candidate.env };
+    } catch {
+      return null;
+    }
+  }
+
+  private readStoredContext(filePath: string, expectedName?: string): StoredContext | null {
+    try {
+      const value: unknown = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      return this.parseStoredContext(value, expectedName);
+    } catch {
+      return null;
+    }
+  }
+
+  private async hydrateContext(stored: StoredContext): Promise<XCSHContext | null> {
+    const raw = await this.secretStorage.get(this.secretKey(stored.credentialId));
+    if (!raw) {
+      return null;
+    }
+    const payload = this.parseSecretPayload(raw, Object.keys(stored.env ?? {}));
+    if (!payload) {
+      return null;
+    }
+    const { env: _storedEnv, ...nonSecret } = stored;
+    void _storedEnv;
+    return {
+      ...nonSecret,
+      apiToken: payload.apiToken,
+      ...(Object.keys(payload.env).length > 0 ? { env: payload.env } : {}),
+    };
+  }
+
+  private async readContext(filePath: string, expectedName?: string): Promise<XCSHContext | null> {
+    const stored = this.readStoredContext(filePath, expectedName);
+    if (!stored) {
+      this.logger.warn('context.read.failed');
+      return null;
+    }
+    const hydrated = await this.hydrateContext(stored);
+    if (!hydrated) {
+      this.logger.warn('context.read.failed');
+    }
+    return hydrated;
+  }
+
+  private async storeSecretPayload(credentialId: string, ctx: XCSHContext): Promise<void> {
+    await this.secretStorage.store(this.secretKey(credentialId), JSON.stringify(this.toSecretPayload(ctx)));
+  }
+
   // ───────── read operations ─────────
 
-  getContexts(): Promise<XCSHContext[]> {
+  async getContexts(): Promise<XCSHContext[]> {
     const dir = getContextsDir();
     if (!fs.existsSync(dir)) {
-      return Promise.resolve([]);
+      return [];
     }
 
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
@@ -135,29 +290,26 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
     for (const file of files) {
       try {
-        const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
-        const ctx = JSON.parse(raw) as XCSHContext;
-        contexts.push(this.normalizeContext(ctx));
-      } catch (err) {
-        this.logger.warn(`Skipping unreadable context file: ${file}`, err);
+        const name = path.basename(file, '.json');
+        const ctx = await this.readContext(path.join(dir, file), name);
+        if (ctx) {
+          contexts.push(ctx);
+        }
+      } catch {
+        this.logger.warn('context.read.failed');
       }
     }
 
     contexts.sort((a, b) => a.name.localeCompare(b.name));
-    return Promise.resolve(contexts);
+    return contexts;
   }
 
-  getContext(name: string): Promise<XCSHContext | null> {
+  async getContext(name: string): Promise<XCSHContext | null> {
     const filePath = getContextPath(name);
     if (!fs.existsSync(filePath)) {
-      return Promise.resolve(null);
+      return null;
     }
-    try {
-      const raw = fs.readFileSync(filePath, 'utf-8');
-      return Promise.resolve(this.normalizeContext(JSON.parse(raw) as XCSHContext));
-    } catch {
-      return Promise.resolve(null);
-    }
+    return this.readContext(filePath, name);
   }
 
   getActiveContextName(): Promise<string | null> {
@@ -200,28 +352,57 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${ctx.name}" already exists`);
     }
 
-    const toWrite: XCSHContext = {
+    const normalized: XCSHContext = {
       ...this.normalizeContext(ctx),
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
     };
-
-    this.atomicWrite(filePath, `${JSON.stringify(toWrite, null, 2)}\n`, FILE_MODE);
-
-    // Creating a context activates it (an explicit user action, not auto-load).
-    // setActiveContext opens the session gate and fires onDidChangeContext.
-    await this.setActiveContext(ctx.name);
+    const credentialId = randomUUID();
+    await this.storeSecretPayload(credentialId, normalized);
+    try {
+      const stored = this.toStoredContext(normalized, credentialId);
+      this.atomicWrite(filePath, `${JSON.stringify(stored, null, 2)}\n`, FILE_MODE);
+      await this.setActiveContext(ctx.name);
+    } catch (error) {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      await this.secretStorage.delete(this.secretKey(credentialId));
+      throw error;
+    }
   }
 
   async updateContext(name: string, updates: Partial<XCSHContext>): Promise<void> {
-    const existing = await this.getContext(name);
-    if (!existing) {
+    const filePath = getContextPath(name);
+    const stored = this.readStoredContext(filePath, name);
+    if (!stored) {
       throw new Error(`Context "${name}" not found`);
     }
+    const existing = await this.hydrateContext(stored);
+    if (!existing) {
+      throw new Error('Context credentials are unavailable');
+    }
 
-    const merged: XCSHContext = this.normalizeContext({ ...existing, ...updates, name });
+    const merged: XCSHContext = this.normalizeContext({
+      ...existing,
+      ...updates,
+      name,
+      credentialId: stored.credentialId,
+    });
 
     this.ensureContextsDir();
-    this.atomicWrite(getContextPath(name), `${JSON.stringify(merged, null, 2)}\n`, FILE_MODE);
+    const secretKey = this.secretKey(stored.credentialId);
+    const priorSecret = await this.secretStorage.get(secretKey);
+    if (!priorSecret) {
+      throw new Error('Context credentials are unavailable');
+    }
+    await this.storeSecretPayload(stored.credentialId, merged);
+    try {
+      const nextStored = this.toStoredContext(merged, stored.credentialId);
+      this.atomicWrite(filePath, `${JSON.stringify(nextStored, null, 2)}\n`, FILE_MODE);
+    } catch (error) {
+      await this.secretStorage.store(secretKey, priorSecret);
+      throw error;
+    }
 
     // Clear caches for this context
     this.clearCacheFor(name);
@@ -245,16 +426,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${name}" not found`);
     }
     const env = { ...(existing.env ?? {}), [key]: value };
-    const updates: Partial<XCSHContext> = { env };
-    // Auto-mark secret-looking keys (e.g. XCSH_CONSOLE_PASSWORD) sensitive so they
-    // are masked in display/export without manual flagging — mirrors the shell's
-    // setEnvVars. Keep only keys still present in env.
-    if (isSensitiveEnvKey(key)) {
-      const sensitive = new Set(existing.sensitiveKeys ?? []);
-      sensitive.add(key);
-      updates.sensitiveKeys = [...sensitive].filter((k) => k in env);
-    }
-    await this.updateContext(name, updates);
+    await this.updateContext(name, { env });
   }
 
   /** Remove one custom env var from a context. No-op if the key is absent. */
@@ -268,13 +440,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
     const env = { ...existing.env };
     delete env[key];
-    const updates: Partial<XCSHContext> = { env };
-    // Drop the removed key from sensitiveKeys so the marker set never references
-    // an absent variable.
-    if (existing.sensitiveKeys?.includes(key)) {
-      updates.sensitiveKeys = existing.sensitiveKeys.filter((k) => k !== key);
-    }
-    await this.updateContext(name, updates);
+    await this.updateContext(name, { env });
   }
 
   /**
@@ -294,123 +460,44 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   }
 
   /**
-   * Build a portable bundle of all global contexts. Tokens (and sensitive env
-   * values) are masked unless `includeTokens` is set; a masked bundle is flagged
-   * `tokensMasked` so {@link importContexts} refuses it.
-   */
-  async exportContexts(opts: { includeTokens: boolean }): Promise<ExportBundle> {
-    const all = await this.getContexts();
-    const contexts = all.map((c) => {
-      const clone = structuredClone(c);
-      if (!opts.includeTokens) {
-        clone.apiToken = maskToken(clone.apiToken);
-        const env = clone.env;
-        if (env) {
-          // Mask env values whose key is explicitly marked sensitive OR looks like
-          // a secret (e.g. XCSH_CONSOLE_PASSWORD) — mirrors the shell's export so a
-          // masked bundle never leaks a console password.
-          const sensitive = new Set(clone.sensitiveKeys ?? []);
-          for (const [key, value] of Object.entries(env)) {
-            if (sensitive.has(key) || isSensitiveEnvKey(key)) {
-              env[key] = maskToken(value);
-            }
-          }
-        }
-      }
-      return clone;
-    });
-    return {
-      version: CURRENT_EXPORT_VERSION,
-      exportedAt: new Date().toISOString(),
-      tokensMasked: !opts.includeTokens,
-      contexts,
-    };
-  }
-
-  /**
-   * Import contexts from an {@link ExportBundle}. Rejects token-masked bundles.
-   * Existing contexts are skipped unless `overwrite` is set. Returns the names
-   * imported and skipped (already-present or invalid).
-   */
-  async importContexts(
-    bundle: unknown,
-    opts: { overwrite: boolean },
-  ): Promise<{ imported: string[]; skipped: string[] }> {
-    if (!bundle || typeof bundle !== 'object') {
-      throw new Error('Invalid export bundle: not a JSON object');
-    }
-    const b = bundle as Partial<ExportBundle>;
-    if (typeof b.version !== 'number' || !Array.isArray(b.contexts)) {
-      throw new Error('Invalid export bundle: missing version or contexts');
-    }
-    if (b.tokensMasked) {
-      throw new Error(
-        'This bundle was exported with masked tokens and cannot be imported — re-export with tokens included',
-      );
-    }
-
-    const imported: string[] = [];
-    const skipped: string[] = [];
-    for (const ctx of b.contexts) {
-      if (!ctx || typeof ctx.name !== 'string' || !isValidContextName(ctx.name)) {
-        skipped.push(ctx && typeof ctx.name === 'string' ? ctx.name : '(invalid)');
-        continue;
-      }
-      const exists = (await this.getContext(ctx.name)) !== null;
-      if (exists && !opts.overwrite) {
-        skipped.push(ctx.name);
-        continue;
-      }
-      if (exists) {
-        await this.updateContext(ctx.name, ctx);
-      } else {
-        await this.addContext(ctx);
-      }
-      imported.push(ctx.name);
-    }
-    return { imported, skipped };
-  }
-
-  /**
    * Rename a context, preserving all its fields and its active status. Mirrors
    * xcsh `/context rename <old> <new>`. Reuses add/setActive/delete so name
    * validation, duplicate checks, and the active pointer stay consistent.
    */
   async renameContext(oldName: string, newName: string): Promise<void> {
-    const existing = await this.getContext(oldName);
-    if (!existing) {
+    const oldPath = getContextPath(oldName);
+    const stored = this.readStoredContext(oldPath, oldName);
+    if (!stored) {
       throw new Error(`Context "${oldName}" not found`);
+    }
+    if (!(await this.secretStorage.get(this.secretKey(stored.credentialId)))) {
+      throw new Error('Context credentials are unavailable');
     }
     if (oldName === newName) {
       return;
     }
-    // A rename must never change which context is active (or whether one is active).
-    // addContext activates the new context as a side-effect, so capture the prior
-    // state and restore it afterwards. Read the pointer file directly (ungated) so
-    // we can faithfully restore a persisted-but-not-yet-loaded pointer instead of
-    // clearing it (cross-tool safety with the TUI).
-    const wasActive = (await this.getActiveContextName()) === oldName;
-    const priorFlag = this.sessionActivated;
+    if (!isValidContextName(newName)) {
+      throw new Error(`Invalid context name: "${newName}"`);
+    }
+    const newPath = getContextPath(newName);
+    if (fs.existsSync(newPath)) {
+      throw new Error(`Context "${newName}" already exists`);
+    }
     const activePath = getActiveContextPath();
     const rawBefore = fs.existsSync(activePath) ? fs.readFileSync(activePath, 'utf-8').trim() || null : null;
-
-    await this.addContext({ ...existing, name: newName });
-    await this.deleteContext(oldName);
-
-    if (wasActive) {
-      // The renamed context was the effective active one → follow the rename.
-      this.setActiveContextInternal(newName);
-    } else {
-      // Undo addContext's activation side-effect: restore the prior pointer
-      // (redirecting to newName only if it pointed at the just-renamed context).
-      const restore = rawBefore === oldName ? newName : rawBefore;
-      if (restore) {
-        this.setActiveContextInternal(restore);
-      } else {
-        this.clearActiveContext();
-      }
-      this.sessionActivated = priorFlag;
+    const renamed: StoredContext = { ...stored, name: newName };
+    this.atomicWrite(newPath, `${JSON.stringify(renamed, null, 2)}\n`, FILE_MODE);
+    try {
+      fs.unlinkSync(oldPath);
+    } catch (error) {
+      fs.unlinkSync(newPath);
+      throw error;
     }
+    if (rawBefore === oldName) {
+      this.setActiveContextInternal(newName);
+    }
+    this.clearCacheFor(oldName);
+    this.clearCacheFor(newName);
     this._onDidChangeContext.fire();
   }
 
@@ -420,7 +507,22 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${name}" not found`);
     }
 
-    fs.unlinkSync(filePath);
+    const stored = this.readStoredContext(filePath, name);
+    if (!stored) {
+      throw new Error(`Context "${name}" not found`);
+    }
+    const secretKey = this.secretKey(stored.credentialId);
+    const priorSecret = await this.secretStorage.get(secretKey);
+    if (!priorSecret) {
+      throw new Error('Context credentials are unavailable');
+    }
+    await this.secretStorage.delete(secretKey);
+    try {
+      fs.unlinkSync(filePath);
+    } catch (error) {
+      await this.secretStorage.store(secretKey, priorSecret);
+      throw error;
+    }
 
     // Clear active if it was the deleted context
     const activeName = await this.getActiveContextName();
@@ -471,10 +573,10 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
   // ───────── local read operations ─────────
 
   /** List all context JSON files under the workspace's `.xcsh/contexts/`. */
-  getLocalContexts(workspaceFolder: string): Promise<XCSHContext[]> {
+  async getLocalContexts(workspaceFolder: string): Promise<XCSHContext[]> {
     const dir = getLocalContextsDir(workspaceFolder);
     if (!fs.existsSync(dir)) {
-      return Promise.resolve([]);
+      return [];
     }
 
     const files = fs.readdirSync(dir).filter((f) => f.endsWith('.json'));
@@ -482,16 +584,30 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
     for (const file of files) {
       try {
-        const raw = fs.readFileSync(path.join(dir, file), 'utf-8');
-        const ctx = JSON.parse(raw) as XCSHContext;
-        contexts.push(this.normalizeContext(ctx));
-      } catch (err) {
-        this.logger.warn(`Skipping unreadable local context file: ${file}`, err);
+        const filePath = path.join(dir, file);
+        const value: unknown = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        if (isPointerContext(value)) {
+          const globalContext = await this.getContext(value.context);
+          if (globalContext) {
+            contexts.push(value.overrides ? mergePointerOverrides(globalContext, value.overrides) : globalContext);
+          }
+          continue;
+        }
+        const name = path.basename(file, '.json');
+        const stored = this.parseStoredContext(value, name);
+        const ctx = stored ? await this.hydrateContext(stored) : null;
+        if (ctx) {
+          contexts.push(ctx);
+        } else {
+          this.logger.warn('context.read.failed');
+        }
+      } catch {
+        this.logger.warn('context.read.failed');
       }
     }
 
     contexts.sort((a, b) => a.name.localeCompare(b.name));
-    return Promise.resolve(contexts);
+    return contexts;
   }
 
   /** Read the active_context pointer from the workspace's local contexts dir. */
@@ -527,15 +643,23 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Local context "${ctx.name}" already exists`);
     }
 
-    const toWrite: XCSHContext = {
+    const normalized: XCSHContext = {
       ...this.normalizeContext(ctx),
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
     };
-
-    this.atomicWrite(filePath, `${JSON.stringify(toWrite, null, 2)}\n`, FILE_MODE);
-
-    // Creating a local context activates it (explicit user action, not auto-load).
-    await this.setLocalActiveContext(ctx.name, workspaceFolder);
+    const credentialId = randomUUID();
+    await this.storeSecretPayload(credentialId, normalized);
+    try {
+      const stored = this.toStoredContext(normalized, credentialId);
+      this.atomicWrite(filePath, `${JSON.stringify(stored, null, 2)}\n`, FILE_MODE);
+      await this.setLocalActiveContext(ctx.name, workspaceFolder);
+    } catch (error) {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      await this.secretStorage.delete(this.secretKey(credentialId));
+      throw error;
+    }
   }
 
   /** Set the active local context pointer. */
@@ -569,7 +693,29 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Local context "${name}" not found`);
     }
 
-    fs.unlinkSync(filePath);
+    let secretKey: string | undefined;
+    let priorSecret: string | undefined;
+    const value: unknown = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    if (!isPointerContext(value)) {
+      const stored = this.parseStoredContext(value, name);
+      if (!stored) {
+        throw new Error(`Local context "${name}" not found`);
+      }
+      secretKey = this.secretKey(stored.credentialId);
+      priorSecret = await this.secretStorage.get(secretKey);
+      if (!priorSecret) {
+        throw new Error('Context credentials are unavailable');
+      }
+      await this.secretStorage.delete(secretKey);
+    }
+    try {
+      fs.unlinkSync(filePath);
+    } catch (error) {
+      if (secretKey && priorSecret) {
+        await this.secretStorage.store(secretKey, priorSecret);
+      }
+      throw error;
+    }
 
     // Clear active if it was the deleted context
     const activeName = await this.getLocalActiveContextName(workspaceFolder);
@@ -609,6 +755,37 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
     // Linking a global context into the workspace activates it (explicit user action).
     await this.setLocalActiveContext(globalName, workspaceFolder);
+  }
+
+  async resolveContext(workspaceFolder: string | undefined): Promise<ResolvedContext | null> {
+    const resolved = await resolveStoredContext(workspaceFolder);
+    if (!resolved) {
+      return null;
+    }
+    if (resolved.source === 'env') {
+      const ctx = resolved.context;
+      if (
+        typeof ctx.apiUrl !== 'string' ||
+        !ctx.apiUrl.startsWith('https://') ||
+        typeof ctx.apiToken !== 'string' ||
+        ctx.apiToken.trim().length === 0 ||
+        typeof ctx.defaultNamespace !== 'string'
+      ) {
+        return null;
+      }
+      return { ...resolved, context: this.normalizeContext(ctx) };
+    }
+    const stored = this.parseStoredContext(resolved.context);
+    if (!stored) {
+      this.logger.warn('context.read.failed');
+      return null;
+    }
+    const context = await this.hydrateContext(stored);
+    if (!context) {
+      this.logger.warn('context.read.failed');
+      return null;
+    }
+    return { ...resolved, context };
   }
 
   // ───────── cache management ─────────

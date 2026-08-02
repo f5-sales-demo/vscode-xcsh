@@ -3,7 +3,6 @@
 src/**
 test/**
 node_modules/**
-!node_modules/@vscode/webview-ui-toolkit/**
 .gitignore
 .eslintrc.json
 tsconfig.json

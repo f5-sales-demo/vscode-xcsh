@@ -5,9 +5,8 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import { getLocalContextsDir } from '../config/contextPaths';
-import { isPointerContext, mergePointerOverrides } from '../config/contextResolver';
+import { isPointerContext } from '../config/contextResolver';
 import type { TokenHealth, XCSHContext } from '../config/contextTypes';
-import { AUTH_ENV_KEYS, isSensitiveEnvKey, maskToken } from '../config/contextTypes';
 import type { XCSHTreeItem } from './treeTypes';
 
 /** Union type for tree nodes returned by this provider. */
@@ -95,13 +94,14 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
 
   /** Build grouped tree: "Project Contexts" + "Global Contexts". */
   private async getGroupedChildren(workspaceFolder: string): Promise<ContextGroupItem[]> {
-    const [localActiveName, globalContexts, globalActiveName] = await Promise.all([
+    const [localActiveName, localContexts, globalContexts, globalActiveName] = await Promise.all([
       this.contextManager.getLocalActiveContextName(workspaceFolder),
+      this.contextManager.getLocalContexts(workspaceFolder),
       this.contextManager.getContexts(),
       this.contextManager.getActiveContextName(),
     ]);
 
-    const projectItems = this.buildLocalContextItems(workspaceFolder, localActiveName, globalContexts);
+    const projectItems = this.buildLocalContextItems(workspaceFolder, localActiveName, localContexts);
     const globalItems = this.buildContextItems(globalContexts, globalActiveName);
 
     return [
@@ -148,22 +148,15 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
   private buildLocalContextItems(
     workspaceFolder: string,
     activeName: string | null,
-    globalContexts: XCSHContext[],
+    contexts: XCSHContext[],
   ): ContextTreeItem[] {
     const localDir = getLocalContextsDir(workspaceFolder);
     if (!fs.existsSync(localDir)) {
       return [];
     }
 
-    const globalMap = new Map(globalContexts.map((g) => [g.name, g]));
     const files = fs.readdirSync(localDir).filter((f) => f.endsWith('.json'));
-
-    interface LocalEntry {
-      ctx: XCSHContext;
-      pointerTarget?: string;
-    }
-
-    const entries: LocalEntry[] = [];
+    const pointerTargets = new Map<string, string>();
 
     for (const file of files) {
       try {
@@ -171,34 +164,27 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
         const data: unknown = JSON.parse(raw);
 
         if (isPointerContext(data)) {
-          const globalCtx = globalMap.get(data.context);
-          if (!globalCtx) {
-            continue; // dangling pointer — skip
-          }
-          const resolved = data.overrides ? mergePointerOverrides(globalCtx, data.overrides) : globalCtx;
-          entries.push({ ctx: { ...resolved, name: data.context }, pointerTarget: data.context });
-        } else {
-          entries.push({ ctx: data as XCSHContext });
+          pointerTargets.set(data.context, data.context);
         }
       } catch {
         /* skip unreadable files */
       }
     }
 
-    entries.sort((a, b) => {
-      if (a.ctx.name === activeName) {
+    const sorted = [...contexts].sort((a, b) => {
+      if (a.name === activeName) {
         return -1;
       }
-      if (b.ctx.name === activeName) {
+      if (b.name === activeName) {
         return 1;
       }
-      return a.ctx.name.localeCompare(b.ctx.name);
+      return a.name.localeCompare(b.name);
     });
 
-    return entries.map((entry) => {
-      const isActive = entry.ctx.name === activeName;
-      const health = this.contextManager.getTokenHealth(entry.ctx);
-      return new ContextTreeItem(entry.ctx, isActive, health, entry.pointerTarget);
+    return sorted.map((ctx) => {
+      const isActive = ctx.name === activeName;
+      const health = this.contextManager.getTokenHealth(ctx);
+      return new ContextTreeItem(ctx, isActive, health, pointerTargets.get(ctx.name));
     });
   }
 }
@@ -263,19 +249,14 @@ export class ContextTreeItem implements XCSHTreeItem {
     const lines = [
       `${vscode.l10n.t('Name')}: ${this.context.name}`,
       `${vscode.l10n.t('URL')}: ${this.context.apiUrl}`,
-      `${vscode.l10n.t('Token')}: ${maskToken(this.context.apiToken)}`,
-      `${vscode.l10n.t('Namespace')}: ${this.context.defaultNamespace}`,
+      `${vscode.l10n.t('Token')}: ${vscode.l10n.t('Configured')}`,
+      `${vscode.l10n.t('Namespace name')}: ${this.context.defaultNamespace}`,
     ];
 
-    // Auth section: recognized web-console credentials from the generic env map,
-    // with secret-looking values (the console password) masked.
     const env = this.context.env;
     if (env) {
-      for (const key of AUTH_ENV_KEYS) {
-        const value = env[key];
-        if (value) {
-          lines.push(`${key}: ${isSensitiveEnvKey(key) ? maskToken(value) : value}`);
-        }
+      for (const key of Object.keys(env).sort()) {
+        lines.push(`${key}: ${vscode.l10n.t('Configured')}`);
       }
     }
 

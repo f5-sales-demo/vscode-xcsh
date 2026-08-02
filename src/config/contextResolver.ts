@@ -37,8 +37,6 @@ import type { XCSHContext } from './contextTypes';
 
 export interface ContextOverrides {
   defaultNamespace?: string;
-  env?: Record<string, string>;
-  sensitiveKeys?: string[];
   knowledgeSources?: Array<{ url: string; label?: string; type?: string }>;
   includeSkills?: string[];
   excludeSkills?: string[];
@@ -49,7 +47,7 @@ export interface PointerContext {
   overrides?: ContextOverrides;
 }
 
-export type ContextSource = 'env' | 'local' | 'global';
+type ContextSource = 'env' | 'local' | 'global';
 
 export interface ResolvedContext {
   context: XCSHContext;

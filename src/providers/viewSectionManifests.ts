@@ -21,7 +21,7 @@
  */
 
 /** A single console section: a title and the top-level spec keys it groups. */
-export interface ManifestSection {
+interface ManifestSection {
   /** Stable id used for the section anchor */
   id: string;
   /** Console section title */

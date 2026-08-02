@@ -8,9 +8,9 @@
 // the webview owns serialization into prompt text. The byte cap lives in
 // `./attachment` (`MAX_ATTACHMENT_BYTES`) and is reused by resolvers directly.
 
-export type AttachmentKind = 'file' | 'folder' | 'instructions' | 'scm' | 'problems' | 'symbols' | 'sessions' | 'tools';
+type AttachmentKind = 'file' | 'folder' | 'instructions' | 'scm' | 'problems' | 'symbols' | 'sessions' | 'tools';
 
-export interface BaseAttachment {
+interface BaseAttachment {
   id: string;
   kind: AttachmentKind;
   label: string;
@@ -26,27 +26,27 @@ export interface FolderAttachment extends BaseAttachment {
   kind: 'folder';
   path: string;
 }
-export interface InstructionsAttachment extends BaseAttachment {
+interface InstructionsAttachment extends BaseAttachment {
   kind: 'instructions';
   sourcePath: string;
 }
-export interface ScmAttachment extends BaseAttachment {
+interface ScmAttachment extends BaseAttachment {
   kind: 'scm';
   repoRoot: string;
 }
-export interface ProblemsAttachment extends BaseAttachment {
+interface ProblemsAttachment extends BaseAttachment {
   kind: 'problems';
   scope: string;
 }
-export interface SymbolsAttachment extends BaseAttachment {
+interface SymbolsAttachment extends BaseAttachment {
   kind: 'symbols';
   query: string;
 }
-export interface SessionsAttachment extends BaseAttachment {
+interface SessionsAttachment extends BaseAttachment {
   kind: 'sessions';
   sessionId: string;
 }
-export interface ToolsAttachment extends BaseAttachment {
+interface ToolsAttachment extends BaseAttachment {
   kind: 'tools';
   toolNames: string[];
 }

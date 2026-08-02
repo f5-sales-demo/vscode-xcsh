@@ -56,7 +56,7 @@ export class SchemaRegistry {
     const schema = generateSchemaForResourceType(resourceType);
     if (schema) {
       this.schemas.set(resourceType, schema);
-      logger.debug(`Generated schema for resource type: ${resourceType}`);
+      logger.debug('schema.generated');
     }
 
     return schema;
@@ -69,7 +69,7 @@ export class SchemaRegistry {
   getGenericSchema(): XCSHJsonSchema {
     if (!this.genericSchema) {
       this.genericSchema = generateGenericSchema();
-      logger.debug('Generated generic F5 XC resource schema');
+      logger.debug('schema.generated');
     }
     return this.genericSchema;
   }
@@ -92,7 +92,7 @@ export class SchemaRegistry {
     }
 
     // Fallback to generic schema if resource type is unknown
-    logger.warn(`Unknown resource type: ${resourceType}, using generic schema`);
+    logger.warn('schema.unavailable');
     return JSON.stringify(this.getGenericSchema(), null, 2);
   }
 
@@ -110,7 +110,7 @@ export class SchemaRegistry {
   clearCache(): void {
     this.schemas.clear();
     this.genericSchema = null;
-    logger.debug('Schema cache cleared');
+    logger.debug('schema.cache.cleared');
   }
 
   /**
@@ -123,7 +123,7 @@ export class SchemaRegistry {
     for (const type of typesToWarm) {
       this.getOrGenerateSchema(type);
     }
-    logger.debug(`Pre-warmed schema cache for ${typesToWarm.length} resource types`);
+    logger.debug('extension.cache.ready');
   }
 
   /**
