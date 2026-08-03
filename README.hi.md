@@ -1,3 +1,5 @@
+# VS Code Extension
+
 🌐 [English](https://f5-sales-demo.github.io/vscode-xcsh/) |
 [日本語](https://f5-sales-demo.github.io/vscode-xcsh/ja/) |
 [한국어](https://f5-sales-demo.github.io/vscode-xcsh/ko/) |
@@ -10,8 +12,6 @@
 [Italiano](https://f5-sales-demo.github.io/vscode-xcsh/it/) |
 [العربية](https://f5-sales-demo.github.io/vscode-xcsh/ar/) | **हिन्दी**
 | [ไทย](https://f5-sales-demo.github.io/vscode-xcsh/th/)
-
-# VS Code Extension
 
 IntelliSense और xcsh चैट के साथ F5 Distributed Cloud संसाधनों के प्रबंधन के लिए
 VS Code एक्सटेंशन
@@ -38,16 +38,16 @@ VS Code एक्सटेंशन
 
 ## समर्थित एकीकरण
 
-| एकीकरण         | इंस्टॉल                                 | प्रमाणीकरण          |
+| एकीकरण | इंस्टॉल | प्रमाणीकरण |
 | -------------- | --------------------------------------- | ------------------- |
-| xcsh           | `brew install f5-sales-demo/tap/xcsh` | इंस्टॉल में शामिल   |
-| AWS CLI        | `brew install awscli`                   | `aws sso login`     |
-| Azure CLI      | `brew install azure-cli`                | `az login`          |
-| Google Cloud   | `brew install google-cloud-sdk`         | `gcloud auth login` |
-| GitHub CLI     | `brew install gh`                       | `gh auth login`     |
-| GitLab CLI     | `brew install glab`                     | `glab auth login`   |
-| Terraform      | `brew install hashicorp/tap/terraform`  | N/A                 |
-| Salesforce CLI | `brew install sf`                       | `sf org login web`  |
+| xcsh | `brew install f5-sales-demo/tap/xcsh` | इंस्टॉल में शामिल |
+| AWS CLI | `brew install awscli` | `aws sso login` |
+| Azure CLI | `brew install azure-cli` | `az login` |
+| Google Cloud | `brew install google-cloud-sdk` | `gcloud auth login` |
+| GitHub CLI | `brew install gh` | `gh auth login` |
+| GitLab CLI | `brew install glab` | `glab auth login` |
+| Terraform | `brew install hashicorp/tap/terraform` | N/A |
+| Salesforce CLI | `brew install sf` | `sf org login web` |
 
 कौन से एकीकरण इंस्टॉल और प्रमाणित हैं यह देखने के लिए VS Code में **xcsh:
 Platform Readiness** चलाएँ।
