@@ -467,7 +467,12 @@ jobs:
       # Linux requires xvfb for headless VSCode testing
       - name: Run integration tests (Linux)
         if: matrix.os == 'ubuntu-latest'
-        run: xvfb-run -a npm run test:integration
+        run: |
+          set -euo pipefail
+          test_user_data_dir=$(mktemp -d /tmp/vscode-xcsh-test.XXXXXX)
+          trap 'rm -rf -- "$test_user_data_dir"' EXIT
+          VSCODE_TEST_USER_DATA_DIR="$test_user_data_dir" \
+            xvfb-run -a npm run test:integration
 
       - name: Run integration tests (macOS/Windows)
         if: matrix.os != 'ubuntu-latest'
