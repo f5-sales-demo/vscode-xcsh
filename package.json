@@ -1080,7 +1080,8 @@
   },
   "overrides": {
     "diff": "8.0.4",
-    "serialize-javascript": "7.0.7"
+    "serialize-javascript": "7.0.7",
+    "undici": "8.10.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.6",
