@@ -1071,7 +1071,7 @@
     "audit:security": "npm audit --audit-level=low"
   },
   "dependencies": {
-    "@f5-sales-demo/pi-resource-management": "^19.105.1",
+    "@f5-sales-demo/pi-resource-management": "^20.1.2",
     "@f5-sales-demo/pi-utils": "^20.1.1",
     "dompurify": "^3.4.12",
     "marked": "^18.0.7",
