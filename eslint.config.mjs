@@ -90,6 +90,7 @@ export default tseslint.config(
       'webpack.config.js',
       'jest.config.js',
       '.vscode-test.mjs',
+      'scripts/github-api-resilience.cjs',
       'coverage/**',
       'src/generated/**',
       'webview/src/vendored/**',
