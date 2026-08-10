@@ -1071,9 +1071,9 @@
     "audit:security": "npm audit --audit-level=low"
   },
   "dependencies": {
-    "@f5-sales-demo/pi-resource-management": "^20.1.2",
-    "@f5-sales-demo/pi-utils": "^20.1.2",
-    "dompurify": "^3.4.12",
+    "@f5-sales-demo/pi-resource-management": "^20.2.7",
+    "@f5-sales-demo/pi-utils": "^20.2.7",
+    "dompurify": "^3.4.13",
     "marked": "^18.0.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
@@ -1088,7 +1088,7 @@
     "@commitlint/cli": "^21.2.1",
     "@commitlint/config-conventional": "^21.0.2",
     "@eslint/js": "^10.0.1",
-    "@f5-sales-demo/i18n-core": "^1.0.43",
+    "@f5-sales-demo/i18n-core": "^1.0.45",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",
     "@types/jest": "^30.0.0",
@@ -1105,7 +1105,7 @@
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.0.1",
     "glob": "^13.0.6",
-    "globals": "^17.8.0",
+    "globals": "^17.9.0",
     "husky": "^9.1.7",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
