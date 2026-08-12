@@ -28,7 +28,7 @@ permissions:
 jobs:
   spec-delivery:
     name: Resolve Spec Delivery
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     permissions:
       contents: read # inspect immutable delivery and receipt branches
       pull-requests: read # distinguish active, merged, and abandoned delivery PRs
@@ -307,7 +307,7 @@ jobs:
   # Validate that code generation is deterministic
   validate-generation:
     name: Validate Generation
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     needs: spec-delivery
     if: needs.spec-delivery.outputs.process == 'true'
     outputs:
@@ -397,7 +397,7 @@ jobs:
 
   test-linux:
     name: Test (Linux)
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     needs: [spec-delivery, validate-generation]
     env:
       SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
@@ -628,7 +628,7 @@ jobs:
 
   build:
     name: Build VSIX
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     needs: [spec-delivery, validate-generation, test-linux, test-macos, test-windows]
     env:
       SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
@@ -681,7 +681,7 @@ jobs:
 
   security:
     name: Security Audit
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
 
     steps:
       - name: Checkout repository
@@ -702,7 +702,7 @@ jobs:
   # Create release after successful build (main branch only)
   release:
     name: Create Release
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     needs: [spec-delivery, test-linux, test-macos, test-windows, build, security]
     if: >-
       github.ref == 'refs/heads/main' &&
@@ -1058,7 +1058,7 @@ jobs:
 
   stage-spec-delivery:
     name: Stage Spec Delivery
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     needs: [spec-delivery, validate-generation, test-linux, test-macos, test-windows, build, security]
     if: >-
       github.event_name == 'repository_dispatch' &&
@@ -1229,7 +1229,7 @@ jobs:
 
   record-spec-delivery:
     name: Record Published Spec Delivery
-    runs-on: [self-hosted, Linux, X64, vscode-xcsh]
+    runs-on: [self-hosted, Linux, X64, vscode-xcsh, ubuntu-24.04]
     needs: [spec-delivery, test-linux, test-macos, test-windows, build, release]
     if: >-
       github.event_name == 'push' &&
