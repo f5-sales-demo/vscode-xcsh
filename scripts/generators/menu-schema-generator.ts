@@ -311,7 +311,7 @@ function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): R
       });
     }
   } catch (error) {
-    console.error(`Error parsing ${filePath}:`, error);
+    console.error('Error parsing %s:', filePath, error);
   }
   return results;
 }

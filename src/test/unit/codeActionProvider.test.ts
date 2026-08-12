@@ -119,4 +119,21 @@ describe('XCSHCodeActionProvider', () => {
       expect(action.edit).toBeDefined();
     }
   });
+
+  it('treats regex metacharacters in field names literally', () => {
+    const doc = createMockDocument('{\n  "axb": true\n}');
+    const diagnostic = new vscode.Diagnostic(
+      new vscode.Range(1, 2, 1, 7),
+      '"a.b" conflicts with "missing" — only one should be set',
+      vscode.DiagnosticSeverity.Warning,
+    );
+
+    const actions = provider.provideCodeActions(doc, new vscode.Range(1, 2, 1, 7), {
+      diagnostics: [diagnostic],
+      only: undefined,
+      triggerKind: vscode.CodeActionTriggerKind.Invoke,
+    });
+
+    expect(actions).toHaveLength(0);
+  });
 });

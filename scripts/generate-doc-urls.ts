@@ -147,7 +147,7 @@ function extractDocUrl(specPath: string): string | null {
 
     return null;
   } catch (e) {
-    console.error(`Error reading spec file ${specPath}:`, e);
+    console.error('Error reading spec file %s:', specPath, e);
     return null;
   }
 }

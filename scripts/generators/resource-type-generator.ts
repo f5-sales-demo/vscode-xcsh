@@ -61,7 +61,7 @@ function loadDisplayNameOverrides(overridesPath: string): DisplayNameOverrides |
     const content = fs.readFileSync(overridesPath, 'utf-8');
     return JSON.parse(content) as DisplayNameOverrides;
   } catch (error) {
-    console.warn(`Warning: Could not load display name overrides from ${overridesPath}:`, error);
+    console.warn('Warning: Could not load display name overrides from %s:', overridesPath, error);
     return null;
   }
 }

@@ -40,6 +40,15 @@ describe('webview protocol', () => {
     };
   }
 
+  function dispatchFromExtension(data: unknown, overrides: Partial<MessageEvent> = {}): void {
+    messageHandler?.({
+      data,
+      source: window,
+      origin: window.location.origin,
+      ...overrides,
+    } as MessageEvent);
+  }
+
   it('sendPrompt posts message via vscode API', () => {
     const { initProtocol, sendPrompt } = loadProtocol();
     initProtocol();
@@ -54,9 +63,7 @@ describe('webview protocol', () => {
     const received: unknown[] = [];
     on('message_update', (msg) => received.push(msg));
 
-    messageHandler?.({
-      data: { type: 'from-extension', message: { type: 'message_update', text: 'chunk' } },
-    } as unknown as MessageEvent);
+    dispatchFromExtension({ type: 'from-extension', message: { type: 'message_update', text: 'chunk' } });
 
     expect(received).toHaveLength(1);
     expect(received[0]).toEqual({ type: 'message_update', text: 'chunk' });
@@ -70,9 +77,7 @@ describe('webview protocol', () => {
     const unsub = on('message_update', (msg) => received.push(msg));
     unsub();
 
-    messageHandler?.({
-      data: { type: 'from-extension', message: { type: 'message_update', text: 'chunk' } },
-    } as unknown as MessageEvent);
+    dispatchFromExtension({ type: 'from-extension', message: { type: 'message_update', text: 'chunk' } });
 
     expect(received).toHaveLength(0);
   });
@@ -104,9 +109,38 @@ describe('webview protocol', () => {
     const received: unknown[] = [];
     on('attachment_added', (msg) => received.push(msg));
     const attachment = { id: '1', kind: 'file', label: 'a.ts', dedupKey: 'file:a.ts', content: 'x', path: 'a.ts' };
-    messageHandler?.({
-      data: { type: 'from-extension', message: { type: 'attachment_added', attachment } },
-    } as unknown as MessageEvent);
+    dispatchFromExtension({ type: 'from-extension', message: { type: 'attachment_added', attachment } });
     expect(received).toEqual([{ type: 'attachment_added', attachment }]);
+  });
+
+  it('rejects messages from a forged origin or source', () => {
+    const { initProtocol, on } = loadProtocol();
+    initProtocol();
+    const received: unknown[] = [];
+    on('message_update', (msg) => received.push(msg));
+    const data = { type: 'from-extension', message: { type: 'message_update', text: 'chunk' } };
+
+    dispatchFromExtension(data, { origin: 'https://attacker.example' });
+    dispatchFromExtension(data, { source: null });
+
+    expect(received).toEqual([]);
+  });
+
+  it.each([
+    null,
+    'from-extension',
+    { type: 'from-extension' },
+    { type: 'from-extension', message: null },
+    { type: 'from-extension', message: { type: '' } },
+    { type: 'from-extension', message: { type: 7 } },
+  ])('rejects malformed extension envelopes: %p', (data) => {
+    const { initProtocol, on } = loadProtocol();
+    initProtocol();
+    const received: unknown[] = [];
+    on('*', (msg) => received.push(msg));
+
+    dispatchFromExtension(data);
+
+    expect(received).toEqual([]);
   });
 });

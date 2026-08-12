@@ -76,6 +76,14 @@ else
   fail 'sync and check do not share the validated release contract'
 fi
 
+if grep -qF "process.platform === 'win32' ? 'npx.cmd' : 'npx'" "$check_script" &&
+  grep -qF 'shell: false' "$check_script" &&
+  ! grep -qF 'shell: true' "$check_script"; then
+  pass 'spec sync spawns npx directly without a command shell'
+else
+  fail 'spec sync still invokes a command shell'
+fi
+
 if [ ! -e "$legacy_release_workflow" ] &&
   [ "$(grep -Rl 'HaaLeo/publish-vscode-extension' "$repo_root/.github/workflows" | wc -l | tr -d ' ')" -eq 1 ]; then
   pass 'only the receipt-gated CI workflow can publish marketplace artifacts'

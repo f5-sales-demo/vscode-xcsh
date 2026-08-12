@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { getSchemaForDocument, isXCSHJsonFile } from '../utils/completionHelper';
+import { escapeRegExp } from '../utils/regex';
 
 export interface ConflictEntry {
   field: string;
@@ -29,6 +30,15 @@ export function findConflicts(specProperties: Record<string, unknown>, setFields
     }
   }
   return conflicts;
+}
+
+export function findFieldOffset(text: string, fieldName: string): { index: number; length: number } | undefined {
+  const fieldPattern = new RegExp(`"${escapeRegExp(fieldName)}"\\s*:`);
+  const match = fieldPattern.exec(text);
+  if (!match) {
+    return undefined;
+  }
+  return { index: match.index, length: match[0].length };
 }
 
 export function registerConflictDiagnostics(context: vscode.ExtensionContext): vscode.DiagnosticCollection {
@@ -74,11 +84,10 @@ export function registerConflictDiagnostics(context: vscode.ExtensionContext): v
     const text = document.getText();
     const diagnostics: vscode.Diagnostic[] = [];
     for (const conflict of conflicts) {
-      const fieldPattern = new RegExp(`"${conflict.field}"\\s*:`);
-      const match = fieldPattern.exec(text);
+      const match = findFieldOffset(text, conflict.field);
       if (match) {
         const pos = document.positionAt(match.index);
-        const range = new vscode.Range(pos, pos.translate(0, match[0].length));
+        const range = new vscode.Range(pos, pos.translate(0, match.length));
         diagnostics.push(
           new vscode.Diagnostic(
             range,

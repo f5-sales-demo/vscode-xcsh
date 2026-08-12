@@ -24,6 +24,7 @@ import type { NamespaceNode, ResourceNode, XCSHExplorerProvider } from '../tree/
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
+import { setNestedValue } from '../utils/objectPath';
 import { filterResource, getFilterOptionsForViewMode, type ViewMode } from '../utils/resourceFilter';
 import { validateResourcePayload } from '../utils/validation';
 import { buildAttachmentName } from '../xcsh/attachment';
@@ -858,34 +859,6 @@ export function registerCrudCommands(
       logger.info('resource.operation.completed');
     }),
   );
-}
-
-/**
- * Set a nested value in an object using dot-separated path.
- * Creates intermediate objects as needed.
- *
- * @param obj - The object to modify
- * @param path - Dot-separated path (e.g., 'spec.monitoring.enabled')
- * @param value - The value to set
- */
-function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): void {
-  const parts = path.split('.');
-  if (parts.length === 0) {
-    return;
-  }
-
-  let current: Record<string, unknown> = obj;
-
-  for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i] as string; // Safe: loop bounds ensure this is defined
-    if (!(part in current) || typeof current[part] !== 'object' || current[part] === null) {
-      current[part] = {};
-    }
-    current = current[part] as Record<string, unknown>;
-  }
-
-  const lastPart = parts[parts.length - 1] as string; // Safe: we checked parts.length > 0
-  current[lastPart] = value;
 }
 
 /**

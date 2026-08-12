@@ -1351,7 +1351,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     const content = fs.readFileSync(filePath, 'utf-8');
     spec = JSON.parse(content) as OpenAPISpec;
   } catch (e) {
-    console.error(`Error parsing domain file ${filename}:`, e);
+    console.error('Error parsing domain file %s:', filename, e);
     return [];
   }
 

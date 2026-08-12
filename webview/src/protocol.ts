@@ -10,9 +10,12 @@ export interface ExtensionMessage {
   [key: string]: unknown;
 }
 
-interface ExtensionEnvelope {
-  type: 'from-extension';
-  message: ExtensionMessage;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isExtensionMessage(value: unknown): value is ExtensionMessage {
+  return isRecord(value) && typeof value.type === 'string' && value.type.length > 0;
 }
 
 declare function acquireVsCodeApi(): VsCodeApi;
@@ -27,14 +30,15 @@ export function initProtocol(): void {
   vscodeApi = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
 
   window.addEventListener('message', (event: MessageEvent) => {
-    const data = event.data as ExtensionEnvelope | undefined;
-    if (data?.type !== 'from-extension') {
+    if (event.source !== window || event.origin !== window.location.origin) {
+      return;
+    }
+
+    const data: unknown = event.data;
+    if (!isRecord(data) || data.type !== 'from-extension' || !isExtensionMessage(data.message)) {
       return;
     }
     const msg = data.message;
-    if (!msg) {
-      return;
-    }
 
     const typeListeners = listeners.get(msg.type);
     if (typeListeners) {
