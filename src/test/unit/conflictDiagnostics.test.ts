@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import { findConflicts } from '../../providers/xcshConflictDiagnosticProvider';
+import { findConflicts, findFieldOffset } from '../../providers/xcshConflictDiagnosticProvider';
 
 describe('Conflict diagnostics', () => {
   describe('findConflicts', () => {
@@ -61,5 +61,13 @@ describe('Conflict diagnostics', () => {
       const conflicts = findConflicts(specProperties, ['round_robin', 'least_active']);
       expect(conflicts.length).toBeGreaterThan(0);
     });
+  });
+});
+
+it('treats regex metacharacters in field names literally', () => {
+  expect(findFieldOffset('"axb": true', 'a.b')).toBeUndefined();
+  expect(findFieldOffset('"a.b": true', 'a.b')).toEqual({
+    index: 0,
+    length: 6,
   });
 });

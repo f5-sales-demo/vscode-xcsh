@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import * as vscode from 'vscode';
+import { escapeRegExp } from '../utils/regex';
 
 export class XCSHCodeActionProvider implements vscode.CodeActionProvider {
   static readonly providedCodeActionKinds = [vscode.CodeActionKind.QuickFix];
@@ -46,7 +47,7 @@ export class XCSHCodeActionProvider implements vscode.CodeActionProvider {
 
 function buildRemoveFieldEdit(document: vscode.TextDocument, fieldName: string): vscode.WorkspaceEdit | undefined {
   const text = document.getText();
-  const pattern = new RegExp(`^\\s*"${fieldName}"\\s*:.*$`, 'gm');
+  const pattern = new RegExp(`^\\s*"${escapeRegExp(fieldName)}"\\s*:.*$`, 'gm');
   const match = pattern.exec(text);
 
   if (!match) {
