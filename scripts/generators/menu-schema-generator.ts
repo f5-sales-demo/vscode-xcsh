@@ -45,7 +45,7 @@ interface ResourceAnalysis {
   apiPath: string;
   displayName: string;
   description: string;
-  apiBase: 'config' | 'web';
+  apiBase: string;
   schemaFile: string;
   paths: PathAnalysis[];
   allowedNamespaces: NamespaceType[];
@@ -243,7 +243,7 @@ function parseDomainSpec(
       if (pathItem.post?.operationId !== record.operationId) {
         throw new Error(`Operation identity mismatch for generated resource ${resourceKey}`);
       }
-      const apiBase = pathKey.split('/').filter(Boolean)[1] as 'config' | 'web';
+      const apiBase = pathKey.split('/').filter(Boolean)[1];
       if (!apiBase) {
         throw new Error(`Malformed generated resource path for ${resourceKey}: ${pathKey}`);
       }
