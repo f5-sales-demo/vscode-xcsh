@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as https from 'node:https';
 import * as path from 'node:path';
-
+import { loadResourceCoverage } from './generators/spec-parser';
 import {
   computeSpecTreeSha256,
   type LocalSpecState,
@@ -358,6 +358,12 @@ async function syncSpecs(): Promise<void> {
         'Synced release is missing required domains/namespace_profiles.json — upstream release is invalid.',
       );
     }
+    const resourceCoveragePath = path.join(stagedSpecs, 'domains', 'resource_coverage.json');
+    if (!fs.existsSync(resourceCoveragePath)) {
+      throw new Error(
+        'Synced release is missing required domains/resource_coverage.json — upstream release is invalid.',
+      );
+    }
 
     const openapiPath = path.join(stagedSpecs, 'openapi.json');
     if (!fs.existsSync(openapiPath)) {
@@ -380,6 +386,8 @@ async function syncSpecs(): Promise<void> {
       );
     }
 
+    loadResourceCoverage(resourceCoveragePath, version);
+
     const domainDir = path.join(stagedSpecs, 'domains');
     for (const filename of fs.readdirSync(domainDir).filter((name) => name.endsWith('.json'))) {
       const document = JSON.parse(fs.readFileSync(path.join(domainDir, filename), 'utf8')) as {
@@ -393,6 +401,11 @@ async function syncSpecs(): Promise<void> {
         );
       }
       if (filename === 'namespace_profiles.json' && document.version !== version) {
+        throw new Error(
+          `Downloaded domains/${filename} version ${document.version ?? 'missing'} disagrees with ${requested.releaseTag}`,
+        );
+      }
+      if (filename === 'resource_coverage.json' && document.version !== version) {
         throw new Error(
           `Downloaded domains/${filename} version ${document.version ?? 'missing'} disagrees with ${requested.releaseTag}`,
         );

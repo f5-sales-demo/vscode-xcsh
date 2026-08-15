@@ -270,8 +270,9 @@ describe('Schema Registry', () => {
     it('should report correct availableCount', () => {
       const stats = registry.getCacheStats();
 
-      // Should match total number of generated resource types (234+)
-      expect(stats.availableCount).toBeGreaterThanOrEqual(200);
+      // The upstream coverage contract currently classifies more than 150
+      // canonical resources as generated.
+      expect(stats.availableCount).toBeGreaterThanOrEqual(150);
     });
   });
 

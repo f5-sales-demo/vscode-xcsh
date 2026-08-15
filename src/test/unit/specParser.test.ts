@@ -32,8 +32,8 @@ describe('Spec Parser - parseAllDomainFiles', () => {
   });
 
   describe('resource discovery', () => {
-    it('should return at least 200 resources', () => {
-      expect(parsedResources.length).toBeGreaterThanOrEqual(200);
+    it('should return at least 150 canonical generated resources', () => {
+      expect(parsedResources.length).toBeGreaterThanOrEqual(150);
     });
 
     it('every resource should have a non-empty resourceKey', () => {
@@ -504,7 +504,7 @@ describe('Spec Parser - parseAllDomainFiles', () => {
   });
 
   describe('operation-level extension extraction', () => {
-    it('at least 200 operations have discoveredResponseTime', () => {
+    it('at least 150 canonical-resource operations have discoveredResponseTime', () => {
       let count = 0;
       for (const r of parsedResources) {
         if (!r.operationMetadata) {
@@ -516,7 +516,7 @@ describe('Spec Parser - parseAllDomainFiles', () => {
           }
         }
       }
-      expect(count).toBeGreaterThanOrEqual(200);
+      expect(count).toBeGreaterThanOrEqual(150);
     });
 
     it('discoveredResponseTime is a non-empty string when present', () => {

@@ -46,6 +46,7 @@ import type { NamespaceProfile } from './resourceTypesBase';
  * resources[resourceKey], falling back to \`default\` when not explicitly listed.
  */
 export interface NamespaceProfilesMap {
+  version: string;
   default: NamespaceProfile;
   resources: Record<string, NamespaceProfile>;
 }

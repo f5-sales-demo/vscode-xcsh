@@ -10,7 +10,7 @@
  * resource types appear in each namespace context.
  *
  * The process:
- * 1. Parse all OpenAPI specs and derive namespace scope from API paths
+ * 1. Parse only resources admitted by the upstream coverage contract
  * 2. Generate menu schema showing resources per namespace type
  */
 
@@ -19,9 +19,10 @@ import * as path from 'node:path';
 import { normalizeDescription } from './description-normalizer';
 import {
   loadNamespaceProfiles,
+  loadResourceCoverage,
   type NamespaceProfilesMap,
   type NamespaceType,
-  resolveNamespaceProfile,
+  type ResourceCoverageMap,
 } from './spec-parser';
 
 /**
@@ -41,6 +42,7 @@ interface PathAnalysis {
  */
 interface ResourceAnalysis {
   resourceKey: string;
+  apiPath: string;
   displayName: string;
   description: string;
   apiBase: 'config' | 'web';
@@ -199,27 +201,14 @@ interface OpenAPISpec {
 }
 
 /**
- * Derive resource key from API path suffix (plural -> singular).
- * Example: "http_loadbalancers" -> "http_loadbalancer"
- */
-function deriveResourceKeyFromApiPath(apiPathSuffix: string): string {
-  if (apiPathSuffix.endsWith('ies')) {
-    return `${apiPathSuffix.slice(0, -3)}y`;
-  }
-  if (apiPathSuffix.endsWith('ses')) {
-    return apiPathSuffix.slice(0, -2);
-  }
-  if (apiPathSuffix.endsWith('s')) {
-    return apiPathSuffix.slice(0, -1);
-  }
-  return apiPathSuffix;
-}
-
-/**
  * Parse a domain-format OpenAPI spec file and extract all resource types.
  * Domain files contain multiple resources (e.g., virtual.json has http_loadbalancers, origin_pools, etc.)
  */
-function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): ResourceAnalysis[] {
+function parseDomainSpec(
+  filePath: string,
+  profilesMap: NamespaceProfilesMap,
+  coverageMap: ResourceCoverageMap,
+): ResourceAnalysis[] {
   const results: ResourceAnalysis[] = [];
   try {
     const content = fs.readFileSync(filePath, 'utf-8');
@@ -237,34 +226,27 @@ function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): R
       return [];
     }
 
-    // Pattern for list endpoints (plural resource path, no trailing {name})
-    // Matches: /api/config/namespaces/{metadata.namespace}/http_loadbalancers
-    // Also matches extended paths: /api/config/dns/namespaces/{ns}/dns_zones
-    // Character classes include digits so versioned resources (e.g. v1_dns_monitors) parse.
-    const listEndpointPattern =
-      /^\/api\/([a-z0-9_-]+)(?:\/([a-z0-9_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z0-9_]+)$/;
+    const generatedByPath = new Map(
+      Object.entries(coverageMap.resources).flatMap(([resourceKey, record]) =>
+        record.disposition === 'generated' ? [[record.path, { resourceKey, record }] as const] : [],
+      ),
+    );
 
     const seen = new Set<string>();
 
     for (const [pathKey, pathItem] of Object.entries(paths)) {
-      const match = pathKey.match(listEndpointPattern);
-      if (!match) {
+      const generated = generatedByPath.get(pathKey);
+      if (!generated) {
         continue;
       }
-
-      const apiBase = match[1] as 'config' | 'web';
-      const apiPathSuffix = match[3];
-
-      if (!apiBase || !apiPathSuffix) {
-        continue;
+      const { resourceKey, record } = generated;
+      if (pathItem.post?.operationId !== record.operationId) {
+        throw new Error(`Operation identity mismatch for generated resource ${resourceKey}`);
       }
-
-      // Skip item endpoints (they end with /{name} but we already filtered those out via regex)
-      if (pathKey.endsWith('}')) {
-        continue;
+      const apiBase = pathKey.split('/').filter(Boolean)[1] as 'config' | 'web';
+      if (!apiBase) {
+        throw new Error(`Malformed generated resource path for ${resourceKey}: ${pathKey}`);
       }
-
-      const resourceKey = deriveResourceKeyFromApiPath(apiPathSuffix);
 
       // Skip duplicates within the same domain file
       if (seen.has(resourceKey)) {
@@ -298,10 +280,15 @@ function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): R
 
       // Allowed namespaces come authoritatively from the namespace profiles map,
       // keyed by resource (single source of truth — no path/profile derivation).
-      const allowedNamespaces = resolveNamespaceProfile(profilesMap, resourceKey).constraint.allowed;
+      const profile = profilesMap.resources[resourceKey];
+      if (!profile) {
+        throw new Error(`Generated resource ${resourceKey} lacks an explicit namespace profile`);
+      }
+      const allowedNamespaces = profile.constraint.allowed;
 
       results.push({
         resourceKey,
+        apiPath: pathKey.split('/').filter(Boolean).at(-1) ?? '',
         displayName,
         description: normalizeDescription(descriptionRaw.substring(0, 200)),
         apiBase,
@@ -311,7 +298,9 @@ function parseDomainSpec(filePath: string, profilesMap: NamespaceProfilesMap): R
       });
     }
   } catch (error) {
-    console.error('Error parsing %s:', filePath, error);
+    throw new Error(`Error parsing ${filePath}: ${error instanceof Error ? error.message : String(error)}`, {
+      cause: error,
+    });
   }
   return results;
 }
@@ -358,7 +347,7 @@ function buildNamespaceSchema(
     categories[category].resources.push({
       key: resource.resourceKey,
       displayName: resource.displayName,
-      apiPath: `${resource.resourceKey}s`, // Simplified - actual apiPath would need more logic
+      apiPath: resource.apiPath,
       allowedNamespaces: resource.allowedNamespaces,
     });
 
@@ -386,12 +375,17 @@ function generateMenuSchema(specsDir: string, outputPath: string): void {
 
   // The namespace profiles map is the authoritative source of namespace scope.
   // It ships alongside the domain specs (in domains/) and is required.
-  const profilesMap = loadNamespaceProfiles(path.join(specsDir, 'namespace_profiles.json'));
+  const coverageMap = loadResourceCoverage(path.join(specsDir, 'resource_coverage.json'));
+  const profilesMap = loadNamespaceProfiles(path.join(specsDir, 'namespace_profiles.json'), coverageMap.version);
 
   // Find all spec files (domain JSON files in new structure)
   const specFiles = fs
     .readdirSync(specsDir)
-    .filter((f) => f.endsWith('.json') && !f.includes('index'))
+    .filter(
+      (f) =>
+        f.endsWith('.json') &&
+        !['index.json', 'namespace_profiles.json', 'resource_coverage.json', 'validation.json'].includes(f),
+    )
     .map((f) => path.join(specsDir, f));
 
   console.log(`Found ${specFiles.length} spec files\n`);
@@ -400,7 +394,7 @@ function generateMenuSchema(specsDir: string, outputPath: string): void {
   const resources: ResourceAnalysis[] = [];
   const seenKeys = new Set<string>();
   for (const file of specFiles) {
-    const analyses = parseDomainSpec(file, profilesMap);
+    const analyses = parseDomainSpec(file, profilesMap, coverageMap);
     for (const analysis of analyses) {
       // Deduplicate across files (prefer first occurrence)
       if (!seenKeys.has(analysis.resourceKey)) {
@@ -412,6 +406,15 @@ function generateMenuSchema(specsDir: string, outputPath: string): void {
 
   // Sort by resource key
   resources.sort((a, b) => a.resourceKey.localeCompare(b.resourceKey));
+
+  const expectedGenerated = Object.entries(coverageMap.resources)
+    .filter(([, record]) => record.disposition === 'generated')
+    .map(([resourceKey]) => resourceKey)
+    .sort();
+  const missingGenerated = expectedGenerated.filter((resourceKey) => !seenKeys.has(resourceKey));
+  if (missingGenerated.length > 0) {
+    throw new Error(`Generated contract resources were not parsed: ${missingGenerated.join(', ')}`);
+  }
 
   console.log(`Successfully parsed ${resources.length} resource types\n`);
 
