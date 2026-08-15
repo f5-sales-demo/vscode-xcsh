@@ -161,4 +161,36 @@ describe('contract-driven domain parsing', () => {
 
     expect(() => parseAllDomainFiles(directory, contract)).toThrow(/operation identity mismatch/);
   });
+
+  it('requires every manual override path to resolve to a GET collection route', () => {
+    writeJson(directory, 'manual.json', {
+      openapi: '3.0.3',
+      info: { version: '1.2.3', 'x-f5xc-cli-domain': 'manual' },
+      paths: {
+        '/api/config/namespaces/{namespace}/reports': {
+          get: { operationId: 'ves.io.schema.report.API.List' },
+        },
+      },
+      components: { schemas: {} },
+    });
+    const manual = coverage({
+      widget: {
+        disposition: 'generated',
+        path: '/api/config/namespaces/{metadata.namespace}/widgets',
+        operationId: 'ves.io.schema.views.widget.API.Create',
+      },
+      report: {
+        disposition: 'manual',
+        path: '/api/config/namespaces/{namespace}/reports',
+      },
+    });
+
+    expect(parseAllDomainFiles(directory, manual).map((resource) => resource.resourceKey)).toEqual(['widget']);
+
+    manual.resources.report = {
+      disposition: 'manual',
+      path: '/api/config/namespaces/{namespace}/missing_reports',
+    };
+    expect(() => parseAllDomainFiles(directory, manual)).toThrow(/stale manual coverage paths.*report/);
+  });
 });

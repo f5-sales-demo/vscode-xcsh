@@ -1802,6 +1802,40 @@ export function parseAllDomainFiles(domainDir: string, coverage?: ResourceCovera
     .sort();
   console.log(`Found ${domainFiles.length} domain files`);
 
+  const unresolvedManualPaths = new Map(
+    Object.entries(resolvedCoverage.resources)
+      .filter((entry): entry is [string, ManualResourceCoverage] => entry[1].disposition === 'manual')
+      .map(([resourceKey, record]) => [record.path, resourceKey]),
+  );
+  const manualPathsWithoutGet = new Set<string>();
+  for (const filename of domainFiles) {
+    let document: OpenAPISpec;
+    try {
+      document = JSON.parse(fs.readFileSync(path.join(domainDir, filename), 'utf-8')) as OpenAPISpec;
+    } catch {
+      continue;
+    }
+    for (const [apiPath] of unresolvedManualPaths) {
+      const pathItem = document.paths?.[apiPath];
+      if (pathItem?.get) {
+        unresolvedManualPaths.delete(apiPath);
+      } else if (pathItem) {
+        manualPathsWithoutGet.add(apiPath);
+      }
+    }
+  }
+  if (unresolvedManualPaths.size > 0) {
+    const withoutGet = [...unresolvedManualPaths]
+      .filter(([apiPath]) => manualPathsWithoutGet.has(apiPath))
+      .map(([apiPath, resourceKey]) => `${resourceKey} (${apiPath})`)
+      .sort();
+    if (withoutGet.length > 0) {
+      throw new Error(`manual coverage paths have no GET list operation: ${withoutGet.join(', ')}`);
+    }
+    const missing = [...unresolvedManualPaths].map(([apiPath, resourceKey]) => `${resourceKey} (${apiPath})`).sort();
+    throw new Error(`stale manual coverage paths: ${missing.join(', ')}`);
+  }
+
   const results: ParsedSpecInfo[] = [];
   const seen = new Set<string>();
 
