@@ -113,6 +113,14 @@ else
   fail 'delivery branch names truncate the immutable delivery ID'
 fi
 
+authenticated_pushes=$(grep -cF 'git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"' "$workflow")
+if [ "$authenticated_pushes" -eq 4 ] &&
+  ! grep -qF 'http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}"' "$workflow"; then
+  pass 'release and delivery pushes use the explicit authenticated repository remote'
+else
+  fail 'release or delivery push still uses the rejected generic bearer extraheader'
+fi
+
 if [ "$failed" -ne 0 ]; then
   exit 1
 fi
