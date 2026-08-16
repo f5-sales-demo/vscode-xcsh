@@ -456,7 +456,7 @@ describe('completions inside nested objects', () => {
 // ─── SECTION 11: Schema Coverage ────────────────────────────
 
 describe('schema coverage', () => {
-  it('at least 170 resource types have schemas', () => {
+  it('at least 150 contract-generated resource types have schemas', () => {
     const registry = getSchemaRegistry();
     const allKeys = getAllGeneratedResourceKeys();
     let withSchema = 0;
@@ -468,6 +468,6 @@ describe('schema coverage', () => {
         }
       }
     }
-    expect(withSchema).toBeGreaterThanOrEqual(170);
+    expect(withSchema).toBeGreaterThanOrEqual(150);
   });
 });

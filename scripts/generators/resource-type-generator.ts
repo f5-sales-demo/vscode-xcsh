@@ -13,8 +13,10 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { MANUAL_RESOURCE_PATHS } from '../../src/api/manualResourcePaths';
 import {
   loadNamespaceProfiles,
+  loadResourceCoverage,
   loadValidationData,
   type NamespaceProfile,
   type ParsedSpecInfo,
@@ -22,7 +24,6 @@ import {
   type ResourceFieldMetadata,
   type ResourceOperationMetadata,
   type ResourceViewLayout,
-  resolveNamespaceProfile,
 } from './spec-parser';
 
 // Re-export types that are used in generated output
@@ -649,11 +650,31 @@ export function generateResourceTypesFromDomainFiles(
   namespaceProfilesPath: string,
   displayNameOverridesPath?: string,
 ): ParsedSpecInfo[] {
-  // Load the authoritative namespace profile map first — without it we cannot
-  // assign correct namespace scopes, so fail fast (no fallback).
-  const profilesMap = loadNamespaceProfiles(namespaceProfilesPath);
+  const coveragePath = path.join(domainDir, 'resource_coverage.json');
+  const coverageMap = loadResourceCoverage(coveragePath);
+  const profilesMap = loadNamespaceProfiles(namespaceProfilesPath, coverageMap.version);
+  const coverageKeys = Object.keys(coverageMap.resources).sort();
+  const profileKeys = Object.keys(profilesMap.resources).sort();
+  if (JSON.stringify(coverageKeys) !== JSON.stringify(profileKeys)) {
+    throw new Error(
+      'resource_coverage.json and namespace_profiles.json classify different resources: ' +
+        `coverage=${JSON.stringify(coverageKeys)}, profiles=${JSON.stringify(profileKeys)}`,
+    );
+  }
 
-  const allParsed = parseAllDomainFiles(domainDir);
+  const configuredManual = Object.entries(MANUAL_RESOURCE_PATHS).sort(([left], [right]) => left.localeCompare(right));
+  const contractManual = Object.entries(coverageMap.resources)
+    .filter(([, record]) => record.disposition === 'manual')
+    .map(([resourceKey, record]) => [resourceKey, record.disposition === 'manual' ? record.path : ''] as const)
+    .sort(([left], [right]) => left.localeCompare(right));
+  if (JSON.stringify(configuredManual) !== JSON.stringify(contractManual)) {
+    throw new Error(
+      'Manual resource overrides do not match resource_coverage.json: ' +
+        `configured=${JSON.stringify(configuredManual)}, contract=${JSON.stringify(contractManual)}`,
+    );
+  }
+
+  const allParsed = parseAllDomainFiles(domainDir, coverageMap);
 
   if (allParsed.length === 0) {
     console.error('No specs parsed successfully from domain files');
@@ -662,44 +683,16 @@ export function generateResourceTypesFromDomainFiles(
 
   console.log(`Parsed ${allParsed.length} resource types from domain files`);
 
-  // Assign authoritative namespace profiles from the map. Every resource
-  // resolves: explicit override if present, otherwise the map default.
-  let mappedOverrideCount = 0;
+  // Generated resources require an explicit profile. The contract deliberately
+  // removes default fallback classification from this path.
   for (const spec of allParsed) {
-    spec.namespaceProfile = resolveNamespaceProfile(profilesMap, spec.resourceKey);
-    if (profilesMap.resources[spec.resourceKey]) {
-      mappedOverrideCount++;
+    const profile = profilesMap.resources[spec.resourceKey];
+    if (!profile) {
+      throw new Error(`Generated resource ${spec.resourceKey} lacks an explicit namespace profile`);
     }
+    spec.namespaceProfile = profile;
   }
-  const defaultFallbackCount = allParsed.length - mappedOverrideCount;
-  console.log(
-    `  Assigned namespace profiles: ${mappedOverrideCount} via explicit override, ` +
-      `${defaultFallbackCount} via default`,
-  );
-  if (defaultFallbackCount > 0) {
-    const defaultResources = allParsed.filter((s) => !profilesMap.resources[s.resourceKey]).map((s) => s.resourceKey);
-    console.warn(`  ⚠ ${defaultFallbackCount} resources using default profile (not explicitly classified)`);
-    if (defaultResources.length <= 20) {
-      for (const r of defaultResources) {
-        console.warn(`    - ${r}`);
-      }
-    }
-  }
-
-  // No-silent-drops report (#727): resources the map classifies but that the
-  // generator produces NO resource type for (parse gap). These can never be
-  // surfaced without an upstream spec/parser change; log them so a growing gap
-  // is visible in CI rather than silently swallowed.
-  const parsedKeys = new Set(allParsed.map((s) => s.resourceKey));
-  const parseGap = Object.keys(profilesMap.resources)
-    .filter((k) => !parsedKeys.has(k))
-    .sort();
-  if (parseGap.length > 0) {
-    console.warn(
-      `  ⚠ ${parseGap.length} map-classified resources have no generated type (parse gap; not consumable): ` +
-        `${parseGap.slice(0, 10).join(', ')}${parseGap.length > 10 ? ', …' : ''}`,
-    );
-  }
+  console.log(`  Assigned ${allParsed.length} explicit namespace profiles from the coverage contract`);
 
   // Merge validation.json data into fieldMetadata
   const validationPath = path.join(domainDir, 'validation.json');

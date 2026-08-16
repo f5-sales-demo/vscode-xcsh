@@ -55,11 +55,11 @@ describe('Spec Directory Structure', () => {
       expect(fs.existsSync(DOMAINS_DIR)).toBe(true);
     });
 
-    it('should contain exactly 40 JSON files', () => {
-      // OpenAPI domain files plus the two non-OpenAPI artifacts that ride along:
-      // validation.json and namespace_profiles.json.
+    it('should contain exactly 41 JSON files', () => {
+      // OpenAPI domain files plus the three non-OpenAPI artifacts that ride along:
+      // validation.json, namespace_profiles.json, and resource_coverage.json.
       const files = fs.readdirSync(DOMAINS_DIR).filter((f) => f.endsWith('.json'));
-      expect(files.length).toBe(40);
+      expect(files.length).toBe(41);
     });
   });
 
@@ -80,8 +80,10 @@ describe('Spec Directory Structure', () => {
     });
 
     it('OpenAPI domain files should have required keys (openapi, info, paths, components)', () => {
-      // validation.json and namespace_profiles.json are non-OpenAPI artifacts, so we skip them
-      const openApiFiles = domainFiles.filter((f) => f !== 'validation.json' && f !== 'namespace_profiles.json');
+      // Metadata artifacts are contracts, not OpenAPI domain documents.
+      const openApiFiles = domainFiles.filter(
+        (f) => !['validation.json', 'namespace_profiles.json', 'resource_coverage.json'].includes(f),
+      );
 
       for (const filename of openApiFiles) {
         const filePath = path.join(DOMAINS_DIR, filename);
@@ -96,8 +98,10 @@ describe('Spec Directory Structure', () => {
     });
 
     it('OpenAPI domain files should have x-f5xc-cli-domain in info', () => {
-      // validation.json and namespace_profiles.json are non-OpenAPI artifacts, so we skip them
-      const openApiFiles = domainFiles.filter((f) => f !== 'validation.json' && f !== 'namespace_profiles.json');
+      // Metadata artifacts are contracts, not OpenAPI domain documents.
+      const openApiFiles = domainFiles.filter(
+        (f) => !['validation.json', 'namespace_profiles.json', 'resource_coverage.json'].includes(f),
+      );
 
       for (const filename of openApiFiles) {
         const filePath = path.join(DOMAINS_DIR, filename);
@@ -202,7 +206,9 @@ describe('Spec version single-source-of-truth', () => {
       return; // specs not synced in this environment; covered by CI where they are
     }
     const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON, 'utf-8')) as { version: string };
-    const spec = JSON.parse(fs.readFileSync(OPENAPI_JSON, 'utf-8')) as { info?: { version?: string } };
+    const spec = JSON.parse(fs.readFileSync(OPENAPI_JSON, 'utf-8')) as {
+      info?: { version?: string };
+    };
     const upstreamMajor = (spec.info?.version ?? '').split('.')[0];
     const pkgMajor = pkg.version.split('.')[0];
     expect(upstreamMajor).not.toEqual('');

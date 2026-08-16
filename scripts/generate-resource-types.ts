@@ -25,6 +25,7 @@ const DOMAIN_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api', '
 const SPECS_DIR = path.join(__dirname, '..', 'docs', 'specifications', 'api');
 // Authoritative resource→namespace scope map (ships in domains/, like validation.json).
 const NAMESPACE_PROFILES_PATH = path.join(DOMAIN_DIR, 'namespace_profiles.json');
+const RESOURCE_COVERAGE_PATH = path.join(DOMAIN_DIR, 'resource_coverage.json');
 const GENERATED_DIR = path.join(__dirname, '..', 'src', 'generated');
 const RESOURCE_TYPES_OUTPUT = path.join(GENERATED_DIR, 'resourceTypesBase.ts');
 const NAMESPACE_PROFILES_OUTPUT = path.join(GENERATED_DIR, 'namespaceProfiles.ts');
@@ -135,6 +136,11 @@ function main(): void {
   if (!fs.existsSync(NAMESPACE_PROFILES_PATH)) {
     console.error(`Error: Required namespace profiles map not found: ${NAMESPACE_PROFILES_PATH}`);
     console.error('Run "npm run specs:ensure" to sync specs (the map ships in domains/).');
+    process.exit(1);
+  }
+  if (!fs.existsSync(RESOURCE_COVERAGE_PATH)) {
+    console.error(`Error: Required resource coverage contract not found: ${RESOURCE_COVERAGE_PATH}`);
+    console.error('Run "npm run specs:ensure" to sync a complete immutable spec bundle.');
     process.exit(1);
   }
 

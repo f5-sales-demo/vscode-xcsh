@@ -171,11 +171,10 @@ describe('Schema Generator', () => {
       expect(types).toContain('app_firewall');
     });
 
-    it('should return at least 200 resource types', () => {
+    it('should return at least 150 contract-generated resource types', () => {
       const types = getSchemaResourceTypes();
 
-      // Based on the generated resource types (234)
-      expect(types.length).toBeGreaterThanOrEqual(200);
+      expect(types.length).toBeGreaterThanOrEqual(150);
     });
 
     it('should return unique keys', () => {

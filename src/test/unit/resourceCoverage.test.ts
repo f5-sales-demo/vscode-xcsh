@@ -1,60 +1,46 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-/**
- * No-silent-drops guard for resource coverage (issue #727).
- *
- * Asserts that the set of namespace-map-classified resources NOT surfaced in the
- * curated RESOURCE_TYPES tree matches a committed snapshot. When upstream drift
- * changes that set, this test fails and forces a conscious decision (surface the
- * resource via an override, or acknowledge it in the snapshot) — nothing appears
- * or disappears from the tree silently.
- */
+/** Contract assertions replacing the historical invisible/parse-gap snapshots. */
 
-import { KNOWN_INVISIBLE_MAP_RESOURCES, KNOWN_PARSE_GAP_RESOURCES } from '../../api/resourceCoverage';
+import * as path from 'node:path';
+import { loadResourceCoverage } from '../../../scripts/generators/spec-parser';
 import { RESOURCE_TYPES } from '../../api/resourceTypes';
 import { NAMESPACE_PROFILES_MAP } from '../../generated/namespaceProfiles';
 import { GENERATED_RESOURCE_TYPES } from '../../generated/resourceTypesBase';
 
-function mapKeys(): string[] {
-  return Object.keys(NAMESPACE_PROFILES_MAP.resources);
-}
+const COVERAGE_PATH = path.resolve(__dirname, '../../../docs/specifications/api/domains/resource_coverage.json');
 
-describe('Resource coverage guard (#727)', () => {
-  it('map-classified resources not visible in RESOURCE_TYPES match the committed snapshot', () => {
-    const visible = new Set(Object.keys(RESOURCE_TYPES));
-    const invisible = mapKeys()
-      .filter((k) => !visible.has(k))
+describe('Resource coverage contract (#1105)', () => {
+  const coverage = loadResourceCoverage(COVERAGE_PATH, NAMESPACE_PROFILES_MAP.version);
+
+  it('classifies every explicit namespace profile exactly once', () => {
+    expect(Object.keys(coverage.resources).sort()).toEqual(Object.keys(NAMESPACE_PROFILES_MAP.resources).sort());
+  });
+
+  it('generates exactly the resources with generated disposition', () => {
+    const expected = Object.entries(coverage.resources)
+      .filter(([, record]) => record.disposition === 'generated')
+      .map(([resourceKey]) => resourceKey)
       .sort();
-    // If this fails: a map resource newly appeared/disappeared from the tree.
-    // Decide per resource — add a RESOURCE_TYPE_OVERRIDES entry to surface it, or
-    // update KNOWN_INVISIBLE_MAP_RESOURCES (via scripts/update-resource-coverage.ts).
-    expect(invisible).toEqual([...KNOWN_INVISIBLE_MAP_RESOURCES]);
+    expect(Object.keys(GENERATED_RESOURCE_TYPES).sort()).toEqual(expected);
   });
 
-  it('map resources with no generated type (parse gap) match the committed snapshot', () => {
-    const generated = new Set(Object.keys(GENERATED_RESOURCE_TYPES));
-    const parseGap = mapKeys()
-      .filter((k) => !generated.has(k))
-      .sort();
-    expect(parseGap).toEqual([...KNOWN_PARSE_GAP_RESOURCES]);
+  it('requires every manual resource to have a matching valid override path', () => {
+    const failures = Object.entries(coverage.resources).flatMap(([resourceKey, record]) =>
+      record.disposition === 'manual' && RESOURCE_TYPES[resourceKey]?.customListPath !== record.path
+        ? [resourceKey]
+        : [],
+    );
+    expect(failures).toEqual([]);
   });
 
-  it('a surfaced parse-gap resource must supply its own apiPath (no generated one exists)', () => {
-    // A parse-gap resource (no generated type) can still be surfaced via a manual
-    // override — but only if that override provides an apiPath/customListPath,
-    // otherwise the tree item cannot resolve an endpoint. `user` is the canonical
-    // example. This guards against surfacing an unusable parse-gap resource.
-    const generated = new Set(Object.keys(GENERATED_RESOURCE_TYPES));
-    const surfacedParseGap = Object.entries(RESOURCE_TYPES).filter(([key]) => !generated.has(key));
-    const missingEndpoint = surfacedParseGap
-      .filter(([, info]) => !info.apiPath && !info.customListPath)
-      .map(([key]) => key);
-    expect(missingEndpoint).toEqual([]);
-  });
-
-  it('no snapshot entry is stale (every listed key is still classified in the map)', () => {
-    const classified = new Set(mapKeys());
-    const stale = [...KNOWN_INVISIBLE_MAP_RESOURCES, ...KNOWN_PARSE_GAP_RESOURCES].filter((k) => !classified.has(k));
-    expect(stale).toEqual([]);
+  it('does not generate or surface excluded resources', () => {
+    const excluded = Object.entries(coverage.resources)
+      .filter(([, record]) => record.disposition === 'excluded')
+      .map(([resourceKey]) => resourceKey);
+    const leaked = excluded.filter(
+      (resourceKey) => GENERATED_RESOURCE_TYPES[resourceKey] || RESOURCE_TYPES[resourceKey],
+    );
+    expect(leaked).toEqual([]);
   });
 });

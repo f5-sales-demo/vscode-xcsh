@@ -123,7 +123,10 @@ export function getAddonSchemaInfo(addon: { name: string; displayName: string })
       continue; // resource not in the registry — drop it rather than show a non-existent capability
     }
     resources.push({ key, displayName: info.displayName });
-    bases.add(`/api/${info.apiBase ?? 'config'}${info.serviceSegment ? `/${info.serviceSegment}` : ''}`);
+    const explicitBase = info.customListPath?.split('/namespaces/')[0];
+    bases.add(
+      explicitBase ?? `/api/${info.apiBase ?? 'config'}${info.serviceSegment ? `/${info.serviceSegment}` : ''}`,
+    );
   }
 
   return { resources, apiBases: [...bases].sort(), cloud: rule.cloud };

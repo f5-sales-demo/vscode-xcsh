@@ -42,8 +42,138 @@ export interface NamespaceProfile {
  * `resources[resourceKey]`, falling back to `default` when not explicitly listed.
  */
 export interface NamespaceProfilesMap {
+  version: string;
   default: NamespaceProfile;
   resources: Record<string, NamespaceProfile>;
+}
+
+export interface GeneratedResourceCoverage {
+  disposition: 'generated';
+  path: string;
+  operationId: string;
+}
+
+export interface ManualResourceCoverage {
+  disposition: 'manual';
+  path: string;
+}
+
+export interface ExcludedResourceCoverage {
+  disposition: 'excluded';
+  reason: 'no_canonical_create';
+}
+
+export type ResourceCoverageRecord = GeneratedResourceCoverage | ManualResourceCoverage | ExcludedResourceCoverage;
+
+/** Versioned upstream contract controlling which resources may be generated. */
+export interface ResourceCoverageMap {
+  version: string;
+  contractVersion: 1;
+  resources: Record<string, ResourceCoverageRecord>;
+}
+
+function isCanonicalCollectionPath(apiPath: string, resourceKey: string): boolean {
+  const segments = apiPath.split('/').filter(Boolean);
+  if (segments.length < 3 || segments[0] !== 'api') {
+    return false;
+  }
+  const namespacesIndex = segments.lastIndexOf('namespaces');
+  if (namespacesIndex < 0) {
+    return false;
+  }
+  if (namespacesIndex === segments.length - 1) {
+    return resourceKey === 'namespace';
+  }
+  return (
+    segments.length === namespacesIndex + 3 &&
+    Boolean(segments[namespacesIndex + 1]) &&
+    Boolean(segments[namespacesIndex + 2]) &&
+    !segments[namespacesIndex + 2]?.startsWith('{')
+  );
+}
+
+/** Load and strictly validate resource_coverage.json. */
+export function loadResourceCoverage(jsonPath: string, expectedVersion?: string): ResourceCoverageMap {
+  if (!fs.existsSync(jsonPath)) {
+    throw new Error(`Required resource_coverage.json not found at: ${jsonPath}`);
+  }
+
+  let raw: {
+    version?: unknown;
+    contract_version?: unknown;
+    resources?: unknown;
+  };
+  try {
+    raw = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) as typeof raw;
+  } catch (error) {
+    throw new Error(`Failed to parse resource_coverage.json at ${jsonPath}`, { cause: error });
+  }
+
+  if (typeof raw.version !== 'string' || raw.version.length === 0) {
+    throw new Error(`resource_coverage.json at ${jsonPath} has no valid version`);
+  }
+  if (expectedVersion && raw.version !== expectedVersion) {
+    throw new Error(`resource_coverage.json version ${raw.version} does not match ${expectedVersion}`);
+  }
+  if (raw.contract_version !== 1) {
+    throw new Error(`resource_coverage.json at ${jsonPath} has unsupported contract_version`);
+  }
+  if (!raw.resources || typeof raw.resources !== 'object' || Array.isArray(raw.resources)) {
+    throw new Error(`resource_coverage.json at ${jsonPath} has no valid resources object`);
+  }
+
+  const resources: Record<string, ResourceCoverageRecord> = {};
+  const coveragePaths = new Set<string>();
+  for (const resourceKey of Object.keys(raw.resources).sort()) {
+    if (!/^[a-zA-Z0-9_]+$/.test(resourceKey)) {
+      throw new Error(`resource_coverage.json has invalid resource key ${resourceKey}`);
+    }
+    const value = (raw.resources as Record<string, unknown>)[resourceKey];
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error(`resource_coverage.json resource ${resourceKey} must be an object`);
+    }
+    const entry = value as Record<string, unknown>;
+    if (entry.disposition === 'generated') {
+      if (
+        typeof entry.path !== 'string' ||
+        !isCanonicalCollectionPath(entry.path, resourceKey) ||
+        typeof entry.operation_id !== 'string'
+      ) {
+        throw new Error(`generated resource ${resourceKey} must declare path and operation_id`);
+      }
+      const identity = entry.operation_id.match(CANONICAL_CREATE_OPERATION)?.[1]?.split('.').at(-1);
+      if (identity !== resourceKey) {
+        throw new Error(`generated resource ${resourceKey} has mismatched operation identity`);
+      }
+      if (coveragePaths.has(entry.path)) {
+        throw new Error(`coverage path ${entry.path} is assigned more than once`);
+      }
+      coveragePaths.add(entry.path);
+      resources[resourceKey] = {
+        disposition: 'generated',
+        path: entry.path,
+        operationId: entry.operation_id,
+      };
+    } else if (entry.disposition === 'manual') {
+      if (typeof entry.path !== 'string' || !isCanonicalCollectionPath(entry.path, resourceKey)) {
+        throw new Error(`manual resource ${resourceKey} must declare an API path`);
+      }
+      if (coveragePaths.has(entry.path)) {
+        throw new Error(`coverage path ${entry.path} is assigned more than once`);
+      }
+      coveragePaths.add(entry.path);
+      resources[resourceKey] = { disposition: 'manual', path: entry.path };
+    } else if (entry.disposition === 'excluded') {
+      if (entry.reason !== 'no_canonical_create') {
+        throw new Error(`excluded resource ${resourceKey} has invalid exclusion reason`);
+      }
+      resources[resourceKey] = { disposition: 'excluded', reason: 'no_canonical_create' };
+    } else {
+      throw new Error(`resource ${resourceKey} has invalid coverage disposition`);
+    }
+  }
+
+  return { version: raw.version, contractVersion: 1, resources };
 }
 
 /**
@@ -56,7 +186,11 @@ interface RawNamespaceProfile {
     alternatives?: Array<{ namespace_type?: string; use_case?: string }>;
     rationale?: string;
   };
-  classification?: { category?: string; multi_tenant_pattern?: string; multiTenantPattern?: string };
+  classification?: {
+    category?: string;
+    multi_tenant_pattern?: string;
+    multiTenantPattern?: string;
+  };
 }
 
 const VALID_NAMESPACE_TYPES: ReadonlySet<NamespaceType> = new Set<NamespaceType>([
@@ -95,7 +229,10 @@ export function normalizeProfile(raw: RawNamespaceProfile): NamespaceProfile {
       primary: primary && VALID_NAMESPACE_TYPES.has(primary as NamespaceType) ? (primary as NamespaceType) : 'custom',
       alternatives: raw.recommendation?.alternatives
         ?.filter((a): a is { namespace_type: string; use_case?: string } => typeof a?.namespace_type === 'string')
-        .map((a) => ({ namespace_type: a.namespace_type as NamespaceType, use_case: a.use_case ?? '' })),
+        .map((a) => ({
+          namespace_type: a.namespace_type as NamespaceType,
+          use_case: a.use_case ?? '',
+        })),
       rationale: raw.recommendation?.rationale ?? '',
     },
     classification: {
@@ -109,14 +246,19 @@ export function normalizeProfile(raw: RawNamespaceProfile): NamespaceProfile {
  * Load the authoritative namespace_profiles.json map. Throws if the file is
  * missing, unparseable, or lacks a `default` profile — there is no fallback.
  */
-export function loadNamespaceProfiles(jsonPath: string): NamespaceProfilesMap {
+export function loadNamespaceProfiles(jsonPath: string, expectedVersion?: string): NamespaceProfilesMap {
   if (!fs.existsSync(jsonPath)) {
     throw new Error(`Required namespace_profiles.json not found at: ${jsonPath}`);
   }
 
-  let raw: { default?: RawNamespaceProfile; resources?: Record<string, RawNamespaceProfile> };
+  let raw: {
+    version?: string;
+    default?: RawNamespaceProfile;
+    resources?: Record<string, RawNamespaceProfile>;
+  };
   try {
     raw = JSON.parse(fs.readFileSync(jsonPath, 'utf-8')) as {
+      version?: string;
       default?: RawNamespaceProfile;
       resources?: Record<string, RawNamespaceProfile>;
     };
@@ -127,13 +269,19 @@ export function loadNamespaceProfiles(jsonPath: string): NamespaceProfilesMap {
   if (!raw.default) {
     throw new Error(`namespace_profiles.json at ${jsonPath} is missing the required "default" profile`);
   }
+  if (typeof raw.version !== 'string' || raw.version.length === 0) {
+    throw new Error(`namespace_profiles.json at ${jsonPath} is missing the required "version"`);
+  }
+  if (expectedVersion && raw.version !== expectedVersion) {
+    throw new Error(`namespace_profiles.json version ${raw.version} does not match ${expectedVersion}`);
+  }
 
   const resources: Record<string, NamespaceProfile> = {};
   for (const [key, profile] of Object.entries(raw.resources ?? {})) {
     resources[key] = normalizeProfile(profile);
   }
 
-  return { default: normalizeProfile(raw.default), resources };
+  return { version: raw.version, default: normalizeProfile(raw.default), resources };
 }
 
 /**
@@ -264,6 +412,42 @@ export interface ParsedSpecInfo {
   bestPractices?: BestPracticesInfo;
   /** Guided workflows (from x-f5xc-guided-workflows in spec info) */
   guidedWorkflows?: unknown[];
+}
+
+const CANONICAL_CREATE_OPERATION = /^ves\.io\.schema\.([a-zA-Z0-9_.]+)\.API\.Create$/;
+
+/** Return the canonical resource key only when identity and route semantics agree. */
+function canonicalCreateResourceKey(apiPath: string, pathItem: PathItem): string | undefined {
+  const operationId = pathItem.post?.operationId;
+  const match = operationId?.match(CANONICAL_CREATE_OPERATION);
+  if (!match?.[1]) {
+    return undefined;
+  }
+
+  const resourceKey = match[1].split('.').at(-1);
+  if (!resourceKey) {
+    return undefined;
+  }
+  const segments = apiPath.split('/').filter(Boolean);
+  if (segments[0] !== 'api') {
+    return undefined;
+  }
+  const namespacesIndex = segments.lastIndexOf('namespaces');
+  if (namespacesIndex < 0) {
+    return undefined;
+  }
+  if (namespacesIndex === segments.length - 1) {
+    return resourceKey === 'namespace' ? resourceKey : undefined;
+  }
+  if (segments.length !== namespacesIndex + 3) {
+    return undefined;
+  }
+  const namespaceSegment = segments[namespacesIndex + 1];
+  const collectionSegment = segments[namespacesIndex + 2];
+  if (!namespaceSegment || !collectionSegment || collectionSegment.startsWith('{')) {
+    return undefined;
+  }
+  return resourceKey;
 }
 
 /**
@@ -499,31 +683,10 @@ interface Operation {
 // ============================================================================
 
 /**
- * Derive resource key from API path suffix.
- * Example: "http_loadbalancers" -> "http_loadbalancer"
- * Example: "app_firewalls" -> "app_firewall"
- */
-export function deriveResourceKeyFromApiPath(apiPath: string): string {
-  // Remove trailing 's' for singular form
-  if (apiPath.endsWith('ies')) {
-    // policies -> policy (F5 XC uses non-standard plural, so this may not apply)
-    return `${apiPath.slice(0, -3)}y`;
-  }
-  if (apiPath.endsWith('ses')) {
-    // classes -> class
-    return apiPath.slice(0, -2);
-  }
-  if (apiPath.endsWith('s')) {
-    return apiPath.slice(0, -1);
-  }
-  return apiPath;
-}
-
-/**
  * Derive schema ID from API path and operation ID.
  * Example: operationId "ves.io.schema.app_firewall.API.Create" -> "ves.io.schema.app_firewall"
  */
-function deriveSchemaIdFromPath(apiPath: string, pathItem: PathItem): string {
+function deriveSchemaIdFromPath(resourceKey: string, pathItem: PathItem): string {
   // Try to get operationId from any method
   for (const method of ['post', 'get', 'put', 'delete'] as const) {
     const operation = pathItem[method];
@@ -536,8 +699,7 @@ function deriveSchemaIdFromPath(apiPath: string, pathItem: PathItem): string {
       }
     }
   }
-  // Fallback: construct from apiPath
-  const resourceKey = deriveResourceKeyFromApiPath(apiPath);
+  // Contract already supplied the canonical resource identity.
   return `ves.io.schema.${resourceKey}`;
 }
 
@@ -1342,7 +1504,7 @@ export function buildResourceViewLayout(spec: OpenAPISpec, resourceKey: string):
  * Parse a domain file and extract all resource types.
  * Domain files contain multiple resource types grouped by domain.
  */
-export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
+export function parseDomainFile(filePath: string, coverage: ResourceCoverageMap): ParsedSpecInfo[] {
   const filename = path.basename(filePath);
   const results: ParsedSpecInfo[] = [];
 
@@ -1369,37 +1531,56 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     return [];
   }
 
-  // Pattern for list endpoints (plural resource path)
-  // Matches: /api/config/namespaces/{metadata.namespace}/http_loadbalancers
-  // Also matches extended paths: /api/config/dns/namespaces/{ns}/dns_zones
-  // Character classes include digits so versioned resources (e.g. v1_dns_monitors,
-  // securemesh_site_v2s) parse correctly instead of being silently skipped.
-  const listEndpointPattern =
-    /^\/api\/([a-z0-9_-]+)(?:\/([a-z0-9_]+))?\/namespaces\/(?:\{[^}]+\}|system|shared)\/([a-z0-9_]+)$/;
+  const generatedByPath = new Map<string, [string, GeneratedResourceCoverage]>();
+  for (const [resourceKey, record] of Object.entries(coverage.resources)) {
+    if (record.disposition === 'generated') {
+      generatedByPath.set(record.path, [resourceKey, record]);
+    }
+  }
 
   const seen = new Set<string>();
 
   for (const [pathKey, pathItem] of Object.entries(paths)) {
-    const match = pathKey.match(listEndpointPattern);
-    if (!match) {
-      continue;
+    const canonicalResourceKey = canonicalCreateResourceKey(pathKey, pathItem);
+    if (canonicalResourceKey) {
+      const record = coverage.resources[canonicalResourceKey];
+      if (record?.disposition !== 'generated') {
+        throw new Error(`unclassified canonical resource ${canonicalResourceKey} at ${pathKey}`);
+      }
+      if (record.path !== pathKey) {
+        throw new Error(
+          `stale coverage path for canonical resource ${canonicalResourceKey}: expected ${record.path}, found ${pathKey}`,
+        );
+      }
+      if (record.operationId !== pathItem.post?.operationId) {
+        throw new Error(
+          `resource coverage operation identity mismatch for ${canonicalResourceKey}: ` +
+            `expected ${record.operationId}, found ${pathItem.post?.operationId ?? 'missing'}`,
+        );
+      }
     }
 
-    const apiBase = match[1];
-    const serviceSegment = match[2]; // May be undefined
-    const apiPath = match[3];
-
-    // Skip if required parts are missing
-    if (!apiBase || !apiPath) {
+    const generated = generatedByPath.get(pathKey);
+    if (!generated) {
       continue;
     }
-
-    // Skip if this is an item endpoint (ends with /{name})
-    if (pathKey.endsWith('}')) {
-      continue;
+    const [resourceKey, coverageRecord] = generated;
+    if (pathItem.post?.operationId !== coverageRecord.operationId) {
+      throw new Error(
+        `resource coverage operation identity mismatch for ${resourceKey}: ` +
+          `expected ${coverageRecord.operationId}, found ${pathItem.post?.operationId ?? 'missing'}`,
+      );
     }
 
-    const resourceKey = deriveResourceKeyFromApiPath(apiPath);
+    const pathSegments = pathKey.split('/').filter(Boolean);
+    const namespacesIndex = pathSegments.lastIndexOf('namespaces');
+    const apiBase = pathSegments[1];
+    const apiPath = pathSegments.at(-1);
+    const serviceParts = namespacesIndex > 2 ? pathSegments.slice(2, namespacesIndex) : [];
+    const serviceSegment = serviceParts.length > 0 ? serviceParts.join('/') : undefined;
+    if (!apiBase || !apiPath || namespacesIndex < 0) {
+      throw new Error(`generated contract path for ${resourceKey} is malformed: ${pathKey}`);
+    }
 
     // Handle duplicates: prefer entry with richer field metadata
     if (seen.has(resourceKey)) {
@@ -1448,7 +1629,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
     const fullApiPath = pathKey;
 
     // Derive schema ID
-    const schemaId = deriveSchemaIdFromPath(apiPath, pathItem);
+    const schemaId = deriveSchemaIdFromPath(resourceKey, pathItem);
 
     // Extract operation metadata from list endpoint (GET=list, POST=create)
     // and item endpoint (GET=get, PUT=update, DELETE=delete)
@@ -1498,7 +1679,7 @@ export function parseDomainFile(filePath: string): ParsedSpecInfo[] {
       fullApiPath,
       schemaFile: filename,
       schemaId,
-      namespaceScoped: true,
+      namespaceScoped: resourceKey !== 'namespace',
       domain,
     };
 
@@ -1602,25 +1783,65 @@ export function loadValidationData(validationPath: string): ValidationData | nul
  * Parse all domain files in a directory.
  * Domain files contain merged specs grouped by F5 XC domain (waf, virtual, dns, etc.)
  */
-export function parseAllDomainFiles(domainDir: string): ParsedSpecInfo[] {
+export function parseAllDomainFiles(domainDir: string, coverage?: ResourceCoverageMap): ParsedSpecInfo[] {
   if (!fs.existsSync(domainDir)) {
     console.error(`Domain directory not found: ${domainDir}`);
     return [];
   }
 
-  // Sort domain files alphabetically for deterministic processing order
+  const resolvedCoverage = coverage ?? loadResourceCoverage(path.join(domainDir, 'resource_coverage.json'));
+
+  // Sort domain files alphabetically for deterministic processing order.
+  // The three metadata contracts are not OpenAPI domain documents.
   const domainFiles = fs
     .readdirSync(domainDir)
-    .filter((f) => f.endsWith('.json') && f !== 'namespace_profiles.json' && f !== 'validation.json')
+    .filter(
+      (f) =>
+        f.endsWith('.json') && !['namespace_profiles.json', 'resource_coverage.json', 'validation.json'].includes(f),
+    )
     .sort();
   console.log(`Found ${domainFiles.length} domain files`);
+
+  const unresolvedManualPaths = new Map(
+    Object.entries(resolvedCoverage.resources)
+      .filter((entry): entry is [string, ManualResourceCoverage] => entry[1].disposition === 'manual')
+      .map(([resourceKey, record]) => [record.path, resourceKey]),
+  );
+  const manualPathsWithoutGet = new Set<string>();
+  for (const filename of domainFiles) {
+    let document: OpenAPISpec;
+    try {
+      document = JSON.parse(fs.readFileSync(path.join(domainDir, filename), 'utf-8')) as OpenAPISpec;
+    } catch {
+      continue;
+    }
+    for (const [apiPath] of unresolvedManualPaths) {
+      const pathItem = document.paths?.[apiPath];
+      if (pathItem?.get) {
+        unresolvedManualPaths.delete(apiPath);
+      } else if (pathItem) {
+        manualPathsWithoutGet.add(apiPath);
+      }
+    }
+  }
+  if (unresolvedManualPaths.size > 0) {
+    const withoutGet = [...unresolvedManualPaths]
+      .filter(([apiPath]) => manualPathsWithoutGet.has(apiPath))
+      .map(([apiPath, resourceKey]) => `${resourceKey} (${apiPath})`)
+      .sort();
+    if (withoutGet.length > 0) {
+      throw new Error(`manual coverage paths have no GET list operation: ${withoutGet.join(', ')}`);
+    }
+    const missing = [...unresolvedManualPaths].map(([apiPath, resourceKey]) => `${resourceKey} (${apiPath})`).sort();
+    throw new Error(`stale manual coverage paths: ${missing.join(', ')}`);
+  }
 
   const results: ParsedSpecInfo[] = [];
   const seen = new Set<string>();
 
   for (const filename of domainFiles) {
     const filePath = path.join(domainDir, filename);
-    const domainResults = parseDomainFile(filePath);
+    const domainResults = parseDomainFile(filePath, resolvedCoverage);
 
     for (const info of domainResults) {
       if (!seen.has(info.resourceKey)) {
@@ -1641,6 +1862,14 @@ export function parseAllDomainFiles(domainDir: string): ParsedSpecInfo[] {
         }
       }
     }
+  }
+
+  const generatedKeys = Object.entries(resolvedCoverage.resources)
+    .filter(([, record]) => record.disposition === 'generated')
+    .map(([resourceKey]) => resourceKey);
+  const missing = generatedKeys.filter((resourceKey) => !seen.has(resourceKey)).sort();
+  if (missing.length > 0) {
+    throw new Error(`generated contract resources were not parsed: ${missing.join(', ')}`);
   }
 
   console.log(`Successfully parsed ${results.length} unique resource types from domain files`);

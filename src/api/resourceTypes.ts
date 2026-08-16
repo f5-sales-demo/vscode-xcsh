@@ -33,6 +33,7 @@ import {
 } from '../generated/constants';
 import { getDomainTierRequirement, getLocalCategoryForDomain, isPreviewDomain } from '../generated/domainCategories';
 import { resolveNamespaceProfileForKey } from '../generated/namespaceProfiles';
+import { MANUAL_RESOURCE_PATHS } from './manualResourcePaths';
 
 /**
  * Namespace type classification for F5 XC namespaces.
@@ -945,6 +946,7 @@ function mergeResourceType(
   // manually-defined type (no generated entry) resolves from the authoritative
   // baked map by key. Overrides may not hardcode a profile.
   const namespaceProfile = generated?.namespaceProfile ?? resolveNamespaceProfileForKey(key);
+  const manualListPath = MANUAL_RESOURCE_PATHS[key as keyof typeof MANUAL_RESOURCE_PATHS];
 
   // Start with defaults
   const result: ResourceTypeInfo = {
@@ -961,7 +963,7 @@ function mergeResourceType(
     apiBase: override.apiBase || generated?.apiBase || 'config',
     // Include service segment for extended API paths (e.g., /api/config/dns/...)
     serviceSegment: (generated as { serviceSegment?: string } | undefined)?.serviceSegment,
-    customListPath: override.customListPath,
+    customListPath: override.customListPath ?? manualListPath,
     customGetPath: override.customGetPath,
     listMethod: override.listMethod,
     tenantLevel: override.tenantLevel,
