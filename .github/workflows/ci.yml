@@ -711,7 +711,8 @@ jobs:
             fi
           else
             git tag -a "$TAG" -m "Release $TAG"
-            git -c http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}" push origin "$TAG"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "$TAG"
             echo "🏷️ Created tag: $TAG"
           fi
           echo "RELEASE_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -780,7 +781,8 @@ jobs:
             npm run version:update
             git add package.json
             git commit -m "chore(release): v${VERSION}"
-            git -c http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}" push origin "$BRANCH"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "$BRANCH"
           fi
 
           ISSUE_URL=$(gh issue create \
@@ -1000,6 +1002,8 @@ jobs:
           VERIFIED_TARGET_COMMIT: ${{ needs.validate-generation.outputs.target_commit }}
         run: |
           set -euo pipefail
+          # Populated by the job environment above; ShellCheck cannot resolve workflow expressions.
+          # shellcheck disable=SC2153
           BRANCH="spec-delivery/${RELEASE_TAG#v}-${DELIVERY_ID}"
 
           if [ "$TARGET_COMMIT" != "$VERIFIED_TARGET_COMMIT" ]; then
@@ -1105,7 +1109,8 @@ jobs:
             git checkout -b "$BRANCH"
             git add tools/spec-release.json tools/spec-delivery-pending.json
             git commit -m "fix(specs): apply enriched specs ${RELEASE_TAG}"
-            git -c http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}" push origin "$BRANCH"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "$BRANCH"
           fi
 
           if [ "$PR_STATE" = "CLOSED" ]; then
@@ -1360,7 +1365,8 @@ jobs:
               tools/spec-delivery-pending.json \
               tools/spec-publications.json
             git commit -m "chore(release): record spec delivery ${RELEASE_TAG}"
-            git -c http.extraheader="AUTHORIZATION: bearer ${GH_TOKEN}" push origin "$BRANCH"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "$BRANCH"
           fi
 
           if [ "$PR_STATE" = "CLOSED" ]; then
