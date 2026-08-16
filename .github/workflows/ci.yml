@@ -8,6 +8,17 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_recovery:
+        description: Recover one verified main release after an external release-policy repair
+        required: false
+        type: boolean
+        default: false
+      expected_main_sha:
+        description: Exact lowercase main SHA authorized for release recovery
+        required: false
+        type: string
+        default: ""
   repository_dispatch:
     types: [theme-updated, enriched-specs-updated]
 
@@ -579,22 +590,44 @@ jobs:
         env:
           BEFORE: ${{ github.event.before }}
           HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          RELEASE_RECOVERY: ${{ inputs.release_recovery }}
+          EXPECTED_MAIN_SHA: ${{ inputs.expected_main_sha }}
         run: |
           set -euo pipefail
-          if [ "$GITHUB_EVENT_NAME" != push ]; then
+          if [ "$GITHUB_EVENT_NAME" = push ]; then
+            paths=$(mktemp)
+            if [ "$BEFORE" = '0000000000000000000000000000000000000000' ]; then
+              git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > "$paths"
+            else
+              git diff --name-only "$BEFORE" "$GITHUB_SHA" > "$paths"
+            fi
+            bash scripts/release-change-policy.sh \
+              --paths-file "$paths" \
+              --head-commit-message "$HEAD_COMMIT_MESSAGE" \
+              --github-output
+            exit 0
+          fi
+
+          # A manual run is never release-eligible unless the operator requests
+          # recovery for the exact current main head. The release job's protected
+          # environment is a second, independent approval gate for this route.
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] || [ "$RELEASE_RECOVERY" != true ]; then
             echo 'eligible=false' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          paths=$(mktemp)
-          if [ "$BEFORE" = '0000000000000000000000000000000000000000' ]; then
-            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > "$paths"
-          else
-            git diff --name-only "$BEFORE" "$GITHUB_SHA" > "$paths"
+
+          if ! [[ "$EXPECTED_MAIN_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo '::error::Release recovery requires a full lowercase expected_main_sha' >&2
+            exit 1
           fi
-          bash scripts/release-change-policy.sh \
-            --paths-file "$paths" \
-            --head-commit-message "$HEAD_COMMIT_MESSAGE" \
-            --github-output
+          CHECKED_OUT_SHA=$(git rev-parse HEAD)
+          git fetch --no-tags origin main
+          CURRENT_MAIN_SHA=$(git rev-parse origin/main)
+          if [ "$EXPECTED_MAIN_SHA" != "$CHECKED_OUT_SHA" ] || [ "$EXPECTED_MAIN_SHA" != "$CURRENT_MAIN_SHA" ]; then
+            echo '::error::Release recovery expected_main_sha must equal both checkout and current origin/main' >&2
+            exit 1
+          fi
+          echo 'eligible=true' >> "$GITHUB_OUTPUT"
 
   # Create release after successful build (main branch only)
   release:
@@ -604,9 +637,11 @@ jobs:
     needs: [spec-delivery, test, build, security, release-eligibility]
     if: >-
       github.ref == 'refs/heads/main' &&
-      github.event_name == 'push' &&
       needs.release-eligibility.outputs.eligible == 'true' &&
-      !contains(github.event.head_commit.message, 'chore(release)')
+      ((github.event_name == 'push' &&
+        !contains(github.event.head_commit.message, 'chore(release)')) ||
+       (github.event_name == 'workflow_dispatch' &&
+        inputs.release_recovery == true))
     outputs:
       marketplace_sha256: ${{ steps.channels.outputs.marketplace_sha256 }}
       marketplace_version: ${{ steps.channels.outputs.marketplace_version }}
@@ -874,9 +909,17 @@ jobs:
           set -euo pipefail
           VSIX_NAME=$(basename "$VSIX_FILE")
           VSIX_SHA256=$(shasum -a 256 "$VSIX_FILE" | awk '{print $1}')
-          REMOTE_DIGEST=$(gh api \
-            "repos/${GITHUB_REPOSITORY}/releases/tags/${PUBLICATION_TAG}" | \
-            jq -r --arg name "$VSIX_NAME" '.assets[] | select(.name == $name) | .digest')
+          RELEASE=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${PUBLICATION_TAG}")
+          if [ "$(jq -r '.immutable' <<<"$RELEASE")" != true ]; then
+            echo '::error::GitHub Release is not immutable; marketplace publication is forbidden' >&2
+            exit 1
+          fi
+          if ! jq -e --arg name "$VSIX_NAME" \
+            '.assets | length == 1 and .[0].name == $name' <<<"$RELEASE" >/dev/null; then
+            echo '::error::GitHub Release must contain exactly the locally built VSIX asset' >&2
+            exit 1
+          fi
+          REMOTE_DIGEST=$(jq -r --arg name "$VSIX_NAME" '.assets[] | select(.name == $name) | .digest' <<<"$RELEASE")
           if [ "$REMOTE_DIGEST" != "sha256:${VSIX_SHA256}" ]; then
             echo "::error::Published VSIX digest does not match the locally built artifact"
             exit 1
