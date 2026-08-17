@@ -1,4 +1,16 @@
 {
-  "publications": {},
+  "publications": {
+    "4365baedb6569423277a419da3b91a63f7bd6923541fcb0c118fb1e770e43679": {
+      "bundle_sha256": "a5d25c0b95121640817eb9313bf7578302efcd9f88cd409e93af1afdd1bf40f3",
+      "marketplace_sha256": "45cf62597b4dddcae6cb7c6ad4bc3a9314399635a1606c294c7486ad0805dec3",
+      "marketplace_version": "2.2608.16052757",
+      "open_vsx_sha256": "45cf62597b4dddcae6cb7c6ad4bc3a9314399635a1606c294c7486ad0805dec3",
+      "open_vsx_version": "2.2608.16052757",
+      "publication_epoch": "1786858077",
+      "publication_tag": "v2.1.220-260816052757",
+      "vsix_name": "xcsh-2.2608.16052757.vsix",
+      "vsix_sha256": "45cf62597b4dddcae6cb7c6ad4bc3a9314399635a1606c294c7486ad0805dec3"
+    }
+  },
   "version": 1
 }
