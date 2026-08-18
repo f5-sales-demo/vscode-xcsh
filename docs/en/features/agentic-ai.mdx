@@ -1,0 +1,90 @@
+---
+title: Agentic AI and Copilot Integration
+description: Collaborate with the embedded xcsh agent, Copilot Chat Participant, Language Model Tools, and Chat Skills.
+sidebar:
+  order: 7
+---
+
+The **F5 Distributed Cloud Tools** extension embeds an agentic artificial intelligence (AI) engine (`xcsh`) that integrates directly with Visual Studio Code Chat and the GitHub Copilot ecosystem. The AI assistant can author manifests, troubleshoot connectivity, inspect logs, and navigate the F5 Distributed Cloud API.
+
+## Embedded Agent Architecture
+
+The extension manages a dedicated `xcsh` agent subprocess communicating via a bi-directional Remote Procedure Call (RPC) bridge over standard input/output (`stdio`):
+
+```text
++-------------------------------------------------------------------------+
+|                       Visual Studio Code Editor                         |
+|                                                                         |
+|  +---------------------------+       +-------------------------------+  |
+|  |   @xcsh Chat Participant  |       |     Language Model Tools      |  |
+|  |   (/status, /context)     |       | (readFile, getDiagnostics...) |  |
+|  +-------------+-------------+       +---------------+---------------+  |
+|                |                                     |                  |
+|                +------------------+------------------+                  |
+|                                   |                                     |
+|                                   v                                     |
+|  +-------------------------------------------------------------------+  |
+|  |                     Xcsh Process Manager                          |  |
+|  |            Bi-directional JSON-RPC Bridge (stdio)                 |  |
+|  +--------------------------------+----------------------------------+  |
++-----------------------------------|-------------------------------------+
+                                    v
++-------------------------------------------------------------------------+
+|                  Embedded xcsh Engine / Chat Skills                     |
+|  xcsh-resource-management | xcsh-troubleshooting | xcsh-config-authoring |
++-------------------------------------------------------------------------+
+```
+
+## `@xcsh` Copilot Chat Participant
+
+You can invoke the assistant directly inside the Visual Studio Code Chat view (`Ctrl+Alt+I` / `Cmd+Alt+I`):
+
+1. Open the Chat view in Visual Studio Code.
+2. Enter `@xcsh` followed by your request or prompt.
+3. The `@xcsh` participant resolves active context, queries the schema engine, and responds with actionable configurations or diagnostic summaries.
+
+### Slash Commands
+
+The chat participant provides specialized slash commands for rapid queries:
+
+| Command | Description | Example Prompt |
+| :--- | :--- | :--- |
+| `/status` | Evaluates platform status and active connection health. | `@xcsh /status` |
+| `/context` | Summarizes active profile, target tenant, namespace, and credentials. | `@xcsh /context` |
+| `/resources` | Queries and lists deployed resources in the active namespace. | `@xcsh /resources list load balancers` |
+
+### Semantic Domain Disambiguation
+
+When asking open-ended questions, the participant categorizes requests into specialized domains:
+
+- **Networking**: Routing rules, DNS load balancing, TCP/UDP proxies, and BGP peering.
+- **Security**: App Firewalls (WAF), Service Policies, Bot Defense, and Rate Limiting.
+- **Infrastructure**: Virtual Sites, Site Registrations, Nodes, and Network Connectors.
+
+## Language Model Tools
+
+The extension contributes tools to the Visual Studio Code Language Model API, enabling AI models to autonomously inspect and navigate your workspace:
+
+- **`xcsh-readFile`**: Reads the contents of a file in the workspace.
+- **`xcsh-getSelection`**: Retrieves currently highlighted text in the active editor.
+- **`xcsh-getDiagnostics`**: Fetches compiler and schema error diagnostics for open manifests.
+- **`xcsh-openFile`**: Opens a specified file in the editor at an exact line number.
+
+## Chat Skills
+
+The extension equips the AI assistant with curated domain knowledge skills:
+
+1. **`xcsh-resource-management`**: Guides creation, modification, and deletion of HTTP load balancers, origin pools, health checks, and security policies.
+2. **`xcsh-troubleshooting`**: Guides diagnostic workflows for site degradation, WAF false-positive blocks, origin pool timeouts, and latency spikes.
+3. **`xcsh-configuration-authoring`**: Guides JSON/YAML schema construction, field relationships, and `oneOf` mutual exclusivity resolution.
+
+## Agent Panel and Terminal Modes
+
+You can interact with the agent through a dedicated panel or interactive terminal:
+
+- **Webview Panel**: Open the agent panel via the Secondary Sidebar (Visual Studio Code version 1.106 or later) or Activity Bar using `xcsh.xcsh.openPanel`.
+- **Interactive Terminal**: Launch an integrated `xcsh` shell terminal using `xcsh.xcsh.openTerminal`.
+
+## Live Context Injection
+
+When viewing a resource in the **Explorer** or **Describe** views, select **Add to xcsh chat** (`xcsh.addToChat`) to automatically attach the full live JSON configuration into your chat prompt as context.

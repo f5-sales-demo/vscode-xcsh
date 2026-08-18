@@ -1,13 +1,79 @@
 ---
-title: F5 Distributed Cloud Tools
-description: VS Code extension for managing F5 Distributed Cloud resources.
-hero:
-  tagline: Manage F5 XC resources directly from VS Code.
-  image:
-    html: '<img src="/vscode-xcsh/assets/screenshot-welcome.png" alt="F5 Distributed Cloud Tools" style="max-width:400px;width:100%;height:auto;" />'
-sidebar:
-  hidden: true
-  order: 0
+title: F5 Distributed Cloud Tools for Visual Studio Code
+description: Native VS Code extension for authoring, managing, and observing F5 Distributed Cloud infrastructure with embedded agentic AI assistance.
 ---
 
-F5 Distributed Cloud Tools is a VS Code extension that enables you to browse, create, edit, and delete F5 XC resources directly from your editor. It provides full CRUD operations, JSON IntelliSense with schema validation, observability tools, and cloud status monitoring for 236+ resource types across 25 API domains.
+The **F5 Distributed Cloud Tools** (`vscode-xcsh`) extension integrates F5 Distributed Cloud (XC)
+platform capabilities directly into Visual Studio Code. The extension provides a unified control plane
+to author declarative configuration manifests, manage live cloud resources through a virtual file system,
+inspect telemetry streams, and collaborate with an embedded agentic artificial intelligence (AI) assistant.
+
+## Architecture Overview
+
+The extension bridges your local developer environment and the F5 Distributed Cloud APIs through three architectural subsystems:
+
+```text
++-------------------------------------------------------------------------+
+|                       Visual Studio Code Workspace                      |
+|                                                                         |
+|  +--------------------+  +--------------------+  +-------------------+  |
+|  |  Resource Explorer |  | Virtual FileSystem |  | Schema Engine &   |  |
+|  |   & Cloud Status   |  |     (xcsh://)      |  | Conflict Analyzer |  |
+|  +---------+----------+  +---------+----------+  +---------+---------+  |
+|            |                       |                       |            |
+|  +---------+-----------------------+-----------------------+---------+  |
+|  |                       Context Manager                             |  |
+|  |       3-Tier Resolution: Environment -> Workspace -> Global       |  |
+|  +---------------------------------+---------------------------------+  |
+|                                    |                                    |
+|  +---------------------------------+---------------------------------+  |
+|  |                     Agent Process Manager                         |  |
+|  |     Bi-directional JSON-RPC Bridge to embedded xcsh engine        |  |
+|  +---------------------------------+---------------------------------+  |
++------------------------------------|------------------------------------+
+                                     |
+               HTTPS (API Tokens / PKCS#12 Certificates)
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                     F5 Distributed Cloud Platform                       |
+|   Configuration API  |  Data Plane Telemetry  |  Global Status API      |
++-------------------------------------------------------------------------+
+```
+
+1. **Context and Credential Manager**: Resolves target tenants and credentials using a 3-tier hierarchy (`env` variables, workspace-local configurations in `.xcsh/contexts/`, and secure user storage in VS Code `SecretStorage`).
+2. **Virtual File System (`xcsh://`)**: Exposes remote F5 Distributed Cloud resources as local JSON documents. Saving buffer changes immediately serializes and applies the resource definition to the target tenant API.
+3. **OpenAPI Schema and Diagnostic Engine**: Pre-warms resource schemas derived from F5 Distributed Cloud OpenAPI specifications, providing real-time autocompletion, field requirement validation, and mutual exclusivity conflict diagnostics.
+4. **Embedded Agent Subprocess**: Operates an integrated `xcsh` background process communicating via a bi-directional Remote Procedure Call (RPC) bridge over standard input/output (`stdio`), powering the `@xcsh` Copilot Chat Participant and Language Model Tools.
+
+## Core Capabilities
+
+| Capability | Description | Target Workflows |
+| :--- | :--- | :--- |
+| **Resource Explorer** | Navigate 236+ resource types across 25 domains with curated Console and Full catalog views. | Day-2 operations, resource discovery, live inventory inspection. |
+| **Direct Resource Editing** | Open and edit live cloud configurations using the `xcsh://` virtual file system. | Immediate updates, configuration reviews, inline adjustments. |
+| **Declarative File Operations** | Validate, diff, apply, and delete local JSON and YAML manifests against live tenant state. | GitOps workflows, automated deployments, configuration reviews. |
+| **Schema Validation & IntelliSense** | Author manifests with autocompletion, hover docs, and instant conflict detection. | Safe configuration authoring, compliance checking. |
+| **Real-Time Observability** | Query access logs, request metrics, and generate visual topology diagrams. | Incident triage, performance analysis, architecture validation. |
+| **Platform Health Monitoring** | Track global service health, active incidents, maintenance windows, and Points of Presence (PoPs). | Availability monitoring, maintenance awareness. |
+| **Subscription & Quota Tracking** | Inspect active plan tiers, track resource quota consumption, and manage add-ons. | Capacity planning, quota management. |
+| **Agentic AI Assistance** | Query infrastructure, generate manifests, and troubleshoot using `@xcsh` in VS Code Chat. | Guided configuration, accelerated diagnosis. |
+
+## Documentation Roadmap
+
+Navigate the documentation sections below based on your current operational stage:
+
+- **[Installation](/getting-started/installation)**: Verify environment requirements and install the extension via the Marketplace or manual VSIX package.
+- **[Profile Setup](/getting-started/profile-setup)**: Configure API tokens or PKCS#12 (`.p12`) certificates across 3-tier resolution contexts.
+- **[Resource Management](/features/resource-management)**: Browse namespaces, inspect properties, edit live resources, and export configurations.
+- **[Manifest Operations](/features/manifest-operations)**: Perform declarative apply, diff, and delete operations on workspace files.
+- **[JSON & YAML IntelliSense](/features/json-intellisense)**: Use OpenAPI-driven autocompletion, hover documentation, and conflict resolution Code Actions.
+- **[Observability & Diagrams](/features/observability)**: Stream access logs, query performance metrics, and visualize load balancer architectures.
+- **[Cloud Status](/features/cloud-status)**: Monitor platform component availability and regional Point of Presence health.
+- **[Subscription & Quotas](/features/subscription-and-quotas)**: Monitor plan utilization and manage platform add-ons.
+- **[Agentic AI Integration](/features/agentic-ai)**: Leverage the `@xcsh` chat participant, Language Model Tools, and Chat Skills.
+- **[How-To Guides](/how-to/deploy-http-load-balancer)**: Follow step-by-step procedural guides for deploying load balancers and fixing schema conflicts.
+- **[Troubleshooting](/troubleshooting/diagnostics)**: Diagnose and resolve authentication errors, RPC bridge disconnects, and schema rejections.
+- **[Settings Reference](/reference/settings)**: Consult the complete catalog of all `xcsh.*` configuration properties.
+- **[Commands Reference](/reference/commands)**: Review all extension commands, menu actions, and default keyboard shortcuts.
+- **[Supported Resources](/reference/supported-resources)**: Inspect the complete matrix of 236+ supported resource types across all 25 domains.
