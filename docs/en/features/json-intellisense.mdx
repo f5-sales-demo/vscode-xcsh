@@ -1,24 +1,84 @@
 ---
-title: JSON IntelliSense
-description: Schema validation and auto-completion for F5 XC resource configurations.
+title: JSON and YAML IntelliSense
+description: Author F5 Distributed Cloud configurations with schema validation, conflict diagnostics, and autocompletion.
 sidebar:
-  order: 4
+  order: 3
 ---
 
-## Schema Validation
+The **F5 Distributed Cloud Tools** extension includes a schema validation engine that provides intelligent autocompletion, hover documentation, structural error detection, and conflict diagnostics for both JSON and YAML configuration files.
 
-The extension provides JSON schemas for common resource types. When editing resource JSON files, VS Code validates your configuration in real-time and highlights errors.
+## OpenAPI Schema Integration
 
-## Supported Schemas
+The extension generates and pre-warms JSON schemas derived directly from F5 Distributed Cloud (XC) OpenAPI specifications. Schemas register under the `xcsh-schema://` Uniform Resource Identifier (URI) scheme and associate automatically with:
 
-- HTTP Load Balancer (`.http_loadbalancer.json`)
-- Origin Pool (`.origin_pool.json`)
-- App Firewall / WAF (`.app_firewall.json`)
-- Health Check (`.healthcheck.json`)
-- TCP Load Balancer (`.tcp_loadbalancer.json`)
-- DNS Load Balancer (`.dns_load_balancer.json`)
-- Virtual Site (`.virtual_site.json`)
+- Virtual documents opened through the `xcsh://` file system provider
+- Workspace manifest files (`*.http_loadbalancer.json`, `*.origin_pool.json`, `*.xcsh.json`, `.xcsh/*.json`)
+- YAML files matching F5 Distributed Cloud schema headers via the YAML Language Server extension
 
-## Auto-Completion
+## Schema Enrichment Extensions
 
-IntelliSense provides auto-completion for field names, enum values, and nested object structures based on the F5 XC OpenAPI spec.
+F5 Distributed Cloud schemas include custom metadata extensions to guide configuration authoring:
+
+### 1. Minimum Configuration (`x-f5xc-minimum-configuration`)
+
+Identifies the baseline fields required to instantiate a valid resource. When you create a resource template in Visual Studio Code, the extension scaffolds these required properties automatically:
+
+```json
+{
+  "metadata": {
+    "name": "example-lb",
+    "namespace": "default"
+  },
+  "spec": {
+    "domains": ["app.example.com"],
+    "https_auto_cert": {
+      "http_redirect": true
+    },
+    "default_route_pools": []
+  }
+}
+```
+
+### 2. Contextual Field Requirements (`x-f5xc-required-for`)
+
+Indicates when specific fields are required based on the operational context:
+
+- `create: true`: The property must be present when initially creating the resource.
+- `update: true`: The property must be present during update (`PUT`) operations.
+- `minimum_config: true`: The property belongs to the minimal viable template.
+
+### 3. Mutual Exclusivity and Conflicts (`x-f5xc-conflicts-with`)
+
+Identifies mutually exclusive fields where setting one property invalidates another. For example, in load balancer configurations, you cannot define both active service policies and explicitly specify no service policies:
+
+- `active_service_policies` conflicts with `no_service_policies` and `service_policies_from_namespace`.
+
+### 4. Recommended `oneOf` Variants (`x-f5xc-recommended-oneof-variant`)
+
+When a property accepts multiple variants (a `oneOf` schema union), this extension indicates the recommended default (for example, recommending `https_auto_cert` over manual `https` or plain `http`).
+
+## Real-Time Conflict Diagnostics
+
+The extension includes a **Conflict Diagnostic Provider** that continuously analyzes open manifests for mutually exclusive fields.
+
+When a conflict occurs:
+
+1. Visual Studio Code underlines the conflicting properties with diagnostic squiggles.
+2. The **Problems** panel (`Ctrl+Shift+M` / `Cmd+Shift+M`) lists the exact conflicting fields and explains the exclusivity rule.
+3. Hovering over the diagnostic displays the conflict explanation.
+
+## Quick Fix Code Actions
+
+The extension registers a **Code Action Provider** that offers automated repairs for detected schema conflicts:
+
+1. Place your cursor on the highlighted conflicting property.
+2. Select the **Quick Fix** lightbulb icon (or press `Ctrl+.` / `Cmd+.`).
+3. Select the recommended resolution (for example, **Remove conflicting 'no_service_policies' property**).
+4. The extension automatically refactors the JSON/YAML structure to resolve the diagnostic.
+
+## Autocompletion and Hover Documentation
+
+As you author configurations:
+
+- **Autocompletion**: Press `Ctrl+Space` to view valid properties, allowable enum values, and nested schema snippets.
+- **Hover Documentation**: Hover over any property key to view its description, expected data type, allowed constraints, and documentation links.

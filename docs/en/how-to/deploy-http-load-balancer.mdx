@@ -1,0 +1,104 @@
+---
+title: Deploy an HTTP Load Balancer
+description: Deploy an end-to-end HTTP Load Balancer with an Origin Pool, Health Check, and automatic TLS on F5 Distributed Cloud.
+sidebar:
+  order: 1
+---
+
+This guide walks you through creating and deploying an HTTP Load Balancer with an associated Origin Pool and Health Check on F5 Distributed Cloud using declarative manifests in Visual Studio Code.
+
+## Prerequisites
+
+Before starting this procedure, ensure you have:
+
+- Installed the **F5 Distributed Cloud Tools** extension in Visual Studio Code.
+- Configured an active profile connected to your target tenant (see [Profile Setup](/getting-started/profile-setup)).
+- Set your active namespace to `production` (or your target workspace namespace).
+- An accessible backend server IP address (this guide uses the RFC 5737 test address `198.51.100.10`).
+
+## Step 1: Create the Health Check
+
+1. In your workspace, create a new file named `web-healthcheck.yaml`.
+2. Add the following configuration:
+
+   ```yaml
+   metadata:
+     name: web-healthcheck
+     namespace: production
+   spec:
+     http_health_check:
+       path: /health
+       use_origin_server_name: true
+     interval: 15
+     timeout: 5
+     healthy_threshold: 2
+     unhealthy_threshold: 3
+   ```
+
+3. Open the file in the editor and press `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) to apply the health check to your tenant.
+
+## Step 2: Create the Origin Pool
+
+1. In your workspace, create a file named `web-origin-pool.yaml`.
+2. Add the origin pool definition referencing the health check created in Step 1:
+
+   ```yaml
+   metadata:
+     name: web-origin-pool
+     namespace: production
+   spec:
+     origin_servers:
+       - public_ip:
+           ip: 198.51.100.10
+     port: 8080
+     healthcheck:
+       - name: web-healthcheck
+         namespace: production
+     loadbalancer_algorithm: LB_OVERRIDE
+   ```
+
+3. Press `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) to apply the origin pool.
+
+## Step 3: Create the HTTP Load Balancer
+
+1. In your workspace, create a file named `web-loadbalancer.yaml`.
+2. Add the load balancer configuration referencing your origin pool and enabling automatic TLS certificates:
+
+   ```yaml
+   metadata:
+     name: web-loadbalancer
+     namespace: production
+   spec:
+     domains:
+       - app.example.com
+     https_auto_cert:
+       http_redirect: true
+       add_hsts: true
+     default_route_pools:
+       - pool:
+           name: web-origin-pool
+           namespace: production
+         weight: 1
+     no_challenge: {}
+     disable_rate_limit: {}
+     no_service_policies: {}
+     round_robin: {}
+   ```
+
+3. Press `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) to apply the load balancer.
+
+## Verify the Deployment
+
+1. Open the **F5 Distributed Cloud Tools** view container from the Activity Bar.
+2. In the **Explorer** view, expand **HTTP Load Balancers**.
+3. Locate `web-loadbalancer`, right-click, and select **Generate Diagram** (`xcsh.diagram`).
+4. Confirm that the diagram illustrates traffic flowing from `app.example.com` through the load balancer into `web-origin-pool` with the active health check.
+5. Right-click `web-loadbalancer` and select **Describe** to verify the provisioning state.
+
+## Clean Up
+
+To remove the resources created in this guide:
+
+1. In the **Explorer** view, right-click `web-loadbalancer` and select **Delete Resource**.
+2. Right-click `web-origin-pool` and select **Delete Resource**.
+3. Right-click `web-healthcheck` and select **Delete Resource**.

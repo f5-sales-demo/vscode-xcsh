@@ -2,15 +2,30 @@
   "customSets": [
     {
       "label": "Getting Started",
-      "description": "Installation and initial profile configuration",
+      "description": "Installation, prerequisites, and multi-tier profile configuration",
       "paths": ["getting-started*"]
     },
     {
-      "label": "Features",
-      "description": "Resource management, observability, cloud status, and IntelliSense",
+      "label": "Features & Workflows",
+      "description": "Resource explorer, manifest operations, schema validation, observability, cloud status, subscription quotas, and agentic AI",
       "paths": ["features*"]
+    },
+    {
+      "label": "How-To Guides",
+      "description": "Procedural guides for deploying load balancers and resolving schema conflicts",
+      "paths": ["how-to*"]
+    },
+    {
+      "label": "Troubleshooting",
+      "description": "Diagnostic workflows for authentication, RPC bridge, schema validation, and connectivity",
+      "paths": ["troubleshooting*"]
+    },
+    {
+      "label": "Reference",
+      "description": "Exhaustive configuration settings, command palette catalog, and supported resource domains",
+      "paths": ["reference*"]
     }
   ],
-  "promote": ["index*", "getting-started*", "features*"],
-  "demote": ["reference/supported-resources*"]
+  "promote": ["index*", "getting-started*", "features*", "how-to*", "troubleshooting*"],
+  "demote": ["reference/supported-resources*", "reference/commands*"]
 }
