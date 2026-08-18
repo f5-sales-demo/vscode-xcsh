@@ -26,15 +26,6 @@
       "paths": ["reference*"]
     }
   ],
-  "promote": [
-    "index*",
-    "getting-started*",
-    "features*",
-    "how-to*",
-    "troubleshooting*"
-  ],
-  "demote": [
-    "reference/supported-resources*",
-    "reference/commands*"
-  ]
+  "promote": ["index*", "getting-started*", "features*", "how-to*", "troubleshooting*"],
+  "demote": ["reference/supported-resources*", "reference/commands*"]
 }
