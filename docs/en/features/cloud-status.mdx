@@ -1,16 +1,44 @@
 ---
-title: Cloud Status
-description: Monitor F5 Distributed Cloud service health from VS Code.
+title: Cloud Status and Platform Health
+description: Monitor real-time F5 Distributed Cloud service availability, incidents, maintenance windows, and global Points of Presence.
 sidebar:
-  order: 3
+  order: 5
 ---
 
-## Status Monitoring
+The **Cloud Status** view (`xcsh.cloudStatus`) provides live platform health monitoring inside Visual Studio Code. The view queries the official F5 Distributed Cloud (XC) status service to track platform components, active incidents, scheduled maintenance, and regional Points of Presence (PoPs).
 
-The **Cloud Status** tree view displays the current health of F5 Distributed Cloud services. Status is fetched from the official F5 status page and shows:
+## Status Tree View
 
-- Overall platform status
-- Per-component health (API, Console, Data Plane, etc.)
-- Active incidents and maintenance windows
+The **Cloud Status** panel displays the real-time operational status of the global F5 Distributed Cloud fleet:
 
-The view updates automatically based on the configured refresh interval (`f5xc.autoRefreshInterval`).
+- **Overall Platform Status**: An aggregate status indicator (Operational, Degraded Performance, Partial Outage, or Major Outage).
+- **Core Platform Components**: Detailed health metrics for critical subsystems including the Control Plane API, Console UI, Global Data Plane, DNS Services, and Identity & Access Management.
+- **Active Incidents**: Unresolved service disruptions, including severity levels, affected regions, and chronological engineering status updates.
+- **Scheduled Maintenance**: Planned maintenance windows detailing target regions, expected service impacts, and execution timelines.
+- **Points of Presence (PoPs)**: Regional health across global F5 Distributed Cloud Edge and Regional Edge facilities.
+
+## Cloud Status Dashboard Webview
+
+For an aggregated overview, open the interactive Cloud Status Dashboard:
+
+1. In the **Cloud Status** view title bar, select the **Open Dashboard** icon, or run `xcsh.cloudStatus.openDashboard`.
+2. The extension opens a dedicated webview panel rendering platform health cards, regional latency indicators, active incident summaries, and upcoming maintenance schedules.
+
+## Item Inspection Commands
+
+Right-clicking individual items in the Cloud Status tree opens detailed diagnostics:
+
+- **View Component (`xcsh.cloudStatus.viewComponent`)**: Inspect component description, historical uptime percentage, and related incident history.
+- **View Point of Presence (`xcsh.cloudStatus.viewPoP`)**: Inspect regional Edge location metadata, transit peering status, and operational health.
+- **View Incident (`xcsh.cloudStatus.viewIncident`)**: Read full incident timelines, root cause descriptions, and mitigation notes.
+- **View Maintenance (`xcsh.cloudStatus.viewMaintenance`)**: Review scheduled maintenance impact windows and affected services.
+- **Open External Status Page (`xcsh.cloudStatus.openExternal`)**: Launch the official F5 Distributed Cloud status site in your external browser.
+
+## Background Refresh Configuration
+
+You can configure automatic background polling to keep status indicators current:
+
+- Open your Visual Studio Code settings (`Ctrl+,` / `Cmd+,`).
+- Search for `xcsh.autoRefreshInterval`.
+- Set the interval in seconds (for example, `300` for 5-minute polling). Setting the value to `0` disables background polling.
+- You can manually refresh status at any time by selecting the **Refresh** icon or pressing `Ctrl+Shift+R` (macOS: `Cmd+Shift+R`).

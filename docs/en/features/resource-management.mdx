@@ -1,28 +1,95 @@
 ---
 title: Resource Management
-description: Browse, create, edit, and delete F5 XC resources from VS Code.
+description: Explore, inspect, edit, and export F5 Distributed Cloud resources using the Resource Explorer and virtual file system.
 sidebar:
   order: 1
 ---
 
-## Browsing Resources
+The **Resource Explorer** (`xcsh.explorer`) provides a centralized interface inside Visual Studio Code to browse, inspect, create, modify, and export F5 Distributed Cloud (XC) resources across your active tenant.
 
-The **Resources** tree view displays resources organized by domain and category. Expand a category to see resource types, then expand a type to list individual resources in your namespace.
+## Resource Explorer Hierarchy
 
-## Creating Resources
+The **Explorer** panel displays resources organized into logical functional categories (such as Application Delivery, Security, Networking, DNS, Infrastructure, and Observability). The extension supports 236+ resource types across 25 API domains.
 
-1. Right-click a resource type in the tree and select **Create**.
-2. A JSON editor opens with a schema-validated template.
-3. Fill in the required fields (IntelliSense provides auto-completion).
-4. Save the file to submit the resource to the F5 XC API.
+### Catalog View Modes
 
-## Editing Resources
+You can toggle between two catalog display modes to match your operational focus:
 
-1. Click a resource in the tree to open it in the editor.
-2. Modify fields with full IntelliSense support.
-3. Save to push changes to the API.
+- **Console Mode (`console`)**: Shows a curated subset of commonly managed resources (for example, HTTP Load Balancers, Origin Pools, App Firewalls, Health Checks, and Service Policies). This is the default view.
+- **Full Mode (`full`)**: Displays the complete catalog of all 236+ resource types defined in the F5 Distributed Cloud OpenAPI specification.
 
-## Deleting Resources
+To switch view modes, select the **Toggle View Mode** icon in the Explorer title bar or run **xcsh: Toggle View Mode** from the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
 
-1. Right-click a resource and select **Delete**.
-2. Confirm the deletion (configurable via `f5xc.confirmDelete` and `f5xc.deleteConfirmationLevel`).
+### Preview APIs Toggle
+
+Certain resource types belong to early-access or preview API sets. You can control whether preview resource types appear in the tree through the `xcsh.showPreviewApis` configuration setting.
+
+## Resource Operations (CRUD)
+
+The extension supports full lifecycle resource management directly from the tree view and editor.
+
+### 1. Create Resources
+
+To create a new resource from the tree view:
+
+1. Expand the target resource type category in the **Explorer** view (for example, **HTTP Load Balancers**).
+2. Select the **Add** (`+`) action button next to the resource type header, or run **xcsh: Create Resource**.
+3. The extension generates a new buffer pre-populated with the minimal required configuration template (`x-f5xc-minimum-configuration`) for that resource type.
+4. Fill in the required fields with IntelliSense assistance.
+5. Apply the resource to the tenant by pressing `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) or selecting **xcsh: Apply Resource**.
+
+#### Interactive Health Check Form
+
+For health checks, the extension provides a dedicated form-based webview:
+
+1. Right-click **Health Checks** in the Explorer view and select **Create with Form Builder** (or run `xcsh.createHealthcheckForm`).
+2. Configure monitor protocol (HTTP/HTTPS/TCP), intervals, healthy/unhealthy thresholds, and expected HTTP response codes.
+3. Select **Create Health Check** to apply the configuration.
+
+### 2. Read and Describe Resources
+
+To inspect an existing resource without altering live state:
+
+- **Describe (`xcsh.describe`)**: Double-click a resource node or right-click and select **Describe**. The extension renders a formatted Markdown document showing metadata, specification summary, active routes, attached policies, and direct links to the F5 XC Console.
+- **Get JSON (`xcsh.get`)**: Right-click a resource and select **Get Resource (JSON)**. This opens a read-only document (`xcsh-view://`) containing the raw API JSON payload.
+
+### 3. Edit Resources via Virtual File System (`xcsh://`)
+
+The extension implements a custom Visual Studio Code `FileSystemProvider` registered under the `xcsh://` Uniform Resource Identifier (URI) scheme.
+
+1. In the **Explorer** view, right-click any resource and select **Edit Resource**.
+2. Visual Studio Code opens an editable virtual document using the path:
+
+   ```text
+   xcsh://<profile-name>/<namespace>/<resource-type>/<resource-name>.json
+   ```
+
+3. Modify the JSON configuration directly in the editor with real-time schema validation and IntelliSense.
+4. Press `Ctrl+S` (macOS: `Cmd+S`) to save the file. The extension intercepts the save operation, strips read-only metadata, validates required fields, and submits an HTTP `PUT` update request to the target F5 Distributed Cloud API endpoint.
+
+### 4. Delete Resources
+
+To remove a resource from your tenant:
+
+1. In the **Explorer** view, right-click the resource and select **Delete Resource**.
+2. If deletion confirmation is enabled (`xcsh.confirmDelete: true`), a confirmation dialog prompts you to verify the deletion.
+3. Confirming the dialog sends a `DELETE` request to the API and refreshes the Explorer tree.
+
+> [!TIP]
+> You can fine-tune deletion confirmation prompts using the `xcsh.deleteConfirmationLevel` setting (`always`, `high-only` for destructive security/infrastructure resources, or `never`).
+
+### 5. Export Resources
+
+You can export live tenant configurations into local JSON or YAML files for version control, backup, or GitOps pipelines:
+
+- **Export Single Resource**: Right-click any resource and select **Export JSON** (`xcsh.exportJson`) or **Export YAML** (`xcsh.exportYaml`).
+- **Export All Resources**: Right-click a resource category header and select **Export All to JSON** (`xcsh.exportAllJson`) or **Export All to YAML** (`xcsh.exportAllYaml`) to batch-export all resources of that type in the active namespace.
+
+## Context Menu Utilities
+
+Right-clicking any resource node exposes additional quick utilities:
+
+- **Copy Name (`xcsh.copyName`)**: Copies the resource's kebab-case name to your clipboard.
+- **Copy as JSON (`xcsh.copyAsJson`)**: Copies the complete resource configuration object to your clipboard.
+- **Open in Browser (`xcsh.openInBrowser`)**: Opens the resource directly in the F5 Distributed Cloud Console web UI in your default browser.
+- **Add to Chat (`xcsh.addToChat`)**: Attaches the resource definition as context into the `@xcsh` Copilot Chat panel.

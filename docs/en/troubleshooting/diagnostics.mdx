@@ -1,0 +1,83 @@
+---
+title: Diagnostics and Troubleshooting
+description: Diagnose and resolve common authentication failures, virtual file system errors, RPC process disconnects, and schema rejections.
+sidebar:
+  order: 1
+---
+
+This guide provides systematic diagnostic workflows for resolving common operational, authentication, and validation issues in the **F5 Distributed Cloud Tools** extension.
+
+## Authentication and Credential Failures
+
+### Symptom: HTTP 401 Unauthorized or HTTP 403 Forbidden
+
+If API requests fail with 401 or 403 status codes:
+
+1. In the **Profiles** view, right-click your profile and select **Validate Context**.
+2. If validation reports an authentication failure:
+   - **API Token**: Verify that your token has not expired in the F5 XC Console. Re-generate the token under **Personal Management** > **Credentials** and update the profile.
+   - **PKCS#12 Certificate**: Confirm that the `.p12` certificate bundle path is accessible on your local disk and that the passphrase decrypts the private key correctly.
+3. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`) and run **xcsh: Clear Auth Cache** to flush any stale session tokens from memory.
+
+### Symptom: Explorer Panel Empty Despite Configured Profile
+
+If the **Explorer** and **Subscription** panels display no resources:
+
+1. Inspect the **Profiles** view to verify that a profile is explicitly marked as active (session activation gate).
+2. Double-click or select the radio button next to your desired profile to activate it for the current Visual Studio Code session.
+3. If using environment variables, verify that `VOLT_API_URL` and `VES_API_TOKEN` (or `VES_P12_BUNDLE` and `VES_P12_PASSWORD`) are exported in your terminal environment.
+
+## Virtual File System (`xcsh://`) Errors
+
+### Symptom: "Resource name mismatch" or "Namespace mismatch" on Save
+
+When editing live resources via the `xcsh://` file system:
+
+- The root `metadata.name` property in the JSON document must exactly match the filename in the URI.
+- The root `metadata.namespace` property must exactly match the namespace path in the URI.
+- If you change `metadata.name` in an existing document, the extension rejects the save operation to prevent unintended resource overwrites. To create a new resource with a different name, use the declarative file workflow or the **Create Resource** command.
+
+### Symptom: "Resource must have a metadata and spec field"
+
+The F5 Distributed Cloud API requires all resource configurations to maintain top-level `metadata` and `spec` objects. Ensure your JSON buffer is not stripped of these root wrappers.
+
+## Embedded Agent and RPC Subprocess Disconnects
+
+### Symptom: `@xcsh` Chat Participant Fails to Respond
+
+If the embedded AI assistant fails to return responses or shows an RPC disconnection error:
+
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+2. Run **xcsh: Restart Agent Process** (`xcsh.xcsh.restart`).
+3. Check the Visual Studio Code **Output** panel (`Ctrl+Shift+U` / `Cmd+Shift+U`) and select **F5 Distributed Cloud** from the dropdown menu to inspect process logs.
+4. To enable verbose debug logging, update your settings:
+
+   ```json
+   {
+     "xcsh.logLevel": "debug"
+   }
+   ```
+
+## Schema Validation and API Rejections
+
+### Symptom: "Invalid resource name format"
+
+All F5 Distributed Cloud resource identifiers must adhere to DNS-1123 / kebab-case naming rules:
+
+- Must contain only lowercase alphanumeric characters and hyphens (`-`).
+- Must not contain uppercase letters, underscores (`_`), spaces, or special characters.
+- Must start and end with an alphanumeric character.
+
+### Symptom: Mutual Exclusivity Conflicts
+
+If the API rejects a manifest with an exclusivity error, use the **Conflict Diagnostic Provider** (see [Resolve Schema Conflicts](/how-to/resolve-schema-conflicts)) to eliminate overlapping properties.
+
+## Regional Service Health Degradation
+
+### Symptom: High Request Latency or API Timeouts
+
+If requests to your tenant or deployed load balancers experience elevated latency:
+
+1. Open the **Cloud Status** view in Visual Studio Code.
+2. Check the **Points of Presence (PoPs)** section to identify whether regional Edge data centers serving your tenant are experiencing degraded connectivity or active maintenance windows.
+3. Select **Open Dashboard** (`xcsh.cloudStatus.openDashboard`) to view real-time incident reports.

@@ -1,0 +1,93 @@
+---
+title: Declarative Manifest Operations
+description: Author, validate, diff, and apply local JSON and YAML configuration files to F5 Distributed Cloud.
+sidebar:
+  order: 2
+---
+
+The **F5 Distributed Cloud Tools** extension provides declarative file-based operations that allow you to manage infrastructure using local workspace files (`.json`, `.yaml`, `.yml`, and `.xcsh.json`). This enables Git-based configuration versioning, pull request reviews, and automated deployment pipelines.
+
+## Manifest Structure
+
+F5 Distributed Cloud declarative manifests define a resource kind, metadata, and specification. Supported formats include both JSON and YAML:
+
+```yaml
+metadata:
+  name: demo-web-app
+  namespace: production
+  labels:
+    environment: prod
+    tier: frontend
+spec:
+  domains:
+    - app.example.com
+  https_auto_cert:
+    http_redirect: true
+    add_hsts: true
+  default_route_pools:
+    - pool:
+        name: demo-origin-pool
+        namespace: production
+      weight: 1
+```
+
+## Editor and Explorer Commands
+
+When you open or select a manifest file in your workspace, the extension contributes specialized commands to the editor title bar and file context menus:
+
+| Command | Action | Keybinding |
+| :--- | :--- | :--- |
+| **Apply Manifest** (`xcsh.fileApply`) | Applies the local manifest to the live tenant (creates or replaces). | `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) |
+| **Diff Manifest** (`xcsh.fileDiff`) | Compares local manifest buffer against live tenant state in side-by-side diff. | — |
+| **Create from File** (`xcsh.fileCreate`) | Submits manifest payload as a new resource creation request. | — |
+| **Delete from File** (`xcsh.fileDelete`) | Deletes the live tenant resource matching the manifest's name and namespace. | — |
+
+## Server-Side Diffing
+
+Before applying local changes to a live environment, you can inspect the exact configuration delta using the visual diff engine:
+
+1. Open your local manifest file in the editor.
+2. Select the **Diff Against Tenant** icon in the editor title bar (or right-click the file in the File Explorer and select **xcsh: Diff Manifest**).
+3. The extension queries the live resource from the F5 Distributed Cloud API and opens a native Visual Studio Code side-by-side diff editor.
+4. Review differences between the local manifest (left) and the live tenant configuration (right).
+
+```text
++------------------------------------+------------------------------------+
+| Local Manifest (Workspace)         | Live Tenant Configuration (Remote) |
++------------------------------------+------------------------------------+
+| "domains": [                       | "domains": [                       |
+|   "app.example.com",               |   "app.example.com"                |
+|   "api.example.com"                |                                    |
+| ]                                  | ]                                  |
++------------------------------------+------------------------------------+
+```
+
+## Applying Manifests
+
+To apply a local manifest to your active tenant:
+
+1. Ensure your desired target profile and namespace are active in the **Profiles** view.
+2. Open the manifest file in the editor.
+3. Press `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) or select **Apply to F5 Distributed Cloud** from the editor title bar.
+4. The extension validates required fields and schema constraints.
+5. If the resource exists, the extension submits an update (`PUT`); if the resource does not exist, it submits a create request (`POST`).
+6. A notification confirms successful deployment.
+
+## GitOps Workflow Integration
+
+You can organize your repository with standard directory layouts to manage multi-service deployments:
+
+```text
+my-infrastructure/
+├── .xcsh/
+│   └── contexts/
+│       └── dev-context.json
+├── healthchecks/
+│   └── web-hc.yaml
+├── origin-pools/
+│   └── web-pool.yaml
+└── load-balancers/
+    └── web-lb.yaml
+```
+
+Because manifests use standard OpenAPI schemas, you can commit configurations to Git, review changes using pull requests, and deploy them directly from Visual Studio Code or continuous integration (CI) workflows.

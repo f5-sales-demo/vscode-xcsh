@@ -1,0 +1,49 @@
+---
+title: Configuration Settings Reference
+description: Complete reference for all configuration properties contributed by the F5 Distributed Cloud Tools extension.
+sidebar:
+  order: 1
+---
+
+The **F5 Distributed Cloud Tools** extension provides configuration settings under the `xcsh.*` namespace. You can modify these settings in your Visual Studio Code User or Workspace settings (`settings.json`).
+
+## Settings Catalog
+
+| Setting Key | Type | Default | Options / Valid Range | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `xcsh.logLevel` | `string` | `"info"` | `"debug"`, `"info"`, `"warn"`, `"error"` | Log verbosity level for extension output and diagnostic channels. |
+| `xcsh.defaultNamespace` | `string` | `"default"` | String | Default namespace used when no namespace is specified in an active context or command. |
+| `xcsh.confirmDelete` | `boolean` | `true` | `true`, `false` | Whether to display a confirmation modal dialog before deleting resources from your tenant. |
+| `xcsh.deleteConfirmationLevel` | `string` | `"always"` | `"always"`, `"high-only"`, `"never"` | Fine-grained threshold for deletion prompts (`high-only` prompts only for destructive security/infrastructure resources). |
+| `xcsh.autoRefreshInterval` | `number` | `0` | Integer (`>= 0`) | Background polling interval in seconds for Cloud Status and Explorer views. `0` disables auto-refresh. |
+| `xcsh.viewMode` | `string` | `"console"` | `"console"`, `"full"` | Resource tree display mode. `"console"` shows curated common resources; `"full"` exposes all 236+ OpenAPI types. |
+| `xcsh.showPreviewApis` | `boolean` | `true` | `true`, `false` | Whether to display early-access and preview API resource types in the Explorer tree. |
+| `xcsh.instructionFiles` | `array` | `[]` | Array of file paths | Workspace file paths containing custom instructions and context injected into agent prompts. |
+| `xcsh.xcsh.enabled` | `boolean` | `true` | `true`, `false` | Enable or disable the embedded `xcsh` agentic background process and related subsystems. |
+| `xcsh.xcsh.path` | `string` | `""` | Absolute or relative file path | Custom path to an external `xcsh` binary executable. If empty, the extension uses the bundled binary. |
+| `xcsh.xcsh.chatParticipantEnabled` | `boolean` | `true` | `true`, `false` | Enable or disable registration of the `@xcsh` Copilot Chat Participant. |
+| `xcsh.xcsh.languageModelEnabled` | `boolean` | `true` | `true`, `false` | Enable or disable registration of Language Model Tools (`readFile`, `getSelection`, `diagnostics`, `openFile`). |
+| `xcsh.xcsh.autoStart` | `boolean` | `true` | `true`, `false` | Automatically spawn the `xcsh` agent subprocess upon extension activation. |
+| `xcsh.xcsh.defaultModel` | `string` | `""` | String | Default language model family identifier to request for agent chat tasks. |
+| `xcsh.xcsh.thinkingLevel` | `string` | `"medium"` | `"off"`, `"minimal"`, `"low"`, `"medium"`, `"high"`, `"xhigh"` | Reasoning budget and depth level for agentic reasoning processes. |
+| `xcsh.xcsh.panelMode` | `string` | `"webview"` | `"webview"`, `"terminal"` | User interface presentation mode for the interactive agent session panel. |
+
+## Example `settings.json` Configuration
+
+```json
+{
+  "xcsh.logLevel": "debug",
+  "xcsh.defaultNamespace": "production",
+  "xcsh.confirmDelete": true,
+  "xcsh.deleteConfirmationLevel": "always",
+  "xcsh.autoRefreshInterval": 300,
+  "xcsh.viewMode": "console",
+  "xcsh.showPreviewApis": true,
+  "xcsh.instructionFiles": [
+    ".xcsh/instructions/compliance.md"
+  ],
+  "xcsh.xcsh.enabled": true,
+  "xcsh.xcsh.thinkingLevel": "high",
+  "xcsh.xcsh.panelMode": "webview"
+}
+```
