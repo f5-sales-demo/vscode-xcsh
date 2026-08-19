@@ -1,24 +1,93 @@
 ---
-title: Profile Setup
-description: Configure API credentials for connecting to F5 Distributed Cloud.
+title: Profile and Context Setup
+description: Configure authentication credentials, tenant endpoints, and multi-tier context resolution for F5 Distributed Cloud.
 sidebar:
   order: 2
 ---
 
-## Adding a Profile
+You connect the **F5 Distributed Cloud Tools** extension to your F5 Distributed Cloud (XC) environment by configuring authentication profiles. The extension supports both API tokens and PKCS#12 (`.p12`) client certificates with secure credential storage and multi-tier context resolution.
 
-1. Open the **Profiles** view in the F5 XC sidebar.
-2. Click the **+** icon to add a new profile.
-3. Enter your tenant URL (e.g., `https://your-tenant.console.ves.volterra.io`).
-4. Choose an authentication method:
-   - **API Token**: Paste your API token from the F5 XC console.
-   - **P12 Certificate**: Select your `.p12` certificate file and enter the password.
-5. Set a default namespace.
+## 3-Tier Context Resolution
 
-## Managing Profiles
+The extension resolves configuration parameters and credentials using a 3-tier hierarchy, ordered from highest to lowest precedence:
 
-- **Switch profiles**: Click a profile in the Profiles view to make it active.
-- **Edit**: Right-click a profile and select **Edit Profile**.
-- **Delete**: Right-click a profile and select **Delete Profile**.
+```text
++-------------------------------------------------------------------------+
+|                        Tier 1: Environment Variables                    |
+|  VES_P12_BUNDLE, VES_P12_PASSWORD, VOLT_API_URL, VOLT_TENANT, etc.     |
++------------------------------------+------------------------------------+
+                                     | (overrides)
+                                     v
++-------------------------------------------------------------------------+
+|                     Tier 2: Workspace Local Contexts                    |
+|  .xcsh/contexts/*.json (project-scoped configuration files)             |
++------------------------------------+------------------------------------+
+                                     | (overrides)
+                                     v
++-------------------------------------------------------------------------+
+|                      Tier 3: Global User Storage                        |
+|  VS Code SecretStorage (encrypted OS keychain / XDG keyring)            |
++-------------------------------------------------------------------------+
+```
 
-Profiles are stored securely using VS Code's built-in secret storage (XDG-compliant on Linux).
+1. **Environment Variables (`env`)**: Environment variables in your execution shell take highest precedence. When present, they automatically configure an ephemeral active context.
+2. **Workspace-Local Contexts (`local`)**: Stored under the `.xcsh/contexts/` directory within your workspace root. Use this tier for project-specific configurations.
+3. **Global User Storage (`global`)**: Managed securely by the extension using Visual Studio Code `SecretStorage`. Sensitive tokens and certificate passwords encrypt directly into your operating system's keychain (or XDG-compliant keyring on Linux).
+
+## Authentication Methods
+
+F5 Distributed Cloud APIs support two primary authentication methods:
+
+- **API Token**: A long-lived Bearer token generated within the F5 XC Console under **Administration** > **Personal Management** > **Credentials**.
+- **PKCS#12 Client Certificate**: A cryptographic bundle (`.p12` or `.pfx`) containing your client certificate and private key, protected by a passphrase.
+
+## Add a Profile Using the UI
+
+To add a new connection profile through the Visual Studio Code interface:
+
+1. Open the **F5 Distributed Cloud Tools** view container from the Activity Bar.
+2. In the **Profiles** view, select the **Add Profile** (`+`) action button.
+3. Select your authentication method: **API Token** or **PKCS#12 Certificate**.
+4. Enter the required connection parameters when prompted:
+   - **Context Name**: A unique descriptive identifier (for example, `prod-us-east`).
+   - **Tenant URL**: Your tenant base URL (for example, `https://example-corp.console.ves.volterra.io`).
+   - **Tenant Name**: Your organization tenant identifier (for example, `example-corp`).
+   - **Default Namespace**: The default target namespace for API operations (for example, `default` or `production`).
+   - **Credential**: Enter your API token string or browse to your `.p12` certificate file and provide the decryption password.
+5. Visual Studio Code securely stores the credentials in `SecretStorage`.
+
+## Validate Profile Connectivity
+
+After configuring a profile, verify that the extension can authenticate against your F5 Distributed Cloud tenant:
+
+1. In the **Profiles** view, locate your newly created profile.
+2. Right-click the profile name and select **Validate Context**.
+3. The extension performs a test API request. A notification confirms successful authentication or details the returned error code.
+
+## Manage Context Environment Variables
+
+You can inject custom environment variables specific to an individual context (for example, targeting custom endpoints or debug flags):
+
+1. Right-click the profile in the **Profiles** view and select **Manage Context Env**.
+2. Define key-value pairs formatted as JSON.
+3. These variables apply whenever that profile activates.
+
+## Switch Namespaces
+
+Each profile operates within a default namespace. To change the active namespace:
+
+1. In the **Profiles** view, right-click the active profile and select **Switch Namespace**.
+2. Select an existing namespace from the dropdown list or enter a custom namespace identifier.
+3. The **Explorer** view refreshes to show resources scoped to the newly selected namespace.
+
+## Session Activation Gating
+
+To prevent accidental queries against unintended tenants, persisted profiles require explicit session activation. Select the radio button or double-click a profile in the **Profiles** view to activate it for your current Visual Studio Code session.
+
+## Clear Authentication Cache
+
+If you rotate your API token or renew a client certificate:
+
+1. Open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
+2. Run **xcsh: Clear Auth Cache**.
+3. The extension purges cached authentication tokens and forces re-authentication on the next API call.

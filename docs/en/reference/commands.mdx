@@ -1,0 +1,84 @@
+---
+title: Command Palette and Shortcuts Reference
+description: Complete catalog of all commands, context menu actions, and default keyboard shortcuts in F5 Distributed Cloud Tools.
+sidebar:
+  order: 2
+---
+
+This page provides an exhaustive catalog of all commands contributed by the **F5 Distributed Cloud Tools** (`vscode-xcsh`) extension, including their default keyboard shortcuts, menus, and context constraints.
+
+## Keyboard Shortcuts
+
+| Shortcut | Command | Command Identifier | Description |
+| :--- | :--- | :--- | :--- |
+| `Ctrl+Shift+A`<br />(macOS: `Cmd+Shift+A`) | **Apply Resource** | `xcsh.apply` | Applies the active editor manifest or buffer to the active F5 Distributed Cloud tenant. |
+| `Ctrl+Shift+R`<br />(macOS: `Cmd+Shift+R`) | **Refresh Explorer** | `xcsh.refresh` | Refreshes the active profile, resource tree, and cloud status indicators. |
+
+## Profile and Context Management
+
+| Command Title | Command Identifier | Contributed Locations | Description |
+| :--- | :--- | :--- | :--- |
+| **xcsh: Add Context** | `xcsh.addContext` | Profiles View Title, Command Palette | Configure a new connection profile with API token or PKCS#12 certificate. |
+| **xcsh: Edit Context** | `xcsh.editContext` | Profile Item Context Menu | Modify URL, credentials, or default namespace for a profile. |
+| **xcsh: Manage Context Env** | `xcsh.manageContextEnv` | Profile Item Context Menu | Define custom environment variables applied when the profile activates. |
+| **xcsh: Validate Context** | `xcsh.validateContext` | Profile Item Context Menu, Command Palette | Test connectivity and authentication against the tenant endpoint. |
+| **xcsh: Switch Namespace** | `xcsh.switchNamespace` | Profile Item Context Menu, Command Palette | Change the active working namespace for the selected profile. |
+| **xcsh: Rename Context** | `xcsh.renameContext` | Profile Item Context Menu | Update the display identifier of a profile. |
+| **xcsh: Delete Context** | `xcsh.deleteContext` | Profile Item Context Menu | Remove a saved connection profile and purge stored credentials from `SecretStorage`. |
+| **xcsh: Set Active Context** | `xcsh.setActiveContext` | Profile Item Inline Action | Mark a profile as active for the current Visual Studio Code session. |
+| **xcsh: Clear Auth Cache** | `xcsh.clearAuthCache` | Command Palette | Flush cached authentication tokens and session credentials from memory. |
+
+## Resource Explorer and CRUD
+
+| Command Title | Command Identifier | Contributed Locations | Description |
+| :--- | :--- | :--- | :--- |
+| **xcsh: Refresh** | `xcsh.refresh` | Explorer Title, Command Palette | Reload live resources from the tenant API. |
+| **xcsh: Create Resource** | `xcsh.create` | Resource Category Inline Action | Open an editor buffer pre-populated with a minimal resource template. |
+| **xcsh: Create from Template** | `xcsh.createFromTemplate` | Resource Category Context Menu | Scaffold an advanced resource manifest template. |
+| **xcsh: Describe** | `xcsh.describe` | Resource Item Context Menu, Double-click | Render a formatted Markdown summary of the resource. |
+| **xcsh: Get (JSON)** | `xcsh.get` | Resource Item Context Menu | Open the raw JSON payload in a read-only document (`xcsh-view://`). |
+| **xcsh: Edit** | `xcsh.edit` | Resource Item Context Menu | Open live resource in an editable buffer (`xcsh://`). Saving writes changes directly to the API. |
+| **xcsh: Delete** | `xcsh.delete` | Resource Item Context Menu | Delete the selected resource from the tenant (with confirmation guard). |
+| **xcsh: Toggle View Mode** | `xcsh.toggleViewMode` | Explorer Title, Command Palette | Switch between `console` (curated) and `full` (all 236+ types) catalog views. |
+| **xcsh: Copy Name** | `xcsh.copyName` | Resource Item Context Menu | Copy the resource name to clipboard. |
+| **xcsh: Copy as JSON** | `xcsh.copyAsJson` | Resource Item Context Menu | Copy the complete resource JSON payload to clipboard. |
+| **xcsh: Open in Browser** | `xcsh.openInBrowser` | Resource Item Context Menu | Open the resource page in the F5 Distributed Cloud Console web UI. |
+| **xcsh: Add to Chat** | `xcsh.addToChat` | Resource Item Context Menu | Inject the resource JSON configuration into the `@xcsh` Copilot Chat prompt. |
+
+## Declarative File Operations
+
+| Command Title | Command Identifier | Contributed Locations | Description |
+| :--- | :--- | :--- | :--- |
+| **xcsh: Apply Manifest** | `xcsh.fileApply` | Editor Title Bar, File Explorer Context | Apply local JSON or YAML manifest to the active tenant. |
+| **xcsh: Create from File** | `xcsh.fileCreate` | File Explorer Context Menu | Create a new resource from the selected file manifest. |
+| **xcsh: Diff Manifest** | `xcsh.fileDiff` | Editor Title Bar, File Explorer Context | Open a side-by-side diff comparing local manifest against live tenant state. |
+| **xcsh: Delete from File** | `xcsh.fileDelete` | File Explorer Context Menu | Delete the remote resource corresponding to the local manifest. |
+
+## Observability, Forms, and Visualizations
+
+| Command Title | Command Identifier | Contributed Locations | Description |
+| :--- | :--- | :--- | :--- |
+| **xcsh: View Logs** | `xcsh.viewLogs` | Resource Context Menu (HTTP/TCP LB) | Stream access logs for the selected load balancer. |
+| **xcsh: View Metrics** | `xcsh.viewMetrics` | Resource Context Menu (LB, Origin Pool) | Query request rates, error codes, and latency distributions. |
+| **xcsh: Generate Diagram** | `xcsh.diagram` | Resource Context Menu (HTTP LB) | Generate an interactive visual Mermaid topology diagram. |
+| **xcsh: Create Health Check (Form)** | `xcsh.createHealthcheckForm` | Health Check Context Menu, Command Palette | Open guided interactive form builder for health monitors. |
+
+## Cloud Status and Subscription
+
+| Command Title | Command Identifier | Contributed Locations | Description |
+| :--- | :--- | :--- | :--- |
+| **xcsh: Open Status Dashboard** | `xcsh.cloudStatus.openDashboard` | Cloud Status Title, Command Palette | Open interactive webview dashboard of global service health. |
+| **xcsh: Open External Status** | `xcsh.cloudStatus.openExternal` | Cloud Status Title | Launch external browser to `status.ves.volterra.io`. |
+| **xcsh: View Plan** | `xcsh.showPlan` | Subscription Title, Command Palette | Open subscription plan entitlements and contract terms dashboard. |
+| **xcsh: View Quotas** | `xcsh.showQuotas` | Subscription Title, Command Palette | Open real-time tenant quota utilization dashboard. |
+| **xcsh: Activate Add-on** | `xcsh.activateAddon` | Add-on Item Context Menu | Enable an optional platform security or networking add-on. |
+| **xcsh: Show Onboarding** | `xcsh.showOnboarding` | Command Palette | Open platform onboarding readiness and setup guide. |
+
+## Embedded Agent Process
+
+| Command Title | Command Identifier | Contributed Locations | Description |
+| :--- | :--- | :--- | :--- |
+| **xcsh: Open Agent Panel** | `xcsh.xcsh.openPanel` | Command Palette, Sidebar | Open the embedded `xcsh` agent webview panel. |
+| **xcsh: Open Terminal** | `xcsh.xcsh.openTerminal` | Command Palette | Launch an integrated `xcsh` interactive shell terminal. |
+| **xcsh: Restart Agent Process** | `xcsh.xcsh.restart` | Command Palette | Restart the background `xcsh` subprocess and re-establish RPC bridge. |
+| **xcsh: New Session** | `xcsh.xcsh.newSession` | Agent Panel Title | Clear conversation memory and initialize a new agent session. |

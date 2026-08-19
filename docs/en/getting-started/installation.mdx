@@ -1,22 +1,57 @@
 ---
 title: Installation
-description: Install the F5 Distributed Cloud Tools VS Code extension.
+description: Install the F5 Distributed Cloud Tools extension for Visual Studio Code.
 sidebar:
   order: 1
 ---
 
-## VS Code Marketplace
+You install the **F5 Distributed Cloud Tools** (`vscode-xcsh`) extension through the Visual Studio Code Marketplace or by manually installing a packaged `.vsix` release artifact.
 
-Search for "F5 Distributed Cloud Tools" in the VS Code Extensions panel (`Ctrl+Shift+X` / `Cmd+Shift+X`) and click **Install**.
+## System Requirements
 
-## Manual VSIX Install
+Before installing the extension, ensure your environment meets the following prerequisites:
 
-1. Download the `.vsix` file from the [GitHub Releases](https://github.com/f5-sales-demo/vscode-xcsh/releases) page.
-2. In VS Code, open the Command Palette (`Ctrl+Shift+P` / `Cmd+Shift+P`).
-3. Run **Extensions: Install from VSIX** and select the downloaded file.
+- **Visual Studio Code**: Version `1.125.0` or later (or compatible runtime such as Cursor or VSCodium).
+- **Operating System**: Linux (x64/arm64), macOS (Apple Silicon/Intel), or Windows 10/11 (x64).
+- **Network Access**: Outbound HTTPS (port 443) connectivity to your F5 Distributed Cloud tenant endpoint (`https://<tenant-name>.console.ves.volterra.io`) and status endpoints (`https://status.ves.volterra.io`).
+- **F5 Distributed Cloud Credentials**: An active tenant user account with permissions to generate an API token or export a PKCS#12 (`.p12`) client certificate.
 
-## Requirements
+## Install from the Marketplace
 
-- VS Code 1.107.0 or later
-- An F5 Distributed Cloud tenant
-- API credentials (certificate or API token)
+To install the extension directly from the Visual Studio Code Marketplace:
+
+1. Open Visual Studio Code.
+2. Open the **Extensions** view by pressing `Ctrl+Shift+X` (macOS: `Cmd+Shift+X`) or selecting **View** > **Extensions**.
+3. In the search box, enter `F5 Distributed Cloud Tools`.
+4. Locate the extension published by F5 and select **Install**.
+
+## Install from a VSIX Package
+
+If you operate in an air-gapped network or test prerelease builds, install the extension using a packaged `.vsix` file.
+
+### Using the Command Palette
+
+1. Download the extension `.vsix` package from the official releases repository.
+2. In Visual Studio Code, open the Command Palette by pressing `Ctrl+Shift+P` (macOS: `Cmd+Shift+P`).
+3. Enter and select **Extensions: Install from VSIX...**.
+4. Browse to the location of the downloaded `.vsix` file and select **Open**.
+
+### Using the Command-Line Interface
+
+You can also install the `.vsix` package directly from your terminal:
+
+```bash
+code --install-extension vscode-xcsh-latest.vsix
+```
+
+## Verify Installation
+
+Confirm that the extension activated successfully:
+
+1. Look for the **F5** icon in the Visual Studio Code Activity Bar (left navigation strip).
+2. Select the **F5** icon to open the **F5 Distributed Cloud Tools** view container.
+3. Verify that the **Profiles**, **Cloud Status**, and **Explorer** view panels appear.
+
+## Next Steps
+
+Once installed, configure your tenant connection and authentication credentials by following the [Profile Setup](/getting-started/profile-setup) guide.
