@@ -1,0 +1,77 @@
+---
+title: Resolve Schema and Policy Conflicts
+description: Identify and resolve mutual exclusivity errors and schema conflicts using inline diagnostics and Quick Fix Code Actions.
+sidebar:
+  order: 2
+---
+
+This guide demonstrates how to diagnose and resolve schema validation errors caused by mutually exclusive fields in F5 Distributed Cloud manifests.
+
+## Prerequisites
+
+Before starting this procedure, ensure you have:
+
+- Installed the **F5 Distributed Cloud Tools** extension in Visual Studio Code.
+- A workspace containing JSON or YAML manifest files.
+
+## Understanding Mutual Exclusivity Conflicts
+
+F5 Distributed Cloud schemas define explicit mutual exclusivity rules (`x-f5xc-conflicts-with`). Setting one property often requires that conflicting alternatives remain omitted.
+
+For example, when configuring service policies on an HTTP Load Balancer, you can choose exactly one of three approaches:
+
+1. **`active_service_policies`**: Attach explicit service policy rules.
+2. **`service_policies_from_namespace`**: Inherit service policies defined at the namespace level.
+3. **`no_service_policies`**: Explicitly disable Layer 7 access control policies.
+
+If a manifest specifies both `active_service_policies` and `no_service_policies`, the API rejects the request.
+
+## Step 1: Identify Conflicting Properties
+
+1. Open an invalid manifest file (for example, `invalid-loadbalancer.json`):
+
+   ```json
+   {
+     "metadata": {
+       "name": "api-service",
+       "namespace": "production"
+     },
+     "spec": {
+       "domains": ["api.example.com"],
+       "https_auto_cert": {
+         "http_redirect": true
+       },
+       "default_route_pools": [],
+       "no_service_policies": {},
+       "active_service_policies": {
+         "policies": [
+           {
+             "name": "ip-allowlist",
+             "namespace": "production"
+           }
+         ]
+       }
+     }
+   }
+   ```
+
+2. Notice the diagnostic squiggle under the `active_service_policies` and `no_service_policies` keys.
+3. Open the **Problems** panel by pressing `Ctrl+Shift+M` (macOS: `Cmd+Shift+M`).
+4. Read the diagnostic message indicating that `active_service_policies` conflicts with `no_service_policies`.
+
+## Step 2: Apply a Quick Fix Code Action
+
+1. In the editor, place your text cursor on the underlined `no_service_policies` property.
+2. Select the **Quick Fix** lightbulb icon in the margin, or press `Ctrl+.` (macOS: `Cmd+.`).
+3. Select **Remove conflicting 'no_service_policies' property**.
+4. Visual Studio Code automatically deletes the conflicting key and re-formats the JSON structure.
+
+## Step 3: Verify Manifest Validity
+
+1. Check the **Problems** panel and verify that the diagnostic squiggle clears.
+2. Select the **Diff Against Tenant** button in the editor title bar to verify the clean payload against your remote tenant.
+3. Press `Ctrl+Shift+A` (macOS: `Cmd+Shift+A`) to apply the resolved manifest.
+
+## Clean Up
+
+If you created `invalid-loadbalancer.json` for testing, delete the file from your workspace.

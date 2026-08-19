@@ -1,19 +1,92 @@
 ---
-title: Supported Resources
-description: Complete list of F5 XC resource types supported by the extension.
+title: Supported Resources Reference
+description: Complete catalog of F5 Distributed Cloud resource domains and OpenAPI types supported by the extension.
 sidebar:
-  order: 1
+  order: 3
 ---
 
-The extension supports 236+ resource types across 25 F5 XC API domains. Resources are organized by domain category in the tree view.
+The **F5 Distributed Cloud Tools** extension supports 236+ resource types across 25 F5 Distributed Cloud (XC) API domains. Resources are grouped by functional categories in the **Explorer** tree view.
 
-## Domain Categories
+## Functional Domain Categories
 
-- **Application Delivery**: HTTP Load Balancers, TCP Load Balancers, Origin Pools, Health Checks
-- **Security**: Web App Firewalls, API Security, Bot Defense, DDoS Protection
-- **Networking**: Virtual Networks, Sites, Fleet Management, Network Policies
-- **DNS**: DNS Zones, DNS Load Balancers, DNS Records
-- **Observability**: Dashboards, Alerts, Log Receivers
-- **Infrastructure**: Cloud Sites, Cloud Credentials, Service Policies
+### 1. Load Balancing and Application Delivery
 
-The full list of supported resource types is auto-generated from the F5 XC OpenAPI specification and updates automatically when new API versions are released.
+Provides traffic distribution, protocol termination, and backend server pooling:
+
+- **`http_loadbalancer`**: HTTP/HTTPS virtual host proxies with automatic certificate management, routing rules, and security attachments. (Supports Describe, Edit, Diff, Access Logs, Metrics, Topology Diagrams).
+- **`tcp_loadbalancer`**: Layer 4 TCP proxy load balancing. (Supports Describe, Edit, Diff, Access Logs, Metrics).
+- **`udp_loadbalancer`**: Layer 4 UDP datagram distribution. (Supports Describe, Edit, Diff, Metrics).
+- **`origin_pool`**: Upstream backend target groups with health monitor associations and load balancing algorithms. (Supports Describe, Edit, Diff, Metrics).
+- **`healthcheck`**: Active health probes (HTTP, HTTPS, TCP) monitoring backend origin server availability. (Supports Form Builder, Describe, Edit, Diff).
+- **`route`**: Standalone Layer 7 routing rules and path matchers.
+- **`cdn_loadbalancer`**: Content Delivery Network edge caching and acceleration proxies.
+
+### 2. Security, WAF, and Policy Enforcement
+
+Enforces Layer 7 application security, access control, and threat defense:
+
+- **`app_firewall`**: Web Application Firewall (WAF) policies with signature inspection, threat campaigning, and blocking modes.
+- **`service_policy`**: Declarative Layer 7 access control policies evaluating client IP, headers, paths, and cryptographic signatures.
+- **`rate_limiter_policy`**: Traffic shaping and threshold enforcement per client, IP prefix, or header.
+- **`user_identification`**: Client identity tracking rules extracting user identifiers from headers, cookies, or query parameters.
+- **`api_definition` / `api_protection`**: OpenAPI specification enforcement, shadow API discovery, and endpoint validation.
+- **`bot_defense_policy`**: Automated bot detection, behavioral analysis, and mitigation challenges.
+- **`ip_prefix_set`**: Reusable collections of IPv4 and IPv6 network prefixes.
+
+### 3. Networking and Transit
+
+Manages software-defined networking, site interconnects, and routing:
+
+- **`virtual_network`**: Site-local and global Layer 3 overlay networks.
+- **`network_connector`**: Interconnects between virtual networks, cloud environments, and physical interfaces.
+- **`network_policy`**: Layer 3/Layer 4 stateful firewall rules between virtual networks and endpoints.
+- **`bgp` / `bgp_routing_policy`**: Border Gateway Protocol peering configurations and route distribution filters.
+- **`route_table`**: Custom routing tables controlling next-hop transit across virtual networks.
+
+### 4. Infrastructure and Sites
+
+Deploys and manages distributed Edge infrastructure across clouds and data centers:
+
+- **`site` / `aws_vpc_site` / `azure_vnet_site` / `gcp_vpc_site`**: Automated customer Edge sites deployed on bare metal or cloud providers.
+- **`virtual_site`**: Logical groupings of sites matching selector labels (e.g. `ves.io/siteName in (us-east-1, us-west-2)`).
+- **`cloud_credentials`**: Cloud provider authentication credentials (AWS IAM, Azure Service Principal, GCP Service Account) for automated site provisioning.
+- **`fleet`**: Distributed fleet management clusters managing software rollout and device configurations.
+
+### 5. DNS and Global Traffic Management
+
+Configures authoritative DNS zones and global load balancing:
+
+- **`dns_zone`**: Authoritative Primary and Secondary DNS zones.
+- **`dns_load_balancer`**: Global server load balancing (GSLB) directing DNS queries based on geolocation, latency, or pool health.
+- **`dns_zone_record_set`**: Individual DNS record definitions (A, AAAA, CNAME, TXT, MX, SRV).
+
+### 6. Observability and Alerting
+
+Configures log shipping, metrics export, and alerting policies:
+
+- **`log_receiver`**: Real-time log export pipelines forwarding telemetry to external SIEM/observability systems (Splunk, Datadog, AWS S3, HTTPS webhook).
+- **`alert_policy` / `alert_receiver`**: Notification channels and alerting thresholds.
+
+### 7. Identity, Access, and Management (IAM)
+
+Manages tenant access, roles, and credentials:
+
+- **Namespaces (`namespace`)** — Multi-tenant isolation boundaries.
+- **Users and Roles (`user`, `role`)** — Role-based access control (RBAC) permissions.
+- **API Credentials (`api_credential`)** — Service account and automated API token provisioning.
+
+## Feature Support Matrix
+
+| Resource Type | Describe | Edit (`xcsh://`) | Diff (`xcsh.fileDiff`) | Access Logs | Metrics | Diagram |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| `http_loadbalancer` | Yes | Yes | Yes | Yes | Yes | Yes |
+| `tcp_loadbalancer` | Yes | Yes | Yes | Yes | Yes | — |
+| `udp_loadbalancer` | Yes | Yes | Yes | — | Yes | — |
+| `origin_pool` | Yes | Yes | Yes | — | Yes | — |
+| `healthcheck` | Yes | Yes | Yes | — | — | — |
+| `app_firewall` | Yes | Yes | Yes | — | — | — |
+| `service_policy` | Yes | Yes | Yes | — | — | — |
+| `virtual_network` | Yes | Yes | Yes | — | — | — |
+| `site` / `virtual_site` | Yes | Yes | Yes | — | — | — |
+| `dns_zone` | Yes | Yes | Yes | — | — | — |
+| All other types | Yes | Yes | Yes | — | — | — |

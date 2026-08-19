@@ -1,0 +1,51 @@
+---
+title: Subscription and Quota Tracking
+description: Inspect plan tiers, monitor tenant quota limits, and manage add-ons directly within Visual Studio Code.
+sidebar:
+  order: 6
+---
+
+The **Subscription** view (`xcsh.subscription`) provides visibility into your F5 Distributed Cloud (XC) tenant subscription tier, resource quota allocations, and active add-on capabilities.
+
+## Subscription Tree View
+
+When you connect and activate a valid profile, the **Subscription** panel appears in the F5 Distributed Cloud view container. The tree structure breaks down:
+
+- **Active Plan**: Displays your tenant's subscription tier (such as Enterprise, Standard, or Free Tier), renewal dates, and billing status.
+- **Resource Quotas**: Displays real-time allocation limits and consumption counts for resources such as HTTP Load Balancers, Origin Pools, Namespaces, App Firewalls, and DNS Zones.
+- **Add-On Subscriptions**: Lists optional platform capabilities (such as Advanced Bot Defense, DDoS Mitigation, and API Security).
+
+## Plan Details Dashboard
+
+To view detailed subscription specifications:
+
+1. In the **Subscription** view, select the **View Plan** action icon, or run `xcsh.showPlan` from the Command Palette.
+2. The extension renders a subscription overview webview detailing:
+   - Account tier and licensed entitlements
+   - Base service limits
+   - Provisioning history and contract terms
+
+## Quota Tracking and Utilization
+
+Before deploying new services across your tenant, verify that your namespace has sufficient quota capacity:
+
+1. In the **Subscription** view, select **View Quotas** (or run `xcsh.showQuotas`).
+2. The quota dashboard visualizes usage percentages against allocated maximums:
+
+```text
++-------------------------------------------------------------------------+
+| HTTP Load Balancers   [====================>..........]  24 / 35 (68%)  |
+| Origin Pools          [============>..................]  18 / 50 (36%)  |
+| App Firewalls         [==============================>]  10 / 10 (100%) |
+| Namespaces            [========>......................]   4 / 15 (26%)  |
++-------------------------------------------------------------------------+
+```
+
+When quota utilization approaches threshold limits, the dashboard highlights the constraint to prevent deployment rejections.
+
+## Add-On Management
+
+To evaluate or enable additional security and networking modules:
+
+1. Right-click an inactive add-on listed in the **Subscription** view and select **Activate Add-on** (or run `xcsh.activateAddon`).
+2. The extension initiates the activation request with the tenant management API and refreshes your entitlement status upon completion.
