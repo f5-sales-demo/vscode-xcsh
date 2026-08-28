@@ -39,7 +39,7 @@ permissions:
 jobs:
   spec-delivery:
     name: Resolve Spec Delivery
-    runs-on: ubuntu-latest
+    runs-on: managed-socketless
     permissions:
       contents: read # inspect immutable delivery and receipt branches
       pull-requests: read # distinguish active, merged, and abandoned delivery PRs
@@ -319,7 +319,7 @@ jobs:
   # Validate that code generation is deterministic
   validate-generation:
     name: Validate Generation
-    runs-on: ubuntu-latest
+    runs-on: managed-socketless
     needs: spec-delivery
     if: needs.spec-delivery.outputs.process == 'true'
     outputs:
@@ -410,6 +410,78 @@ jobs:
           retention-days: 1
 
   test:
+    name: Test (ubuntu-latest)
+    runs-on: managed-socketless
+    needs: [spec-delivery, validate-generation]
+    env:
+      SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
+      SPEC_DISPATCH_ACTION: ${{ github.event.action }}
+      SPEC_RELEASE_TAG: ${{ needs.spec-delivery.outputs.release_tag }}
+      SPEC_RELEASE_VERSION: ${{ needs.spec-delivery.outputs.version }}
+      SPEC_TARGET_COMMIT: ${{ needs.spec-delivery.outputs.target_commit }}
+      SPEC_TRIGGER_SOURCE: ${{ github.event.client_payload.trigger_source }}
+      SPEC_EXPECTED_BUNDLE_SHA256: ${{ needs.validate-generation.outputs.bundle_sha256 }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync API specs from upstream
+        run: npm run specs:sync
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download generated files
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: generated-files
+          path: src/generated/
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Validate form defaults
+        run: npm run validate:forms
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm run test:unit
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+        continue-on-error: true
+
+      - name: Build extension
+        run: npm run package
+
+      # Linux requires xvfb for headless VSCode testing
+      - name: Run integration tests (Linux)
+        run: |
+          set -euo pipefail
+          test_user_data_dir=$(mktemp -d /tmp/vscode-xcsh-test.XXXXXX)
+          trap 'rm -rf -- "$test_user_data_dir"' EXIT
+          VSCODE_TEST_USER_DATA_DIR="$test_user_data_dir" \
+            xvfb-run -a npm run test:integration
+
+  test-native:
     name: Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: [spec-delivery, validate-generation]
@@ -424,7 +496,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [macos-latest, windows-latest]
         node-version: [22]
 
     steps:
@@ -465,39 +537,16 @@ jobs:
       - name: Run unit tests
         run: npm run test:unit
 
-      - name: Run unit tests with coverage
-        run: npm run test:coverage
-        if: matrix.os == 'ubuntu-latest'
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7
-        if: matrix.os == 'ubuntu-latest'
-        with:
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-        continue-on-error: true
-
       - name: Build extension
         run: npm run package
 
-      # Linux requires xvfb for headless VSCode testing
-      - name: Run integration tests (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          set -euo pipefail
-          test_user_data_dir=$(mktemp -d /tmp/vscode-xcsh-test.XXXXXX)
-          trap 'rm -rf -- "$test_user_data_dir"' EXIT
-          VSCODE_TEST_USER_DATA_DIR="$test_user_data_dir" \
-            xvfb-run -a npm run test:integration
-
       - name: Run integration tests (macOS/Windows)
-        if: matrix.os != 'ubuntu-latest'
         run: npm run test:integration
 
   build:
     name: Build VSIX
-    runs-on: ubuntu-latest
-    needs: [spec-delivery, validate-generation, test]
+    runs-on: managed-socketless
+    needs: [spec-delivery, validate-generation, test, test-native]
     env:
       SPEC_DELIVERY_ID: ${{ needs.spec-delivery.outputs.delivery_id }}
       SPEC_DISPATCH_ACTION: ${{ github.event.action }}
@@ -551,7 +600,7 @@ jobs:
 
   security:
     name: Security Audit
-    runs-on: ubuntu-latest
+    runs-on: managed-socketless
 
     steps:
       - name: Checkout repository
@@ -573,7 +622,7 @@ jobs:
 
   release-eligibility:
     name: Release Eligibility
-    runs-on: ubuntu-latest
+    runs-on: managed-socketless
     # This job is deliberately read-only. It makes the release decision visible
     # in CI before any job can create tags, releases, issues, or pull requests.
     outputs:
@@ -634,7 +683,7 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     environment: release
-    needs: [spec-delivery, test, build, security, release-eligibility]
+    needs: [spec-delivery, test, test-native, build, security, release-eligibility]
     if: >-
       github.ref == 'refs/heads/main' &&
       needs.release-eligibility.outputs.eligible == 'true' &&
@@ -1011,12 +1060,13 @@ jobs:
     name: Stage Spec Delivery
     runs-on: ubuntu-latest
     environment: release
-    needs: [spec-delivery, validate-generation, test, build, security]
+    needs: [spec-delivery, validate-generation, test, test-native, build, security]
     if: >-
       github.event_name == 'repository_dispatch' &&
       github.event.action == 'enriched-specs-updated' &&
       needs.spec-delivery.outputs.process == 'true' &&
       needs.test.result == 'success' &&
+      needs.test-native.result == 'success' &&
       needs.build.result == 'success' &&
       needs.security.result == 'success'
     permissions:
@@ -1185,7 +1235,7 @@ jobs:
     name: Record Published Spec Delivery
     runs-on: ubuntu-latest
     environment: release
-    needs: [spec-delivery, test, build, release]
+    needs: [spec-delivery, test, test-native, build, release]
     if: >-
       github.event_name == 'push' &&
       github.ref == 'refs/heads/main' &&
