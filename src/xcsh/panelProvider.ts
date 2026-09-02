@@ -302,7 +302,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       html = html.replace(/\/assets\//g, `${assetUri.toString()}/`);
       html = html.replace(
         /<head>/,
-        `<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource};">`,
+        `<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource} data:;">`,
       );
 
       return html;
