@@ -1078,6 +1078,7 @@
     "react-dom": "^19.2.8"
   },
   "overrides": {
+    "browserslist": "4.28.8",
     "diff": "8.0.4",
     "serialize-javascript": "7.1.0",
     "undici": "8.10.0"
