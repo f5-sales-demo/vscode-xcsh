@@ -612,7 +612,9 @@ describe('ContextManager', () => {
     ) as Record<string, unknown>;
     expect(global.apiToken).toBe('padded=');
     expect(pointer).toEqual({ context: 'linked' });
-    expect(fs.statSync(path.join(workspace, '.xcsh', 'contexts', 'linked.json')).mode & 0o777).toBe(0o600);
+    if (process.platform !== 'win32') {
+      expect(fs.statSync(path.join(workspace, '.xcsh', 'contexts', 'linked.json')).mode & 0o777).toBe(0o600);
+    }
     mgr.dispose();
   });
 
