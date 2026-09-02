@@ -71,7 +71,7 @@ describe('ContextManager', () => {
     };
   }
 
-  it('persists credentials and environment values only in secret storage', async () => {
+  it('persists canonical owner-only credentials without using secret storage', async () => {
     const secretStorage = createSecretStorage();
     const mgr = new ContextManager(secretStorage);
     const apiToken = 'TEST_ONLY_TOKEN_VALUE';
@@ -82,14 +82,15 @@ describe('ContextManager', () => {
         name: 'secure-storage',
         apiToken,
         env: { XCSH_PRIVATE_VALUE: envValue },
+        sensitiveKeys: ['XCSH_PRIVATE_VALUE'],
       }),
     );
 
     const raw = fs.readFileSync(path.join(contextsDir, 'secure-storage.json'), 'utf-8');
-    expect(raw).not.toContain(apiToken);
-    expect(raw).not.toContain(envValue);
-    expect([...secretStorage.values.values()].join('\n')).toContain(apiToken);
-    expect([...secretStorage.values.values()].join('\n')).toContain(envValue);
+    expect(raw).toContain(apiToken);
+    expect(raw).toContain(envValue);
+    expect(raw).toContain('sensitiveKeys');
+    expect(secretStorage.values.size).toBe(0);
 
     const hydrated = await mgr.getContext('secure-storage');
     expect(hydrated?.apiToken).toBe(apiToken);
@@ -97,11 +98,11 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
-  it('deletes the secret payload when a context is deleted', async () => {
+  it('does not create or delete SecretStorage payloads for canonical contexts', async () => {
     const secretStorage = createSecretStorage();
     const mgr = new ContextManager(secretStorage);
     await mgr.addContext(makeContext({ name: 'delete-secret' }));
-    expect(secretStorage.values.size).toBe(1);
+    expect(secretStorage.values.size).toBe(0);
 
     await mgr.deleteContext('delete-secret');
 
@@ -140,7 +141,7 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
-  it('rejects a plaintext legacy context file', async () => {
+  it('reads an existing canonical xcsh CLI context file', async () => {
     fs.mkdirSync(contextsDir, { recursive: true });
     const legacy: XCSHContext = {
       name: 'legacy',
@@ -153,7 +154,163 @@ describe('ContextManager', () => {
 
     const mgr = new ContextManager(secretStorage);
     const retrieved = await mgr.getContext('legacy');
-    expect(retrieved).toBeNull();
+    expect(retrieved).toMatchObject({ name: 'legacy', apiToken: 'tok-abc123', apiUrl: 'https://host.example.com' });
+    mgr.dispose();
+  });
+
+  it('detects an occupied context filename even when its contents cannot be read', () => {
+    fs.mkdirSync(contextsDir, { recursive: true });
+    fs.writeFileSync(path.join(contextsDir, 'occupied.json'), '{not-json');
+
+    const mgr = new ContextManager(secretStorage);
+    expect(mgr.contextExists('occupied')).toBe(true);
+    expect(mgr.contextExists('../occupied')).toBe(false);
+    mgr.dispose();
+  });
+
+  it('atomically migrates a legacy global placeholder before deleting its secret', async () => {
+    fs.mkdirSync(contextsDir, { recursive: true });
+    const credentialId = '123e4567-e89b-42d3-a456-426614174000';
+    const filePath = path.join(contextsDir, 'migrate.json');
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        name: 'migrate',
+        apiUrl: 'https://host.example.com',
+        apiToken: '<SECRET_STORAGE>',
+        credentialId,
+        defaultNamespace: 'default',
+        env: { XCSH_CONSOLE_PASSWORD: '<SECRET_STORAGE>' },
+        version: 1,
+      }),
+    );
+    secretStorage.values.set(
+      `xcsh.context.credentials.${credentialId}`,
+      JSON.stringify({ apiToken: 'opaque=', env: { XCSH_CONSOLE_PASSWORD: 'password' } }),
+    );
+
+    const mgr = new ContextManager(secretStorage);
+    await expect(mgr.getContext('migrate')).resolves.toMatchObject({ apiToken: 'opaque=' });
+    const migrated = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as Record<string, unknown>;
+    expect(migrated.apiToken).toBe('opaque=');
+    expect(migrated).not.toHaveProperty('credentialId');
+    expect(secretStorage.values.size).toBe(0);
+    mgr.dispose();
+  });
+
+  it('migrates a legacy global placeholder during direct active-context resolution', async () => {
+    fs.mkdirSync(contextsDir, { recursive: true });
+    const credentialId = '123e4567-e89b-42d3-a456-426614174010';
+    const filePath = path.join(contextsDir, 'resolve-migrate.json');
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        name: 'resolve-migrate',
+        apiUrl: 'https://host.example.com',
+        apiToken: '<SECRET_STORAGE>',
+        credentialId,
+        defaultNamespace: 'default',
+        version: 1,
+      }),
+    );
+    fs.writeFileSync(path.join(configDir, 'active_context'), 'resolve-migrate\n');
+    secretStorage.values.set(
+      `xcsh.context.credentials.${credentialId}`,
+      JSON.stringify({ apiToken: 'resolved-token=', env: {} }),
+    );
+
+    const mgr = new ContextManager(secretStorage);
+    await expect(mgr.resolveContext(undefined)).resolves.toMatchObject({
+      source: 'global',
+      context: { name: 'resolve-migrate', apiToken: 'resolved-token=' },
+    });
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf-8'))).not.toHaveProperty('credentialId');
+    expect(secretStorage.values.size).toBe(0);
+    mgr.dispose();
+  });
+
+  it('leaves a legacy placeholder untouched when its secret is missing', async () => {
+    fs.mkdirSync(contextsDir, { recursive: true });
+    const filePath = path.join(contextsDir, 'missing.json');
+    const legacy = {
+      name: 'missing',
+      apiUrl: 'https://host.example.com',
+      apiToken: '<SECRET_STORAGE>',
+      credentialId: '123e4567-e89b-42d3-a456-426614174000',
+      defaultNamespace: 'default',
+      version: 1,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(legacy));
+
+    const mgr = new ContextManager(secretStorage);
+    await expect(mgr.getContext('missing')).resolves.toBeNull();
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf-8'))).toEqual(legacy);
+    mgr.dispose();
+  });
+
+  it('keeps both verified canonical credentials and the legacy secret when secret cleanup is interrupted', async () => {
+    fs.mkdirSync(contextsDir, { recursive: true });
+    const credentialId = '123e4567-e89b-42d3-a456-426614174011';
+    const filePath = path.join(contextsDir, 'interrupted.json');
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        name: 'interrupted',
+        apiUrl: 'https://host.example.com',
+        apiToken: '<SECRET_STORAGE>',
+        credentialId,
+        defaultNamespace: 'default',
+        version: 1,
+      }),
+    );
+    const secretKey = `xcsh.context.credentials.${credentialId}`;
+    secretStorage.values.set(secretKey, JSON.stringify({ apiToken: 'still-safe=', env: {} }));
+    secretStorage.delete = jest.fn().mockRejectedValue(new Error('simulated interruption'));
+
+    const mgr = new ContextManager(secretStorage);
+    await expect(mgr.getContext('interrupted')).rejects.toMatchObject({ stage: 'migration' });
+    expect(JSON.parse(fs.readFileSync(filePath, 'utf-8'))).toMatchObject({ apiToken: 'still-safe=' });
+    expect(secretStorage.values.has(secretKey)).toBe(true);
+    mgr.dispose();
+  });
+
+  it('migrates a conflicting legacy project context under a user-selected global name', async () => {
+    const workspace = path.join(tmpDir, 'project');
+    const localDir = path.join(workspace, '.xcsh', 'contexts');
+    fs.mkdirSync(localDir, { recursive: true });
+    const mgr = new ContextManager(secretStorage);
+    await mgr.addContext(makeContext({ name: 'conflict', apiToken: 'existing-token' }));
+
+    const credentialId = '123e4567-e89b-42d3-a456-426614174001';
+    fs.writeFileSync(
+      path.join(localDir, 'conflict.json'),
+      JSON.stringify({
+        name: 'conflict',
+        apiUrl: 'https://different.example.test',
+        apiToken: '<SECRET_STORAGE>',
+        credentialId,
+        defaultNamespace: 'default',
+        version: 1,
+      }),
+    );
+    fs.writeFileSync(path.join(localDir, 'active_context'), 'conflict\n');
+    secretStorage.values.set(
+      `xcsh.context.credentials.${credentialId}`,
+      JSON.stringify({ apiToken: 'legacy-token', env: {} }),
+    );
+    const currentVscode = require('vscode') as typeof import('vscode');
+    jest.mocked(currentVscode.window.showInputBox).mockResolvedValueOnce('project-conflict');
+
+    await expect(mgr.getLocalContexts(workspace)).resolves.toEqual([
+      expect.objectContaining({ name: 'project-conflict', apiToken: 'legacy-token' }),
+    ]);
+    expect(JSON.parse(fs.readFileSync(path.join(localDir, 'project-conflict.json'), 'utf-8'))).toEqual({
+      context: 'project-conflict',
+    });
+    expect(fs.existsSync(path.join(localDir, 'conflict.json'))).toBe(false);
+    expect(fs.readFileSync(path.join(localDir, 'active_context'), 'utf-8').trim()).toBe('project-conflict');
+    expect((await mgr.getContext('project-conflict'))?.apiToken).toBe('legacy-token');
+    expect(secretStorage.values.size).toBe(0);
     mgr.dispose();
   });
 
@@ -442,6 +599,38 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
+  it('creates a canonical global context plus a project pointer transactionally', async () => {
+    const workspace = path.join(tmpDir, 'project');
+    fs.mkdirSync(path.join(workspace, '.xcsh'), { recursive: true });
+    const mgr = new ContextManager(secretStorage);
+
+    await mgr.addGlobalContextAndLink(makeContext({ name: 'linked', apiToken: 'padded=' }), workspace);
+
+    const global = JSON.parse(fs.readFileSync(path.join(contextsDir, 'linked.json'), 'utf-8')) as XCSHContext;
+    const pointer = JSON.parse(
+      fs.readFileSync(path.join(workspace, '.xcsh', 'contexts', 'linked.json'), 'utf-8'),
+    ) as Record<string, unknown>;
+    expect(global.apiToken).toBe('padded=');
+    expect(pointer).toEqual({ context: 'linked' });
+    expect(fs.statSync(path.join(workspace, '.xcsh', 'contexts', 'linked.json')).mode & 0o777).toBe(0o600);
+    mgr.dispose();
+  });
+
+  it('removes the new global context and restores pointers when project linking fails', async () => {
+    const workspace = path.join(tmpDir, 'project');
+    fs.mkdirSync(path.join(workspace, '.xcsh'), { recursive: true });
+    const mgr = new ContextManager(secretStorage);
+    await mgr.addContext(makeContext({ name: 'prior' }));
+    jest.spyOn(mgr, 'linkGlobalContext').mockRejectedValueOnce(new Error('simulated pointer failure'));
+
+    await expect(mgr.addGlobalContextAndLink(makeContext({ name: 'rollback' }), workspace)).rejects.toThrow(
+      'simulated pointer failure',
+    );
+    expect(fs.existsSync(path.join(contextsDir, 'rollback.json'))).toBe(false);
+    expect(fs.readFileSync(path.join(configDir, 'active_context'), 'utf-8').trim()).toBe('prior');
+    mgr.dispose();
+  });
+
   // --------------- update nonexistent ---------------
 
   it('throws when updating a context that does not exist', async () => {
@@ -466,9 +655,8 @@ describe('ContextManager', () => {
     await mgr.setContextEnv('env-ctx', 'XCSH_LB_NAME', 'my-lb');
 
     const onDisk = JSON.parse(fs.readFileSync(path.join(contextsDir, 'env-ctx.json'), 'utf-8')) as XCSHContext;
-    expect(onDisk.env).not.toEqual({ XCSH_LB_NAME: 'my-lb' });
-    expect(JSON.stringify(onDisk)).not.toContain('my-lb');
-    expect([...secretStorage.values.values()].join('\n')).toContain('my-lb');
+    expect(onDisk.env).toEqual({ XCSH_LB_NAME: 'my-lb' });
+    expect(secretStorage.values.size).toBe(0);
     mgr.dispose();
   });
 

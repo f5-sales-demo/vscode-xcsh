@@ -140,6 +140,14 @@ export async function withErrorHandling<T>(
         const message = smartMessage || error.userFriendlyMessage;
         void vscode.window.showErrorMessage(`${context}: ${message}`);
       }
+    } else if (
+      error instanceof Error &&
+      error.name === 'ContextPersistenceError' &&
+      ['duplicate', 'migration', 'directory', 'context-write', 'active-pointer'].includes(
+        (error as Error & { stage?: string }).stage ?? '',
+      )
+    ) {
+      void vscode.window.showErrorMessage(`${context}: ${error.message}`);
     } else {
       void vscode.window.showErrorMessage(vscode.l10n.t('{0}: An unexpected error occurred', context));
     }
