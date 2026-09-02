@@ -7,9 +7,9 @@ export interface XCSHContext {
   name: string;
   apiUrl: string;
   apiToken: string;
-  credentialId?: string;
   defaultNamespace: string;
   env?: Record<string, string>;
+  sensitiveKeys?: string[];
   knowledgeSources?: KnowledgeSource[];
   includeSkills?: string[];
   excludeSkills?: string[];
@@ -44,36 +44,15 @@ export interface ContextManagerInterface {
 
 export const CURRENT_SCHEMA_VERSION = 1;
 
-export const RESERVED_CONTEXT_NAMES = new Set([
-  'list',
-  'show',
-  'status',
-  'create',
-  'delete',
-  'rename',
-  'namespace',
-  'env',
-  'set',
-  'unset',
-  'add',
-  'remove',
-  'clear',
-  'activate',
-  'validate',
-  'export',
-  'import',
-  'wizard',
-  'help',
-]);
-
-const CONTEXT_NAME_PATTERN = /^[a-zA-Z0-9_-]{1,64}$/;
-
-export function isValidContextName(name: string): boolean {
-  if (!CONTEXT_NAME_PATTERN.test(name)) {
-    return false;
-  }
-  return !RESERVED_CONTEXT_NAMES.has(name.toLowerCase());
+interface SharedContextModule {
+  readonly RESERVED_CONTEXT_NAMES: ReadonlySet<string>;
+  isSafeContextName(name: string): boolean;
+  normalizeApiUrl(apiUrl: string): string;
 }
+
+const sharedContext = require('@f5-sales-demo/pi-utils/xcsh-context-resolver') as SharedContextModule;
+export const RESERVED_CONTEXT_NAMES = sharedContext.RESERVED_CONTEXT_NAMES;
+export const isValidContextName = (name: string): boolean => sharedContext.isSafeContextName(name);
 
 /**
  * Auth-env recognition shared with the xcsh shell via
@@ -85,6 +64,7 @@ export function isValidContextName(name: string): boolean {
  * pattern `contextResolver.ts` uses.
  */
 interface SharedEnvNamesModule {
+  readonly XCSH_API_TOKEN: string;
   readonly XCSH_USERNAME: string;
   readonly XCSH_CONSOLE_PASSWORD: string;
   readonly AUTH_ENV_KEYS: readonly string[];
@@ -96,6 +76,7 @@ const sharedEnvNames = require('@f5-sales-demo/pi-utils/xcsh-env-names') as Shar
 
 /** Web-console login username key — a generic (non-reserved) env credential. */
 export const XCSH_USERNAME = sharedEnvNames.XCSH_USERNAME;
+export const XCSH_API_TOKEN = sharedEnvNames.XCSH_API_TOKEN;
 /** Web-console login password key — a generic (non-reserved), sensitive env credential. */
 export const XCSH_CONSOLE_PASSWORD = sharedEnvNames.XCSH_CONSOLE_PASSWORD;
 /** Recognized web-console credentials, in display order (username, then password). */
@@ -161,17 +142,7 @@ export function computeTokenHealth(expiresAt: string | undefined): TokenHealth {
  * collapses the request host to a bare label (e.g. `api`).
  */
 export function normalizeApiUrl(apiUrl: string): string {
-  if (typeof apiUrl !== 'string') {
-    return apiUrl;
-  }
-  const trimmed = apiUrl.trim();
-  try {
-    return new URL(trimmed).origin;
-  } catch {
-    // Not a parseable absolute URL (input validation should prevent this);
-    // fall back to stripping trailing slashes so we never worsen a bad value.
-    return trimmed.replace(/\/+$/, '');
-  }
+  return sharedContext.normalizeApiUrl(apiUrl);
 }
 
 export function deriveTenantFromUrl(apiUrl: string): string | null {
