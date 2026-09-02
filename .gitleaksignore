@@ -1,0 +1,4 @@
+# Vendored chat-ui manifest contains only SHA-256 integrity digests. Super-linter
+# scans changed files by absolute path; keep both local and CI fingerprints.
+webview/src/vendored/chat-ui/VENDOR-MANIFEST.json:generic-api-key:40
+/github/workspace/webview/src/vendored/chat-ui/VENDOR-MANIFEST.json:generic-api-key:40
