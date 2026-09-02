@@ -1,6 +1,5 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
@@ -49,11 +48,27 @@ interface ContextSecretPayload {
   env: Record<string, string>;
 }
 
-interface StoredContext extends Omit<XCSHContext, 'apiToken' | 'credentialId' | 'env'> {
+interface LegacyStoredContext extends Omit<XCSHContext, 'apiToken' | 'env'> {
   apiToken: typeof SECRET_SENTINEL;
   credentialId: string;
   env?: Record<string, typeof SECRET_SENTINEL>;
 }
+
+export type ContextPersistenceStage = 'duplicate' | 'migration' | 'directory' | 'context-write' | 'active-pointer';
+
+export class ContextPersistenceError extends Error {
+  constructor(
+    readonly stage: ContextPersistenceStage,
+    message: string,
+    options?: ErrorOptions,
+  ) {
+    super(message, options);
+    this.name = 'ContextPersistenceError';
+  }
+}
+
+const CONTEXT_SCHEMA_URL =
+  'https://raw.githubusercontent.com/f5-sales-demo/xcsh/main/packages/coding-agent/src/config/context-schema.json';
 
 /**
  * Manages F5 XC context files stored in ~/.config/xcsh/contexts/.
@@ -128,10 +143,21 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
    */
   private atomicWrite(filePath: string, data: string, mode: number): void {
     const tmp = `${filePath}.tmp`;
-    fs.writeFileSync(tmp, data, { encoding: 'utf-8', mode });
-    fs.renameSync(tmp, filePath);
-    // Ensure final permissions (rename may not preserve them on all OSes)
-    this.chmodSafe(filePath, mode);
+    try {
+      fs.writeFileSync(tmp, data, { encoding: 'utf-8', mode });
+      fs.renameSync(tmp, filePath);
+      // Ensure final permissions (rename may not preserve them on all OSes)
+      this.chmodSafe(filePath, mode);
+    } catch (error) {
+      try {
+        if (fs.existsSync(tmp)) {
+          fs.unlinkSync(tmp);
+        }
+      } catch {
+        this.logger.warn('context.temp.cleanup.failed');
+      }
+      throw error;
+    }
   }
 
   /**
@@ -149,25 +175,6 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     return `${SECRET_KEY_PREFIX}${credentialId}`;
   }
 
-  private toStoredContext(ctx: XCSHContext, credentialId: string): StoredContext {
-    const { apiToken: _apiToken, credentialId: _credentialId, env, ...nonSecret } = this.normalizeContext(ctx);
-    void _apiToken;
-    void _credentialId;
-    const storedEnv = env
-      ? Object.fromEntries(Object.keys(env).map((key) => [key, SECRET_SENTINEL] as const))
-      : undefined;
-    return {
-      ...nonSecret,
-      apiToken: SECRET_SENTINEL,
-      credentialId,
-      ...(storedEnv ? { env: storedEnv } : {}),
-    };
-  }
-
-  private toSecretPayload(ctx: XCSHContext): ContextSecretPayload {
-    return { apiToken: ctx.apiToken, env: { ...(ctx.env ?? {}) } };
-  }
-
   private isStringRecord(value: unknown): value is Record<string, string> {
     return (
       typeof value === 'object' &&
@@ -177,7 +184,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     );
   }
 
-  private parseStoredContext(value: unknown, expectedName?: string): StoredContext | null {
+  private parseLegacyStoredContext(value: unknown, expectedName?: string): LegacyStoredContext | null {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
       return null;
     }
@@ -205,7 +212,47 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
         }
       }
     }
-    return this.normalizeContext(candidate as unknown as StoredContext) as StoredContext;
+    return this.normalizeContext(candidate as unknown as LegacyStoredContext) as LegacyStoredContext;
+  }
+
+  private parseCanonicalContext(value: unknown, expectedName?: string): XCSHContext | null {
+    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+      return null;
+    }
+    const candidate = value as Record<string, unknown>;
+    if (
+      typeof candidate.name !== 'string' ||
+      !isValidContextName(candidate.name) ||
+      (expectedName !== undefined && candidate.name !== expectedName) ||
+      typeof candidate.apiUrl !== 'string' ||
+      !candidate.apiUrl.startsWith('https://') ||
+      typeof candidate.apiToken !== 'string' ||
+      candidate.apiToken === SECRET_SENTINEL ||
+      candidate.apiToken.trim().length === 0 ||
+      typeof candidate.defaultNamespace !== 'string' ||
+      (candidate.version !== undefined &&
+        (typeof candidate.version !== 'number' || candidate.version > CURRENT_SCHEMA_VERSION))
+    ) {
+      return null;
+    }
+    if (candidate.env !== undefined) {
+      if (!this.isStringRecord(candidate.env)) {
+        return null;
+      }
+      if (Object.keys(candidate.env).some((key) => !isValidEnvKey(key) || isReservedEnvKey(key))) {
+        return null;
+      }
+    }
+    if (
+      candidate.sensitiveKeys !== undefined &&
+      (!Array.isArray(candidate.sensitiveKeys) || candidate.sensitiveKeys.some((key) => typeof key !== 'string'))
+    ) {
+      return null;
+    }
+    const { $schema: _schema, credentialId: _credentialId, ...context } = candidate;
+    void _schema;
+    void _credentialId;
+    return this.normalizeContext(context as unknown as XCSHContext);
   }
 
   private parseSecretPayload(raw: string, expectedEnvKeys: readonly string[]): ContextSecretPayload | null {
@@ -233,16 +280,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
   }
 
-  private readStoredContext(filePath: string, expectedName?: string): StoredContext | null {
-    try {
-      const value: unknown = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      return this.parseStoredContext(value, expectedName);
-    } catch {
-      return null;
-    }
-  }
-
-  private async hydrateContext(stored: StoredContext): Promise<XCSHContext | null> {
+  private async hydrateContext(stored: LegacyStoredContext): Promise<XCSHContext | null> {
     const raw = await this.secretStorage.get(this.secretKey(stored.credentialId));
     if (!raw) {
       return null;
@@ -251,8 +289,9 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     if (!payload) {
       return null;
     }
-    const { env: _storedEnv, ...nonSecret } = stored;
+    const { env: _storedEnv, credentialId: _credentialId, ...nonSecret } = stored;
     void _storedEnv;
+    void _credentialId;
     return {
       ...nonSecret,
       apiToken: payload.apiToken,
@@ -260,21 +299,45 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     };
   }
 
+  private canonicalPayload(ctx: XCSHContext): string {
+    return `${JSON.stringify({ $schema: CONTEXT_SCHEMA_URL, ...this.normalizeContext(ctx) }, null, 2)}\n`;
+  }
+
   private async readContext(filePath: string, expectedName?: string): Promise<XCSHContext | null> {
-    const stored = this.readStoredContext(filePath, expectedName);
-    if (!stored) {
+    let value: unknown;
+    try {
+      value = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    } catch {
       this.logger.warn('context.read.failed');
       return null;
     }
-    const hydrated = await this.hydrateContext(stored);
-    if (!hydrated) {
-      this.logger.warn('context.read.failed');
+    const canonical = this.parseCanonicalContext(value, expectedName);
+    if (canonical) {
+      return canonical;
     }
-    return hydrated;
-  }
 
-  private async storeSecretPayload(credentialId: string, ctx: XCSHContext): Promise<void> {
-    await this.secretStorage.store(this.secretKey(credentialId), JSON.stringify(this.toSecretPayload(ctx)));
+    const legacy = this.parseLegacyStoredContext(value, expectedName);
+    if (!legacy) {
+      this.logger.warn('context.read.failed');
+      return null;
+    }
+    const hydrated = await this.hydrateContext(legacy);
+    if (!hydrated) {
+      this.logger.warn('context.secret.missing');
+      return null;
+    }
+    try {
+      this.atomicWrite(filePath, this.canonicalPayload(hydrated), FILE_MODE);
+      const verified = this.parseCanonicalContext(JSON.parse(fs.readFileSync(filePath, 'utf-8')), expectedName);
+      if (!verified) {
+        throw new Error('Canonical context verification failed');
+      }
+      await this.secretStorage.delete(this.secretKey(legacy.credentialId));
+      return verified;
+    } catch (error) {
+      this.logger.warn('context.read.failed');
+      throw new ContextPersistenceError('migration', 'Could not migrate legacy context credentials', { cause: error });
+    }
   }
 
   // ───────── read operations ─────────
@@ -312,6 +375,11 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     return this.readContext(filePath, name);
   }
 
+  /** Check the canonical filename directly, including unreadable or not-yet-migrated legacy records. */
+  contextExists(name: string): boolean {
+    return isValidContextName(name) && fs.existsSync(getContextPath(name));
+  }
+
   getActiveContextName(): Promise<string | null> {
     // Session gate: do not honor a persisted active context until the user has
     // explicitly activated one this session (no auto-load, matching the TUI).
@@ -345,63 +413,55 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Invalid context name: "${ctx.name}"`);
     }
 
-    this.ensureContextsDir();
+    try {
+      this.ensureContextsDir();
+    } catch (error) {
+      throw new ContextPersistenceError('directory', 'Could not create the xcsh context directory', { cause: error });
+    }
 
     const filePath = getContextPath(ctx.name);
     if (fs.existsSync(filePath)) {
-      throw new Error(`Context "${ctx.name}" already exists`);
+      throw new ContextPersistenceError('duplicate', `Context "${ctx.name}" already exists`);
     }
 
     const normalized: XCSHContext = {
       ...this.normalizeContext(ctx),
       version: ctx.version ?? CURRENT_SCHEMA_VERSION,
+      metadata: ctx.metadata ?? { createdAt: new Date().toISOString() },
     };
-    const credentialId = randomUUID();
-    await this.storeSecretPayload(credentialId, normalized);
     try {
-      const stored = this.toStoredContext(normalized, credentialId);
-      this.atomicWrite(filePath, `${JSON.stringify(stored, null, 2)}\n`, FILE_MODE);
+      this.atomicWrite(filePath, this.canonicalPayload(normalized), FILE_MODE);
+    } catch (error) {
+      throw new ContextPersistenceError('context-write', `Could not write context "${ctx.name}"`, { cause: error });
+    }
+    try {
       await this.setActiveContext(ctx.name);
     } catch (error) {
       if (fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
-      await this.secretStorage.delete(this.secretKey(credentialId));
-      throw error;
+      throw new ContextPersistenceError('active-pointer', `Context "${ctx.name}" was not activated`, { cause: error });
     }
   }
 
   async updateContext(name: string, updates: Partial<XCSHContext>): Promise<void> {
     const filePath = getContextPath(name);
-    const stored = this.readStoredContext(filePath, name);
-    if (!stored) {
-      throw new Error(`Context "${name}" not found`);
-    }
-    const existing = await this.hydrateContext(stored);
+    const existing = await this.getContext(name);
     if (!existing) {
-      throw new Error('Context credentials are unavailable');
+      throw new Error(`Context "${name}" not found`);
     }
 
     const merged: XCSHContext = this.normalizeContext({
       ...existing,
       ...updates,
       name,
-      credentialId: stored.credentialId,
     });
 
     this.ensureContextsDir();
-    const secretKey = this.secretKey(stored.credentialId);
-    const priorSecret = await this.secretStorage.get(secretKey);
-    if (!priorSecret) {
-      throw new Error('Context credentials are unavailable');
-    }
-    await this.storeSecretPayload(stored.credentialId, merged);
     try {
-      const nextStored = this.toStoredContext(merged, stored.credentialId);
-      this.atomicWrite(filePath, `${JSON.stringify(nextStored, null, 2)}\n`, FILE_MODE);
+      this.atomicWrite(filePath, this.canonicalPayload(merged), FILE_MODE);
     } catch (error) {
-      await this.secretStorage.store(secretKey, priorSecret);
-      throw error;
+      throw new ContextPersistenceError('context-write', `Could not update context "${name}"`, { cause: error });
     }
 
     // Clear caches for this context
@@ -466,12 +526,9 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
    */
   async renameContext(oldName: string, newName: string): Promise<void> {
     const oldPath = getContextPath(oldName);
-    const stored = this.readStoredContext(oldPath, oldName);
-    if (!stored) {
+    const existing = await this.getContext(oldName);
+    if (!existing) {
       throw new Error(`Context "${oldName}" not found`);
-    }
-    if (!(await this.secretStorage.get(this.secretKey(stored.credentialId)))) {
-      throw new Error('Context credentials are unavailable');
     }
     if (oldName === newName) {
       return;
@@ -485,8 +542,8 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     }
     const activePath = getActiveContextPath();
     const rawBefore = fs.existsSync(activePath) ? fs.readFileSync(activePath, 'utf-8').trim() || null : null;
-    const renamed: StoredContext = { ...stored, name: newName };
-    this.atomicWrite(newPath, `${JSON.stringify(renamed, null, 2)}\n`, FILE_MODE);
+    const renamed: XCSHContext = { ...existing, name: newName };
+    this.atomicWrite(newPath, this.canonicalPayload(renamed), FILE_MODE);
     try {
       fs.unlinkSync(oldPath);
     } catch (error) {
@@ -507,22 +564,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Context "${name}" not found`);
     }
 
-    const stored = this.readStoredContext(filePath, name);
-    if (!stored) {
-      throw new Error(`Context "${name}" not found`);
-    }
-    const secretKey = this.secretKey(stored.credentialId);
-    const priorSecret = await this.secretStorage.get(secretKey);
-    if (!priorSecret) {
-      throw new Error('Context credentials are unavailable');
-    }
-    await this.secretStorage.delete(secretKey);
-    try {
-      fs.unlinkSync(filePath);
-    } catch (error) {
-      await this.secretStorage.store(secretKey, priorSecret);
-      throw error;
-    }
+    fs.unlinkSync(filePath);
 
     // Clear active if it was the deleted context
     const activeName = await this.getActiveContextName();
@@ -594,8 +636,13 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
           continue;
         }
         const name = path.basename(file, '.json');
-        const stored = this.parseStoredContext(value, name);
-        const ctx = stored ? await this.hydrateContext(stored) : null;
+        const canonical = this.parseCanonicalContext(value, name);
+        if (canonical) {
+          contexts.push(canonical);
+          continue;
+        }
+        const stored = this.parseLegacyStoredContext(value, name);
+        const ctx = stored ? await this.migrateLocalLegacy(stored, filePath, workspaceFolder) : null;
         if (ctx) {
           contexts.push(ctx);
         } else {
@@ -630,36 +677,9 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   // ───────── local write operations ─────────
 
-  /** Add an inline context JSON to the workspace's `.xcsh/contexts/`. */
+  /** Compatibility entry point: create globally and write only a project pointer locally. */
   async addLocalContext(ctx: XCSHContext, workspaceFolder: string): Promise<void> {
-    if (!isValidContextName(ctx.name)) {
-      throw new Error(`Invalid context name: "${ctx.name}"`);
-    }
-
-    this.ensureLocalContextsDir(workspaceFolder);
-
-    const filePath = getLocalContextPath(ctx.name, workspaceFolder);
-    if (fs.existsSync(filePath)) {
-      throw new Error(`Local context "${ctx.name}" already exists`);
-    }
-
-    const normalized: XCSHContext = {
-      ...this.normalizeContext(ctx),
-      version: ctx.version ?? CURRENT_SCHEMA_VERSION,
-    };
-    const credentialId = randomUUID();
-    await this.storeSecretPayload(credentialId, normalized);
-    try {
-      const stored = this.toStoredContext(normalized, credentialId);
-      this.atomicWrite(filePath, `${JSON.stringify(stored, null, 2)}\n`, FILE_MODE);
-      await this.setLocalActiveContext(ctx.name, workspaceFolder);
-    } catch (error) {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-      await this.secretStorage.delete(this.secretKey(credentialId));
-      throw error;
-    }
+    await this.addGlobalContextAndLink(ctx, workspaceFolder);
   }
 
   /** Set the active local context pointer. */
@@ -693,29 +713,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       throw new Error(`Local context "${name}" not found`);
     }
 
-    let secretKey: string | undefined;
-    let priorSecret: string | undefined;
-    const value: unknown = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    if (!isPointerContext(value)) {
-      const stored = this.parseStoredContext(value, name);
-      if (!stored) {
-        throw new Error(`Local context "${name}" not found`);
-      }
-      secretKey = this.secretKey(stored.credentialId);
-      priorSecret = await this.secretStorage.get(secretKey);
-      if (!priorSecret) {
-        throw new Error('Context credentials are unavailable');
-      }
-      await this.secretStorage.delete(secretKey);
-    }
-    try {
-      fs.unlinkSync(filePath);
-    } catch (error) {
-      if (secretKey && priorSecret) {
-        await this.secretStorage.store(secretKey, priorSecret);
-      }
-      throw error;
-    }
+    fs.unlinkSync(filePath);
 
     // Clear active if it was the deleted context
     const activeName = await this.getLocalActiveContextName(workspaceFolder);
@@ -757,6 +755,128 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
     await this.setLocalActiveContext(globalName, workspaceFolder);
   }
 
+  /** Transactionally create a canonical global context and link it into a workspace. */
+  async addGlobalContextAndLink(ctx: XCSHContext, workspaceFolder: string): Promise<void> {
+    const priorGlobalPointer = fs.existsSync(getActiveContextPath())
+      ? fs.readFileSync(getActiveContextPath(), 'utf-8')
+      : undefined;
+    const priorLocalPointer = fs.existsSync(getLocalActiveContextPath(workspaceFolder))
+      ? fs.readFileSync(getLocalActiveContextPath(workspaceFolder), 'utf-8')
+      : undefined;
+    const globalPath = getContextPath(ctx.name);
+    const localPath = getLocalContextPath(ctx.name, workspaceFolder);
+    const globalExisted = fs.existsSync(globalPath);
+    const priorLocalContext = fs.existsSync(localPath) ? fs.readFileSync(localPath, 'utf-8') : undefined;
+    try {
+      await this.addContext(ctx);
+      await this.linkGlobalContext(ctx.name, workspaceFolder);
+    } catch (error) {
+      if (!globalExisted && fs.existsSync(globalPath)) {
+        fs.unlinkSync(globalPath);
+      }
+      this.restorePointer(localPath, priorLocalContext);
+      this.restorePointer(getActiveContextPath(), priorGlobalPointer);
+      this.restorePointer(getLocalActiveContextPath(workspaceFolder), priorLocalPointer);
+      throw error;
+    }
+  }
+
+  private restorePointer(filePath: string, prior: string | undefined): void {
+    if (prior === undefined) {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      return;
+    }
+    this.atomicWrite(filePath, prior, FILE_MODE);
+  }
+
+  private sameContext(left: XCSHContext, right: XCSHContext): boolean {
+    const sortedRecord = (record: Record<string, string> | undefined): Record<string, string> =>
+      Object.fromEntries(Object.entries(record ?? {}).sort(([leftKey], [rightKey]) => leftKey.localeCompare(rightKey)));
+    const comparable = (ctx: XCSHContext): unknown => ({
+      apiUrl: this.normalizeContext(ctx).apiUrl,
+      apiToken: ctx.apiToken,
+      defaultNamespace: ctx.defaultNamespace,
+      env: sortedRecord(ctx.env),
+      sensitiveKeys: [...(ctx.sensitiveKeys ?? [])].sort(),
+    });
+    return JSON.stringify(comparable(left)) === JSON.stringify(comparable(right));
+  }
+
+  private async migrateLocalLegacy(
+    stored: LegacyStoredContext,
+    legacyPath: string,
+    workspaceFolder: string,
+  ): Promise<XCSHContext | null> {
+    const hydrated = await this.hydrateContext(stored);
+    if (!hydrated) {
+      return null;
+    }
+    let globalName = stored.name;
+    const existing = await this.getContext(globalName);
+    if (existing && !this.sameContext(existing, hydrated)) {
+      const replacement = await vscode.window.showInputBox({
+        prompt: vscode.l10n.t(
+          'A different global context named "{0}" already exists. Enter a new global name.',
+          globalName,
+        ),
+        validateInput: (value) =>
+          !isValidContextName(value) ||
+          fs.existsSync(getContextPath(value)) ||
+          fs.existsSync(getLocalContextPath(value, workspaceFolder))
+            ? vscode.l10n.t('Choose a valid, unused global context name')
+            : null,
+        ignoreFocusOut: true,
+      });
+      if (!replacement) {
+        return null;
+      }
+      globalName = replacement;
+    }
+
+    const globalPath = getContextPath(globalName);
+    const pointerPath = getLocalContextPath(globalName, workspaceFolder);
+    const createdGlobal = !fs.existsSync(globalPath);
+    const legacyRaw = fs.readFileSync(legacyPath, 'utf-8');
+    const activePath = getLocalActiveContextPath(workspaceFolder);
+    const priorActive = fs.existsSync(activePath) ? fs.readFileSync(activePath, 'utf-8') : undefined;
+    try {
+      if (createdGlobal) {
+        this.ensureContextsDir();
+        this.atomicWrite(globalPath, this.canonicalPayload({ ...hydrated, name: globalName }), FILE_MODE);
+        if (!(await this.getContext(globalName))) {
+          throw new Error('Global migration verification failed');
+        }
+      }
+      const pointer: PointerContext = { context: globalName };
+      this.ensureLocalContextsDir(workspaceFolder);
+      this.atomicWrite(pointerPath, `${JSON.stringify(pointer, null, 2)}\n`, FILE_MODE);
+      const verified = JSON.parse(fs.readFileSync(pointerPath, 'utf-8')) as unknown;
+      if (!isPointerContext(verified) || verified.context !== globalName) {
+        throw new Error('Pointer verification failed');
+      }
+      if (priorActive?.trim() === stored.name && globalName !== stored.name) {
+        this.setLocalActiveContextInternal(globalName, workspaceFolder);
+      }
+      if (pointerPath !== legacyPath) {
+        fs.unlinkSync(legacyPath);
+      }
+      await this.secretStorage.delete(this.secretKey(stored.credentialId));
+      return { ...hydrated, name: globalName };
+    } catch (error) {
+      if (createdGlobal && fs.existsSync(globalPath)) {
+        fs.unlinkSync(globalPath);
+      }
+      if (pointerPath !== legacyPath && fs.existsSync(pointerPath)) {
+        fs.unlinkSync(pointerPath);
+      }
+      this.atomicWrite(legacyPath, legacyRaw, FILE_MODE);
+      this.restorePointer(activePath, priorActive);
+      throw new ContextPersistenceError('migration', 'Could not migrate the project context', { cause: error });
+    }
+  }
+
   async resolveContext(workspaceFolder: string | undefined): Promise<ResolvedContext | null> {
     const resolved = await resolveStoredContext(workspaceFolder);
     if (!resolved) {
@@ -775,17 +895,45 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       }
       return { ...resolved, context: this.normalizeContext(ctx) };
     }
-    const stored = this.parseStoredContext(resolved.context);
-    if (!stored) {
+    const context = this.parseCanonicalContext(resolved.context);
+    if (context) {
+      return { ...resolved, context };
+    }
+
+    const legacy = this.parseLegacyStoredContext(resolved.context);
+    if (!legacy) {
       this.logger.warn('context.read.failed');
       return null;
     }
-    const context = await this.hydrateContext(stored);
-    if (!context) {
+
+    if (resolved.source === 'global') {
+      const migrated = await this.readContext(resolved.sourcePath, legacy.name);
+      return migrated ? { ...resolved, context: migrated } : null;
+    }
+
+    if (!workspaceFolder) {
       this.logger.warn('context.read.failed');
       return null;
     }
-    return { ...resolved, context };
+    try {
+      const localValue: unknown = JSON.parse(fs.readFileSync(resolved.sourcePath, 'utf-8'));
+      if (isPointerContext(localValue)) {
+        const migrated = await this.getContext(localValue.context);
+        if (!migrated) {
+          return null;
+        }
+        const merged = localValue.overrides ? mergePointerOverrides(migrated, localValue.overrides) : migrated;
+        return { ...resolved, context: this.normalizeContext(merged) };
+      }
+      const migrated = await this.migrateLocalLegacy(legacy, resolved.sourcePath, workspaceFolder);
+      return migrated ? { ...resolved, context: migrated } : null;
+    } catch (error) {
+      if (error instanceof ContextPersistenceError) {
+        throw error;
+      }
+      this.logger.warn('context.read.failed');
+      return null;
+    }
   }
 
   // ───────── cache management ─────────

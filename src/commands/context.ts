@@ -1,7 +1,5 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
-import * as fs from 'node:fs';
-import * as path from 'node:path';
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
 import type { XCSHContext } from '../config/contextTypes';
@@ -24,11 +22,10 @@ function setOrClearEnv(env: Record<string, string> | undefined, key: string, val
   return next;
 }
 
-import { TokenAuthProvider } from '../api/auth/tokenAuth';
-import { XCSHClient } from '../api/client';
 import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
-import { buildNamespacePickChoices, buildSelectableNamespaces, type XCSHExplorerProvider } from '../tree/xcshExplorer';
-import { showInfo, showWarning, withErrorHandling, XCSHApiError } from '../utils/errors';
+import { buildSelectableNamespaces, type XCSHExplorerProvider } from '../tree/xcshExplorer';
+import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
+import { ContextAddController } from './contextAddWizard';
 
 /**
  * Resolve the target context name: use the tree node if invoked from the view,
@@ -68,215 +65,13 @@ export function registerContextCommands(
   context.subscriptions.push(
     vscode.commands.registerCommand('xcsh.addContext', async () => {
       await withErrorHandling(async () => {
-        // Step 1: Context name
-        const name = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('Enter a name for this context'),
-          placeHolder: 'production',
-          ignoreFocusOut: true,
-          validateInput: (value) => {
-            if (!value || value.trim().length === 0) {
-              return vscode.l10n.t('Context name is required');
-            }
-            if (!isValidContextName(value)) {
-              return vscode.l10n.t(
-                'Context name can only contain letters, numbers, underscores, and hyphens (1-64 chars, no reserved words)',
-              );
-            }
-            return null;
-          },
-        });
-
+        const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        const name = await new ContextAddController(contextManager, workspaceFolder).run();
         if (!name) {
           return;
         }
 
-        // Steps 2–3: API URL + token, verified against the API before we go on.
-        // A failed check warns and re-prompts both (URL pre-filled with the last
-        // value) until it succeeds or the user cancels. On success the tenant's
-        // namespace list comes back with the verification and drives the picker.
-        const verified = await (async () => {
-          let url = 'https://';
-          for (;;) {
-            const urlInput = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter API URL'),
-              placeHolder: 'https://tenant.console.ves.volterra.io',
-              value: url,
-              ignoreFocusOut: true,
-              validateInput: (value) => {
-                if (!value?.startsWith('https://')) {
-                  return vscode.l10n.t('API URL must start with https://');
-                }
-                try {
-                  new URL(value);
-                  return null;
-                } catch {
-                  return vscode.l10n.t('Invalid URL format');
-                }
-              },
-            });
-            if (!urlInput) {
-              return undefined;
-            }
-            url = urlInput;
-
-            const tokenInput = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter your API token'),
-              password: true,
-              placeHolder: vscode.l10n.t('Your API token'),
-              ignoreFocusOut: true,
-              validateInput: (value) => {
-                if (!value || value.trim().length === 0) {
-                  return vscode.l10n.t('API token is required');
-                }
-                return null;
-              },
-            });
-            if (!tokenInput) {
-              return undefined;
-            }
-
-            const auth = new TokenAuthProvider({ apiUrl: url, apiToken: tokenInput });
-            try {
-              const namespaces = await vscode.window.withProgress(
-                {
-                  location: vscode.ProgressLocation.Notification,
-                  title: vscode.l10n.t('Verifying connection...'),
-                  cancellable: false,
-                },
-                async () => new XCSHClient(url, auth).listNamespaces(),
-              );
-              return { apiUrl: url, apiToken: tokenInput, namespaceNames: namespaces.map((ns) => ns.name) };
-            } catch (err) {
-              const rejected = err instanceof XCSHApiError && err.isAuthError;
-              showWarning(
-                rejected
-                  ? vscode.l10n.t('Authentication failed — the API token was rejected. Re-enter the URL and token.')
-                  : vscode.l10n.t('Could not reach the API. Check the URL and token, then try again.'),
-              );
-            } finally {
-              auth.dispose();
-            }
-          }
-        })();
-        if (!verified) {
-          return;
-        }
-        const { apiUrl, apiToken, namespaceNames } = verified;
-
-        // Step 4: Default namespace — pick from the tenant's namespaces (default
-        // first, system/shared hidden) or type a custom one that does not exist yet.
-        const customLabel = vscode.l10n.t('$(edit) Enter a custom namespace...');
-        const namespacePick = await vscode.window.showQuickPick(
-          buildNamespacePickChoices(namespaceNames).map((choice) =>
-            choice.isCustom
-              ? { label: customLabel, isCustom: true }
-              : {
-                  label: choice.name,
-                  description: choice.name === 'default' ? vscode.l10n.t('always present') : undefined,
-                  isCustom: false,
-                },
-          ),
-          { placeHolder: vscode.l10n.t('Select the default namespace'), ignoreFocusOut: true },
-        );
-        if (!namespacePick) {
-          return;
-        }
-
-        let defaultNamespace: string;
-        if (namespacePick.isCustom) {
-          const typed = await vscode.window.showInputBox({
-            prompt: vscode.l10n.t('Enter default namespace'),
-            value: 'default',
-            ignoreFocusOut: true,
-          });
-          if (typed === undefined) {
-            return;
-          }
-          defaultNamespace = typed.trim() || 'default';
-        } else {
-          defaultNamespace = namespacePick.label;
-        }
-
-        // Step 5: Web-console username (optional — generic env credential)
-        const username = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('Enter web-console login username (optional)'),
-          placeHolder: vscode.l10n.t('Leave empty to skip'),
-          ignoreFocusOut: true,
-        });
-        if (username === undefined) {
-          return;
-        }
-
-        // Step 6: Web-console password (optional, masked — auto-marked sensitive)
-        const consolePassword = await vscode.window.showInputBox({
-          prompt: vscode.l10n.t('Enter web-console login password (optional)'),
-          password: true,
-          placeHolder: vscode.l10n.t('Leave empty to skip'),
-          ignoreFocusOut: true,
-        });
-        if (consolePassword === undefined) {
-          return;
-        }
-
-        // Build context
-        const newContext: XCSHContext = {
-          name,
-          apiUrl,
-          apiToken,
-          defaultNamespace,
-        };
-
-        // Stash the web-console credentials as generic env vars; auto-mark any
-        // secret-looking key (the password) sensitive so it is masked everywhere.
-        const env: Record<string, string> = {};
-        if (username.trim()) {
-          env[XCSH_USERNAME] = username.trim();
-        }
-        if (consolePassword) {
-          env[XCSH_CONSOLE_PASSWORD] = consolePassword;
-        }
-        if (Object.keys(env).length > 0) {
-          newContext.env = env;
-        }
-
-        // Check if workspace has .xcsh/ directory — offer local vs global choice
-        const wsFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
-        const hasXcshDir = wsFolder ? fs.existsSync(path.join(wsFolder, '.xcsh')) : false;
-
-        let createLocal = false;
-        if (hasXcshDir && wsFolder) {
-          const scope = await vscode.window.showQuickPick(
-            [
-              {
-                label: vscode.l10n.t('Create for this project only'),
-                description: vscode.l10n.t('Stored in .xcsh/contexts/'),
-                value: 'local' as const,
-              },
-              {
-                label: vscode.l10n.t('Create globally'),
-                description: vscode.l10n.t('Stored in ~/.config/xcsh/contexts/'),
-                value: 'global' as const,
-              },
-            ],
-            { placeHolder: vscode.l10n.t('Where should this context be stored?'), ignoreFocusOut: true },
-          );
-
-          if (!scope) {
-            return;
-          }
-          createLocal = scope.value === 'local';
-        }
-
-        // Add context to the chosen location. Credentials were already verified
-        // against the API before persisting, so no second validation is needed.
-        if (createLocal && wsFolder) {
-          await contextManager.addLocalContext(newContext, wsFolder);
-        } else {
-          await contextManager.addContext(newContext);
-        }
-
         showInfo(vscode.l10n.t('Context "{0}" added and verified', name));
-
         contextProvider.refresh();
         explorerProvider.refresh();
       }, 'Add context');
