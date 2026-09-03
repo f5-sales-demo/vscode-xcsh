@@ -9,12 +9,12 @@
  * - No duplicate resource keys exist
  * - Required fields are present in generated types
  *
- * Usage: npx ts-node scripts/validate-generation.ts
+ * Usage: npx tsx scripts/validate-generation.ts
  */
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import * as ts from 'typescript';
+import { parseSync } from '@swc/core';
 
 const GENERATED_DIR = path.join(__dirname, '..', 'src', 'generated');
 
@@ -41,17 +41,16 @@ function fileExists(filePath: string): boolean {
  */
 function validateTypeScriptSyntax(filePath: string): { valid: boolean; errors: string[] } {
   const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(path.basename(filePath), content, ts.ScriptTarget.Latest, true);
-
   const errors: string[] = [];
 
-  // Check for syntax errors
-  const diagnostics = (sourceFile as ts.SourceFile & { parseDiagnostics?: ts.Diagnostic[] }).parseDiagnostics;
-  if (diagnostics && diagnostics.length > 0) {
-    for (const diag of diagnostics) {
-      const message = ts.flattenDiagnosticMessageText(diag.messageText, '\n');
-      errors.push(`${path.basename(filePath)}: ${message}`);
-    }
+  try {
+    parseSync(content, {
+      syntax: 'typescript',
+      tsx: false,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`${path.basename(filePath)}: ${message}`);
   }
 
   return { valid: errors.length === 0, errors };
