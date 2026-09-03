@@ -80,7 +80,7 @@ jobs:
           SPEC_RELEASE_VERSION: ${{ github.event.client_payload.version }}
           SPEC_TARGET_COMMIT: ${{ github.event.client_payload.target_commit }}
           SPEC_TRIGGER_SOURCE: ${{ github.event.client_payload.trigger_source }}
-        run: npx ts-node scripts/spec-delivery.ts --github-output
+        run: npx tsx scripts/spec-delivery.ts --github-output
 
       - name: Enforce pending-delivery idempotency
         id: pending

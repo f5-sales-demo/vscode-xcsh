@@ -14,10 +14,10 @@
  * Each segment must be ≤ 2,147,483,647 (YYMM max=9912, DDHHMMSS max=31235959).
  *
  * Usage:
- *   npx ts-node scripts/version.ts           # Output current version
- *   npx ts-node scripts/version.ts --beta    # Output beta version
- *   npx ts-node scripts/version.ts --update  # Update package.json
- *   npx ts-node scripts/version.ts --json    # Output JSON format
+ *   npx tsx scripts/version.ts           # Output current version
+ *   npx tsx scripts/version.ts --beta    # Output beta version
+ *   npx tsx scripts/version.ts --update  # Update package.json
+ *   npx tsx scripts/version.ts --json    # Output JSON format
  */
 
 import * as fs from 'node:fs';
@@ -195,7 +195,7 @@ function main(): void {
 F5 XC Tools Version Generator
 
 Usage:
-  npx ts-node scripts/version.ts [options]
+  npx tsx scripts/version.ts [options]
 
 Options:
   --beta    Generate beta version (adds -BETA suffix)
@@ -204,10 +204,10 @@ Options:
   --help    Show this help message
 
 Examples:
-  npx ts-node scripts/version.ts           # Output: 1.0.82-260101051607
-  npx ts-node scripts/version.ts --beta    # Output: 1.0.82-260101051607-BETA
-  npx ts-node scripts/version.ts --update  # Updates package.json to 1.2601.10516
-  npx ts-node scripts/version.ts --json    # Shows version, semver, upstream, etc.
+  npx tsx scripts/version.ts           # Output: 1.0.82-260101051607
+  npx tsx scripts/version.ts --beta    # Output: 1.0.82-260101051607-BETA
+  npx tsx scripts/version.ts --update  # Updates package.json to 1.2601.10516
+  npx tsx scripts/version.ts --json    # Shows version, semver, upstream, etc.
 `);
     return;
   }

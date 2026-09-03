@@ -81,7 +81,7 @@ jest.mock('../../api/resourceTypes', () => ({
 }));
 
 jest.mock('../../xcsh/specBridge', () => ({
-  getKindResolver: jest.fn().mockReturnValue(mockKindResolver),
+  getKindResolver: jest.fn(() => mockKindResolver),
 }));
 
 // Mock XCSHApiError

@@ -21,9 +21,9 @@ jest.mock('vscode', () => {
     Uri,
     window: {
       showErrorMessage: jest.fn(),
-      showWarningMessage: mockShowWarningMessage,
-      showInformationMessage: mockShowInformationMessage,
-      showTextDocument: mockShowTextDocument,
+      showWarningMessage: (...args: unknown[]) => mockShowWarningMessage(...args),
+      showInformationMessage: (...args: unknown[]) => mockShowInformationMessage(...args),
+      showTextDocument: (...args: unknown[]) => mockShowTextDocument(...args),
       withProgress: jest.fn((_opts: unknown, task: () => Promise<unknown>) => task()),
       createOutputChannel: jest.fn(() => ({
         appendLine: jest.fn(),
@@ -34,10 +34,10 @@ jest.mock('vscode', () => {
     workspace: {
       workspaceFolders: [{ uri: { fsPath: '/workspace', scheme: 'file', path: '/workspace' } }],
       fs: {
-        writeFile: mockWriteFile,
-        stat: mockStat,
+        writeFile: (...args: unknown[]) => mockWriteFile(...args),
+        stat: (...args: unknown[]) => mockStat(...args),
       },
-      openTextDocument: mockOpenTextDocument,
+      openTextDocument: (...args: unknown[]) => mockOpenTextDocument(...args),
       getConfiguration: jest.fn(() => ({
         get: jest.fn().mockReturnValue('info'),
       })),
@@ -45,7 +45,7 @@ jest.mock('vscode', () => {
     },
     ProgressLocation: { Notification: 15 },
     commands: {
-      registerCommand: mockRegisterCommand,
+      registerCommand: (...args: unknown[]) => mockRegisterCommand(...args),
     },
     l10n: {
       t: jest.fn((...args: unknown[]) => {

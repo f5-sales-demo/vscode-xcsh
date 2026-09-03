@@ -7,11 +7,11 @@
  * Can optionally auto-sync if outdated.
  *
  * Usage:
- *   npx ts-node scripts/check-specs.ts              # Check and exit with code 0/1
- *   npx ts-node scripts/check-specs.ts --check      # Same as default
- *   npx ts-node scripts/check-specs.ts --sync       # Auto-sync if outdated
- *   npx ts-node scripts/check-specs.ts --json       # Output JSON status
- *   npx ts-node scripts/check-specs.ts --warn       # Warn only, don't fail
+ *   npx tsx scripts/check-specs.ts              # Check and exit with code 0/1
+ *   npx tsx scripts/check-specs.ts --check      # Same as default
+ *   npx tsx scripts/check-specs.ts --sync       # Auto-sync if outdated
+ *   npx tsx scripts/check-specs.ts --json       # Output JSON status
+ *   npx tsx scripts/check-specs.ts --warn       # Warn only, don't fail
  */
 
 import * as fs from 'node:fs';
@@ -93,7 +93,7 @@ async function runSync(): Promise<boolean> {
     console.log('🔄 Syncing specs from upstream...');
 
     const command = process.platform === 'win32' ? 'npx.cmd' : 'npx';
-    const child = spawn(command, ['ts-node', path.join(__dirname, 'sync-specs.ts')], {
+    const child = spawn(command, ['tsx', path.join(__dirname, 'sync-specs.ts')], {
       cwd: PROJECT_ROOT,
       stdio: 'inherit',
       shell: false,
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
 F5 XC API Spec Freshness Check
 
 Usage:
-  npx ts-node scripts/check-specs.ts [options]
+  npx tsx scripts/check-specs.ts [options]
 
 Options:
   --check   Check freshness and exit with code 0 (up-to-date) or 1 (outdated)
@@ -134,9 +134,9 @@ Options:
   --help    Show this help message
 
 Examples:
-  npx ts-node scripts/check-specs.ts              # Check and fail if outdated
-  npx ts-node scripts/check-specs.ts --sync       # Auto-sync if outdated
-  npx ts-node scripts/check-specs.ts --json       # Get JSON status
+  npx tsx scripts/check-specs.ts              # Check and fail if outdated
+  npx tsx scripts/check-specs.ts --sync       # Auto-sync if outdated
+  npx tsx scripts/check-specs.ts --json       # Get JSON status
 `);
     return;
   }

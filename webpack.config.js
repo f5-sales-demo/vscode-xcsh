@@ -26,7 +26,7 @@ const extensionConfig = {
       // pi-utils exposes its ESM TypeScript subpaths only under the "import"
       // condition, so a CommonJS require() can't resolve them through the exports
       // map. Point straight at the source file — the @f5-sales-demo vendor
-      // ts-loader rule below transpiles it. Mirrors the jest moduleNameMapper.
+      // swc-loader rule below transpiles it. Mirrors the jest moduleNameMapper.
       '@f5-sales-demo/pi-utils/xcsh-context-resolver$': path.resolve(
         __dirname,
         'node_modules/@f5-sales-demo/pi-utils/src/xcsh-context-resolver.ts',
@@ -44,7 +44,14 @@ const extensionConfig = {
         exclude: /node_modules|webview/,
         use: [
           {
-            loader: 'ts-loader',
+            loader: 'swc-loader',
+            options: {
+              jsc: {
+                parser: { syntax: 'typescript' },
+                target: 'es2022',
+              },
+              module: { type: 'commonjs' },
+            },
           },
         ],
       },
@@ -53,11 +60,13 @@ const extensionConfig = {
         include: /node_modules[\\/]@f5-sales-demo/,
         use: [
           {
-            loader: 'ts-loader',
+            loader: 'swc-loader',
             options: {
-              allowTsInNodeModules: true,
-              transpileOnly: true,
-              configFile: path.resolve(__dirname, 'tsconfig.vendor.json'),
+              jsc: {
+                parser: { syntax: 'typescript' },
+                target: 'es2022',
+              },
+              module: { type: 'commonjs' },
             },
           },
         ],
