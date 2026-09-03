@@ -16,14 +16,8 @@
   },
   "linter": {
     "enabled": true,
-    "domains": {
-      "types": "recommended"
-    },
     "rules": {
-      "preset": "recommended",
-      "nursery": {
-        "noFloatingPromises": "error"
-      }
+      "preset": "recommended"
     }
   },
   "files": {
