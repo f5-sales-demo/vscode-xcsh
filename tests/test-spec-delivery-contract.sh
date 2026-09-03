@@ -24,7 +24,7 @@ for field in delivery_id release_tag version target_commit trigger_source; do
   fi
 done
 
-if grep -qF 'npx ts-node scripts/spec-delivery.ts --github-output' "$workflow" &&
+if grep -qF 'npx tsx scripts/spec-delivery.ts --github-output' "$workflow" &&
   grep -qF "if: needs.spec-delivery.outputs.process == 'true'" "$workflow" &&
   grep -qF "github.event.action == 'enriched-specs-updated'" "$workflow"; then
   pass 'delivery identity gates generation'

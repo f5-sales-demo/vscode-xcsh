@@ -5,8 +5,9 @@
     "noEmit": true,
     "isolatedModules": true,
     "lib": ["ES2022", "DOM"],
-    "module": "CommonJS",
-    "moduleResolution": "node"
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": ["jest", "mocha", "node", "vscode"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "out", ".vscode-test"]

@@ -27,8 +27,8 @@ jest.mock('vscode', () => {
     window: {
       activeTextEditor: undefined,
       showErrorMessage: jest.fn(),
-      showWarningMessage: mockShowWarningMessage,
-      showInformationMessage: mockShowInformationMessage,
+      showWarningMessage: (...args: unknown[]) => mockShowWarningMessage(...args),
+      showInformationMessage: (...args: unknown[]) => mockShowInformationMessage(...args),
       showTextDocument: jest.fn(),
       withProgress: jest.fn((_opts: unknown, task: () => Promise<unknown>) => task()),
       createOutputChannel: jest.fn(() => ({
@@ -38,16 +38,16 @@ jest.mock('vscode', () => {
       })),
     },
     workspace: {
-      openTextDocument: mockOpenTextDocument,
-      applyEdit: mockApplyEdit,
+      openTextDocument: (...args: unknown[]) => mockOpenTextDocument(...args),
+      applyEdit: (...args: unknown[]) => mockApplyEdit(...args),
       asRelativePath: jest.fn((uri: { fsPath?: string }) => uri?.fsPath ?? String(uri)),
       getConfiguration: jest.fn(() => ({
         get: jest.fn().mockReturnValue('info'),
       })),
     },
     commands: {
-      registerCommand: mockRegisterCommand,
-      executeCommand: mockExecuteCommand,
+      registerCommand: (...args: unknown[]) => mockRegisterCommand(...args),
+      executeCommand: (...args: unknown[]) => mockExecuteCommand(...args),
     },
     ProgressLocation: { Notification: 15 },
     l10n: {

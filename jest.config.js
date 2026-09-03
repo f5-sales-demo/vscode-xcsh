@@ -2,13 +2,15 @@
 
 const sharedTransform = {
   '^.+\\.ts$': [
-    'ts-jest',
+    '@swc/jest',
     {
-      tsconfig: 'tsconfig.test.json',
-      useESM: false,
-      diagnostics: {
-        ignoreCodes: [151002, 2554, 2307, 7016, 7026, 17004, 7006],
+      jsc: {
+        parser: {
+          syntax: 'typescript',
+        },
+        target: 'es2022',
       },
+      module: { type: 'commonjs' },
     },
   ],
 };
@@ -17,7 +19,7 @@ const sharedModuleNameMapper = {
   '^vscode$': '<rootDir>/src/test/__mocks__/vscode.ts',
   // pi-utils ships ESM TypeScript source via an `exports` wildcard; jest-resolve
   // doesn't honor that subpath, so map it straight to the source file (and the
-  // transformIgnorePatterns exception below lets ts-jest compile it).
+  // transformIgnorePatterns exception below lets SWC compile it).
   '^@f5-sales-demo/pi-utils/(.*)$': '<rootDir>/node_modules/@f5-sales-demo/pi-utils/src/$1.ts',
 };
 
@@ -46,7 +48,6 @@ module.exports = {
   projects: [
     {
       displayName: 'node',
-      preset: 'ts-jest',
       testEnvironment: 'node',
       roots: ['<rootDir>/src'],
       testMatch: ['**/unit/**/*.test.ts', ...(process.env.XCSH_API_URL ? ['**/integration/live*.test.ts'] : [])],
@@ -64,7 +65,6 @@ module.exports = {
     },
     {
       displayName: 'webview',
-      preset: 'ts-jest',
       testEnvironment: 'jsdom',
       roots: ['<rootDir>/webview'],
       testMatch: ['**/__tests__/**/*.test.ts?(x)'],
@@ -75,16 +75,21 @@ module.exports = {
       setupFilesAfterEnv: ['<rootDir>/webview/src/test-setup.ts'],
       transform: {
         '^.+\\.tsx?$': [
-          'ts-jest',
+          '@swc/jest',
           {
-            // No `diagnostics.ignoreCodes` here: webview/tsconfig.json sets
-            // `isolatedModules`, so ts-jest transpiles per file and never produces
-            // semantic diagnostics — an ignore list for codes like TS2307/TS2554
-            // could never fire and only implied a suppression that wasn't happening.
-            // Verified: a TS2304 in either a component or a test file leaves this
-            // suite fully green. Type checking is gated by `npm run typecheck:webview`
-            // (a full-program `tsc`), not by jest. See #995.
-            tsconfig: '<rootDir>/webview/tsconfig.test.json',
+            jsc: {
+              parser: {
+                syntax: 'typescript',
+                tsx: true,
+              },
+              target: 'es2022',
+              transform: {
+                react: {
+                  runtime: 'automatic',
+                },
+              },
+            },
+            module: { type: 'commonjs' },
           },
         ],
       },

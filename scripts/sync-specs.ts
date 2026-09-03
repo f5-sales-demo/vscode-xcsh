@@ -6,8 +6,8 @@
  * Downloads and extracts one pinned F5 XC API specification release.
  *
  * Usage:
- *   npx ts-node scripts/sync-specs.ts
- *   npx ts-node scripts/sync-specs.ts --force    # Force sync even if up-to-date
+ *   npx tsx scripts/sync-specs.ts
+ *   npx tsx scripts/sync-specs.ts --force    # Force sync even if up-to-date
  */
 
 import { execFileSync } from 'node:child_process';
@@ -464,7 +464,7 @@ F5 XC API Spec Sync
 Downloads and extracts the pinned API specification release from upstream.
 
 Usage:
-  npx ts-node scripts/sync-specs.ts [options]
+  npx tsx scripts/sync-specs.ts [options]
 
 Options:
   --force   Force sync even if already up-to-date

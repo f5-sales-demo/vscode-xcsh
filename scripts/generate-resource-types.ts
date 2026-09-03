@@ -6,7 +6,7 @@
  * - src/generated/constants.ts - Consolidated constants (namespaces, endpoints, icons)
  * - src/generated/index.ts - Barrel export for generated modules
  *
- * Usage: npx ts-node scripts/generate-resource-types.ts
+ * Usage: npx tsx scripts/generate-resource-types.ts
  */
 
 import * as fs from 'node:fs';

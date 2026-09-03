@@ -6,7 +6,7 @@
  * This script reads all OpenAPI spec files from docs/specifications/api/
  * and extracts documentation URLs to create a TypeScript mapping file.
  *
- * Usage: npx ts-node scripts/generate-doc-urls.ts
+ * Usage: npx tsx scripts/generate-doc-urls.ts
  */
 
 import * as fs from 'node:fs';
