@@ -28,6 +28,7 @@ export type LogEvent =
   | 'context.changed'
   | 'context.read.failed'
   | 'context.secret.missing'
+  | 'context.temp.cleanup.failed'
   | 'extension.activation.completed'
   | 'extension.activation.failed'
   | 'extension.activation.started'

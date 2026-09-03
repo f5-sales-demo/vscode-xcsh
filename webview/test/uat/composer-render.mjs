@@ -135,6 +135,12 @@ async function main() {
   });
   try {
     const page = await browser.newPage();
+    const remoteRequests = [];
+    page.on('request', (request) => {
+      const url = new URL(request.url());
+      if (url.protocol === 'http:' && url.hostname !== '127.0.0.1') remoteRequests.push(url.href);
+      if (url.protocol === 'https:') remoteRequests.push(url.href);
+    });
     await page.setViewport({ width: 420, height: 760 });
     page.on('pageerror', (e) => ok('no page error', false, String(e)));
     await page.evaluateOnNewDocument(`(${stub})()`);
@@ -151,6 +157,12 @@ async function main() {
       'shared PANEL_CSS is injected (.composer styled)',
       await page.evaluate(() =>
         [...document.querySelectorAll('style')].some((s) => s.textContent.includes('.composer')),
+      ),
+    );
+    ok(
+      'Temml runtime is bundled as a local webview asset',
+      await page.evaluate(() =>
+        [...document.scripts].some((script) => script.src.includes('/assets/temml.min.js')),
       ),
     );
     ok(
@@ -208,7 +220,13 @@ async function main() {
     // 5. An extension→webview reply renders in the transcript.
     await page.evaluate(() =>
       window.postMessage(
-        { type: 'from-extension', message: { type: 'message_update', text: 'Creating the load balancer now.' } },
+        {
+          type: 'from-extension',
+          message: {
+            type: 'message_update',
+            text: 'Creating the load balancer now.\n\n$$\nI \\propto \\frac{1}{\\lambda^4}\n$$',
+          },
+        },
         '*',
       ),
     );
@@ -216,6 +234,22 @@ async function main() {
       timeout: 3000,
     });
     ok('assistant reply from the message bridge renders', true);
+
+    // 6. The streamed formula converges to semantic display MathML in the real bundle.
+    try {
+      await page.waitForSelector('.markdown-root math[display="block"] mfrac', { timeout: 3000 });
+    } catch (error) {
+      const bodies = await page.$$eval('.markdown-root', (els) => els.map((el) => el.innerHTML));
+      console.error('assistant render at MathML timeout:', bodies);
+      throw error;
+    }
+    const formula = await page.$eval('.markdown-root math[display="block"]', (el) => ({
+      text: el.textContent,
+      raw: el.parentElement?.textContent ?? '',
+    }));
+    ok('assistant LaTeX paints semantic display MathML', /I/.test(formula.text) && /∝/.test(formula.text) && /λ/.test(formula.text));
+    ok('supported formula hides raw LaTeX commands', !formula.raw.includes('\\frac') && !formula.raw.includes('\\lambda'));
+    ok('webview rendering makes no external network requests', remoteRequests.length === 0, remoteRequests.join(', '));
     await page.screenshot({ path: join(ARTIFACTS, '2-conversation.png') });
   } finally {
     await browser.close();
