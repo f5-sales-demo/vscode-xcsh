@@ -61,4 +61,12 @@ if grep -qF "jq -r '.immutable'" <<<"$publication" &&
 else
   fail 'publication can run without immutable exact-release verification'
 fi
+
+marketplace_verification=$(sed -n '/- name: Verify required marketplace artifacts/,/^  stage-spec-delivery:/p' "$workflow")
+if [ "$(grep -cF 'for attempt in {1..120}; do' <<<"$marketplace_verification")" -eq 2 ] &&
+  [ "$(grep -cF 'if [ "$attempt" -lt 120 ]; then sleep 5; fi' <<<"$marketplace_verification")" -eq 2 ]; then
+  pass 'marketplace verification allows asynchronous publication propagation'
+else
+  fail 'marketplace verification does not allow the propagation window'
+fi
 [ "$failed" -eq 0 ]
