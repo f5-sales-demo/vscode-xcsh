@@ -68,7 +68,7 @@ while IFS= read -r path || [ -n "$path" ]; do
     ;;
   # Intentionally non-release surfaces: automation, docs, tests, governance,
   # assistant assets, and developer-only lint/tooling configuration.
-  .github/* | .claude/* | .agents/* | docs/* | tests/* | test/* | coverage/* | *.md | .gitignore | .editorconfig | .prettier* | .eslint* | eslint.config.* | jest.config.* | biome.json | .yamllint.yaml | .markdownlint.json | .shellcheckrc | .codespellrc | .gitleaks.toml | .pre-commit-config.yaml | .husky/* | scripts/agy-* | scripts/audit-* | scripts/check-* | scripts/github-api-resilience.cjs | scripts/lint-* | scripts/locale-lint.sh | scripts/pre-commit-local.sh | scripts/run-with-progress.sh | scripts/update-resource-coverage.ts | scripts/validate-* | scripts/verify-*)
+  .github/* | .claude/* | .agents/* | docs/* | tests/* | test/* | coverage/* | *.md | .gitignore | .editorconfig | .prettier* | .eslint* | eslint.config.* | jest.config.* | biome.json | .yamllint.yaml | .markdownlint.json | .shellcheckrc | .codespellrc | .gitleaks.toml | .pre-commit-config.yaml | .husky/* | scripts/agy-* | scripts/audit-* | scripts/check-* | scripts/github-api-resilience.cjs | scripts/lint-* | scripts/locale-lint.sh | scripts/pre-commit-local.sh | scripts/release-change-policy.sh | scripts/run-with-progress.sh | scripts/update-resource-coverage.ts | scripts/validate-* | scripts/verify-*)
     ;;
   *)
     echo "::error::Unclassified release-change path: $path" >&2
