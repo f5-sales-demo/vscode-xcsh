@@ -30,10 +30,12 @@ case_result() {
 }
 
 case_result 'runtime input is eligible' true 'src/extension.ts'
+case_result 'Node runtime selection is eligible' true '.nvmrc'
 case_result 'shipped content is eligible' true $'resources/logo.svg\nREADME.md'
 case_result 'managed sync is ineligible' false $'.github/workflows/translation-audit.yml\nAGENTS.md'
 case_result 'CI, test, documentation and governance are ineligible' false $'.github/workflows/ci.yml\ntests/test-example.sh\ndocs/guide.md\n.claude/governance.json'
 case_result 'deleted legacy resource coverage tooling is ineligible' false 'scripts/update-resource-coverage.ts'
+case_result 'Jest configuration is ineligible' false 'jest.config.js'
 case_result 'unknown paths fail closed' error 'new-product-surface/file.ts'
 case_result 'release bump commit cannot recurse' false 'package.json' 'chore(release): v2.1.207-260814230728'
 

@@ -1008,7 +1008,9 @@ jobs:
 
           OPEN_VSX_URL="https://open-vsx.org/api/f5-sales-demo/xcsh/${EXTENSION_VERSION}"
           OPEN_VSX_SHA256=""
-          for attempt in {1..12}; do
+          # Open VSX indexes a newly published extension asynchronously. Keep the
+          # exact-hash gate, but allow its documented eventual-consistency window.
+          for attempt in {1..120}; do
             if curl -fsSL "$OPEN_VSX_URL" -o "$VERIFY_DIR/open-vsx.json"; then
               DOWNLOAD_URL=$(jq -er '.files.download' "$VERIFY_DIR/open-vsx.json")
               if [[ "$DOWNLOAD_URL" == https://open-vsx.org/* ]] &&
@@ -1020,7 +1022,7 @@ jobs:
               fi
             fi
             OPEN_VSX_SHA256=""
-            if [ "$attempt" -lt 12 ]; then sleep 5; fi
+            if [ "$attempt" -lt 120 ]; then sleep 5; fi
           done
           if [ "$OPEN_VSX_SHA256" != "$EXPECTED_SHA256" ]; then
             echo "::error::Open VSX did not serve the exact published VSIX"
@@ -1029,7 +1031,8 @@ jobs:
 
           MARKETPLACE_URL="https://marketplace.visualstudio.com/_apis/public/gallery/publishers/f5-sales-demo/vsextensions/xcsh/${EXTENSION_VERSION}/vspackage"
           MARKETPLACE_SHA256=""
-          for attempt in {1..12}; do
+          # The VS Code Marketplace can likewise lag the publisher response.
+          for attempt in {1..120}; do
             if curl -fsSL "$MARKETPLACE_URL" -o "$VERIFY_DIR/marketplace.download"; then
               if gzip -t "$VERIFY_DIR/marketplace.download" >/dev/null 2>&1; then
                 gzip -dc "$VERIFY_DIR/marketplace.download" > "$VERIFY_DIR/marketplace.vsix"
@@ -1042,7 +1045,7 @@ jobs:
               fi
             fi
             MARKETPLACE_SHA256=""
-            if [ "$attempt" -lt 12 ]; then sleep 5; fi
+            if [ "$attempt" -lt 120 ]; then sleep 5; fi
           done
           if [ "$MARKETPLACE_SHA256" != "$EXPECTED_SHA256" ]; then
             echo "::error::VS Code Marketplace did not serve the exact published VSIX"
