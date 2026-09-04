@@ -11,7 +11,7 @@
  *  - a full sweep of every resource type available in the namespace (regression net);
  *  - the add-on catalog + activation status the Subscription → Plan dashboard reads (read-only).
  *
- * Required env vars (suite is excluded by jest.config.js when XCSH_API_URL is absent):
+ * Required env vars (run explicitly with `npm run test:live:read-only`):
  *   XCSH_API_URL        — e.g. https://tenant.console.ves.volterra.io
  *   XCSH_API_TOKEN      — a valid API token
  *   XCSH_TEST_NAMESPACE — namespace to list resources in (default: "default")

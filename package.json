@@ -1044,6 +1044,8 @@
     "lint:fix": "biome check --write src scripts webview/src",
     "test": "npm run test:unit",
     "test:unit": "jest",
+    "test:live:read-only": "XCSH_LIVE_TESTS=read-only jest --selectProjects node --runInBand",
+    "test:live:crud": "XCSH_LIVE_TESTS=crud jest --selectProjects node --runInBand",
     "verify:integration-tests": "tsx scripts/verify-integration-tests.ts",
     "test:integration": "npm run compile-tests && npm run verify:integration-tests && vscode-test",
     "test:coverage": "jest --coverage",

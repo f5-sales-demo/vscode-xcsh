@@ -2,30 +2,13 @@
 
 import * as vscode from 'vscode';
 import type { ContextManager } from '../config/contextManager';
-import type { XCSHContext } from '../config/contextTypes';
-import {
-  isReservedEnvKey,
-  isValidContextName,
-  isValidEnvKey,
-  XCSH_CONSOLE_PASSWORD,
-  XCSH_USERNAME,
-} from '../config/contextTypes';
-
-/** Set (non-empty) or clear (empty) one env key, returning a fresh env map. */
-function setOrClearEnv(env: Record<string, string> | undefined, key: string, value: string): Record<string, string> {
-  const next = { ...(env ?? {}) };
-  if (value) {
-    next[key] = value;
-  } else {
-    delete next[key];
-  }
-  return next;
-}
-
-import type { ContextProvider, ContextTreeItem } from '../tree/contextProvider';
-import { buildSelectableNamespaces, type XCSHExplorerProvider } from '../tree/xcshExplorer';
+import { isReservedEnvKey, isValidContextName, isValidEnvKey } from '../config/contextTypes';
+import type { ContextTreeItem } from '../tree/contextProvider';
+import { buildSelectableNamespaces } from '../tree/xcshExplorer';
 import { showInfo, showWarning, withErrorHandling } from '../utils/errors';
+import { ContextActivationController } from './contextActivation';
 import { ContextAddController } from './contextAddWizard';
+import { ContextEditController, type ContextEditTarget } from './contextEdit';
 
 /**
  * Resolve the target context name: use the tree node if invoked from the view,
@@ -55,12 +38,7 @@ async function selectContextName(
 /**
  * Register context management commands
  */
-export function registerContextCommands(
-  context: vscode.ExtensionContext,
-  contextManager: ContextManager,
-  contextProvider: ContextProvider,
-  explorerProvider: XCSHExplorerProvider,
-): void {
+export function registerContextCommands(context: vscode.ExtensionContext, contextManager: ContextManager): void {
   // ADD CONTEXT
   context.subscriptions.push(
     vscode.commands.registerCommand('xcsh.addContext', async () => {
@@ -72,172 +50,14 @@ export function registerContextCommands(
         }
 
         showInfo(vscode.l10n.t('Context "{0}" added and verified', name));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Add context');
     }),
   );
 
   // EDIT CONTEXT
   context.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.editContext', async (node?: ContextTreeItem) => {
-      await withErrorHandling(async () => {
-        let contextName: string | undefined;
-
-        if (node) {
-          contextName = node.getContext().name;
-        } else {
-          // Prompt user to select context
-          const contexts = await contextManager.getContexts();
-          if (contexts.length === 0) {
-            showWarning(vscode.l10n.t('No contexts configured'));
-            return;
-          }
-
-          const selected = await vscode.window.showQuickPick(
-            contexts.map((c) => ({
-              label: c.name,
-              description: c.apiUrl,
-            })),
-            { placeHolder: vscode.l10n.t('Select context to edit'), ignoreFocusOut: true },
-          );
-
-          if (!selected) {
-            return;
-          }
-
-          contextName = selected.label;
-        }
-
-        const ctx = await contextManager.getContext(contextName);
-        if (!ctx) {
-          showWarning(vscode.l10n.t('Context "{0}" not found', contextName));
-          return;
-        }
-
-        // Build edit options
-        const editOptions: { label: string; description: string }[] = [
-          { label: vscode.l10n.t('API URL'), description: vscode.l10n.t('Current: {0}', ctx.apiUrl) },
-          { label: vscode.l10n.t('API Token'), description: vscode.l10n.t('Update API token') },
-          {
-            label: vscode.l10n.t('Default Namespace'),
-            description: vscode.l10n.t('Current: {0}', ctx.defaultNamespace || vscode.l10n.t('Not set')),
-          },
-          {
-            label: vscode.l10n.t('Username'),
-            description: vscode.l10n.t('Current: {0}', ctx.env?.[XCSH_USERNAME] || vscode.l10n.t('Not set')),
-          },
-          {
-            label: vscode.l10n.t('Console Password'),
-            description: ctx.env?.[XCSH_CONSOLE_PASSWORD]
-              ? vscode.l10n.t('Set — update web-console password')
-              : vscode.l10n.t('Set web-console password'),
-          },
-        ];
-
-        const editOption = await vscode.window.showQuickPick(editOptions, {
-          placeHolder: vscode.l10n.t('What would you like to edit?'),
-          ignoreFocusOut: true,
-        });
-
-        if (!editOption) {
-          return;
-        }
-
-        const updates: Partial<XCSHContext> = {};
-
-        switch (editOption.label) {
-          case vscode.l10n.t('API URL'): {
-            const newUrl = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter new API URL'),
-              value: ctx.apiUrl,
-              ignoreFocusOut: true,
-              validateInput: (value) => {
-                if (!value?.startsWith('https://')) {
-                  return vscode.l10n.t('API URL must start with https://');
-                }
-                return null;
-              },
-            });
-
-            if (!newUrl) {
-              return;
-            }
-
-            updates.apiUrl = newUrl;
-            break;
-          }
-
-          case vscode.l10n.t('API Token'): {
-            const newToken = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter new API token'),
-              password: true,
-              placeHolder: vscode.l10n.t('New API token'),
-              ignoreFocusOut: true,
-            });
-
-            if (!newToken) {
-              return;
-            }
-
-            updates.apiToken = newToken;
-            break;
-          }
-
-          case vscode.l10n.t('Default Namespace'): {
-            const newNamespace = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter new default namespace (leave empty to clear)'),
-              value: ctx.defaultNamespace || '',
-              ignoreFocusOut: true,
-            });
-
-            if (newNamespace === undefined) {
-              return;
-            }
-
-            updates.defaultNamespace = newNamespace.trim() || undefined;
-            break;
-          }
-
-          case vscode.l10n.t('Username'): {
-            const newUsername = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter web-console login username (leave empty to clear)'),
-              value: ctx.env?.[XCSH_USERNAME] ?? '',
-              ignoreFocusOut: true,
-            });
-
-            if (newUsername === undefined) {
-              return;
-            }
-
-            updates.env = setOrClearEnv(ctx.env, XCSH_USERNAME, newUsername.trim());
-            break;
-          }
-
-          case vscode.l10n.t('Console Password'): {
-            const newPassword = await vscode.window.showInputBox({
-              prompt: vscode.l10n.t('Enter web-console login password (leave empty to clear)'),
-              password: true,
-              ignoreFocusOut: true,
-            });
-
-            if (newPassword === undefined) {
-              return;
-            }
-
-            const nextEnv = setOrClearEnv(ctx.env, XCSH_CONSOLE_PASSWORD, newPassword);
-            updates.env = nextEnv;
-            break;
-          }
-        }
-
-        // Apply updates
-        await contextManager.updateContext(contextName, updates);
-
-        showInfo(vscode.l10n.t('Context "{0}" updated', contextName));
-        contextProvider.refresh();
-        explorerProvider.refresh();
-      }, 'Edit context');
+    vscode.commands.registerCommand('xcsh.editContext', async (target?: ContextEditTarget) => {
+      await withErrorHandling(() => new ContextEditController(contextManager).run(target), 'Edit context');
     }),
   );
 
@@ -321,9 +141,6 @@ export function registerContextCommands(
           await contextManager.unsetContextEnv(contextName, key);
           showInfo(vscode.l10n.t('Removed {0} from context "{1}"', key, contextName));
         }
-
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Manage context env vars');
     }),
   );
@@ -359,8 +176,6 @@ export function registerContextCommands(
 
         await contextManager.setContextNamespace(contextName, namespace);
         showInfo(vscode.l10n.t('Namespace for "{0}" set to {1}', contextName, namespace.trim()));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Switch namespace');
     }),
   );
@@ -398,8 +213,6 @@ export function registerContextCommands(
 
         await contextManager.setContextNamespace(activeContext.name, picked.label);
         showInfo(vscode.l10n.t('Active namespace set to {0}', picked.label));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Select active namespace');
     }),
   );
@@ -434,8 +247,6 @@ export function registerContextCommands(
 
         await contextManager.renameContext(oldName, newName.trim());
         showInfo(vscode.l10n.t('Renamed context "{0}" to "{1}"', oldName, newName.trim()));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Rename context');
     }),
   );
@@ -507,8 +318,6 @@ export function registerContextCommands(
 
         await contextManager.deleteContext(contextName);
         showInfo(vscode.l10n.t('Context "{0}" deleted', contextName));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Delete context');
     }),
   );
@@ -547,10 +356,9 @@ export function registerContextCommands(
           contextName = selected.label;
         }
 
-        await contextManager.setActiveContext(contextName);
-        showInfo(vscode.l10n.t('Active context set to "{0}"', contextName));
-        contextProvider.refresh();
-        explorerProvider.refresh();
+        if (await new ContextActivationController(contextManager).run(contextName)) {
+          showInfo(vscode.l10n.t('Active context set to "{0}"', contextName));
+        }
       }, 'Set active context');
     }),
   );
@@ -561,7 +369,6 @@ export function registerContextCommands(
       await withErrorHandling(() => {
         contextManager.clearAllCachesPublic();
         showInfo(vscode.l10n.t('Authentication cache cleared. Re-authentication will occur on next request.'));
-        explorerProvider.refresh();
         return Promise.resolve();
       }, 'Clear auth cache');
     }),
@@ -597,8 +404,6 @@ export function registerContextCommands(
 
         await contextManager.linkGlobalContext(selected.label, wsFolder);
         showInfo(vscode.l10n.t('Global context "{0}" linked to this project', selected.label));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Link global context');
     }),
   );
@@ -644,8 +449,6 @@ export function registerContextCommands(
 
         await contextManager.deleteLocalContext(selected.label, wsFolder);
         showInfo(vscode.l10n.t('Local context "{0}" removed', selected.label));
-        contextProvider.refresh();
-        explorerProvider.refresh();
       }, 'Unlink local context');
     }),
   );

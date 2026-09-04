@@ -11,7 +11,7 @@
  * It logs any over-limit rows and the ≥80% (critical) count so the tenant's real numbers
  * can be eyeballed against the dashboard.
  *
- * Required env vars (suite is excluded by jest.config.js when XCSH_API_URL is absent):
+ * Required env vars (run explicitly with `npm run test:live:read-only`):
  *   XCSH_API_URL   — e.g. https://tenant.console.ves.volterra.io
  *   XCSH_API_TOKEN — a valid API token
  */

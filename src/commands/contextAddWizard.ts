@@ -7,58 +7,12 @@ import type { ContextManager } from '../config/contextManager';
 import { isValidContextName, XCSH_API_TOKEN, XCSH_CONSOLE_PASSWORD, XCSH_USERNAME } from '../config/contextTypes';
 import { buildNamespacePickChoices } from '../tree/xcshExplorer';
 import { showWarning } from '../utils/errors';
-
-type XcshAuthValidationFailure =
-  | 'unauthorized'
-  | 'forbidden'
-  | 'redirect'
-  | 'non_json'
-  | 'rate_limited'
-  | 'server'
-  | 'timeout'
-  | 'network';
-
-interface SharedAuthModule {
-  normalizeXcshApiUrlInput(value: string): string | null;
-  normalizeXcshCredentialInput(value: string, expectedKey: string): string | null;
-  validateXcshApiCredentials(options: {
-    apiUrl: string;
-    apiToken: string;
-    fetch?: typeof fetch;
-    timeoutMs?: number;
-  }): Promise<{
-    status: 'connected' | 'auth_error' | 'offline';
-    failureReason?: XcshAuthValidationFailure;
-    namespaces?: string[];
-  }>;
-}
-
-const sharedAuth = require('@f5-sales-demo/pi-utils/xcsh-auth') as SharedAuthModule;
-const normalizeXcshApiUrlInput = (value: string): string | null => sharedAuth.normalizeXcshApiUrlInput(value);
-const normalizeXcshCredentialInput = (value: string, expectedKey: string): string | null =>
-  sharedAuth.normalizeXcshCredentialInput(value, expectedKey);
-const validateXcshApiCredentials: SharedAuthModule['validateXcshApiCredentials'] = (options) =>
-  sharedAuth.validateXcshApiCredentials(options);
-
-function failureMessage(reason: XcshAuthValidationFailure | undefined): string {
-  switch (reason) {
-    case 'unauthorized':
-      return vscode.l10n.t('Authentication failed — the API token was rejected.');
-    case 'forbidden':
-      return vscode.l10n.t('The token does not have permission to list namespaces.');
-    case 'redirect':
-    case 'non_json':
-      return vscode.l10n.t('The tenant URL did not return the XC namespaces API.');
-    case 'rate_limited':
-      return vscode.l10n.t('Validation was rate-limited. Wait briefly, then try again.');
-    case 'server':
-      return vscode.l10n.t('The tenant server could not validate credentials. Try again shortly.');
-    case 'timeout':
-      return vscode.l10n.t('Validation timed out. Check network access and the tenant URL.');
-    default:
-      return vscode.l10n.t('Could not reach the API. Check the URL and network, then try again.');
-  }
-}
+import {
+  credentialValidationFailureMessage,
+  normalizeXcshApiUrlInput,
+  normalizeXcshCredentialInput,
+  validateCredentialsWithProgress,
+} from './contextCredentialValidation';
 
 /** Testable controller for the complete add-context flow. It does not write until every prompt succeeds. */
 export class ContextAddController {
@@ -141,19 +95,12 @@ export class ContextAddController {
       }
       apiToken = normalizedToken;
 
-      const validation = await vscode.window.withProgress(
-        {
-          location: vscode.ProgressLocation.Notification,
-          title: vscode.l10n.t('Verifying connection...'),
-          cancellable: false,
-        },
-        () => validateXcshApiCredentials({ apiUrl, apiToken, fetch: this.fetchImpl, timeoutMs: 5000 }),
-      );
+      const validation = await validateCredentialsWithProgress(apiUrl, apiToken, this.fetchImpl);
       if (validation.status === 'connected') {
         namespaceNames = validation.namespaces ?? [];
         break;
       }
-      showWarning(failureMessage(validation.failureReason));
+      showWarning(credentialValidationFailureMessage(validation.failureReason));
     }
 
     const customLabel = vscode.l10n.t('$(edit) Enter a custom namespace...');

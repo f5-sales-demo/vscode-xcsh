@@ -10,8 +10,8 @@
  *   XCSH_API_URL  — e.g. https://tenant.console.ves.volterra.io
  *   XCSH_API_TOKEN — a valid API token
  *
- * When the env vars are absent the file is excluded via jest.config.js
- * testMatch gating, so the suite is never discovered.
+ * Run explicitly with `npm run test:live:crud`. Credentials alone never opt
+ * this mutating suite into an ordinary unit-test run.
  */
 
 import { TokenAuthProvider } from '../../api/auth/tokenAuth';

@@ -23,6 +23,23 @@ const sharedModuleNameMapper = {
   '^@f5-sales-demo/pi-utils/(.*)$': '<rootDir>/node_modules/@f5-sales-demo/pi-utils/src/$1.ts',
 };
 
+const liveMode = process.env.XCSH_LIVE_TESTS;
+if (!liveMode) {
+  // Keep unit tests hermetic even on developer machines that have usable tenant
+  // credentials in their shell. Individual tests may still set fixture values.
+  delete process.env.XCSH_API_URL;
+  delete process.env.XCSH_API_TOKEN;
+  delete process.env.XCSH_USERNAME;
+  delete process.env.XCSH_CONSOLE_PASSWORD;
+  delete process.env.XCSH_TEST_NAMESPACE;
+}
+const liveReadOnlyTests = [
+  '**/integration/liveApiSmoke.test.ts',
+  '**/integration/liveQuotaUsage.test.ts',
+  '**/integration/liveResourcePaths.test.ts',
+];
+const liveCrudTests = ['**/integration/liveCrud.test.ts'];
+
 /** @type {import('jest').Config} */
 module.exports = {
   coverageDirectory: 'coverage',
@@ -50,12 +67,16 @@ module.exports = {
       displayName: 'node',
       testEnvironment: 'node',
       roots: ['<rootDir>/src'],
-      testMatch: ['**/unit/**/*.test.ts', ...(process.env.XCSH_API_URL ? ['**/integration/live*.test.ts'] : [])],
+      testMatch: [
+        ...(!liveMode ? ['**/unit/**/*.test.ts'] : []),
+        ...(liveMode === 'read-only' ? liveReadOnlyTests : []),
+        ...(liveMode === 'crud' ? liveCrudTests : []),
+      ],
       testPathIgnorePatterns: [
         '/node_modules/',
         '/dist/',
         '/out/',
-        ...(process.env.XCSH_API_URL ? [] : ['/integration/']),
+        ...(liveMode ? ['/unit/'] : ['/integration/']),
       ],
       moduleFileExtensions: ['ts', 'js', 'json'],
       moduleNameMapper: sharedModuleNameMapper,
