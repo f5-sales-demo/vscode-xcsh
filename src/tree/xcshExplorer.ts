@@ -634,7 +634,7 @@ export function classifyExplorerError(error: unknown, contextName: string): Expl
   }
 
   const details = error instanceof Error ? error : undefined;
-  const code = (details as (Error & { code?: string }) | undefined)?.code;
+  const code = details && 'code' in details ? details.code : undefined;
   if (
     details &&
     (details.name === 'AbortError' || code === 'ETIMEDOUT' || /timed?\s*out|timeout/i.test(details.message))

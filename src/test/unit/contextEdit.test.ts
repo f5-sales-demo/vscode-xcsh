@@ -24,7 +24,7 @@ describe('ContextEditController', () => {
 
   it('accepts a context-name argument and saves a validated API URL', async () => {
     const mgr = manager();
-    jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({ label: 'API URL' } as vscode.QuickPickItem);
+    jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({ label: 'API URL' });
     jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('https://new.example.test/web/home');
     const fetchImpl = jest.fn().mockResolvedValue(
       new Response(JSON.stringify({ items: [] }), {
@@ -44,7 +44,7 @@ describe('ContextEditController', () => {
 
   it('retains credentials when an API token edit fails validation', async () => {
     const mgr = manager();
-    jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({ label: 'API Token' } as vscode.QuickPickItem);
+    jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({ label: 'API Token' });
     jest.mocked(vscode.window.showInputBox).mockResolvedValueOnce('bad-token');
     const fetchImpl = jest.fn().mockResolvedValue(new Response('{}', { status: 401 })) as unknown as typeof fetch;
 

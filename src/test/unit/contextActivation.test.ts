@@ -32,11 +32,12 @@ describe('ContextActivationController', () => {
     const fetchImpl = fetchMock as unknown as typeof fetch;
 
     await expect(new ContextActivationController(mgr, fetchImpl).run('candidate')).resolves.toBe(true);
-    expect(fetchImpl).toHaveBeenCalled();
     // eslint-disable-next-line @typescript-eslint/unbound-method
-    expect(jest.mocked(mgr.setActiveContext)).toHaveBeenCalledWith('candidate');
+    const setActiveContextMock = jest.mocked(mgr.setActiveContext);
+    expect(fetchImpl).toHaveBeenCalled();
+    expect(setActiveContextMock).toHaveBeenCalledWith('candidate');
     expect(fetchMock.mock.invocationCallOrder[0]).toBeLessThan(
-      jest.mocked(mgr.setActiveContext).mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
+      setActiveContextMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY,
     );
   });
 

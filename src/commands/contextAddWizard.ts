@@ -51,7 +51,7 @@ export class ContextAddController {
     }
 
     let apiUrl = 'https://';
-    let apiToken = '';
+    let apiToken: string;
     let namespaceNames: string[];
     for (;;) {
       const rawUrl = await vscode.window.showInputBox({
