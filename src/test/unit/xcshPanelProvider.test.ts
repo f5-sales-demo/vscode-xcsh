@@ -1,13 +1,16 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type * as vscode from 'vscode';
+import type { ContextManagerInterface, XCSHContext } from '../../config/contextTypes';
 import { MAX_ATTACHMENT_BYTES } from '../../xcsh/attachment';
 import { resolveAttachments } from '../../xcsh/attachmentResolvers';
 import type { Attachment } from '../../xcsh/attachmentTypes';
 import { XcshPanelProvider } from '../../xcsh/panelProvider';
 import type { XcshRpcBridge } from '../../xcsh/rpcBridge';
 
-jest.mock('../../xcsh/attachmentResolvers', () => ({ resolveAttachments: jest.fn().mockResolvedValue([]) }));
+jest.mock('../../xcsh/attachmentResolvers', () => ({
+  resolveAttachments: jest.fn().mockResolvedValue([]),
+}));
 const resolveAttachmentsMock = resolveAttachments as jest.MockedFunction<typeof resolveAttachments>;
 
 function createMockBridge() {
@@ -21,6 +24,12 @@ function createMockBridge() {
     sendCommand: jest.fn().mockResolvedValue({ type: 'response', success: true }),
     setLocale: jest.fn().mockResolvedValue(undefined),
   } as unknown as XcshRpcBridge;
+}
+
+function createMockContextManager(activeContext: XCSHContext | null = null) {
+  return {
+    getActiveContext: jest.fn().mockResolvedValue(activeContext),
+  } as unknown as ContextManagerInterface;
 }
 
 function createMockWebviewView() {
@@ -58,29 +67,49 @@ describe('XcshPanelProvider', () => {
   it('constructs without error', () => {
     const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
     const mockBridge = createMockBridge();
-    const provider = new XcshPanelProvider(mockUri, mockBridge);
+    const provider = new XcshPanelProvider(mockUri, mockBridge, createMockContextManager());
     expect(provider).toBeDefined();
   });
 
   describe('handleWebviewMessage via resolveWebviewView', () => {
     let sendCommandMock: jest.Mock;
+    let promptMock: jest.Mock;
+    let getIntegrationsMock: jest.Mock;
+    let getActiveContextMock: jest.Mock;
+    let postMessageMock: jest.Mock;
     let messageHandlers: Array<(msg: { type: string; [key: string]: unknown }) => void>;
 
     beforeEach(() => {
       const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
       sendCommandMock = jest.fn().mockResolvedValue({ type: 'response', success: true });
+      promptMock = jest.fn();
+      getIntegrationsMock = jest.fn().mockResolvedValue({
+        version: '21.11.4',
+        model: { state: 'connected', provider: 'test' },
+        services: [],
+      });
       const bridge = {
         onEvent: jest.fn(() => ({ dispose: jest.fn() })),
         onMessageStream: jest.fn(() => ({ dispose: jest.fn() })),
-        prompt: jest.fn(),
+        prompt: promptMock,
         abort: jest.fn(),
         getState: jest.fn().mockResolvedValue({ model: { name: 'test' } }),
-        getIntegrations: jest.fn().mockRejectedValue(new Error('not supported')),
+        getIntegrations: getIntegrationsMock,
         sendCommand: sendCommandMock,
         setLocale: jest.fn().mockResolvedValue(undefined),
       } as unknown as XcshRpcBridge;
-      const provider = new XcshPanelProvider(mockUri, bridge);
+      getActiveContextMock = jest.fn().mockResolvedValue({
+        name: 'test-context',
+        apiUrl: 'https://example.invalid/api',
+        apiToken: 'secret',
+        defaultNamespace: 'default',
+      });
+      const contextManager = {
+        getActiveContext: getActiveContextMock,
+      } as unknown as ContextManagerInterface;
+      const provider = new XcshPanelProvider(mockUri, bridge, contextManager);
       const { mockWebviewView, messageHandlers: handlers } = createMockWebviewView();
+      postMessageMock = (mockWebviewView.webview as unknown as { postMessage: jest.Mock }).postMessage;
       messageHandlers = handlers;
       provider.resolveWebviewView(
         mockWebviewView,
@@ -154,7 +183,7 @@ describe('XcshPanelProvider', () => {
         setLocale: jest.fn().mockResolvedValue(undefined),
       } as unknown as XcshRpcBridge;
       const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
-      const provider = new XcshPanelProvider(mockUri, testBridge);
+      const provider = new XcshPanelProvider(mockUri, testBridge, createMockContextManager());
       const { mockWebviewView, messageHandlers: handlers } = createMockWebviewView();
       provider.resolveWebviewView(
         mockWebviewView,
@@ -172,6 +201,51 @@ describe('XcshPanelProvider', () => {
       void bridge;
     });
 
+    it.each([
+      ['/context list', 'Active Context'],
+      ['/status', 'xcsh** v21.11.4'],
+      ['/resources', 'Browse resources'],
+    ])('handles %s locally and settles the webview turn', async (text, expectedText) => {
+      postMessageMock.mockClear();
+
+      dispatch({ type: 'prompt', text });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(promptMock).not.toHaveBeenCalled();
+      expect(postMessageMock).toHaveBeenCalledWith({
+        type: 'from-extension',
+        message: expect.objectContaining({
+          type: 'message_update',
+          text: expect.stringContaining(expectedText),
+        }),
+      });
+      expect(postMessageMock).toHaveBeenLastCalledWith({
+        type: 'from-extension',
+        message: { type: 'turn_end' },
+      });
+    });
+
+    it('settles the webview turn when a local slash command fails', async () => {
+      getActiveContextMock.mockRejectedValueOnce(new Error('keyring unavailable'));
+      postMessageMock.mockClear();
+
+      dispatch({ type: 'prompt', text: '/context' });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(promptMock).not.toHaveBeenCalled();
+      expect(postMessageMock).toHaveBeenCalledWith({
+        type: 'from-extension',
+        message: expect.objectContaining({
+          type: 'message_update',
+          text: expect.stringContaining('Unable to fetch context'),
+        }),
+      });
+      expect(postMessageMock).toHaveBeenLastCalledWith({
+        type: 'from-extension',
+        message: { type: 'turn_end' },
+      });
+    });
+
     it('calls setLocale on resolveWebviewView', async () => {
       const vscode = await import('vscode');
       const setLocaleMock = jest.fn().mockResolvedValue(undefined);
@@ -186,7 +260,7 @@ describe('XcshPanelProvider', () => {
         setLocale: setLocaleMock,
       } as unknown as XcshRpcBridge;
       const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
-      const provider = new XcshPanelProvider(mockUri, testBridge);
+      const provider = new XcshPanelProvider(mockUri, testBridge, createMockContextManager());
       const { mockWebviewView } = createMockWebviewView();
       provider.resolveWebviewView(
         mockWebviewView,
@@ -221,7 +295,7 @@ describe('XcshPanelProvider', () => {
     const mockUri = { fsPath: '/test', scheme: 'file' } as unknown as vscode.Uri;
 
     function setup() {
-      const provider = new XcshPanelProvider(mockUri, createMockBridge());
+      const provider = new XcshPanelProvider(mockUri, createMockBridge(), createMockContextManager());
       const { mockWebviewView, messageHandlers } = createMockWebviewView();
       provider.resolveWebviewView(
         mockWebviewView,
