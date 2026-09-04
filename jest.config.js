@@ -72,12 +72,7 @@ module.exports = {
         ...(liveMode === 'read-only' ? liveReadOnlyTests : []),
         ...(liveMode === 'crud' ? liveCrudTests : []),
       ],
-      testPathIgnorePatterns: [
-        '/node_modules/',
-        '/dist/',
-        '/out/',
-        ...(liveMode ? ['/unit/'] : ['/integration/']),
-      ],
+      testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/', ...(liveMode ? ['/unit/'] : ['/integration/'])],
       moduleFileExtensions: ['ts', 'js', 'json'],
       moduleNameMapper: sharedModuleNameMapper,
       transform: sharedTransform,
