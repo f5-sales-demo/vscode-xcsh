@@ -2,6 +2,7 @@
 
 import type { XCSHContext } from '../../config/contextTypes';
 import { buildNamespacePickChoices, buildSelectableNamespaces, XCSHExplorerProvider } from '../../tree/xcshExplorer';
+import { XCSHApiError } from '../../utils/errors';
 
 const NAMESPACES = ['b-x', 'a-franklin', 'default', 'system', 'shared'];
 
@@ -84,5 +85,25 @@ describe('XCSHExplorerProvider root items', () => {
     const contextManager = { getActiveContext: jest.fn().mockResolvedValue(null) } as never;
     const provider = new XCSHExplorerProvider(contextManager, jest.fn() as never);
     expect(await provider.getChildren()).toEqual([]);
+  });
+
+  it.each([
+    [new XCSHApiError(401), 'Authentication failed', 'xcsh.editContext', ['ctx1']],
+    [new XCSHApiError(403), 'Permission denied', 'xcsh.refresh', undefined],
+    [new XCSHApiError(429), 'Rate limited', 'xcsh.refresh', undefined],
+    [new XCSHApiError(503), 'Server unavailable', 'xcsh.refresh', undefined],
+    [new Error('Request timeout'), 'Request timed out', 'xcsh.refresh', undefined],
+    [Object.assign(new Error('socket closed'), { code: 'ECONNRESET' }), 'Network error', 'xcsh.refresh', undefined],
+  ])('classifies namespace failures and supplies a working recovery command', async (error, title, command, args) => {
+    const contextManager = {
+      getActiveContext: jest.fn().mockResolvedValue({ ...({ name: 'ctx1' } as XCSHContext) }),
+    } as never;
+    const provider = new XCSHExplorerProvider(contextManager, jest.fn().mockRejectedValue(error) as never);
+
+    const [node] = await provider.getChildren();
+    const item = node?.getTreeItem();
+    expect(item?.label).toBe(title);
+    expect(item?.command?.command).toBe(command);
+    expect(item?.command?.arguments).toEqual(args);
   });
 });

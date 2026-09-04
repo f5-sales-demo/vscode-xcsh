@@ -27,6 +27,7 @@ import {
   getDomainUseCases,
   type UiCategory,
 } from '../generated/domainCategories';
+import { XCSHApiError } from '../utils/errors';
 import { getLocalizedDisplayName } from '../utils/l10nHelpers';
 import { getLogger } from '../utils/logger';
 import {
@@ -108,9 +109,10 @@ export class XCSHExplorerProvider implements vscode.TreeDataProvider<XCSHTreeIte
       );
 
       return nodes;
-    } catch {
+    } catch (error) {
       this.logger.error('resource.operation.failed');
-      return [new ErrorNode(vscode.l10n.t('Failed to load namespaces'), vscode.l10n.t('Request failed'))];
+      const failure = classifyExplorerError(error, activeContext.name);
+      return [new ErrorNode(failure.title, failure.message, failure.command, failure.commandArguments)];
     }
   }
 }
@@ -476,9 +478,10 @@ class ResourceTypeNode implements XCSHTreeItem {
             });
           })
       );
-    } catch {
+    } catch (error) {
       this.logger.error('resource.operation.failed');
-      return [new ErrorNode(vscode.l10n.t('Failed to load resources'), vscode.l10n.t('Request failed'))];
+      const failure = classifyExplorerError(error, this.data.profileName);
+      return [new ErrorNode(failure.title, failure.message, failure.command, failure.commandArguments)];
     }
   }
 
@@ -585,22 +588,98 @@ export class ResourceNode implements XCSHTreeItem {
 /**
  * Error node for displaying connection/API errors in the tree
  */
+interface ExplorerErrorPresentation {
+  title: string;
+  message: string;
+  command: 'xcsh.editContext' | 'xcsh.refresh';
+  commandArguments?: unknown[];
+}
+
+export function classifyExplorerError(error: unknown, contextName: string): ExplorerErrorPresentation {
+  if (error instanceof XCSHApiError) {
+    if (error.isUnauthorized) {
+      return {
+        title: vscode.l10n.t('Authentication failed'),
+        message: vscode.l10n.t('The API token for context "{0}" was rejected. Click to edit it.', contextName),
+        command: 'xcsh.editContext',
+        commandArguments: [contextName],
+      };
+    }
+    if (error.isForbidden) {
+      return {
+        title: vscode.l10n.t('Permission denied'),
+        message: vscode.l10n.t('This token cannot list namespaces. Check its tenant permissions, then retry.'),
+        command: 'xcsh.refresh',
+      };
+    }
+    if (error.isRateLimited) {
+      return {
+        title: vscode.l10n.t('Rate limited'),
+        message: vscode.l10n.t('The tenant is throttling requests. Wait briefly, then retry.'),
+        command: 'xcsh.refresh',
+      };
+    }
+    if (error.isServerError) {
+      return {
+        title: vscode.l10n.t('Server unavailable'),
+        message: vscode.l10n.t('The tenant returned a server error. Try again shortly.'),
+        command: 'xcsh.refresh',
+      };
+    }
+    return {
+      title: vscode.l10n.t('Request failed'),
+      message: error.userFriendlyMessage,
+      command: 'xcsh.refresh',
+    };
+  }
+
+  const details = error instanceof Error ? error : undefined;
+  const code = details && 'code' in details ? details.code : undefined;
+  if (
+    details &&
+    (details.name === 'AbortError' || code === 'ETIMEDOUT' || /timed?\s*out|timeout/i.test(details.message))
+  ) {
+    return {
+      title: vscode.l10n.t('Request timed out'),
+      message: vscode.l10n.t('Namespace discovery timed out. Check network access, then retry.'),
+      command: 'xcsh.refresh',
+    };
+  }
+  if (details) {
+    return {
+      title: vscode.l10n.t('Network error'),
+      message: vscode.l10n.t('Could not reach the tenant. Check the API URL and network, then retry.'),
+      command: 'xcsh.refresh',
+    };
+  }
+  return {
+    title: vscode.l10n.t('Failed to load namespaces'),
+    message: vscode.l10n.t('Namespace discovery failed. Try again.'),
+    command: 'xcsh.refresh',
+  };
+}
+
 class ErrorNode implements XCSHTreeItem {
   constructor(
     private readonly title: string,
     private readonly message: string,
-    private readonly retryCommand: string = 'xcsh.refreshExplorer',
+    private readonly retryCommand: string = 'xcsh.refresh',
+    private readonly commandArguments?: unknown[],
   ) {}
 
   getTreeItem(): vscode.TreeItem {
     const item = new vscode.TreeItem(this.title, vscode.TreeItemCollapsibleState.None);
     item.contextValue = TreeItemContext.ERROR;
     item.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('list.errorForeground'));
-    item.description = vscode.l10n.t('Click to retry');
+    item.description =
+      this.retryCommand === 'xcsh.editContext'
+        ? vscode.l10n.t('Click to edit context')
+        : vscode.l10n.t('Click to retry');
     item.tooltip = this.message;
     item.command = {
       command: this.retryCommand,
-      title: 'Retry',
+      title: this.retryCommand === 'xcsh.editContext' ? vscode.l10n.t('Edit Context') : vscode.l10n.t('Retry'),
+      arguments: this.commandArguments,
     };
     return item;
   }

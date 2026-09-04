@@ -215,7 +215,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // Register context commands
-  registerContextCommands(context, contextManager, contextProvider, explorerProvider);
+  registerContextCommands(context, contextManager);
 
   // Register CRUD commands
   registerCrudCommands(context, explorerProvider, contextManager, fsProvider, viewProvider, describeProvider);
