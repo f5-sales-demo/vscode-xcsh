@@ -224,7 +224,7 @@ export async function activateXcsh(
   }
 
   // Register the xcsh panel (activity bar fallback + secondary sidebar)
-  const panelProvider = new XcshPanelProvider(extensionContext.extensionUri, rpcBridge);
+  const panelProvider = new XcshPanelProvider(extensionContext.extensionUri, rpcBridge, contextManager);
   extensionContext.subscriptions.push(
     vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewType, panelProvider),
   );

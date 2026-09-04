@@ -5,10 +5,12 @@ import { randomUUID } from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
+import type { ContextManagerInterface } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { MAX_ATTACHMENT_BYTES } from './attachment';
 import { resolveAttachments } from './attachmentResolvers';
 import type { Attachment, FileAttachment, HostAttachmentCategory } from './attachmentTypes';
+import { formatContextResponse, formatStatusResponse } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS } from './hostTools';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ReferencesEvent, ToolExecutionEnd, ToolExecutionStart } from './types';
@@ -32,6 +34,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly rpcBridge: XcshRpcBridge,
+    private readonly contextManager: ContextManagerInterface,
   ) {}
 
   resolveWebviewView(
@@ -69,7 +72,11 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       this.rpcBridge.onEvent<ToolExecutionStart>('tool_execution_start', (event) => {
         void webviewView.webview.postMessage({
           type: 'from-extension',
-          message: { type: 'tool_execution_start', toolName: event.toolName, toolCallId: event.toolCallId },
+          message: {
+            type: 'tool_execution_start',
+            toolName: event.toolName,
+            toolCallId: event.toolCallId,
+          },
         });
       }),
     );
@@ -137,7 +144,10 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       if (skills.length === 0) {
         return;
       }
-      void view.webview.postMessage({ type: 'from-extension', message: { type: 'skills', skills } });
+      void view.webview.postMessage({
+        type: 'from-extension',
+        message: { type: 'skills', skills },
+      });
     } catch {
       /* no skills available — the menu stays absent */
     }
@@ -185,7 +195,12 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       case 'prompt': {
         const text = msg.text as string | undefined;
         if (text) {
-          this.rpcBridge.prompt(text, { locale: vscode.env.language });
+          const slashCommand = this.parseSlashCommand(text);
+          if (slashCommand) {
+            void this.handleSlashCommand(slashCommand);
+          } else {
+            this.rpcBridge.prompt(text, { locale: vscode.env.language });
+          }
         }
         break;
       }
@@ -227,6 +242,65 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       default:
         break;
     }
+  }
+
+  /**
+   * Match the local commands advertised by the webview composer. Arguments are
+   * accepted so prompts such as `/context list` retain the same local semantics
+   * instead of being sent to the model as an open-ended agent request.
+   */
+  private parseSlashCommand(text: string): 'status' | 'context' | 'resources' | null {
+    const match = /^\/(status|context|resources)(?:\s|$)/i.exec(text.trim());
+    const command = match?.[1]?.toLowerCase();
+    if (command === 'status' || command === 'context' || command === 'resources') {
+      return command;
+    }
+    return null;
+  }
+
+  /** Resolve a sidebar slash command locally and always settle its UI turn. */
+  private async handleSlashCommand(command: 'status' | 'context' | 'resources'): Promise<void> {
+    let response: string;
+
+    if (command === 'status') {
+      try {
+        response = formatStatusResponse(await this.rpcBridge.getIntegrations());
+      } catch {
+        response = vscode.l10n.t('Unable to fetch integration status. Is xcsh running?');
+      }
+    } else {
+      try {
+        const activeContext = await this.contextManager.getActiveContext();
+        if (command === 'context') {
+          response = formatContextResponse(activeContext);
+        } else if (!activeContext) {
+          response = vscode.l10n.t('No active xcsh context. Use the **xcsh: Add Context** command to configure one.');
+        } else {
+          response = [
+            `**${vscode.l10n.t('Resources')}:** ${vscode.l10n.t('Active context configured')}`,
+            '',
+            vscode.l10n.t(
+              'Browse resources in the **xcsh** sidebar (Explorer tree view) for full resource listing, viewing, and editing.',
+            ),
+          ].join('\n\n');
+        }
+      } catch {
+        response = vscode.l10n.t('Unable to fetch context. Is xcsh running?');
+      }
+    }
+
+    const view = this.webviewView;
+    if (!view) {
+      return;
+    }
+    await view.webview.postMessage({
+      type: 'from-extension',
+      message: { type: 'message_update', text: response },
+    });
+    await view.webview.postMessage({
+      type: 'from-extension',
+      message: { type: 'turn_end' },
+    });
   }
 
   /**
