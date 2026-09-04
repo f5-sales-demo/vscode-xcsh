@@ -30,7 +30,10 @@ export function initProtocol(): void {
   vscodeApi = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
 
   window.addEventListener('message', (event: MessageEvent) => {
-    if (event.source !== window || event.origin !== window.location.origin) {
+    // VS Code relays extension-host messages through its outer webview frame,
+    // so event.source is that frame's WindowProxy rather than this window. The
+    // generated per-webview origin is the trust boundary available here.
+    if (event.origin !== window.location.origin) {
       return;
     }
 

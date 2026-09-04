@@ -69,6 +69,21 @@ describe('webview protocol', () => {
     expect(received[0]).toEqual({ type: 'message_update', text: 'chunk' });
   });
 
+  it('accepts extension-host events relayed by the outer VS Code webview frame', () => {
+    const { initProtocol, on } = loadProtocol();
+    initProtocol();
+
+    const received: unknown[] = [];
+    on('message_update', (msg) => received.push(msg));
+
+    dispatchFromExtension(
+      { type: 'from-extension', message: { type: 'message_update', text: 'chunk' } },
+      { source: {} as MessageEventSource },
+    );
+
+    expect(received).toEqual([{ type: 'message_update', text: 'chunk' }]);
+  });
+
   it('on returns unsubscribe function', () => {
     const { initProtocol, on } = loadProtocol();
     initProtocol();
@@ -113,7 +128,7 @@ describe('webview protocol', () => {
     expect(received).toEqual([{ type: 'attachment_added', attachment }]);
   });
 
-  it('rejects messages from a forged origin or source', () => {
+  it('rejects messages from a forged origin', () => {
     const { initProtocol, on } = loadProtocol();
     initProtocol();
     const received: unknown[] = [];
@@ -121,7 +136,6 @@ describe('webview protocol', () => {
     const data = { type: 'from-extension', message: { type: 'message_update', text: 'chunk' } };
 
     dispatchFromExtension(data, { origin: 'https://attacker.example' });
-    dispatchFromExtension(data, { source: null });
 
     expect(received).toEqual([]);
   });
