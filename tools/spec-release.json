@@ -1,6 +1,6 @@
 {
-  "bundle_sha256": "1dd3517813cd6f7075603d28998826dc348e139886cd0123af4921455ff304b0",
-  "release_tag": "v2.1.222",
-  "target_commit": "e1b5cc16b8cb3928a409f144099ea473ae33e307",
-  "version": "2.1.222"
+  "bundle_sha256": "0fce4f17c7347132d3482348084d19986181dcf0ba3f3fb79ad52f9f64fecfae",
+  "release_tag": "v7.0.1",
+  "target_commit": "2513fe498149c98fb737ff2ab207704b8a86fec6",
+  "version": "7.0.1"
 }
