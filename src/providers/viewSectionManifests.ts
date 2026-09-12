@@ -265,7 +265,7 @@ export const VIEW_SECTION_MANIFESTS: Record<string, ViewSectionManifest> = {
       {
         id: 'rules',
         title: 'Rules',
-        keys: ['rule_list', 'legacy_rule_list', 'allow_list', 'deny_list', 'allow_all_requests', 'deny_all_requests'],
+        keys: ['rule_list', 'allow_list', 'deny_list', 'allow_all_requests', 'deny_all_requests'],
       },
     ],
     labelOverrides: {
@@ -274,7 +274,6 @@ export const VIEW_SECTION_MANIFESTS: Record<string, ViewSectionManifest> = {
       server_name_matcher: 'Server Name Matcher',
       server_selector: 'Server Selector',
       rule_list: 'Custom Rule List',
-      legacy_rule_list: 'Legacy Rule List',
       allow_list: 'Allow List',
       deny_list: 'Deny List',
       allow_all_requests: 'Allow All Requests',
