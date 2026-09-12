@@ -1,0 +1,10 @@
+{
+  "bundle_sha256": "0fce4f17c7347132d3482348084d19986181dcf0ba3f3fb79ad52f9f64fecfae",
+  "delivery_id": "ef22ed72da56e038564ef74cc83e2acbd8c52ce8c12713e0c752fa00727b4482",
+  "publication_epoch": "1789231749",
+  "publication_tag": "v7.0.1-260912164909",
+  "release_tag": "v7.0.1",
+  "target_commit": "2513fe498149c98fb737ff2ab207704b8a86fec6",
+  "trigger_source": "f5-sales-demo/api-specs-enriched",
+  "version": "7.0.1"
+}
