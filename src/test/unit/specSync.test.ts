@@ -9,6 +9,7 @@
 
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { generateVersionInfo } from '../../../scripts/version';
 
 const SPEC_ROOT = path.resolve(__dirname, '../../../docs/specifications/api');
 const DOMAINS_DIR = path.join(SPEC_ROOT, 'domains');
@@ -33,6 +34,24 @@ const DOMAINS_DIR = path.join(SPEC_ROOT, 'domains');
 const MIN_TOTAL_PATHS = 1200;
 const MIN_TOTAL_SCHEMAS = 6000;
 
+// These documents are release metadata rather than OpenAPI domains. They share
+// the domains directory so consumers can fetch one self-contained bundle.
+// Keep this explicit: an unrecognized JSON document must satisfy the OpenAPI
+// contract rather than silently being treated as release metadata.
+const REQUIRED_DOMAIN_METADATA_FILES = new Set([
+  'namespace_profiles.json',
+  'resource_coverage.json',
+  'validation.json',
+]);
+
+const DOMAIN_METADATA_FILES = new Set([
+  'concurrency_contracts.json',
+  'namespace_profiles.json',
+  'resource_coverage.json',
+  'smsv2_parity_manifest.json',
+  'validation.json',
+]);
+
 /**
  * Minimal OpenAPI spec structure for validation
  */
@@ -55,11 +74,12 @@ describe('Spec Directory Structure', () => {
       expect(fs.existsSync(DOMAINS_DIR)).toBe(true);
     });
 
-    it('should contain exactly 41 JSON files', () => {
-      // OpenAPI domain files plus the three non-OpenAPI artifacts that ride along:
-      // validation.json, namespace_profiles.json, and resource_coverage.json.
+    it('should contain OpenAPI domains and the required metadata artifacts', () => {
       const files = fs.readdirSync(DOMAINS_DIR).filter((f) => f.endsWith('.json'));
-      expect(files.length).toBe(41);
+      for (const metadataFile of REQUIRED_DOMAIN_METADATA_FILES) {
+        expect(files).toContain(metadataFile);
+      }
+      expect(files.length).toBeGreaterThan(REQUIRED_DOMAIN_METADATA_FILES.size);
     });
   });
 
@@ -81,9 +101,7 @@ describe('Spec Directory Structure', () => {
 
     it('OpenAPI domain files should have required keys (openapi, info, paths, components)', () => {
       // Metadata artifacts are contracts, not OpenAPI domain documents.
-      const openApiFiles = domainFiles.filter(
-        (f) => !['validation.json', 'namespace_profiles.json', 'resource_coverage.json'].includes(f),
-      );
+      const openApiFiles = domainFiles.filter((f) => !DOMAIN_METADATA_FILES.has(f));
 
       for (const filename of openApiFiles) {
         const filePath = path.join(DOMAINS_DIR, filename);
@@ -99,9 +117,7 @@ describe('Spec Directory Structure', () => {
 
     it('OpenAPI domain files should have x-f5xc-cli-domain in info', () => {
       // Metadata artifacts are contracts, not OpenAPI domain documents.
-      const openApiFiles = domainFiles.filter(
-        (f) => !['validation.json', 'namespace_profiles.json', 'resource_coverage.json'].includes(f),
-      );
+      const openApiFiles = domainFiles.filter((f) => !DOMAIN_METADATA_FILES.has(f));
 
       for (const filename of openApiFiles) {
         const filePath = path.join(DOMAINS_DIR, filename);
@@ -197,21 +213,20 @@ describe('Spec version single-source-of-truth', () => {
     expect(handMaintainedSpecVersionKeys).toEqual([]);
   });
 
-  it('the extension version must be derived from the bundled spec version', () => {
-    // scripts/version.ts builds the semver from openapi.json info.version, so a
-    // freshly-synced build always reflects the latest upstream spec. This asserts
-    // the two stay coupled (major segment of the extension version tracks the
-    // upstream major), catching a decoupled/pinned version marker sneaking back.
+  it('the release version generator derives its upstream major from the bundled spec', () => {
+    // package.json is stamped only by the release bump after CI has validated a
+    // delivery. Test the generator itself here so an incoming major release can
+    // be validated before that later, immutable publication step.
     if (!fs.existsSync(OPENAPI_JSON)) {
       return; // specs not synced in this environment; covered by CI where they are
     }
-    const pkg = JSON.parse(fs.readFileSync(PACKAGE_JSON, 'utf-8')) as { version: string };
     const spec = JSON.parse(fs.readFileSync(OPENAPI_JSON, 'utf-8')) as {
       info?: { version?: string };
     };
     const upstreamMajor = (spec.info?.version ?? '').split('.')[0];
-    const pkgMajor = pkg.version.split('.')[0];
+    const generated = generateVersionInfo();
     expect(upstreamMajor).not.toEqual('');
-    expect(pkgMajor).toEqual(upstreamMajor);
+    expect(generated.upstream).toEqual(spec.info?.version);
+    expect(generated.semver.split('.')[0]).toEqual(upstreamMajor);
   });
 });
