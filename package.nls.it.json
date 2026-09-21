@@ -78,6 +78,8 @@
   "command.createHealthcheckForm.title": "xcsh: Crea healthcheck (modulo)",
   "command.xcsh.openTerminal.title": "xcsh: Apri terminale",
   "command.xcsh.restart.title": "xcsh: Riavvia",
+  "command.xcsh.pairHerdr.title": "xcsh: Associa a Herdr",
+  "command.xcsh.disconnectHerdr.title": "xcsh: Disconnetti da Herdr",
   "command.xcsh.openPanel.title": "xcsh: Apri pannello",
   "command.xcsh.newSession.title": "xcsh: Nuova sessione",
   "tool.readFile.displayName": "Leggi file",

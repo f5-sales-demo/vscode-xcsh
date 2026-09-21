@@ -78,6 +78,8 @@
   "command.createHealthcheckForm.title": "xcsh: สร้างการตรวจสุขภาพ (ฟอร์ม)",
   "command.xcsh.openTerminal.title": "xcsh: เปิดเทอร์มินัล",
   "command.xcsh.restart.title": "xcsh: เริ่มใหม่",
+  "command.xcsh.pairHerdr.title": "xcsh: จับคู่กับ Herdr",
+  "command.xcsh.disconnectHerdr.title": "xcsh: ยกเลิกการเชื่อมต่อ Herdr",
   "command.xcsh.openPanel.title": "xcsh: เปิดแผง",
   "command.xcsh.newSession.title": "xcsh: เซสชันใหม่",
   "tool.readFile.displayName": "อ่านไฟล์",

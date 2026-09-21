@@ -78,6 +78,8 @@
   "command.createHealthcheckForm.title": "xcsh: 创建健康检查（表单）",
   "command.xcsh.openTerminal.title": "xcsh: 打开终端",
   "command.xcsh.restart.title": "xcsh: 重启",
+  "command.xcsh.pairHerdr.title": "xcsh: 与 Herdr 配对",
+  "command.xcsh.disconnectHerdr.title": "xcsh: 断开 Herdr 连接",
   "command.xcsh.openPanel.title": "xcsh: 打开面板",
   "command.xcsh.newSession.title": "xcsh: 新建会话",
   "tool.readFile.displayName": "读取文件",

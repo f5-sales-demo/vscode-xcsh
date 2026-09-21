@@ -542,6 +542,18 @@
         "icon": "$(debug-restart)"
       },
       {
+        "command": "xcsh.xcsh.pairHerdr",
+        "title": "%command.xcsh.pairHerdr.title%",
+        "category": "xcsh",
+        "icon": "$(plug)"
+      },
+      {
+        "command": "xcsh.xcsh.disconnectHerdr",
+        "title": "%command.xcsh.disconnectHerdr.title%",
+        "category": "xcsh",
+        "icon": "$(debug-disconnect)"
+      },
+      {
         "command": "xcsh.xcsh.openPanel",
         "title": "%command.xcsh.openPanel.title%",
         "category": "xcsh",

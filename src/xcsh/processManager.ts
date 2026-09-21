@@ -10,6 +10,9 @@ import type { ProcessStatus } from './types';
 const HEALTH_CHECK_INTERVAL_MS = 30_000;
 const MAX_RETRIES = 5;
 const MAX_BACKOFF_MS = 30_000;
+const STOP_TIMEOUT_MS = 2_000;
+
+export type WorkerEnvironmentResolver = () => Promise<Record<string, string>>;
 
 /**
  * Locate the xcsh binary using a prioritized search order:
@@ -82,9 +85,13 @@ export class XcshProcessManager implements vscode.Disposable {
   private retryCount = 0;
   private healthTimer: ReturnType<typeof setInterval> | null = null;
   private disposed = false;
+  private lifecycle: Promise<void> = Promise.resolve();
+  private environmentResolver: WorkerEnvironmentResolver = () => Promise.resolve({});
 
   private readonly _onDidChangeStatus = new vscode.EventEmitter<ProcessStatus>();
   readonly onDidChangeStatus: vscode.Event<ProcessStatus> = this._onDidChangeStatus.event;
+  private readonly _onDidSpawn = new vscode.EventEmitter<ChildProcess>();
+  readonly onDidSpawn: vscode.Event<ChildProcess> = this._onDidSpawn.event;
 
   getStatus(): ProcessStatus {
     return this.status;
@@ -102,12 +109,23 @@ export class XcshProcessManager implements vscode.Disposable {
     this.cwd = cwd;
   }
 
+  setEnvironmentResolver(resolver: WorkerEnvironmentResolver): void {
+    this.environmentResolver = resolver;
+  }
+
   /**
    * Start the xcsh process in RPC mode.
    * Resolves once the process is spawned (not necessarily ready).
    */
-  start(): void {
+  start(): Promise<void> {
+    return this.enqueue(() => this.startNow());
+  }
+
+  private async startNow(): Promise<void> {
     if (this.disposed) {
+      return;
+    }
+    if (this.process?.exitCode === null) {
       return;
     }
 
@@ -123,19 +141,39 @@ export class XcshProcessManager implements vscode.Disposable {
     this.setStatus('starting');
 
     try {
+      const inherited = { ...process.env };
+      for (const key of Object.keys(inherited)) {
+        if (key.startsWith('HERDR_')) {
+          delete inherited[key];
+        }
+      }
+      const resolvedEnvironment = await this.environmentResolver();
       const child = spawn(binary, ['--mode', 'rpc'], {
         stdio: ['pipe', 'pipe', 'pipe'],
-        env: { ...process.env, ...this.envVars, XCSH_LOCALE: vscode.env.language },
+        env: {
+          ...inherited,
+          ...this.envVars,
+          ...resolvedEnvironment,
+          XCSH_LOCALE: vscode.env.language,
+        },
         cwd: this.cwd,
       });
 
       child.on('error', () => {
+        if (this.process !== child) {
+          return;
+        }
+        this.process = null;
         this.logger.error('process.spawn.failed');
         this.setStatus('error');
         this.scheduleRestart();
       });
 
       child.on('exit', () => {
+        if (this.process !== child) {
+          return;
+        }
+        this.process = null;
         this.logger.info('process.exited');
         if (this.status !== 'stopped' && !this.disposed) {
           this.setStatus('error');
@@ -147,6 +185,7 @@ export class XcshProcessManager implements vscode.Disposable {
       this.retryCount = 0;
       this.setStatus('running');
       this.startHealthCheck();
+      this._onDidSpawn.fire(child);
     } catch {
       this.logger.error('process.spawn.failed');
       this.setStatus('error');
@@ -157,12 +196,27 @@ export class XcshProcessManager implements vscode.Disposable {
   /**
    * Stop the xcsh process gracefully via SIGTERM.
    */
-  stop(): void {
+  stop(): Promise<void> {
+    return this.enqueue(() => this.stopNow());
+  }
+
+  private async stopNow(): Promise<void> {
     this.stopHealthCheck();
 
-    if (this.process) {
-      this.process.kill('SIGTERM');
-      this.process = null;
+    const child = this.process;
+    this.process = null;
+    if (child && child.exitCode === null) {
+      child.kill('SIGTERM');
+      if (child.pid !== undefined) {
+        await waitForExit(child, STOP_TIMEOUT_MS);
+        if (child.exitCode === null) {
+          child.kill('SIGKILL');
+          await waitForExit(child, STOP_TIMEOUT_MS);
+        }
+        if (child.exitCode === null) {
+          throw new Error('xcsh worker did not exit; replacement was not started');
+        }
+      }
     }
 
     this.setStatus('stopped');
@@ -171,10 +225,12 @@ export class XcshProcessManager implements vscode.Disposable {
   /**
    * Restart: stop then start.
    */
-  restart(): void {
-    this.stop();
-    this.retryCount = 0;
-    this.start();
+  restart(): Promise<void> {
+    return this.enqueue(async () => {
+      await this.stopNow();
+      this.retryCount = 0;
+      await this.startNow();
+    });
   }
 
   // ───────── health check ─────────
@@ -215,7 +271,7 @@ export class XcshProcessManager implements vscode.Disposable {
 
     setTimeout(() => {
       if (!this.disposed && this.status !== 'running') {
-        this.start();
+        void this.start();
       }
     }, delay);
   }
@@ -233,7 +289,27 @@ export class XcshProcessManager implements vscode.Disposable {
 
   dispose(): void {
     this.disposed = true;
-    this.stop();
+    void this.stop();
     this._onDidChangeStatus.dispose();
+    this._onDidSpawn.dispose();
   }
+
+  private enqueue(operation: () => Promise<void>): Promise<void> {
+    const next = this.lifecycle.then(operation, operation);
+    this.lifecycle = next.catch(() => {});
+    return next;
+  }
+}
+
+function waitForExit(child: ChildProcess, timeoutMs: number): Promise<void> {
+  if (child.exitCode !== null) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const timer = setTimeout(resolve, timeoutMs);
+    child.once('exit', () => {
+      clearTimeout(timer);
+      resolve();
+    });
+  });
 }
