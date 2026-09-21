@@ -6,6 +6,7 @@ import type { ContextManagerInterface } from '../config/contextTypes';
 import { CURRENT_SCHEMA_VERSION, deriveTenantFromUrl, isInjectableContextEnvKey } from '../config/contextTypes';
 import { getLogger } from '../utils/logger';
 import { registerChatParticipant } from './chatParticipant';
+import { HerdrBinding } from './herdrBinding';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerLanguageModelProvider } from './languageModelProvider';
 import { registerLanguageModelTools } from './languageModelTools';
@@ -77,6 +78,8 @@ export async function activateXcsh(
 
   // Create process manager and configure env from active context
   const processManager = new XcshProcessManager();
+  const herdrBinding = new HerdrBinding(extensionContext);
+  processManager.setEnvironmentResolver(() => herdrBinding.resolveEnvironment());
   extensionContext.subscriptions.push(processManager);
 
   const setEnvFromContext = async (): Promise<void> => {
@@ -148,7 +151,7 @@ export async function activateXcsh(
   processManager.setCwd(getWorkspaceCwd());
 
   // Start the process
-  processManager.start();
+  await processManager.start();
 
   // Wait for the process to be running before setting up RPC
   const childProcess = processManager.getProcess();
@@ -161,6 +164,16 @@ export async function activateXcsh(
   const rpcBridge = new XcshRpcBridge(childProcess.stdin, childProcess.stdout);
   rpcBridge.init();
   extensionContext.subscriptions.push(rpcBridge);
+  extensionContext.subscriptions.push(
+    processManager.onDidSpawn((newProcess) => {
+      if (newProcess === childProcess || !newProcess.stdin || !newProcess.stdout) {
+        return;
+      }
+      rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
+      registerHostToolsOnBridge(rpcBridge);
+      rpcBridge.setLocale(vscode.env.language).catch(() => {});
+    }),
+  );
 
   // Listen for context changes and restart
   extensionContext.subscriptions.push(
@@ -168,29 +181,15 @@ export async function activateXcsh(
       logger.info('context.changed');
       await setEnvFromContext();
       processManager.setCwd(getWorkspaceCwd());
-      processManager.restart();
-
-      const newProcess = processManager.getProcess();
-      if (newProcess?.stdin && newProcess?.stdout) {
-        rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
-        registerHostToolsOnBridge(rpcBridge);
-        rpcBridge.setLocale(vscode.env.language).catch(() => {});
-      }
+      await processManager.restart();
     }),
   );
 
   extensionContext.subscriptions.push(
-    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+    vscode.workspace.onDidChangeWorkspaceFolders(async () => {
       logger.info('context.changed');
       processManager.setCwd(getWorkspaceCwd());
-      processManager.restart();
-
-      const newProcess = processManager.getProcess();
-      if (newProcess?.stdin && newProcess?.stdout) {
-        rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
-        registerHostToolsOnBridge(rpcBridge);
-        rpcBridge.setLocale(vscode.env.language).catch(() => {});
-      }
+      await processManager.restart();
     }),
   );
 
@@ -275,17 +274,35 @@ export async function activateXcsh(
     vscode.commands.registerCommand('xcsh.xcsh.restart', async () => {
       await setEnvFromContext();
       processManager.setCwd(getWorkspaceCwd());
-      processManager.restart();
-
-      const newProcess = processManager.getProcess();
-      if (newProcess?.stdin && newProcess?.stdout) {
-        rpcBridge.reconnect(newProcess.stdin, newProcess.stdout);
-        registerHostToolsOnBridge(rpcBridge);
-        rpcBridge.setLocale(vscode.env.language).catch(() => {});
-      }
+      await processManager.restart();
 
       void vscode.window.showInformationMessage('xcsh restarted');
       logger.info('integration.activation.completed');
+    }),
+  );
+
+  extensionContext.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.xcsh.pairHerdr', async () => {
+      const payload = await vscode.window.showInputBox({
+        prompt: 'Paste the one-time payload from `herdr context issue` in the target pane',
+        password: true,
+        ignoreFocusOut: true,
+      });
+      if (!payload) {
+        return;
+      }
+      try {
+        const pane = await herdrBinding.pair(payload);
+        await processManager.restart();
+        void vscode.window.showInformationMessage(`xcsh paired with Herdr pane ${pane.pane_id}`);
+      } catch {
+        void vscode.window.showErrorMessage('Unable to pair with Herdr. Generate a new pairing payload and try again.');
+      }
+    }),
+    vscode.commands.registerCommand('xcsh.xcsh.disconnectHerdr', async () => {
+      await herdrBinding.disconnect();
+      await processManager.restart();
+      void vscode.window.showInformationMessage('xcsh disconnected from Herdr');
     }),
   );
 

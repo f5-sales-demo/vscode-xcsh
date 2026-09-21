@@ -70,6 +70,8 @@
   "command.createHealthcheckForm.title": "xcsh: Criar Healthcheck (Formulário)",
   "command.xcsh.openTerminal.title": "xcsh: Abrir Terminal",
   "command.xcsh.restart.title": "xcsh: Reiniciar",
+  "command.xcsh.pairHerdr.title": "xcsh: Emparelhar com Herdr",
+  "command.xcsh.disconnectHerdr.title": "xcsh: Desconectar do Herdr",
   "command.xcsh.openPanel.title": "xcsh: Abrir Painel",
   "command.xcsh.newSession.title": "xcsh: Nova Sessão",
   "view.profiles.name": "Contextos",

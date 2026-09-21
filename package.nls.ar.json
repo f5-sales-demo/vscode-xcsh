@@ -78,6 +78,8 @@
   "command.createHealthcheckForm.title": "xcsh: إنشاء فحص صحي (نموذج)",
   "command.xcsh.openTerminal.title": "xcsh: فتح محطة",
   "command.xcsh.restart.title": "xcsh: إعادة تشغيل",
+  "command.xcsh.pairHerdr.title": "xcsh: الاقتران مع Herdr",
+  "command.xcsh.disconnectHerdr.title": "xcsh: قطع الاتصال عن Herdr",
   "command.xcsh.openPanel.title": "xcsh: فتح لوحة",
   "command.xcsh.newSession.title": "xcsh: جلسة جديدة",
   "tool.readFile.displayName": "قراءة ملف",

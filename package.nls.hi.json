@@ -78,6 +78,8 @@
   "command.createHealthcheckForm.title": "xcsh: हेल्थचेक बनाएं (फ़ॉर्म)",
   "command.xcsh.openTerminal.title": "xcsh: टर्मिनल खोलें",
   "command.xcsh.restart.title": "xcsh: पुनः प्रारंभ करें",
+  "command.xcsh.pairHerdr.title": "xcsh: Herdr से जोड़ें",
+  "command.xcsh.disconnectHerdr.title": "xcsh: Herdr से डिस्कनेक्ट करें",
   "command.xcsh.openPanel.title": "xcsh: पैनल खोलें",
   "command.xcsh.newSession.title": "xcsh: नया सत्र",
   "tool.readFile.displayName": "फ़ाइल पढ़ें",

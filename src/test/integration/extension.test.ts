@@ -52,6 +52,8 @@ suite('Extension Test Suite', () => {
       'xcsh.delete',
       'xcsh.apply',
       'xcsh.diff',
+      'xcsh.xcsh.pairHerdr',
+      'xcsh.xcsh.disconnectHerdr',
     ];
 
     for (const cmd of expectedCommands) {
