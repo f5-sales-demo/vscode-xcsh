@@ -81,6 +81,30 @@ export async function activateXcsh(
   const herdrBinding = new HerdrBinding(extensionContext);
   processManager.setEnvironmentResolver(() => herdrBinding.resolveEnvironment());
   extensionContext.subscriptions.push(processManager);
+  extensionContext.subscriptions.push(
+    vscode.commands.registerCommand('xcsh.xcsh.pairHerdr', async () => {
+      const payload = await vscode.window.showInputBox({
+        prompt: 'Paste the one-time payload from `herdr context issue` in the target pane',
+        password: true,
+        ignoreFocusOut: true,
+      });
+      if (!payload) {
+        return;
+      }
+      try {
+        const pane = await herdrBinding.pair(payload);
+        await processManager.restart();
+        void vscode.window.showInformationMessage(`xcsh paired with Herdr pane ${pane.pane_id}`);
+      } catch {
+        void vscode.window.showErrorMessage('Unable to pair with Herdr. Generate a new pairing payload and try again.');
+      }
+    }),
+    vscode.commands.registerCommand('xcsh.xcsh.disconnectHerdr', async () => {
+      await herdrBinding.disconnect();
+      await processManager.restart();
+      void vscode.window.showInformationMessage('xcsh disconnected from Herdr');
+    }),
+  );
 
   const setEnvFromContext = async (): Promise<void> => {
     // Use three-tier context resolution (env > local > global)
@@ -278,31 +302,6 @@ export async function activateXcsh(
 
       void vscode.window.showInformationMessage('xcsh restarted');
       logger.info('integration.activation.completed');
-    }),
-  );
-
-  extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.xcsh.pairHerdr', async () => {
-      const payload = await vscode.window.showInputBox({
-        prompt: 'Paste the one-time payload from `herdr context issue` in the target pane',
-        password: true,
-        ignoreFocusOut: true,
-      });
-      if (!payload) {
-        return;
-      }
-      try {
-        const pane = await herdrBinding.pair(payload);
-        await processManager.restart();
-        void vscode.window.showInformationMessage(`xcsh paired with Herdr pane ${pane.pane_id}`);
-      } catch {
-        void vscode.window.showErrorMessage('Unable to pair with Herdr. Generate a new pairing payload and try again.');
-      }
-    }),
-    vscode.commands.registerCommand('xcsh.xcsh.disconnectHerdr', async () => {
-      await herdrBinding.disconnect();
-      await processManager.restart();
-      void vscode.window.showInformationMessage('xcsh disconnected from Herdr');
     }),
   );
 
