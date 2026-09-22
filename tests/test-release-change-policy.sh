@@ -32,6 +32,7 @@ case_result() {
 case_result 'runtime input is eligible' true 'src/extension.ts'
 case_result 'Node runtime selection is eligible' true '.nvmrc'
 case_result 'shipped content is eligible' true $'resources/logo.svg\nREADME.md'
+case_result 'top-level localization bundles are eligible' true 'package.nls.ar.json'
 case_result 'managed sync is ineligible' false $'.github/workflows/translation-audit.yml\nAGENTS.md'
 case_result 'CI, test, documentation and governance are ineligible' false $'.github/workflows/ci.yml\ntests/test-example.sh\ndocs/guide.md\n.claude/governance.json'
 case_result 'deleted legacy resource coverage tooling is ineligible' false 'scripts/update-resource-coverage.ts'

@@ -56,7 +56,7 @@ while IFS= read -r path || [ -n "$path" ]; do
   case "$path" in
   # Runtime, webview, shipped assets and localization.
   # Package manifests and build configuration shipped with the extension.
-  package.json | package-lock.json | webview/package.json | webview/package-lock.json | .nvmrc | webpack.config.* | tsconfig*.json | webview/tsconfig*.json | webview/vite.config.*)
+  package.json | package-lock.json | package.nls.*.json | webview/package.json | webview/package-lock.json | .nvmrc | webpack.config.* | tsconfig*.json | webview/tsconfig*.json | webview/vite.config.*)
     eligible=true
     ;;
   src/* | webview/* | resources/* | l10n/* | README.md | LICENSE)
