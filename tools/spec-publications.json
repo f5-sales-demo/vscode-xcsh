@@ -32,6 +32,17 @@
       "publication_tag": "v2.1.221-260817222856",
       "vsix_name": "xcsh-2.2608.17222856.vsix",
       "vsix_sha256": "c9bf1a1fe089e2edcc9cff2374abef6dab649b3bd3a956c9bc8af80576a556b2"
+    },
+    "ef22ed72da56e038564ef74cc83e2acbd8c52ce8c12713e0c752fa00727b4482": {
+      "bundle_sha256": "0fce4f17c7347132d3482348084d19986181dcf0ba3f3fb79ad52f9f64fecfae",
+      "marketplace_sha256": "9926beec5eae68d9d529f81ecf605006888b0ee693ff2499c3d9789f51a2a2eb",
+      "marketplace_version": "7.2609.12164909",
+      "open_vsx_sha256": "9926beec5eae68d9d529f81ecf605006888b0ee693ff2499c3d9789f51a2a2eb",
+      "open_vsx_version": "7.2609.12164909",
+      "publication_epoch": "1789231749",
+      "publication_tag": "v7.0.1-260912164909",
+      "vsix_name": "xcsh-7.2609.12164909.vsix",
+      "vsix_sha256": "9926beec5eae68d9d529f81ecf605006888b0ee693ff2499c3d9789f51a2a2eb"
     }
   },
   "version": 1

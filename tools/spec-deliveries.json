@@ -14,6 +14,11 @@
       "release_tag": "v2.1.221",
       "target_commit": "6e6cfd6f135f34be22bd4d47baf9fa8bb4a1bbe0",
       "version": "2.1.221"
+    },
+    "ef22ed72da56e038564ef74cc83e2acbd8c52ce8c12713e0c752fa00727b4482": {
+      "release_tag": "v7.0.1",
+      "target_commit": "2513fe498149c98fb737ff2ab207704b8a86fec6",
+      "version": "7.0.1"
     }
   },
   "version": 1
