@@ -15,6 +15,7 @@ import {
  * JSON Schema draft-07 compatible property definition
  */
 export interface SchemaProperty {
+  'x-f5xc-constraints'?: unknown;
   type?: string | string[];
   description?: string;
   default?: unknown;
@@ -26,6 +27,8 @@ export interface SchemaProperty {
   required?: string[];
   // JSON Schema validation keywords
   pattern?: string;
+  maxProperties?: number;
+  minProperties?: number;
   maxLength?: number;
   minLength?: number;
   minimum?: number;
@@ -289,6 +292,21 @@ function buildFieldProperties(metadata: GeneratedFieldMetadata): Partial<SchemaP
   // Wire constraints into JSON Schema keywords
   const constraints = metadata.constraints;
   if (constraints && typeof constraints === 'object') {
+    if (constraints.constraintType === 'map') {
+      props.type = 'object';
+      props['x-f5xc-constraints'] = constraints;
+      props.minProperties = constraints.cardinality?.minProperties;
+      props.maxProperties = constraints.cardinality?.maxProperties;
+      const values = constraints.values;
+      if (values?.type === 'string') {
+        props.additionalProperties = {
+          type: 'string',
+          minLength: values.minLength,
+          maxLength: values.maxLength,
+          pattern: values.pattern,
+        };
+      }
+    }
     if (typeof constraints.pattern === 'string') {
       props.pattern = constraints.pattern;
     }

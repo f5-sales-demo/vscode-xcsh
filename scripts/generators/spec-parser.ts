@@ -523,6 +523,18 @@ export interface ResourceFieldMetadata {
  * Field validation constraints from x-f5xc-constraints extension.
  */
 export interface ConstraintInfo {
+  keys?: Record<string, unknown>;
+  values?: {
+    type?: string;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    format?: string;
+  };
+  cardinality?: { minProperties?: number; maxProperties?: number };
+  crossEntry?: { uniqueValues?: boolean };
+  originalRules?: Record<string, unknown>;
+
   constraintType?: string;
   category?: string;
   maxLength?: number;
@@ -1033,6 +1045,12 @@ function extractFieldMetadataFromProperty(
           restricted: typeof cs.restricted === 'string' ? cs.restricted : undefined,
           description: typeof cs.description === 'string' ? cs.description : undefined,
         };
+      }
+      for (const key of ['keys', 'values', 'cardinality', 'crossEntry', 'originalRules'] as const) {
+        const value = c[key];
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          (ci as Record<string, unknown>)[key] = value;
+        }
       }
       if (Object.keys(ci).length > 0) {
         fieldMeta.constraints = ci;

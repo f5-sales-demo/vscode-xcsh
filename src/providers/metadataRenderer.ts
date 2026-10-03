@@ -9,6 +9,18 @@ interface BestPracticesInput {
 }
 
 interface ConstraintInput {
+  keys?: Record<string, unknown>;
+  values?: {
+    type?: string;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    format?: string;
+  };
+  cardinality?: { minProperties?: number; maxProperties?: number };
+  crossEntry?: { uniqueValues?: boolean };
+  originalRules?: Record<string, unknown>;
+
   maxLength?: number;
   minLength?: number;
   pattern?: string;
@@ -56,6 +68,12 @@ export function renderConstraintBadge(c: ConstraintInput | undefined): string {
     return '';
   }
   const badges: string[] = [];
+  for (const scope of ['keys', 'values', 'cardinality', 'crossEntry'] as const) {
+    const value = c[scope];
+    if (value) {
+      badges.push(`<span class="badge badge-info">${esc(scope)}: ${esc(JSON.stringify(value))}</span>`);
+    }
+  }
   if (c.formatDescription) {
     badges.push(
       `<span class="badge badge-info" title="${esc(c.formatDescription)}">${esc(c.formatDescription)}</span>`,
