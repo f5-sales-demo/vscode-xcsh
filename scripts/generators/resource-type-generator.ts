@@ -488,6 +488,11 @@ export interface GeneratedFieldMetadata {
   example?: unknown;
   /** Validation constraints (from x-f5xc-constraints) */
   constraints?: {
+  keys?: Record<string, unknown>;
+  values?: { type?: string; minLength?: number; maxLength?: number; pattern?: string; format?: string };
+  cardinality?: { minProperties?: number; maxProperties?: number };
+  crossEntry?: { uniqueValues?: boolean };
+  originalRules?: Record<string, unknown>;
     constraintType?: string;
     category?: string;
     maxLength?: number;
