@@ -67,7 +67,7 @@ export const VIEW_SECTION_MANIFESTS: Record<string, ViewSectionManifest> = {
       {
         id: 'bot-protection',
         title: 'Bot Protection',
-        keys: ['bot_defense', 'bot_defense_advanced', 'disable_bot_defense'],
+        keys: ['bot_defense', 'bot_defense_advanced_protection', 'disable_bot_defense'],
       },
       {
         id: 'api-protection',
