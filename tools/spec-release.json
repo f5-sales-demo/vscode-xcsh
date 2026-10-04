@@ -1,6 +1,6 @@
 {
-  "bundle_sha256": "738f4db8aaba7e13f0e563236a45a7a177c924db3e798fb05fb34b267f1da6ce",
-  "release_tag": "v10.0.0",
-  "target_commit": "ac024ccbfb8b9f84412813f3e2ab9f5821937ef2",
-  "version": "10.0.0"
+  "bundle_sha256": "c7ed97855749306619296dbf125e510298f859098fa6ed84c34bca39537019ec",
+  "release_tag": "v10.0.1",
+  "target_commit": "ec431fb7909aae6a211468542c1e74c04122a56a",
+  "version": "10.0.1"
 }
