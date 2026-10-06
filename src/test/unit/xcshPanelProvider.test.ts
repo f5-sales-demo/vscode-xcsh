@@ -385,3 +385,59 @@ describe('XcshPanelProvider', () => {
     });
   });
 });
+
+describe('structured interaction forwarding', () => {
+  it('requests a snapshot and returns the shared frame to the webview', async () => {
+    const bridge = createMockBridge();
+    const identity = { sessionId: 's', threadId: 's', turnId: '1', itemId: 'i', generation: 0 };
+    const pending = [{ id: 'r', identity, kind: 'input', delivery: 'async', title: 'Which?', options: ['A', 'B'] }];
+    (bridge.sendCommand as jest.Mock).mockResolvedValue({
+      success: true,
+      data: { sessionId: 's', snapshot: { revision: 1, pending } },
+    });
+    const provider = new XcshPanelProvider({ fsPath: '/test' } as vscode.Uri, bridge, createMockContextManager());
+    const { mockWebviewView, messageHandlers } = createMockWebviewView();
+    provider.resolveWebviewView(
+      mockWebviewView,
+      {} as vscode.WebviewViewResolveContext,
+      {} as vscode.CancellationToken,
+    );
+    messageHandlers[0]?.({ type: 'interaction_snapshot' });
+    await new Promise((resolve) => setImmediate(resolve));
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- Jest inspects this mock without invoking it.
+    expect(bridge.sendCommand).toHaveBeenCalledWith({ type: 'interaction_snapshot' });
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- Jest inspects this mock without invoking it.
+    expect(mockWebviewView.webview.postMessage).toHaveBeenCalledWith({
+      type: 'from-extension',
+      message: { type: 'interaction_snapshot', sessionId: 's', revision: 1, pending, plan: undefined },
+    });
+  });
+
+  it('forwards an explicit reply and returns its correlated receipt', async () => {
+    const bridge = createMockBridge();
+    (bridge.sendCommand as jest.Mock).mockResolvedValue({ success: true, data: { accepted: true } });
+    const provider = new XcshPanelProvider({ fsPath: '/test' } as vscode.Uri, bridge, createMockContextManager());
+    const { mockWebviewView, messageHandlers } = createMockWebviewView();
+    provider.resolveWebviewView(
+      mockWebviewView,
+      {} as vscode.WebviewViewResolveContext,
+      {} as vscode.CancellationToken,
+    );
+    const reply = {
+      type: 'interaction_respond',
+      requestId: 'r',
+      responseId: 'receipt',
+      identity: { sessionId: 's', threadId: 's', turnId: '1', itemId: 'i', generation: 0 },
+      value: 'B',
+    };
+    messageHandlers[0]?.(reply);
+    await new Promise((resolve) => setImmediate(resolve));
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- Jest inspects this mock without invoking it.
+    expect(bridge.sendCommand).toHaveBeenCalledWith(reply);
+    // eslint-disable-next-line @typescript-eslint/unbound-method -- Jest inspects this mock without invoking it.
+    expect(mockWebviewView.webview.postMessage).toHaveBeenCalledWith({
+      type: 'from-extension',
+      message: { type: 'interaction_receipt', responseId: 'receipt', accepted: true },
+    });
+  });
+});

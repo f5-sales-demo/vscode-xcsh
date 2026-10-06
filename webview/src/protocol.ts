@@ -121,3 +121,9 @@ export function sendRequestAttachment(category: HostAttachmentCategory): void {
 export function sendReady(): void {
   send({ type: 'webview_ready' });
 }
+
+/** Existing shared interaction frames use the same extension-host message route. */
+export const interactionTransport = {
+  send,
+  onMessage: (callback: (message: unknown) => void) => on('*', callback),
+};

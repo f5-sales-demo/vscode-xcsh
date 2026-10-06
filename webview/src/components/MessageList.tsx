@@ -3,6 +3,7 @@
 
 import type { AssistantMessage, ChatMessage } from '../state/session';
 import { ContentBlockRenderer, ReferenceChips } from '../vendored/chat-ui';
+import { asyncAnswerSummary } from '../vendored/chat-ui/interactions/async-answer';
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -39,7 +40,7 @@ export function MessageList({ messages, busy }: MessageListProps) {
         <div key={ti} className="turn">
           {turn.user && turn.user.type === 'user' && (
             <div className="userMessage">
-              <div className="userMessageText">{turn.user.text}</div>
+              <div className="userMessageText">{asyncAnswerSummary(turn.user.text) ?? turn.user.text}</div>
             </div>
           )}
           {turn.assistants.map(({ msg, idx }, ai) => {
