@@ -4,6 +4,7 @@
  * gutter + the message body (see `.row`/`.gutter` in panel.css.ts).
  */
 import { type ReactNode, useEffect, useState } from "react";
+import { asyncAnswerSummary } from "../interactions/async-answer";
 import { GLYPHS } from "../theme/tokens";
 import { toolActivityLabel } from "../tools/activity-label";
 import type { ChatMediaContent, ChatMediaFrame, ChatReference } from "../types";
@@ -13,12 +14,13 @@ import { ReferenceChips } from "./ReferenceChips";
 export interface GutterRowProps {
 	glyph: string;
 	glyphClass?: string;
+	phase?: "commentary" | "final_answer";
 	children: ReactNode;
 }
 
-export function GutterRow({ glyph, glyphClass, children }: GutterRowProps) {
+export function GutterRow({ glyph, glyphClass, phase, children }: GutterRowProps) {
 	return (
-		<div className="row">
+		<div className="row" data-message-phase={phase}>
 			<div className={`gutter ${glyphClass ?? ""}`}>{glyph}</div>
 			<div className="content">{children}</div>
 		</div>
@@ -27,6 +29,7 @@ export function GutterRow({ glyph, glyphClass, children }: GutterRowProps) {
 
 export interface AssistantMessageProps {
 	text: string;
+	phase?: "commentary" | "final_answer";
 	/** Cited sources, rendered as a "Sources" chip row beneath the answer. */
 	references?: ChatReference[];
 	media?: ChatMediaContent[];
@@ -34,12 +37,12 @@ export interface AssistantMessageProps {
 	streaming?: boolean;
 }
 
-export function AssistantMessage({ text, references, media, streaming }: AssistantMessageProps) {
+export function AssistantMessage({ text, phase, references, media, streaming }: AssistantMessageProps) {
 	// renderMarkdown output is DOMPurify-sanitized (see markdown/sanitize.ts). The
 	// `markdown-root` class opts the assistant body into the block stylesheet
 	// (tables, headings, lists, code) — matching ContentBlockRenderer's text path.
 	return (
-		<GutterRow glyph={GLYPHS.assistant} glyphClass="g-assistant">
+		<GutterRow glyph={GLYPHS.assistant} glyphClass="g-assistant" phase={phase}>
 			<MarkdownRenderer className="body markdown-root" text={text} />
 			{media?.map(item => (
 				<RichMedia key={item.id} media={item} />
@@ -114,7 +117,7 @@ export function UserMessage({ text }: UserMessageProps) {
 	return (
 		<div className="msg-user">
 			<GutterRow glyph={GLYPHS.userGutter} glyphClass="g-user">
-				<div className="body user-body">{text}</div>
+				<div className="body user-body">{asyncAnswerSummary(text) ?? text}</div>
 			</GutterRow>
 		</div>
 	);

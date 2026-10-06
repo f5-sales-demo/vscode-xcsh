@@ -12,6 +12,7 @@ import { resolveAttachments } from './attachmentResolvers';
 import type { Attachment, FileAttachment, HostAttachmentCategory } from './attachmentTypes';
 import { formatContextResponse, formatStatusResponse } from './chatParticipant';
 import { HOST_TOOL_DEFINITIONS } from './hostTools';
+import { isInteractionCommand } from './interactions/transport';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ReferencesEvent, ToolExecutionEnd, ToolExecutionStart } from './types';
 
@@ -42,6 +43,24 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     _context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken,
   ): void {
+    this.disposables.push(
+      this.rpcBridge.onEvent<{ type: string; event: unknown }>('interaction', ({ event }) => {
+        const revision = (event as { revision?: number }).revision;
+        void webviewView.webview.postMessage({
+          type: 'from-extension',
+          message: { type: 'interaction_event', revision, event },
+        });
+      }),
+      this.rpcBridge.onEvent('interaction_snapshot', (event) => {
+        void webviewView.webview.postMessage({ type: 'from-extension', message: event });
+      }),
+      this.rpcBridge.onEvent('plan_available', (event) => {
+        void webviewView.webview.postMessage({ type: 'from-extension', message: event });
+      }),
+      this.rpcBridge.onEvent('plan_resolved', (event) => {
+        void webviewView.webview.postMessage({ type: 'from-extension', message: event });
+      }),
+    );
     this.webviewView = webviewView;
     this.webviewReady = false;
     const distPath = vscode.Uri.joinPath(this.extensionUri, 'dist', 'webview');
@@ -191,6 +210,10 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
   }
 
   private handleWebviewMessage(msg: { type: string; [key: string]: unknown }): void {
+    if (isInteractionCommand(msg)) {
+      void this.forwardInteraction(msg);
+      return;
+    }
     switch (msg.type) {
       case 'prompt': {
         const text = msg.text as string | undefined;
@@ -241,6 +264,31 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       }
       default:
         break;
+    }
+  }
+
+  private async forwardInteraction(msg: import('./types').RpcCommand): Promise<void> {
+    const post = (message: unknown) => this.webviewView?.webview.postMessage({ type: 'from-extension', message });
+    try {
+      const reply = await this.rpcBridge.sendCommand({ ...msg });
+      if (msg.type === 'interaction_snapshot' && reply.success) {
+        const data = reply.data as {
+          sessionId: string;
+          snapshot: { revision: number; pending: unknown[] };
+          plan?: unknown;
+        };
+        await post({ type: 'interaction_snapshot', sessionId: data.sessionId, ...data.snapshot, plan: data.plan });
+      } else if ('responseId' in msg) {
+        await post({
+          type: 'interaction_receipt',
+          responseId: String(msg.responseId),
+          accepted: reply.success && (reply.data as { accepted?: boolean } | undefined)?.accepted === true,
+        });
+      }
+    } catch {
+      if ('responseId' in msg) {
+        await post({ type: 'interaction_receipt', responseId: String(msg.responseId), accepted: false });
+      }
     }
   }
 
