@@ -11,6 +11,17 @@
       "vsix_name": "xcsh-2.2608.16052757.vsix",
       "vsix_sha256": "45cf62597b4dddcae6cb7c6ad4bc3a9314399635a1606c294c7486ad0805dec3"
     },
+    "4af783ab2bf1f148127a4e463aae9300c08de7e46a7f3de2358cb295f0dac315": {
+      "bundle_sha256": "c7ed97855749306619296dbf125e510298f859098fa6ed84c34bca39537019ec",
+      "marketplace_sha256": "01c44f2abcb92fe9fa4d74ca6ee88001159bb54991e56e013a6f2c302a7b3efb",
+      "marketplace_version": "10.2610.4021456",
+      "open_vsx_sha256": "01c44f2abcb92fe9fa4d74ca6ee88001159bb54991e56e013a6f2c302a7b3efb",
+      "open_vsx_version": "10.2610.4021456",
+      "publication_epoch": "1791080096",
+      "publication_tag": "v10.0.1-261004021456",
+      "vsix_name": "xcsh-10.2610.4021456.vsix",
+      "vsix_sha256": "01c44f2abcb92fe9fa4d74ca6ee88001159bb54991e56e013a6f2c302a7b3efb"
+    },
     "d174904dbbf4325bf4c3b5b18f0d80bcad0ae8af781f727e8545b815f50163eb": {
       "bundle_sha256": "1dd3517813cd6f7075603d28998826dc348e139886cd0123af4921455ff304b0",
       "marketplace_sha256": "e221f8b763681acc9ad17f1a6a28bb993d7c64d2f4642cfeb141c601991c6dce",
