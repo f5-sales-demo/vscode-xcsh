@@ -147,7 +147,8 @@ async function main() {
     await page.goto(`http://127.0.0.1:${port}/index.html`, { waitUntil: 'networkidle0' });
     // A few VS Code theme vars the components would inherit from the host (cosmetic).
     await page.addStyleTag({
-      content: ':root{--vscode-foreground:#ccc;--vscode-editor-background:#1e1e1e;--vscode-font-family:sans-serif;}',
+      content:
+        ':root{--vscode-foreground:#ccc;--vscode-editor-background:#1e1e1e;--vscode-font-family:sans-serif;}',
     });
 
     // 1. The built bundle mounts and paints the shared terminal composer.
@@ -168,7 +169,8 @@ async function main() {
     ok(
       'F5 terminal token is present (--f5-red)',
       await page.evaluate(
-        () => getComputedStyle(document.documentElement).getPropertyValue('--f5-red').trim().length > 0,
+        () =>
+          getComputedStyle(document.documentElement).getPropertyValue('--f5-red').trim().length > 0,
       ),
     );
     const btn = (name) => page.$(`button[aria-label="${name}"]`);
@@ -192,16 +194,23 @@ async function main() {
     await (await btn('Slash commands')).click();
     await page.waitForSelector('[role="menu"]', { timeout: 2000 });
     const statusItem = await page.evaluateHandle(() =>
-      [...document.querySelectorAll('[role="menuitem"]')].find((e) => /\/status/.test(e.textContent)),
+      [...document.querySelectorAll('[role="menuitem"]')].find((e) =>
+        /\/status/.test(e.textContent),
+      ),
     );
     await statusItem.asElement().click();
-    await page.waitForFunction(() => globalThis.__posted.some((m) => m.type === 'prompt' && m.text === '/status'), {
-      timeout: 2000,
-    });
+    await page.waitForFunction(
+      () => globalThis.__posted.some((m) => m.type === 'prompt' && m.text === '/status'),
+      {
+        timeout: 2000,
+      },
+    );
     ok('slash /status posts a prompt message', true);
     // Sending sets the session busy (Send→Stop); end the turn so the composer
     // is idle again for the next send.
-    await page.evaluate(() => window.postMessage({ type: 'from-extension', message: { type: 'turn_end' } }, '*'));
+    await page.evaluate(() =>
+      window.postMessage({ type: 'from-extension', message: { type: 'turn_end' } }, '*'),
+    );
     await page.waitForSelector('button[aria-label="Send"]', { timeout: 2000 });
 
     // 4. Typing + Send posts the typed prompt over the protocol.
@@ -212,7 +221,8 @@ async function main() {
     });
     await (await btn('Send')).click();
     await page.waitForFunction(
-      () => globalThis.__posted.some((m) => m.type === 'prompt' && m.text === 'create a load balancer'),
+      () =>
+        globalThis.__posted.some((m) => m.type === 'prompt' && m.text === 'create a load balancer'),
       { timeout: 2000 },
     );
     ok('typing + Send posts the typed prompt', true);
@@ -230,10 +240,33 @@ async function main() {
         '*',
       ),
     );
-    await page.waitForFunction(() => document.body.textContent.includes('Creating the load balancer now.'), {
-      timeout: 3000,
-    });
+    await page.waitForFunction(
+      () => document.body.textContent.includes('Creating the load balancer now.'),
+      {
+        timeout: 3000,
+      },
+    );
     ok('assistant reply from the message bridge renders', true);
+    const documentFlow = await page.$eval('.markdown-root', (element) => {
+      const original = element.innerHTML;
+      element.innerHTML =
+        '<p>First paragraph.</p><p>Second paragraph.</p><ul><li>Third block.</li></ul>';
+      const blocks = [...element.children].map((child) => child.getBoundingClientRect());
+      const result = {
+        display: getComputedStyle(element).display,
+        tops: blocks.map((block) => block.top),
+        lefts: blocks.map((block) => block.left),
+      };
+      element.innerHTML = original;
+      return result;
+    });
+    ok(
+      'shared message paragraphs and lists remain in vertical document flow',
+      documentFlow.display !== 'flex' &&
+        documentFlow.tops[1] > documentFlow.tops[0] &&
+        documentFlow.tops[2] > documentFlow.tops[1] &&
+        documentFlow.lefts[0] === documentFlow.lefts[1],
+    );
 
     // 6. The streamed formula converges to semantic display MathML in the real bundle.
     try {
@@ -247,9 +280,19 @@ async function main() {
       text: el.textContent,
       raw: el.parentElement?.textContent ?? '',
     }));
-    ok('assistant LaTeX paints semantic display MathML', /I/.test(formula.text) && /∝/.test(formula.text) && /λ/.test(formula.text));
-    ok('supported formula hides raw LaTeX commands', !formula.raw.includes('\\frac') && !formula.raw.includes('\\lambda'));
-    ok('webview rendering makes no external network requests', remoteRequests.length === 0, remoteRequests.join(', '));
+    ok(
+      'assistant LaTeX paints semantic display MathML',
+      /I/.test(formula.text) && /∝/.test(formula.text) && /λ/.test(formula.text),
+    );
+    ok(
+      'supported formula hides raw LaTeX commands',
+      !formula.raw.includes('\\frac') && !formula.raw.includes('\\lambda'),
+    );
+    ok(
+      'webview rendering makes no external network requests',
+      remoteRequests.length === 0,
+      remoteRequests.join(', '),
+    );
     await page.screenshot({ path: join(ARTIFACTS, '2-conversation.png') });
   } finally {
     await browser.close();

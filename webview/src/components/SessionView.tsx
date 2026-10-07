@@ -55,7 +55,7 @@ export function SessionView() {
           <PlusIcon />
         </button>
       </div>
-      <div className="body">
+      <div className="sessionBody">
         <div className="content">
           {activeSession ? (
             <ChatContainer session={activeSession} />
