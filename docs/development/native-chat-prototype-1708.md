@@ -89,3 +89,45 @@ sanitized findings.
 - [Kiro CLI ACP boundary](https://kiro.dev/docs/cli/acp/)
 - [vscode-xcsh #1708](https://github.com/f5-sales-demo/vscode-xcsh/issues/1708)
 - [xcsh #5072](https://github.com/f5-sales-demo/xcsh/issues/5072)
+
+## Context host implementation follow-up
+
+Kiro production entrypoints are now gated: Open Panel, New Session and resource
+attachments report unavailable specialist routing without opening ordinary chat
+or changing a native draft. The commands remain reserved so the CLI chat cannot
+become a fallback. Contexts and resource views continue to use their existing
+activation, persistence and watcher implementation.
+
+The new NativeContextHost prepares opaque window/context/revision snapshots
+through ContextManager, checks files and environment synchronously before core
+operations, and re-resolves credentials without refreshing an existing binding.
+Its approval callback displays the exact redacted configuration and plan hash.
+Receipts are written atomically in extension-owned private storage. The adapter
+is preparation for the shared core dependency and production native tool wiring;
+it is not yet activated by the extension.
+
+Optional CLI probing first checks the documented help command for the capability
+subcommand, preventing an older CLI from receiving it as a natural-language
+request. The actual compiled CLI negotiated discovery. An absent executable and
+a legacy fixture retained every bundled capability. The subprocess receives no
+context or credential environment, and advertises no delegated mutation route.
+
+A private VSIX with the real ContextManager and adapter was installed in default
+VS Code 1.143.1 and Kiro 1.4.26, both embedding Node 24.21.0. Separate task
+stores and the built-in custom dialog setting allowed checks of the complete
+displayed configuration and hash. Approving create produced one synthetic write;
+dismissing update and changing a context file blocked subsequent writes. A fresh
+manager kept the stored context inactive. Node, Bun and xcsh executables were
+absent from the editor-host PATH. The VSIX hash is
+`d0d0f5eb7639f0754436427a0bc7daa20945aadee1ba7146d39768c5a688e8af`.
+
+The first concurrent fixture shared an active pointer and invalidated a binding;
+its native-dialog interactions were uncontrolled and excluded. That failure
+remains private. The successful fixtures used separate stores and verified each
+displayed plan before selecting its button. No cloud call or specialist routing
+acceptance is inferred from these host-boundary tests.
+
+The complete extension unit/webview suite passed (93 suites, 1,398 tests), as
+did type checks and lint. Production native tool/agent registration, the
+released core pin, supported Kiro primary routing, full marketplace VSIX and
+released artifact acceptance remain open. No merge or publication is claimed.

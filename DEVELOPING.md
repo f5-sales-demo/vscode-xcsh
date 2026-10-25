@@ -57,11 +57,12 @@ before interaction. Do not operate a pre-existing user window as a task window.
 
 ## Kiro chat
 
-In Kiro, xcsh opens the native Kiro sidebar through `kiroAgent.focusChatInput`.
-Kiro retains its existing sign-in and model selection. xcsh neither reads Kiro
-credentials nor selects a separate model for that sidebar. New conversations and
-resource context drafts use the same native command; resource drafts are not
-submitted automatically. The custom xcsh webview and language model provider
-remain available in VS Code. If native chat is unavailable, Contexts and
-resource views remain functional and the chat command reports that Kiro must be
-reopened.
+Kiro specialist delivery is gated. In Kiro 1.4.26, command arguments do not
+select the primary agent, slash invocation delegates, and new sessions do not
+retain a manually selected specialist. No persistent-default control was found.
+The chat entrypoints report this limit without changing native sessions or
+drafts. Contexts and resource views continue to work. See the sanitized
+[campaign receipt](docs/development/native-chat-prototype-1708.md) for evidence.
+
+A future Kiro route must pass the complete campaign before these entrypoints are
+enabled. Native sign-in and selected models remain under editor control.
