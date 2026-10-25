@@ -171,7 +171,7 @@
           "id": "xcsh-panel",
           "title": "xcsh",
           "icon": "resources/f5-activitybar.svg",
-          "when": "xcsh:doesNotSupportSecondarySidebar"
+          "when": "xcsh:doesNotSupportSecondarySidebar && !xcsh.usesNativeChat"
         }
       ],
       "secondarySidebar": [
@@ -179,7 +179,7 @@
           "id": "xcsh-panel-secondary",
           "title": "xcsh",
           "icon": "resources/f5-activitybar.svg",
-          "when": "!xcsh:doesNotSupportSecondarySidebar"
+          "when": "!xcsh:doesNotSupportSecondarySidebar && !xcsh.usesNativeChat"
         }
       ]
     },
@@ -189,7 +189,7 @@
           "id": "xcsh.xcshPanel",
           "name": "xcsh",
           "type": "webview",
-          "when": "xcsh:doesNotSupportSecondarySidebar"
+          "when": "xcsh:doesNotSupportSecondarySidebar && !xcsh.usesNativeChat"
         }
       ],
       "xcsh-panel-secondary": [
@@ -197,7 +197,7 @@
           "id": "xcsh.xcshPanelSecondary",
           "name": "xcsh",
           "type": "webview",
-          "when": "!xcsh:doesNotSupportSecondarySidebar"
+          "when": "!xcsh:doesNotSupportSecondarySidebar && !xcsh.usesNativeChat"
         }
       ],
       "xcsh-explorer": [

@@ -54,3 +54,14 @@ paths before `npm run test:integration`. `XCSH_EDITOR_API_RECEIPT` optionally
 writes a private capability receipt. Native UI acceptance is a separate gate:
 bind the window and process to the task state, source commit, and artifact hash
 before interaction. Do not operate a pre-existing user window as a task window.
+
+## Kiro chat
+
+In Kiro, xcsh opens the native Kiro sidebar through `kiroAgent.focusChatInput`.
+Kiro retains its existing sign-in and model selection. xcsh neither reads Kiro
+credentials nor selects a separate model for that sidebar. New conversations and
+resource context drafts use the same native command; resource drafts are not
+submitted automatically. The custom xcsh webview and language model provider
+remain available in VS Code. If native chat is unavailable, Contexts and
+resource views remain functional and the chat command reports that Kiro must be
+reopened.

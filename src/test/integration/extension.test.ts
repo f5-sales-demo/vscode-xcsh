@@ -53,6 +53,9 @@ suite('Extension Test Suite', () => {
       'xcsh.delete',
       'xcsh.apply',
       'xcsh.diff',
+      'xcsh.xcsh.openPanel',
+      'xcsh.xcsh.newSession',
+      'xcsh.attachToChat',
       'xcsh.xcsh.pairHerdr',
       'xcsh.xcsh.disconnectHerdr',
     ];
@@ -121,6 +124,19 @@ suite('Editor compatibility', () => {
     const extension = vscode.extensions.getExtension('f5-sales-demo.xcsh');
     assert.ok(extension?.isActive);
     assert.strictEqual(vscode.extensions.all.filter((candidate) => candidate.packageJSON.name === 'xcsh').length, 1);
+    const commands = await vscode.commands.getCommands(true);
+    const usesNativeChat = vscode.env.appName === 'Kiro';
+    if (usesNativeChat) {
+      assert.ok(commands.includes('kiroAgent.focusChatInput'), 'Native Kiro chat must be available');
+      const models = await vscode.lm.selectChatModels();
+      assert.ok(
+        models.every((model) => model.vendor !== 'xcsh'),
+        'Kiro must own sidebar model selection',
+      );
+    }
+    if (usesNativeChat) {
+      await vscode.commands.executeCommand('xcsh.xcsh.openPanel');
+    }
     const output = process.env.XCSH_EDITOR_API_RECEIPT;
     if (output) {
       writeFileSync(
@@ -132,6 +148,8 @@ suite('Editor compatibility', () => {
             extensionId: extension.id,
             extensionVersion: extension.packageJSON.version,
             active: extension.isActive,
+            usesNativeChat,
+            nativeChatAvailable: commands.includes('kiroAgent.focusChatInput'),
             chatParticipant: typeof vscode.chat?.createChatParticipant === 'function',
             languageModelTools: typeof vscode.lm?.registerTool === 'function',
             languageModelProvider: typeof vscode.lm?.registerLanguageModelChatProvider === 'function',
