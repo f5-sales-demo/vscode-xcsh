@@ -183,6 +183,14 @@ export async function activateXcsh(
   const childProcess = processManager.getProcess();
   if (!childProcess?.stdin || !childProcess?.stdout) {
     logger.warn('integration.process.unavailable');
+    if (!usesNativeChat) {
+      const unavailable = () => {
+        void vscode.window.showWarningMessage(vscode.l10n.t('Install xcsh and reload the window to use chat.'));
+      };
+      for (const command of ['xcsh.xcsh.openPanel', 'xcsh.xcsh.newSession', 'xcsh.attachToChat']) {
+        extensionContext.subscriptions.push(vscode.commands.registerCommand(command, unavailable));
+      }
+    }
     return;
   }
 
