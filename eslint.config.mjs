@@ -1,7 +1,7 @@
 import eslint from '@eslint/js';
 import prettier from 'eslint-config-prettier';
 import globals from 'globals';
-import tseslint from 'typescript-eslint';
+import tseslint from './tooling/eslint/index.mjs';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -54,7 +54,10 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/prefer-promise-reject-errors': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
   {
@@ -80,6 +83,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unnecessary-type-assertion': 'off',
     },
+  },
+  {
+    ...tseslint.configs.disableTypeChecked,
+    files: ['scripts/**/*.mjs'],
   },
   {
     ignores: [

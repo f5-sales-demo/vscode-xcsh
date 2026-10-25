@@ -633,6 +633,18 @@ describe('ContextManager', () => {
     mgr.dispose();
   });
 
+  it('keeps a fresh session inactive when linked creation rolls back', async () => {
+    const workspace = path.join(tmpDir, 'project');
+    const mgr = new ContextManager(secretStorage);
+    jest.spyOn(mgr, 'linkGlobalContext').mockRejectedValueOnce(new Error('simulated link failure'));
+    await expect(mgr.addGlobalContextAndLink(makeContext({ name: 'rollback' }), workspace)).rejects.toThrow();
+    expect(mgr.isSessionActivated()).toBe(false);
+    expect(await mgr.getActiveContext()).toBeNull();
+    expect(fs.existsSync(path.join(contextsDir, 'rollback.json'))).toBe(false);
+    expect(fs.existsSync(path.join(configDir, 'active_context'))).toBe(false);
+    mgr.dispose();
+  });
+
   // --------------- update nonexistent ---------------
 
   it('throws when updating a context that does not exist', async () => {

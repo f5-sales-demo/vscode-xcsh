@@ -37,3 +37,7 @@ jest.config.js
 mkdocs.yml
 !dist/webview/**
 webview/**
+
+# Private build tooling is not part of the extension runtime
+tooling/**
+.npmrc

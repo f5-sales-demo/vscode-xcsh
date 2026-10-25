@@ -8,6 +8,7 @@ import { getLogger } from '../utils/logger';
 import { registerChatParticipant } from './chatParticipant';
 import { HerdrBinding } from './herdrBinding';
 import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
+import { registerKiroChatCommands } from './kiroNativeChat';
 import { registerLanguageModelProvider } from './languageModelProvider';
 import { registerLanguageModelTools } from './languageModelTools';
 import { XcshPanelProvider } from './panelProvider';
@@ -64,6 +65,7 @@ export async function activateXcsh(
   }
 
   logger.info('integration.activation.started');
+  const usesNativeChat = registerKiroChatCommands(extensionContext);
 
   // Detect secondary sidebar support (VS Code >= 1.106)
   const versionParts = vscode.version.split('.').map(Number);
@@ -181,6 +183,14 @@ export async function activateXcsh(
   const childProcess = processManager.getProcess();
   if (!childProcess?.stdin || !childProcess?.stdout) {
     logger.warn('integration.process.unavailable');
+    if (!usesNativeChat) {
+      const unavailable = () => {
+        void vscode.window.showWarningMessage(vscode.l10n.t('Install xcsh and reload the window to use chat.'));
+      };
+      for (const command of ['xcsh.xcsh.openPanel', 'xcsh.xcsh.newSession', 'xcsh.attachToChat']) {
+        extensionContext.subscriptions.push(vscode.commands.registerCommand(command, unavailable));
+      }
+    }
     return;
   }
 
@@ -225,69 +235,71 @@ export async function activateXcsh(
     logger.warn('integration.locale.failed');
   });
 
-  // Register Language Model Tools for agent mode
-  registerLanguageModelTools(extensionContext);
+  if (!usesNativeChat) {
+    // Register Language Model Tools for agent mode
+    registerLanguageModelTools(extensionContext);
 
-  // Conditionally register Chat Participant
-  if (config.get<boolean>('xcsh.chatParticipantEnabled', true)) {
-    try {
-      registerChatParticipant(extensionContext, rpcBridge, contextManager);
-    } catch {
-      logger.warn('integration.activation.failed');
+    // Conditionally register Chat Participant
+    if (config.get<boolean>('xcsh.chatParticipantEnabled', true)) {
+      try {
+        registerChatParticipant(extensionContext, rpcBridge, contextManager);
+      } catch {
+        logger.warn('integration.activation.failed');
+      }
     }
-  }
 
-  // Conditionally register Language Model Provider
-  if (config.get<boolean>('xcsh.languageModelEnabled', true)) {
-    try {
-      registerLanguageModelProvider(extensionContext, rpcBridge);
-    } catch {
-      logger.warn('integration.activation.failed');
+    // Conditionally register Language Model Provider
+    if (config.get<boolean>('xcsh.languageModelEnabled', true)) {
+      try {
+        registerLanguageModelProvider(extensionContext, rpcBridge);
+      } catch {
+        logger.warn('integration.activation.failed');
+      }
     }
-  }
 
-  // Register the xcsh panel (activity bar fallback + secondary sidebar)
-  const panelProvider = new XcshPanelProvider(extensionContext.extensionUri, rpcBridge, contextManager);
-  extensionContext.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewType, panelProvider),
-  );
-  extensionContext.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewTypeSecondary, panelProvider),
-  );
+    // Register the xcsh panel (activity bar fallback + secondary sidebar)
+    const panelProvider = new XcshPanelProvider(extensionContext.extensionUri, rpcBridge, contextManager);
+    extensionContext.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewType, panelProvider),
+    );
+    extensionContext.subscriptions.push(
+      vscode.window.registerWebviewViewProvider(XcshPanelProvider.viewTypeSecondary, panelProvider),
+    );
 
-  const focusPanelCommand = supportsSecondarySidebar ? 'xcsh.xcshPanelSecondary.focus' : 'xcsh.xcshPanel.focus';
+    const focusPanelCommand = supportsSecondarySidebar ? 'xcsh.xcshPanelSecondary.focus' : 'xcsh.xcshPanel.focus';
 
-  extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.xcsh.openPanel', () => {
-      const panelMode = vscode.workspace.getConfiguration('xcsh').get<string>('xcsh.panelMode', 'webview');
-      if (panelMode === 'terminal') {
-        void vscode.commands.executeCommand('xcsh.xcsh.openTerminal');
-      } else {
+    extensionContext.subscriptions.push(
+      vscode.commands.registerCommand('xcsh.xcsh.openPanel', () => {
+        const panelMode = vscode.workspace.getConfiguration('xcsh').get<string>('xcsh.panelMode', 'webview');
+        if (panelMode === 'terminal') {
+          void vscode.commands.executeCommand('xcsh.xcsh.openTerminal');
+        } else {
+          void vscode.commands.executeCommand(focusPanelCommand);
+        }
+      }),
+    );
+
+    extensionContext.subscriptions.push(
+      vscode.commands.registerCommand('xcsh.xcsh.newSession', () => {
         void vscode.commands.executeCommand(focusPanelCommand);
-      }
-    }),
-  );
+      }),
+    );
 
-  extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.xcsh.newSession', () => {
-      void vscode.commands.executeCommand(focusPanelCommand);
-    }),
-  );
-
-  // Inject a resource JSON payload into the chat input as a context attachment.
-  // Invoked by the resource webview button and the tree "Add to xcsh chat"
-  // command; both pass { name, content }. Always focus the webview panel — a
-  // context chip needs the webview even when panelMode is 'terminal'.
-  extensionContext.subscriptions.push(
-    vscode.commands.registerCommand('xcsh.attachToChat', async (arg?: { name?: string; content?: string }) => {
-      if (typeof arg?.name !== 'string' || typeof arg?.content !== 'string') {
-        logger.warn('webview.attachment.failed');
-        return;
-      }
-      await vscode.commands.executeCommand(focusPanelCommand);
-      panelProvider.attachContext(arg.name, arg.content);
-    }),
-  );
+    // Inject a resource JSON payload into the chat input as a context attachment.
+    // Invoked by the resource webview button and the tree "Add to xcsh chat"
+    // command; both pass { name, content }. Always focus the webview panel — a
+    // context chip needs the webview even when panelMode is 'terminal'.
+    extensionContext.subscriptions.push(
+      vscode.commands.registerCommand('xcsh.attachToChat', async (arg?: { name?: string; content?: string }) => {
+        if (typeof arg?.name !== 'string' || typeof arg?.content !== 'string') {
+          logger.warn('webview.attachment.failed');
+          return;
+        }
+        await vscode.commands.executeCommand(focusPanelCommand);
+        panelProvider.attachContext(arg.name, arg.content);
+      }),
+    );
+  }
 
   // Register terminal integration
   registerTerminalIntegration(extensionContext, contextManager);

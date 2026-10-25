@@ -6,6 +6,7 @@
  */
 
 import * as assert from 'node:assert';
+import { writeFileSync } from 'node:fs';
 import * as vscode from 'vscode';
 
 suite('Extension Test Suite', () => {
@@ -52,6 +53,9 @@ suite('Extension Test Suite', () => {
       'xcsh.delete',
       'xcsh.apply',
       'xcsh.diff',
+      'xcsh.xcsh.openPanel',
+      'xcsh.xcsh.newSession',
+      'xcsh.attachToChat',
       'xcsh.xcsh.pairHerdr',
       'xcsh.xcsh.disconnectHerdr',
     ];
@@ -111,5 +115,50 @@ suite('Tree View Test Suite', () => {
     const commands = await vscode.commands.getCommands(true);
     const explorerCommands = commands.filter((cmd) => cmd.startsWith('xcsh.'));
     assert.ok(explorerCommands.length > 0, 'xcsh commands should be registered');
+  });
+});
+
+suite('Editor compatibility', () => {
+  test('opens Contexts and records actual optional APIs', async () => {
+    await vscode.commands.executeCommand('xcsh.profiles.focus');
+    const extension = vscode.extensions.getExtension('f5-sales-demo.xcsh');
+    assert.ok(extension?.isActive);
+    assert.strictEqual(vscode.extensions.all.filter((candidate) => candidate.packageJSON.name === 'xcsh').length, 1);
+    const commands = await vscode.commands.getCommands(true);
+    const usesNativeChat = vscode.env.appName === 'Kiro';
+    if (usesNativeChat) {
+      assert.ok(commands.includes('kiroAgent.focusChatInput'), 'Native Kiro chat must be available');
+      const models = await vscode.lm.selectChatModels();
+      assert.ok(
+        models.every((model) => model.vendor !== 'xcsh'),
+        'Kiro must own sidebar model selection',
+      );
+    }
+    if (usesNativeChat) {
+      await vscode.commands.executeCommand('xcsh.xcsh.openPanel');
+    }
+    const output = process.env.XCSH_EDITOR_API_RECEIPT;
+    if (output) {
+      writeFileSync(
+        output,
+        JSON.stringify(
+          {
+            editor: vscode.env.appName,
+            apiVersion: vscode.version,
+            extensionId: extension.id,
+            extensionVersion: extension.packageJSON.version,
+            active: extension.isActive,
+            usesNativeChat,
+            nativeChatAvailable: commands.includes('kiroAgent.focusChatInput'),
+            chatParticipant: typeof vscode.chat?.createChatParticipant === 'function',
+            languageModelTools: typeof vscode.lm?.registerTool === 'function',
+            languageModelProvider: typeof vscode.lm?.registerLanguageModelChatProvider === 'function',
+          },
+          null,
+          2,
+        ) + '\n',
+        { mode: 0o600 },
+      );
+    }
   });
 });

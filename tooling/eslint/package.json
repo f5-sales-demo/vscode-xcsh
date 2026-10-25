@@ -1,0 +1,10 @@
+{
+  "name": "@xcsh/eslint-tooling",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "typescript-eslint": "8.72.0"
+  }
+}

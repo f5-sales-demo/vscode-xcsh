@@ -73,7 +73,7 @@ const extensionConfig = {
       },
     ],
   },
-  devtool: 'nosources-source-map',
+  devtool: 'source-map',
   infrastructureLogging: {
     level: 'log',
   },

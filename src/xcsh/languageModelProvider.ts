@@ -56,6 +56,10 @@ export function registerLanguageModelProvider(
   extensionContext: vscode.ExtensionContext,
   rpcBridge: XcshRpcBridge,
 ): vscode.Disposable {
+  if (typeof vscode.lm?.registerLanguageModelChatProvider !== 'function') {
+    return new vscode.Disposable(() => {});
+  }
+
   const logger = getLogger();
 
   const modelInfo: vscode.LanguageModelChatInformation = {
