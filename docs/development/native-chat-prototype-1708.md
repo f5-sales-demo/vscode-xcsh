@@ -72,6 +72,11 @@ failed in the conversation experiment. The same direct native tool API check
 passed in default-installed VS Code 1.143.1. These development-host checks do
 not establish both-editor specialist acceptance or production VSIX acceptance.
 
+The full-repository HEAD privacy scan failed on three existing findings in
+`src/api/subscription.ts` and `src/test/unit/contextAddWizard.test.ts`. Those
+files are unchanged from the fetched baseline. The clean staged scan therefore
+qualifies this prototype diff only; the full privacy gate remains unmet.
+
 Raw prompts, model reasoning, logs, authentication-bearing task agent files,
 conversation IDs and screenshots remain private. This receipt contains only
 sanitized findings.
