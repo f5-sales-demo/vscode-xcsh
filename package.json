@@ -1103,7 +1103,8 @@
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "5.5.0"
     },
-    "@azure/msal-node": "7.1.1"
+    "@azure/msal-node": "7.1.1",
+    "katex": "0.19.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
@@ -1135,6 +1136,7 @@
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
     "lint-staged": "^17.6.0",
+    "markdownlint-cli": "^0.50.0",
     "prettier": "^3.9.10",
     "puppeteer-core": "^25.16.0",
     "rimraf": "^6.1.3",
