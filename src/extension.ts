@@ -38,7 +38,8 @@ export function activate(context: vscode.ExtensionContext): void {
   logger.info('extension.activation.started');
 
   const contextManager = new ContextManager(context.secrets);
-  contextManager.initFileWatcher();
+  const workspaceFolder = () => vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+  contextManager.initFileWatcher(workspaceFolder());
   context.subscriptions.push(contextManager);
 
   // Client factory for creating API clients
@@ -49,6 +50,13 @@ export function activate(context: vscode.ExtensionContext): void {
   // Initialize tree view providers
   const explorerProvider = new XCSHExplorerProvider(contextManager, clientFactory);
   const contextProvider = new ContextProvider(contextManager);
+  contextProvider.setWorkspaceFolder(workspaceFolder());
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(() => {
+      contextProvider.setWorkspaceFolder(workspaceFolder());
+      contextManager.initFileWatcher(workspaceFolder());
+    }),
+  );
   const cloudStatusProvider = new CloudStatusProvider();
   const subscriptionProvider = new SubscriptionProvider(contextManager);
   const cloudStatusDashboardProvider = new CloudStatusDashboardProvider(contextManager);

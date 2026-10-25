@@ -116,6 +116,10 @@ export function registerChatParticipant(
   rpcBridge: XcshRpcBridge,
   contextManager: ContextManagerInterface,
 ): vscode.Disposable {
+  if (typeof vscode.chat?.createChatParticipant !== 'function') {
+    return new vscode.Disposable(() => {});
+  }
+
   const logger = getLogger();
 
   const FOLLOWUP_PATTERNS: Array<{ pattern: RegExp; command: string }> = [

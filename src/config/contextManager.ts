@@ -88,6 +88,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   private fileWatcher: vscode.Disposable | undefined;
   private localFileWatcher: vscode.Disposable | undefined;
+  private localWorkspaceFolder: string | undefined;
 
   /**
    * Session-scoped activation gate. A fresh ContextManager (i.e. a new extension
@@ -757,6 +758,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
 
   /** Transactionally create a canonical global context and link it into a workspace. */
   async addGlobalContextAndLink(ctx: XCSHContext, workspaceFolder: string): Promise<void> {
+    const priorSessionActivated = this.sessionActivated;
     const priorGlobalPointer = fs.existsSync(getActiveContextPath())
       ? fs.readFileSync(getActiveContextPath(), 'utf-8')
       : undefined;
@@ -774,6 +776,7 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       if (!globalExisted && fs.existsSync(globalPath)) {
         fs.unlinkSync(globalPath);
       }
+      this.sessionActivated = priorSessionActivated;
       this.restorePointer(localPath, priorLocalContext);
       this.restorePointer(getActiveContextPath(), priorGlobalPointer);
       this.restorePointer(getLocalActiveContextPath(workspaceFolder), priorLocalPointer);
@@ -1044,13 +1047,19 @@ export class ContextManager implements ContextManagerInterface, vscode.Disposabl
       this.fileWatcher = vscode.Disposable.from(...disposables);
     }
 
-    // Optionally watch local workspace contexts
+    // Rebind when the first workspace changes, including removal of all folders.
+    if (workspaceFolder !== this.localWorkspaceFolder) {
+      this.localFileWatcher?.dispose();
+      this.localFileWatcher = undefined;
+      this.localWorkspaceFolder = workspaceFolder;
+    }
+    // Watch the workspace root so creation of .xcsh is observed as well.
     if (workspaceFolder && !this.localFileWatcher) {
-      const localDir = getLocalContextsDir(workspaceFolder);
-      // Only set up watcher if parent .xcsh dir exists (avoids noise)
-      const xcshDir = path.dirname(localDir);
-      if (fs.existsSync(xcshDir)) {
-        const localGlob = new vscode.RelativePattern(vscode.Uri.file(localDir), '{*.json,active_context}');
+      {
+        const localGlob = new vscode.RelativePattern(
+          vscode.Uri.file(workspaceFolder),
+          '.xcsh/contexts/{*.json,active_context}',
+        );
 
         const localWatcher = vscode.workspace.createFileSystemWatcher(localGlob);
 

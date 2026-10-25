@@ -51,7 +51,7 @@ export class ContextProvider implements vscode.TreeDataProvider<ContextNode> {
   }
 
   /** Set the workspace folder for local context resolution. */
-  setWorkspaceFolder(folder: string): void {
+  setWorkspaceFolder(folder: string | undefined): void {
     this.workspaceFolder = folder;
     this.refresh();
   }
