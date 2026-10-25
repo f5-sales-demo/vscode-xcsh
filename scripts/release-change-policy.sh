@@ -55,8 +55,9 @@ while IFS= read -r path || [ -n "$path" ]; do
   [ -n "$path" ] || continue
   case "$path" in
   # Runtime, webview, shipped assets and localization.
+  # Installation configuration and VSIX filters control reproducible shipped inputs.
   # Package manifests and build configuration shipped with the extension.
-  package.json | package-lock.json | package.nls.*.json | webview/package.json | webview/package-lock.json | .nvmrc | webpack.config.* | tsconfig*.json | webview/tsconfig*.json | webview/vite.config.*)
+  .npmrc | .vscodeignore | package.json | package-lock.json | package.nls.*.json | webview/package.json | webview/package-lock.json | .nvmrc | webpack.config.* | tsconfig*.json | webview/tsconfig*.json | webview/vite.config.*)
     eligible=true
     ;;
   src/* | webview/* | resources/* | l10n/* | README.md | LICENSE)
@@ -68,7 +69,7 @@ while IFS= read -r path || [ -n "$path" ]; do
     ;;
   # Intentionally non-release surfaces: automation, docs, tests, governance,
   # assistant assets, and developer-only lint/tooling configuration.
-  .github/* | .claude/* | .agents/* | docs/* | tests/* | test/* | coverage/* | *.md | .gitignore | .editorconfig | .prettier* | .eslint* | eslint.config.* | jest.config.* | biome.json | .yamllint.yaml | .markdownlint.json | .shellcheckrc | .codespellrc | .gitleaks.toml | .pre-commit-config.yaml | .husky/* | scripts/agy-* | scripts/audit-* | scripts/check-* | scripts/github-api-resilience.cjs | scripts/lint-* | scripts/locale-lint.sh | scripts/pre-commit-local.sh | scripts/release-change-policy.sh | scripts/run-with-progress.sh | scripts/update-resource-coverage.ts | scripts/validate-* | scripts/verify-*)
+  .vscode-test.mjs | scripts/launch-editor.mjs | tooling/eslint/* | .github/* | .claude/* | .agents/* | docs/* | tests/* | test/* | coverage/* | *.md | .gitignore | .editorconfig | .prettier* | .eslint* | eslint.config.* | jest.config.* | biome.json | .yamllint.yaml | .markdownlint.json | .shellcheckrc | .codespellrc | .gitleaks.toml | .pre-commit-config.yaml | .husky/* | scripts/agy-* | scripts/audit-* | scripts/check-* | scripts/github-api-resilience.cjs | scripts/lint-* | scripts/locale-lint.sh | scripts/pre-commit-local.sh | scripts/release-change-policy.sh | scripts/run-with-progress.sh | scripts/update-resource-coverage.ts | scripts/validate-* | scripts/verify-*)
     ;;
   *)
     echo "::error::Unclassified release-change path: $path" >&2
