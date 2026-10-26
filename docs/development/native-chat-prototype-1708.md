@@ -225,3 +225,44 @@ Installed private prototype VSIX SHA-256 receipts:
 | --------- | ------------------------------------------------------------------ |
 | 0.0.4     | `431b0973dc3946d7970c2f09392a506024aa051c6e743bf24c46f40d38496cc5` |
 | 0.0.5     | `a6ffbb03adeca6ad9959d770fd6d6b4152d498a0a3ea9bc7de86a30ede761ecd` |
+
+## Default-profile and guarded-contribution follow-up
+
+The operator authorized reusing their default VS Code and Kiro profiles for
+testing. Further default-profile work uses task-owned workspaces and native
+sign-in in place, with context fixtures and raw evidence kept separate. Native
+credentials are not copied, and unrelated profile settings are preserved.
+
+Inspection found an anonymous-session branch that resets empty sessions to
+built-in Agent when the available modes change. After native sign-in, a Local
+reload experiment retained xcsh and `claude-opus-5-5` and invoked the actual F5
+description tool. This supports an authentication-related explanation, while
+fresh registration and full routing acceptance remain separate checks.
+
+Prototype 0.0.6 exercises the source readiness registration and Local-only
+manifest guards. In an extension development host using the default VS Code
+profile, the route reached xcsh with `claude-opus-5-5`. An exact native-window
+preflight confirmed the primary agent, model, Local harness and empty draft
+before an explicit synthetic identity submission. The request returned ALPHA and
+the pinned specification version through the requested model. No profile
+configuration values were changed for this test.
+
+One earlier identity turn was submitted without a qualified primary-agent
+preflight. It is excluded. Subsequent submissions require a positive preflight;
+raw failed and accepted captures remain private. Default-profile,
+development-host and prototype results do not establish released-artifact
+acceptance.
+
+The source now contributes the native F5 tool and Local-only xcsh agent, guarded
+by successful tool readiness and excluded from Kiro. Removal clears readiness.
+The agent instructions are included in the VSIX without a model override. All 95
+unit/webview suites and 1,416 tests passed, along with type checks, lint and
+production packaging. Production core registration and the published pin remain
+pending, so these declarations are not exposed prematurely.
+
+Two email fixtures now use the repository's accepted documentation domain. The
+remaining HEAD privacy finding is a computed subscription-name false positive.
+Its runtime naming code is unchanged. The managed correction belongs to
+docs-control issue #2610 and PR #2611; it passed its complete contract suite
+without a suppression or skipped path. Managed propagation and the extension's
+independent HEAD recheck remain required.

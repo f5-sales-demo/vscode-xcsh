@@ -40,6 +40,11 @@ short alias to one. For installed-artifact acceptance, add
 in an extension development host. Development builds include source maps;
 packaging uses hidden source maps.
 
+When the operator authorizes using their default editor profile, reuse native
+sign-in in place and keep experiments in task-owned workspaces. Do not copy
+native credentials or change unrelated profile settings. Keep raw evidence
+private and bind each inspected window to its exact workspace and artifact.
+
 Copy authorized canonical profiles into the task store privately before launch.
 Never commit that store, editor logs, screenshots, credentials, or profile
 names. Preserve original profiles and active pointers. A reloaded editor lists
@@ -94,11 +99,17 @@ successfully verified write retains its completion result after late
 cancellation. Transport errors expose contract codes and retain their causes
 privately. Mutations are never retried by the adapter.
 
+The manifest declares the F5 tool and a Local-only custom agent. Both
+declarations are guarded by `xcsh.nativeF5Ready` and excluded from Kiro.
+Activation initializes readiness to false; successful native tool registration
+exposes the agent, and disposal clears readiness. The agent file is packaged
+without a model override.
+
 The package boundary remains structural until the accepted shared package is
 published and pinned. Its actual public declarations have been checked against
-this factory, and private installed prototypes exercise the real core. The
-production activation path does not yet register this tool or a custom agent. Do
-not add a private filesystem dependency or treat prototype VSIX results as
-marketplace-only acceptance. The native agent-selection command can return
-before a contributed agent is available after reload. The cold routing and
-multiple-window gates remain open, even after native model discovery is primed.
+this factory, and private prototypes exercise the real core. Production does not
+yet register the core tool, so the declarations remain unavailable. Do not add a
+private filesystem dependency or treat prototype results as marketplace-only
+acceptance. Native anonymous-session resets and asynchronous agent discovery are
+separate routing considerations. Full startup, multiple-window and draft
+preservation acceptance remain required before enabling the production route.

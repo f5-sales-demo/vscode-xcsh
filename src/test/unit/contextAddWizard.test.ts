@@ -38,7 +38,7 @@ describe('ContextAddController', () => {
       .mockResolvedValueOnce('production')
       .mockResolvedValueOnce('XCSH_API_URL=https://tenant.example.test/web/home')
       .mockResolvedValueOnce('XCSH_API_TOKEN=opaque=')
-      .mockResolvedValueOnce('XCSH_USERNAME=user@example.test')
+      .mockResolvedValueOnce('XCSH_USERNAME=user@example.com')
       .mockResolvedValueOnce("XCSH_CONSOLE_PASSWORD='password='");
     jest.mocked(vscode.window.showQuickPick).mockResolvedValueOnce({
       label: 'default',
@@ -57,7 +57,7 @@ describe('ContextAddController', () => {
       expect.objectContaining({
         apiUrl: 'https://tenant.example.test',
         apiToken: 'opaque=',
-        env: { XCSH_USERNAME: 'user@example.test', XCSH_CONSOLE_PASSWORD: 'password=' },
+        env: { XCSH_USERNAME: 'user@example.com', XCSH_CONSOLE_PASSWORD: 'password=' },
         sensitiveKeys: ['XCSH_CONSOLE_PASSWORD'],
       }),
     );

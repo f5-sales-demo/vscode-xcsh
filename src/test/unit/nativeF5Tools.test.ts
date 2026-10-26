@@ -101,6 +101,7 @@ describe('native F5 operation ownership', () => {
 
   afterEach(() => {
     tool.dispose();
+    jest.restoreAllMocks();
     if (oldConfig === undefined) {
       delete process.env.XDG_CONFIG_HOME;
     } else {
@@ -205,5 +206,33 @@ describe('native F5 operation ownership', () => {
     expect(registerNativeF5Tool(context, tool)).toBe(false);
     expect(context.subscriptions).toHaveLength(0);
     registration.mockRestore();
+  });
+
+  it('exposes the contributed agent only after registration and clears it on removal', () => {
+    jest.spyOn(vscode.lm, 'registerTool').mockReturnValue(new vscode.Disposable(() => {}));
+    const command = jest.spyOn(vscode.commands, 'executeCommand').mockResolvedValue(undefined);
+    command.mockClear();
+    const context = { subscriptions: [] } as unknown as vscode.ExtensionContext;
+    expect(registerNativeF5Tool(context, tool)).toBe(true);
+    expect(command.mock.calls).toEqual([
+      ['setContext', 'xcsh.nativeF5Ready', false],
+      ['setContext', 'xcsh.nativeF5Ready', true],
+    ]);
+    for (const disposable of context.subscriptions) {
+      disposable.dispose();
+    }
+    expect(command.mock.calls.at(-1)).toEqual(['setContext', 'xcsh.nativeF5Ready', false]);
+  });
+
+  it('keeps the agent and native tool unavailable in Kiro', () => {
+    jest.replaceProperty(vscode.env, 'appName', 'Kiro');
+    const registration = jest.spyOn(vscode.lm, 'registerTool');
+    registration.mockClear();
+    const command = jest.spyOn(vscode.commands, 'executeCommand').mockResolvedValue(undefined);
+    command.mockClear();
+    const context = { subscriptions: [] } as unknown as vscode.ExtensionContext;
+    expect(registerNativeF5Tool(context, tool)).toBe(false);
+    expect(registration.mock.calls).toHaveLength(0);
+    expect(command.mock.calls).toEqual([['setContext', 'xcsh.nativeF5Ready', false]]);
   });
 });

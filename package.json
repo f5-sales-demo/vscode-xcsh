@@ -950,6 +950,59 @@
             "path"
           ]
         }
+      },
+      {
+        "name": "xcsh-f5",
+        "displayName": "F5 resources",
+        "userDescription": "Read or change F5 resources in the active context. Changes require approval of the exact validated plan.",
+        "modelDescription": "Perform specification-backed F5 discover, describe, validate, inspect, apply, create, update, or delete. Use the explicitly activated workspace context. Mutations require exact native plan approval and must never be retried after an uncertain result.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "xcshF5",
+        "icon": "$(cloud)",
+        "tags": [
+          "xcsh",
+          "f5"
+        ],
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": [
+                "discover",
+                "describe",
+                "validate",
+                "inspect",
+                "apply",
+                "create",
+                "update",
+                "delete"
+              ]
+            },
+            "kind": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "field": {
+              "type": "string",
+              "maxLength": 256
+            },
+            "objects": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object"
+              }
+            }
+          },
+          "required": [
+            "action"
+          ],
+          "additionalProperties": false
+        },
+        "when": "xcsh.nativeF5Ready && !xcsh.usesNativeChat"
       }
     ],
     "languageModelChatProviders": [
@@ -1033,7 +1086,16 @@
           "icon": "terminal"
         }
       ]
-    }
+    },
+    "chatAgents": [
+      {
+        "path": "./resources/agents/xcsh.agent.md",
+        "when": "xcsh.nativeF5Ready && !xcsh.usesNativeChat",
+        "sessionTypes": [
+          "local"
+        ]
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

@@ -67,6 +67,7 @@ export async function activateXcsh(
 
   logger.info('integration.activation.started');
   const usesNativeChat = registerKiroChatCommands(extensionContext);
+  void vscode.commands.executeCommand('setContext', 'xcsh.nativeF5Ready', false);
   registerLiteLLMProvider(extensionContext);
 
   // Detect secondary sidebar support (VS Code >= 1.106)

@@ -168,13 +168,21 @@ export class NativeF5Tool implements vscode.LanguageModelTool<NativeF5Input>, vs
 
 /** Called only by an accepted native route with its pinned bundled core. */
 export function registerNativeF5Tool(context: vscode.ExtensionContext, tool: NativeF5Tool): boolean {
-  if (typeof vscode.lm?.registerTool !== 'function') {
+  void vscode.commands.executeCommand('setContext', 'xcsh.nativeF5Ready', false);
+  if (vscode.env.appName === 'Kiro' || typeof vscode.lm?.registerTool !== 'function') {
     tool.dispose();
     return false;
   }
   try {
     const registration = vscode.lm.registerTool('xcsh-f5', tool);
-    context.subscriptions.push(tool, registration);
+    context.subscriptions.push(
+      tool,
+      registration,
+      new vscode.Disposable(() => {
+        void vscode.commands.executeCommand('setContext', 'xcsh.nativeF5Ready', false);
+      }),
+    );
+    void vscode.commands.executeCommand('setContext', 'xcsh.nativeF5Ready', true);
     return true;
   } catch {
     tool.dispose();
