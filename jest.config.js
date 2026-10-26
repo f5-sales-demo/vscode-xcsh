@@ -90,6 +90,13 @@ module.exports = {
       // rather than in two places — see the comment in that file.
       setupFilesAfterEnv: ['<rootDir>/webview/src/test-setup.ts'],
       transform: {
+        '^.+code-presentation\\.generated\\.min\\.js$': [
+          '@swc/jest',
+          {
+            jsc: { parser: { syntax: 'ecmascript' }, target: 'es2022' },
+            module: { type: 'commonjs' },
+          },
+        ],
         '^.+\\.tsx?$': [
           '@swc/jest',
           {
