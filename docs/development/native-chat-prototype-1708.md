@@ -311,3 +311,38 @@ registrations were absent; the synthetic draft and GPT model remained preserved.
 The default profile no longer contains the installed experiment. These lifecycle
 observations qualify prototype removal, not the production extension's complete
 lifecycle.
+
+## Reused signed-in profile and fixture corrections
+
+The previously authenticated task profile was reused in place on October 26. The
+public editor authentication inventory reported one GitHub account; native
+credentials were not copied. Prototype 0.0.7 returned ALPHA and specification
+12.5.1 through Opus 5.5 after a qualified primary/model/Local/empty-draft
+preflight. Its reload retained Opus but showed built-in Agent.
+
+The production manifest already declares the LiteLLM vendor. The private fixture
+had omitted that required contribution. A static-agent prototype with the vendor
+declared preserved both xcsh and Opus after reload. Restoring the readiness
+guards did not qualify the same restoration: the capture showed Agent and a
+nonempty draft, which was preserved. These observations narrow the
+fixture/startup investigation; they do not establish production routing.
+
+In a fresh workspace within the same signed-in profile, a native-picker control
+passed preflight. Both `claude-opus-5-5` and `gpt-6.1-sol` invoked the actual F5
+adapter and returned the bundled map constraint for
+`http_loadbalancer.spec.more_option.custom_errors`. The GPT operation also ran
+with the task extension host's PATH restricted to system directories; its
+original PATH was restored afterward. This qualifies a packaged-core prototype
+operation through embedded Node 24.21.0, not a released marketplace artifact.
+
+One static-visibility identity turn ran after a failed preflight because its
+shell continued. That turn is excluded. The corrected harness rejects
+unqualified agent/model/Local state, nonempty drafts and stale captures before
+any submission. Negative checks cover the failed Agent capture and the resource
+draft; subsequent accepted requests use the guarded harness. Raw failed and
+accepted evidence remains private.
+
+The supported automatic entrypoint and complete readiness-guard lifecycle still
+need qualification. Kiro's previously demonstrated automatic/default limitation
+remains a delivery gate, and the shared package is not published or pinned into
+production activation.
