@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useSyncExternalStore }
 import { t } from '../lib/i18n';
 import { interactionTransport, sendAbort, sendPrompt } from '../protocol';
 import type { Session } from '../state/session';
-import { InteractionPanel } from '../vendored/chat-ui';
+import { InteractionPanel, VoiceCompanionControl } from '../vendored/chat-ui';
 import { ComposerHost } from './ComposerHost';
 import { EmptyState } from './EmptyState';
 import { MessageList } from './MessageList';
@@ -90,6 +90,7 @@ export function ChatContainer({ session }: ChatContainerProps) {
         </div>
       )}
       <InteractionPanel transport={interactionTransport} />
+      <VoiceCompanionControl transport={interactionTransport} />
       <div className="inputContainer">
         <ComposerHost onSubmit={handleSubmit} onInterrupt={handleInterrupt} busy={busy} />
       </div>

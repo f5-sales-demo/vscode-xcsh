@@ -15,6 +15,7 @@ import { HOST_TOOL_DEFINITIONS } from './hostTools';
 import { isInteractionCommand } from './interactions/transport';
 import type { XcshRpcBridge } from './rpcBridge';
 import type { MessageUpdate, ReferencesEvent, ToolExecutionEnd, ToolExecutionStart } from './types';
+import { isVoiceRequest } from './voice-contract';
 
 export class XcshPanelProvider implements vscode.WebviewViewProvider {
   static readonly viewType = 'xcsh.xcshPanel';
@@ -44,6 +45,27 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
     _token: vscode.CancellationToken,
   ): void {
     this.disposables.push(
+      this.rpcBridge.onEvent('voice_event', (event) => {
+        if (
+          event.method === 'xcsh/voice/companion' &&
+          event.params &&
+          typeof event.params === 'object' &&
+          typeof (event.params as { url?: unknown }).url === 'string'
+        ) {
+          const original = vscode.Uri.parse((event.params as { url: string }).url);
+          void vscode.env.asExternalUri(original).then((uri) =>
+            webviewView.webview.postMessage({
+              type: 'from-extension',
+              message: {
+                ...event,
+                params: { ...(event.params as object), url: uri.with({ fragment: original.fragment }).toString() },
+              },
+            }),
+          );
+          return;
+        }
+        void webviewView.webview.postMessage({ type: 'from-extension', message: event });
+      }),
       this.rpcBridge.onEvent<{ type: string; event: unknown }>('interaction', ({ event }) => {
         const revision = (event as { revision?: number }).revision;
         void webviewView.webview.postMessage({
@@ -214,6 +236,20 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       void this.forwardInteraction(msg);
       return;
     }
+    if (isVoiceRequest(msg)) {
+      void this.rpcBridge.sendCommand({ ...msg }).catch(() => {
+        void this.webviewView?.webview.postMessage({
+          type: 'from-extension',
+          message: {
+            type: 'voice_event',
+            chatId: msg.chatId ?? '',
+            method: 'xcsh/voice/error',
+            params: { message: 'The selected xcsh runtime cannot start voice.' },
+          },
+        });
+      });
+      return;
+    }
     switch (msg.type) {
       case 'prompt': {
         const text = msg.text as string | undefined;
@@ -277,7 +313,12 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
           snapshot: { revision: number; pending: unknown[] };
           plan?: unknown;
         };
-        await post({ type: 'interaction_snapshot', sessionId: data.sessionId, ...data.snapshot, plan: data.plan });
+        await post({
+          type: 'interaction_snapshot',
+          sessionId: data.sessionId,
+          ...data.snapshot,
+          plan: data.plan,
+        });
       } else if ('responseId' in msg) {
         await post({
           type: 'interaction_receipt',
@@ -287,7 +328,11 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       }
     } catch {
       if ('responseId' in msg) {
-        await post({ type: 'interaction_receipt', responseId: String(msg.responseId), accepted: false });
+        await post({
+          type: 'interaction_receipt',
+          responseId: String(msg.responseId),
+          accepted: false,
+        });
       }
     }
   }
@@ -424,7 +469,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       html = html.replace(/\/assets\//g, `${assetUri.toString()}/`);
       html = html.replace(
         /<head>/,
-        `<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource} data:;">`,
+        `<head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src ${webview.cspSource}; img-src ${webview.cspSource} data:; font-src ${webview.cspSource} data:; media-src blob:;">`,
       );
 
       return html;

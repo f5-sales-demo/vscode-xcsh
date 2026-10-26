@@ -72,7 +72,12 @@ module.exports = {
         ...(liveMode === 'read-only' ? liveReadOnlyTests : []),
         ...(liveMode === 'crud' ? liveCrudTests : []),
       ],
-      testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/', ...(liveMode ? ['/unit/'] : ['/integration/'])],
+      testPathIgnorePatterns: [
+        '/node_modules/',
+        '/dist/',
+        '/out/',
+        ...(liveMode ? ['/unit/'] : ['/integration/']),
+      ],
       moduleFileExtensions: ['ts', 'js', 'json'],
       moduleNameMapper: sharedModuleNameMapper,
       transform: sharedTransform,
@@ -90,6 +95,13 @@ module.exports = {
       // rather than in two places — see the comment in that file.
       setupFilesAfterEnv: ['<rootDir>/webview/src/test-setup.ts'],
       transform: {
+        '^.+code-presentation\\.generated\\.min\\.js$': [
+          '@swc/jest',
+          {
+            jsc: { parser: { syntax: 'ecmascript' }, target: 'es2022' },
+            module: { type: 'commonjs' },
+          },
+        ],
         '^.+\\.tsx?$': [
           '@swc/jest',
           {
