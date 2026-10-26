@@ -429,6 +429,11 @@ export class LanguageModelToolResult {
   constructor(public readonly content: unknown[]) {}
 }
 
+export enum LanguageModelChatToolMode {
+  Auto = 1,
+  Required = 2,
+}
+
 // Mock LanguageModelChatMessageRole
 export enum LanguageModelChatMessageRole {
   User = 1,
@@ -659,6 +664,7 @@ export default {
   LanguageModelToolResultPart,
   LanguageModelToolResult,
   LanguageModelChatMessageRole,
+  LanguageModelChatToolMode,
   l10n,
   languages,
   lm,

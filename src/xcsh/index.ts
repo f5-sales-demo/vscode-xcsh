@@ -11,6 +11,7 @@ import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerKiroChatCommands } from './kiroNativeChat';
 import { registerLanguageModelProvider } from './languageModelProvider';
 import { registerLanguageModelTools } from './languageModelTools';
+import { registerLiteLLMProvider } from './litellmProvider';
 import { XcshPanelProvider } from './panelProvider';
 import { XcshProcessManager } from './processManager';
 import { XcshRpcBridge } from './rpcBridge';
@@ -66,6 +67,7 @@ export async function activateXcsh(
 
   logger.info('integration.activation.started');
   const usesNativeChat = registerKiroChatCommands(extensionContext);
+  registerLiteLLMProvider(extensionContext);
 
   // Detect secondary sidebar support (VS Code >= 1.106)
   const versionParts = vscode.version.split('.').map(Number);

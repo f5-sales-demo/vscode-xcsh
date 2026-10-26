@@ -66,3 +66,18 @@ drafts. Contexts and resource views continue to work. See the sanitized
 
 A future Kiro route must pass the complete campaign before these entrypoints are
 enabled. Native sign-in and selected models remain under editor control.
+
+## Native LiteLLM model access
+
+VS Code can expose gateway models through its native language-model provider
+API. Set `LITELLM_BASE_URL` and `LITELLM_API_KEY` in the extension-host
+environment before launching the editor. Credentials remain in that environment;
+they are not copied into editor settings or shared with another editor's sign-in
+state. The provider registers before optional xcsh CLI startup, so CLI absence
+does not remove model access. Choose the model in the native picker.
+
+The current accepted prototype uses the native **Local** harness. The new
+Copilot harness reset the model to Auto in the experiment, so that workflow is
+excluded. Use the supported New Local Chat command for further routing tests.
+Kiro's native chat has no qualifying custom gateway route in version 1.4.26;
+Kiro chat delivery remains gated.

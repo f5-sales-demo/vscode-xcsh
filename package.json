@@ -956,6 +956,10 @@
       {
         "vendor": "xcsh",
         "displayName": "xcsh"
+      },
+      {
+        "vendor": "xcsh-litellm",
+        "displayName": "xcsh LiteLLM"
       }
     ],
     "chatParticipants": [

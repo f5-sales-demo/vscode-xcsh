@@ -131,3 +131,42 @@ The complete extension unit/webview suite passed (93 suites, 1,398 tests), as
 did type checks and lint. Production native tool/agent registration, the
 released core pin, supported Kiro primary routing, full marketplace VSIX and
 released artifact acceptance remain open. No merge or publication is claimed.
+
+## LiteLLM environment and VS Code native model prototype
+
+The delivery direction remains one VSIX with editor-specific capability guards.
+Both registries must continue serving identical versions and hashes. Registry
+publishing credentials and editor model authentication are separate concerns.
+
+The new native VS Code provider reads `LITELLM_BASE_URL` and `LITELLM_API_KEY`
+from the extension-host environment and discovers gateway chat models with
+published token limits. It preserves message history and tool result identities,
+uses stable wire aliases for native tool names, streams text and complete tool
+calls, rejects redirects and incomplete responses, and cancels transport on
+provider disposal. It does not select a model or transfer native credentials.
+Kiro registration is gated because its native chat does not consume this
+provider.
+
+The installed prototype discovered 50 chat models from a 59-model gateway
+catalog. Native API probes with `claude-opus-5-5` and `gpt-6.1-sol` both
+returned the required synthetic tool call. Full native Local-harness turns
+selected xcsh, invoked its identity tool, read the actual bundled specification
+constraint, and reported specification version 12.5.1. The turn receipts
+identified the exact requested LiteLLM model, which remained selected afterward.
+
+The first full turn through the new Copilot harness instead used Auto/GPT-6 Luna
+despite the picker showing Opus. That turn is excluded. Ordinary New Chat also
+returned to that harness; an attempted turn was canceled and excluded. The
+supported New Local Chat command created a Local conversation, selected the
+contributed xcsh agent by its URI, and preserved the selected gateway model.
+Reloading a blank session returned to the Copilot/Auto entrypoint, so complete
+reload, multiple-window, conflict, and existing-conversation routing acceptance
+remains pending. No production native-agent route is claimed from these partial
+routing checks.
+
+A native Custom Endpoint configuration with environment-variable placeholders
+failed to resolve its secret key. It was removed from the task profile, and the
+provider API was used instead. Native APIs and supported commands are production
+interfaces; debugger, DOM, and SQLite inspection remain diagnostic evidence
+only. All raw gateway metadata, model outputs, sessions, and failed captures
+remain private. No marketplace publication or release acceptance is claimed.
