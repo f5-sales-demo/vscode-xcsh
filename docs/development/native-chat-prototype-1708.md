@@ -170,3 +170,58 @@ provider API was used instead. Native APIs and supported commands are production
 interfaces; debugger, DOM, and SQLite inspection remain diagnostic evidence
 only. All raw gateway metadata, model outputs, sessions, and failed captures
 remain private. No marketplace publication or release acceptance is claimed.
+
+## Recovery campaign and actual native F5 tool
+
+The resumed campaign confirmed warm Local-harness behavior with the supported
+New Local Chat and Open Chat commands. Moving from the distinguishable second
+agent to xcsh created a distinct conversation, invoked the primary agent's ALPHA
+identity tool, and preserved `gpt-6.1-sol`. A completed Local conversation
+retained its agent and model after reload. Blank reload behavior remains
+different: the default entrypoint can return to Copilot/Auto.
+
+New Local Chat inherited an unsubmitted resource draft unless its supported
+`inputValue` and `isPartialQuery` arguments initialized a blank draft. The draft
+test performed no tool invocation or submission. This proves draft behavior in
+the prototype; it does not establish preservation of every draft in native
+history. A fresh production attachment design still requires that verification.
+
+Fresh extension updates exposed an additional race. The agent-selection command
+returned successfully before xcsh was available, leaving ordinary Agent
+selected. Failed preflights submitted nothing. A distinct candidate that first
+revealed chat and awaited native model discovery still failed cold selection in
+the two-window test. Warm URI selection remains demonstrated behavior, not
+complete automatic-routing acceptance. No startup delay or debugger function has
+been promoted to a production dependency.
+
+The new source adapter, `NativeF5Tool`, uses a separate context host and actual
+core per native invocation. Plans and opaque private references cannot cross
+requests. Writes require the native opaque request token and exact core-owned
+approval. Focused tests cover concurrent ownership, inactive contexts,
+cancellation during planning, disablement, registration conflict, uncertain
+mutation failure, private error sanitization, and late verified completion. The
+full unit/webview suite passed 95 suites and 1,414 tests; type checks, lint,
+production packaging, and security audit passed. The actual package's public
+Node declarations are structurally assignable to the adapter factory.
+
+Installed private prototype 0.0.4 invoked the adapter from primary xcsh through
+`gpt-6.1-sol`, using the real ContextManager and pinned specification. Read-only
+description returned the actual map constraint. Exact displayed entries and
+hashes were matched before approving a synthetic create and delete; an update
+was dismissed. Only POST and DELETE reached the synthetic transport. The three
+turns retained their requested model and had distinct conversation IDs. No F5
+cloud endpoint was contacted.
+
+Private prototype 0.0.5 included the final late-cancellation behavior and ran an
+actual native F5 description through `claude-opus-5-5` in the second task
+window. These are installed prototype results, not production activation, cloud
+mutation, publication, or release acceptance. The extracted shared core remains
+unpublished, and the production extension has no private dependency or premature
+native F5 registration. Kiro delivery remains gated.
+
+Installed private prototype VSIX SHA-256 receipts:
+
+| Prototype | SHA-256                                                            |
+| --------- | ------------------------------------------------------------------ |
+| 0.0.4     | `431b0973dc3946d7970c2f09392a506024aa051c6e743bf24c46f40d38496cc5` |
+| 0.0.5     | `a6ffbb03adeca6ad9959d770fd6d6b4152d498a0a3ea9bc7de86a30ede761ecd` |

@@ -81,3 +81,24 @@ Copilot harness reset the model to Auto in the experiment, so that workflow is
 excluded. Use the supported New Local Chat command for further routing tests.
 Kiro's native chat has no qualifying custom gateway route in version 1.4.26;
 Kiro chat delivery remains gated.
+
+## Native F5 tool preparation
+
+`NativeF5Tool` adapts the extracted core to native tool invocations. Each call
+owns a separate `NativeContextHost` and core instance. Writes require an opaque
+native request token; its private fields are never inspected. The adapter
+generates an invocation identity and retains the binding, validated plan, and
+exact approval within that invocation. Model input cannot reuse a plan from
+another request or window. Cancellation and disposal abort active operations; a
+successfully verified write retains its completion result after late
+cancellation. Transport errors expose contract codes and retain their causes
+privately. Mutations are never retried by the adapter.
+
+The package boundary remains structural until the accepted shared package is
+published and pinned. Its actual public declarations have been checked against
+this factory, and private installed prototypes exercise the real core. The
+production activation path does not yet register this tool or a custom agent. Do
+not add a private filesystem dependency or treat prototype VSIX results as
+marketplace-only acceptance. The native agent-selection command can return
+before a contributed agent is available after reload. The cold routing and
+multiple-window gates remain open, even after native model discovery is primed.
