@@ -72,10 +72,11 @@ failed in the conversation experiment. The same direct native tool API check
 passed in default-installed VS Code 1.143.1. These development-host checks do
 not establish both-editor specialist acceptance or production VSIX acceptance.
 
-The full-repository HEAD privacy scan failed on three existing findings in
-`src/api/subscription.ts` and `src/test/unit/contextAddWizard.test.ts`. Those
+The initial full-repository HEAD privacy scan failed on three existing findings
+in `src/api/subscription.ts` and `src/test/unit/contextAddWizard.test.ts`. Those
 files are unchanged from the fetched baseline. The clean staged scan therefore
-qualifies this prototype diff only; the full privacy gate remains unmet.
+qualified that prototype diff only. These findings were subsequently resolved
+through fixture corrections and the managed scanner update described below.
 
 Raw prompts, model reasoning, logs, authentication-bearing task agent files,
 conversation IDs and screenshots remain private. This receipt contains only
@@ -261,8 +262,44 @@ production packaging. Production core registration and the published pin remain
 pending, so these declarations are not exposed prematurely.
 
 Two email fixtures now use the repository's accepted documentation domain. The
-remaining HEAD privacy finding is a computed subscription-name false positive.
-Its runtime naming code is unchanged. The managed correction belongs to
-docs-control issue #2610 and PR #2611; it passed its complete contract suite
-without a suppression or skipped path. Managed propagation and the extension's
-independent HEAD recheck remain required.
+computed subscription-name false positive was resolved upstream in docs-control
+PR `#2611` and propagated through the normal managed workflow in vscode-xcsh PR
+`#1713` and xcsh PR `#5078`. The scanner checks executable runtime interpolation
+without a suppression or skipped path; subscription runtime naming is unchanged.
+The extension's independent full HEAD enforcement scan is clean. This verifies
+the two consuming repositories, not the remaining fleet.
+
+## Authenticated Kiro default-profile candidate
+
+On 2026-10-26, a task-owned workspace in the authorized default Kiro profile
+used native Builder ID sign-in. Process-specific accessibility capture and
+extension workspace verification bound the experiment to the same window. Two
+documented workspace agent configurations appeared in the native selector.
+Selecting the xcsh prototype changed the primary selector while preserving the
+native Auto model. The selector exposed no persistent-default control.
+
+Both the native New session button and extension-invoked `focusChatInput` with
+`ensureSession`, `newSession` and `submit: false` created sessions on Default,
+with Auto preserved. No model request or tool invocation was submitted in this
+candidate. Authentication therefore did not establish a supported automatic
+route or the one-time native-default fallback. Kiro delivery remains gated.
+
+An earlier accessibility capture belonged to a separate qualification process
+with the same application path and generic window title. Its agent-list and Opus
+label observations are excluded from this candidate. Raw captures are retained
+privately; no agent selection or prompt submission occurred there.
+
+## Default-profile installed VS Code reload and resource draft
+
+Installed prototype 0.0.7 retained `gpt-6.1-sol` and Local after reload, but the
+restored conversation's primary selector changed to built-in Agent. Running the
+prototype's supported Local entrypoint then selected xcsh with the same model.
+This demonstrates entrypoint recovery after reload, not automatic restoration of
+the prior conversation's specialist.
+
+A synthetic resource payload inserted with `isPartialQuery: true` remained an
+unsubmitted native draft with xcsh and the selected model preserved. Opening
+xcsh again retained that draft. Identity and F5 invocation counts did not
+increase. Process- and window-specific accessibility captures qualify these
+observations in the authorized default profile; full lifecycle and released
+production artifact acceptance remain open.
