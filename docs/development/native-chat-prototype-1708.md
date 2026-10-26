@@ -303,3 +303,11 @@ xcsh again retained that draft. Identity and F5 invocation counts did not
 increase. Process- and window-specific accessibility captures qualify these
 observations in the authorized default profile; full lifecycle and released
 production artifact acceptance remain open.
+
+A fresh default-profile task window launched with the prototype disabled exposed
+neither its commands nor its identity/F5 tools. After uninstalling the
+task-owned prototype and reloading the installed-prototype window, the same
+registrations were absent; the synthetic draft and GPT model remained preserved.
+The default profile no longer contains the installed experiment. These lifecycle
+observations qualify prototype removal, not the production extension's complete
+lifecycle.
