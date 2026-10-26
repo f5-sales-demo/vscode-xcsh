@@ -83,9 +83,12 @@ does not remove model access. Choose the model in the native picker.
 
 The current accepted prototype uses the native **Local** harness. The new
 Copilot harness reset the model to Auto in the experiment, so that workflow is
-excluded. Use the supported New Local Chat command for further routing tests.
-Kiro's native chat has no qualifying custom gateway route in version 1.4.26;
-Kiro chat delivery remains gated.
+excluded. The native picker command
+`workbench.action.chat.openNewChatSessionInPlace.local` with the `sidebar`
+argument creates Local directly. `newLocalChat` can be redirected to Copilot by
+native preferences or treatments, even with an explicit Local override. Kiro's
+native chat has no qualifying custom gateway route in version 1.4.26; Kiro chat
+delivery remains gated.
 
 ## Native F5 tool preparation
 
@@ -113,3 +116,26 @@ private filesystem dependency or treat prototype results as marketplace-only
 acceptance. Native anonymous-session resets and asynchronous agent discovery are
 separate routing considerations. Full startup, multiple-window and draft
 preservation acceptance remain required before enabling the production route.
+
+## Native chat router preparation
+
+`NativeChatRouter` prepares Open Panel, New Session and Attach Resource through
+public editor APIs and native commands. Operations serialize within a window and
+recheck cancellation, availability, the exact workspace and public window focus
+after asynchronous work. Background requests stop before touching chat. New
+Session initializes an empty partial query; Open Panel and attachments provide
+no query. Attachment files are private, immutable JSON snapshots and survive
+disposal because native drafts and history can retain their references.
+
+An optional `prepareModels` callback must finish native model metadata discovery
+before chat commands run. With the configured LiteLLM provider, query its native
+vendor and reject an empty catalog; never supply a model selector in the router.
+Registration preserves existing handlers and rolls back a partial conflict.
+
+The source adapter remains unwired. Prototype evidence supports focused Local
+operations, but the generated agent command can outlive the agent URI in the
+native mode cache during upgrades. Its presence is insufficient proof that the
+exact owned URI is ready. Static prototype agent declarations improved reload
+behavior; the production readiness guard remains disabled until the published
+core and complete routing lifecycle qualify. See the campaign receipt for
+accepted and excluded observations.

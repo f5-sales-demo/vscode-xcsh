@@ -183,6 +183,11 @@ describe('native F5 operation ownership', () => {
     await Promise.resolve();
     coreAt(1).inspect.mockRejectedValue(new Error('https://private.invalid/?token=private-value'));
     await expect(next).rejects.toThrow('F5_OPERATION_FAILED');
+    const uppercase = invoke({ action: 'inspect', kind: 'http_loadbalancer' });
+    await Promise.resolve();
+    await Promise.resolve();
+    coreAt(2).inspect.mockRejectedValue(new Error('SYNTHETIC_PRIVATE_VALUE'));
+    await expect(uppercase).rejects.toThrow('F5_OPERATION_FAILED');
   });
 
   it('preserves independently verified mutation completion after late cancellation', async () => {

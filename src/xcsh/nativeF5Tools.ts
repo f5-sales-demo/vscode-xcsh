@@ -62,6 +62,48 @@ const actions = new Set<NativeF5Action>([
 ]);
 const writes = new Set<NativeF5Action>(['apply', 'create', 'update', 'delete']);
 
+// An uppercase message is not proof that an upstream error is a public code.
+// Keep this boundary explicit until the published core's error type is pinned.
+const publicErrors = new Set([
+  'APPROVAL_CANCELED',
+  'APPROVAL_MISMATCH',
+  'CANCELED',
+  'CONTEXT_UNAVAILABLE',
+  'CONTEXT_VERSION_UNSUPPORTED',
+  'CREDENTIALS_CHANGED',
+  'CREDENTIALS_EXPIRED',
+  'CREDENTIALS_REJECTED',
+  'CREDENTIALS_UNAVAILABLE',
+  'DUPLICATE_RESOURCE',
+  'IMMUTABLE_CHANGE',
+  'INVALID_BINDING',
+  'INVALID_CONTEXT',
+  'INVALID_CONVERSATION',
+  'INVALID_OPERATION',
+  'INVALID_RECEIPT',
+  'INVALID_RECEIPT_STORAGE',
+  'NAMESPACE_MISMATCH',
+  'NO_ACTIVE_CONTEXT',
+  'PERSISTENCE_FAILED',
+  'PLAN_BINDING_MISMATCH',
+  'PLAN_CHANGED',
+  'PLAN_CONSUMED',
+  'READ_FAILED',
+  'RESOURCE_EXISTS',
+  'RESOURCE_IDENTITY_MISMATCH',
+  'RESOURCE_IDENTITY_UNAVAILABLE',
+  'RESOURCE_NOT_FOUND',
+  'SECRET_REFERENCE_UNAVAILABLE',
+  'STALE_BINDING',
+  'STALE_RESOURCE',
+  'UNCERTAIN_MUTATION',
+  'UNKNOWN_KIND',
+  'UNKNOWN_PLAN',
+  'UNPLANNED_MUTATION',
+  'UNSUPPORTED_OPERATION',
+  'VALIDATION_FAILED',
+]);
+
 /**
  * One context host and core per invocation prevents concurrent chat requests from
  * refreshing each other's bindings. No plan handle or private reference crosses
@@ -154,8 +196,7 @@ export class NativeF5Tool implements vscode.LanguageModelTool<NativeF5Input>, vs
     } catch (error) {
       // Only contract codes are public. A transport or credential error's raw
       // message and cause may contain private values and must not reach the model.
-      const code =
-        error instanceof Error && /^[A-Z][A-Z_]{2,63}$/.test(error.message) ? error.message : 'F5_OPERATION_FAILED';
+      const code = error instanceof Error && publicErrors.has(error.message) ? error.message : 'F5_OPERATION_FAILED';
       throw new Error(code, { cause: error });
     } finally {
       cancellation.dispose();

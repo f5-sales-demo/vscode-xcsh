@@ -142,6 +142,7 @@ export const mockExtensionContext = {
 
 // Mock window
 export const window = {
+  state: { focused: true, active: true },
   showInformationMessage: jest.fn().mockResolvedValue(undefined),
   showWarningMessage: jest.fn(),
   showErrorMessage: jest.fn(),

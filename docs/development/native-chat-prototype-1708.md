@@ -346,3 +346,68 @@ The supported automatic entrypoint and complete readiness-guard lifecycle still
 need qualification. Kiro's previously demonstrated automatic/default limitation
 remains a delivery gate, and the shared package is not published or pinned into
 production activation.
+
+## Native routing safeguards and macOS 26 verification
+
+The October 26 campaign tested source routing in installed VS Code 1.143.1 using
+the existing signed-in task profile. Credentials stayed in that profile.
+Experimental agents, resources and raw evidence stayed in task-owned stores.
+
+| Candidate                                     | Classification and evidence                                                                                                                                                                                      |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Readiness-key agent visibility                | Failed reload qualification: the agent command disappeared while the tool remained registered. Reasserting and toggling readiness did not restore it.                                                            |
+| Static agent declaration with native commands | Demonstrated focused Local selection, new sessions and resource attachment. A workspace agent with the same name still reached the owned ALPHA agent through its exact extension URI.                            |
+| `newLocalChat`                                | Failed harness/model qualification in a second window: native preference handling redirected it to Copilot/Auto.                                                                                                 |
+| Native picker Local command                   | Supported native command interface, demonstrated in focused windows. Source routing uses `openNewChatSessionInPlace.local` with `sidebar`; background requests are rejected through public window focus.         |
+| Model metadata preparation                    | Supported native model catalog API. Preparation completes before chat commands; it provides no model selector and rejects failure before changing the session.                                                   |
+| Upgrade of the owned agent URI                | Failed final routing qualification: the generated command could remain registered while its mode cache referred to the previous VSIX URI. The guarded submission preflight rejected the resulting Agent capture. |
+
+Prototypes exercised the actual bundled specification and F5 adapter through
+`claude-opus-5-5` and `gpt-6.1-sol`. Both returned the map constraint for
+`http_loadbalancer.spec.more_option.custom_errors` with external xcsh, Node and
+Bun excluded from the task host's PATH. Focused Local new sessions preserved
+different selected models in two windows. These observations demonstrate
+prototype behavior; the complete production lifecycle remains unqualified.
+
+A synthetic create used the exact native plan dialog. The displayed hash and
+configuration matched the captured validated plan; transport and independent
+readback returned a created result. A separate canceled create returned
+`APPROVAL_CANCELED`, invoked the F5 tool once and recorded only a read, with no
+synthetic mutation. The core and adapter never contacted a cloud endpoint.
+
+Resource drafts were never submitted. GPT, xcsh and the attachment survived a
+same-version reload and subsequent Open Panel. Additional text appeared in some
+captured drafts from an undetermined source, so those comparisons do not qualify
+exact initial-draft equality. Failed model/catalog, background and upgrade
+preflights are retained privately and excluded from submitted-operation claims.
+
+Final installed prototype 0.0.21 contains the final router and F5 adapter. Its
+VSIX SHA-256 is
+`94a22e3ba84651240d20637beaeaa22f0f8fb792938a028d949badb550b0d4a3`. The bundled
+core SHA-256 remains
+`b6f5eb5628bb367f6a538a7bdba5ffe941997a4e6f703b8d6fde7d66492127b1`. It passed an
+actual GPT specification operation after reload. The final Opus upgrade
+preflight failed and submitted no request.
+
+The source router has 19 focused regressions. Complete source validation passed
+96 suites and 1,435 unit/webview tests, package/type checks, lint and the
+dependency security audit. Real installed-editor host suites passed nine checks
+each in VS Code and Kiro. These host checks cover activation, Contexts and
+optional APIs; they do not replace specialist or released-VSIX acceptance.
+
+The F5 adapter now exposes only recognized contract error codes. An uppercase
+private error previously passed its shape check; the new regression reproduces
+that leak and verifies a generic public error with its raw cause retained
+privately.
+
+Core head `d93b3e3ff5467c398286fb15460446f7701fbe6b` completed
+[CI run 40400792966](https://github.com/f5-sales-demo/xcsh/actions/runs/40400792966)
+successfully. ARM uses `macos-latest` and Intel uses `macos-26-intel`; runtime,
+native builds, installation smoke and both TypeScript lanes passed. Historical
+release lane aliases retain their existing validation and exact lane counts. The
+earlier immutable snapshot HTTP 504 did not recur; retry code was unchanged.
+
+The shared package remains unpublished and unpinned in production. The source
+router remains unwired and Kiro delivery remains gated. Both PRs remain drafts;
+merge, publication, one production VSIX in both editors and marketplace artifact
+acceptance remain separate open gates.
