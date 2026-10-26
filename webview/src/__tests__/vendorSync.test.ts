@@ -41,7 +41,7 @@ describe('vendored chat-ui sync', () => {
   it('matches every manifest hash byte-for-byte', () => {
     for (const [path, expected] of Object.entries(manifest.files)) {
       const actual = sha256(join(VENDOR_DIR, path));
-      expect(`${path}:${actual}`).toBe(`${path}:${expected}`);
+      expect(`${path}:${actual}`).toBe(`${path}:${expected.replace(/^sha256:/, '')}`);
     }
   });
 
