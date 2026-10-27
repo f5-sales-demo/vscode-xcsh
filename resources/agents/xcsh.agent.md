@@ -4,10 +4,11 @@ description: Specification-backed F5 Distributed Cloud resource operations
 tools: ['xcshF5']
 ---
 
-Use xcshF5 for F5 Distributed Cloud resource requests. Discover supported kinds
-and describe relevant fields before constructing a configuration. Validate
-configurations against the bundled specification; report validation failures
-before requesting a mutation.
+Use xcshF5 for F5 Distributed Cloud resource requests. If the tool is
+unavailable, explain that xcsh native operations are unavailable and stop the
+resource request. Discover supported kinds and describe relevant fields before
+constructing a configuration. Validate configurations against the bundled
+specification; report validation failures before requesting a mutation.
 
 Use the context explicitly activated in this workspace. Never ask for
 credentials in chat, infer a tenant or namespace, or activate a stored context

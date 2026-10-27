@@ -1002,7 +1002,7 @@
           ],
           "additionalProperties": false
         },
-        "when": "xcsh.nativeF5Ready && !xcsh.usesNativeChat"
+        "when": "xcsh.nativeF5Ready"
       }
     ],
     "languageModelChatProviders": [
@@ -1086,16 +1086,7 @@
           "icon": "terminal"
         }
       ]
-    },
-    "chatAgents": [
-      {
-        "path": "./resources/agents/xcsh.agent.md",
-        "when": "xcsh.nativeF5Ready && !xcsh.usesNativeChat",
-        "sessionTypes": [
-          "local"
-        ]
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -1153,6 +1144,7 @@
   "dependencies": {
     "@f5-sales-demo/pi-resource-management": "^23.9.5",
     "@f5-sales-demo/pi-utils": "^23.9.5",
+    "@f5-sales-demo/xcsh-f5-core": "23.10.1",
     "dompurify": "^3.4.17",
     "marked": "^18.1.1",
     "react": "^19.3.1",

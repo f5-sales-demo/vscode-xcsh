@@ -102,20 +102,20 @@ successfully verified write retains its completion result after late
 cancellation. Transport errors expose contract codes and retain their causes
 privately. Mutations are never retried by the adapter.
 
-The manifest declares the F5 tool and a Local-only custom agent. Both
-declarations are guarded by `xcsh.nativeF5Ready` and excluded from Kiro.
-Activation initializes readiness to false; successful native tool registration
-exposes the agent, and disposal clears readiness. The agent file is packaged
-without a model override.
+The manifest declares the F5 tool, guarded by `xcsh.nativeF5Ready`. Activation
+publishes the owned Local agent in eligible VS Code workspaces; Kiro is
+excluded. Activation initializes readiness to false; successful native tool
+registration exposes the agent, and disposal clears readiness. The agent file is
+packaged without a model override.
 
-The package boundary remains structural until the accepted shared package is
-published and pinned. Its actual public declarations have been checked against
-this factory, and private prototypes exercise the real core. Production does not
-yet register the core tool, so the declarations remain unavailable. Do not add a
-private filesystem dependency or treat prototype results as marketplace-only
-acceptance. Native anonymous-session resets and asynchronous agent discovery are
-separate routing considerations. Full startup, multiple-window and draft
-preservation acceptance remain required before enabling the production route.
+The extension pins the published `@f5-sales-demo/xcsh-f5-core@23.10.1` package.
+`bundledNativeF5Options` verifies its protocol and specification receipt before
+creating the actual core. Native registration runs independently of CLI startup;
+optional CLI queries negotiate capabilities only and receive no credential env.
+Package, registration or routing failure leaves native entrypoints gated. Keep
+source, prototype, installed VSIX and marketplace acceptance distinct. Native
+anonymous-session resets and asynchronous agent discovery require real editor
+tests, including startup, multiple windows and draft preservation.
 
 ## Native chat router preparation
 
@@ -156,8 +156,8 @@ tool's readiness separately. The workspace document persists after extension
 removal; automatic file cleanup and full disablement/removal acceptance remain
 open. An edited or removed document is never repaired by `verify`.
 
-The source adapter and managed registration remain unwired. A stable workspace
-URI passed prototype upgrades; extension-version-dependent agent URIs failed.
-The production readiness guard remains disabled until the published core and
-complete routing lifecycle qualify. See the campaign receipt for accepted and
+`activateXcsh` wires the published core, native adapter and managed
+registration. A stable workspace URI passed prototype upgrades;
+extension-version-dependent agent URIs failed. The complete production VSIX
+lifecycle remains a delivery gate. See the campaign receipt for accepted and
 excluded observations.

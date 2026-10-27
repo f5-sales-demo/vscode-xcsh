@@ -119,14 +119,35 @@ suite('Tree View Test Suite', () => {
 });
 
 suite('Editor compatibility', () => {
+  test('keeps native operations behind explicit context activation', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    if (vscode.env.appName === 'Kiro') {
+      assert.strictEqual(await vscode.commands.executeCommand('xcsh.xcsh.openPanel'), false);
+    } else if (
+      typeof vscode.lm?.invokeTool === 'function' &&
+      commands.includes('workbench.action.chat.openNewChatSessionInPlace.local')
+    ) {
+      await assert.rejects(
+        Promise.resolve(
+          vscode.lm.invokeTool('xcsh-f5', { input: { action: 'discover' }, toolInvocationToken: undefined }),
+        ),
+        /NO_ACTIVE_CONTEXT/,
+      );
+    }
+  });
+
   test('opens Contexts and records actual optional APIs', async () => {
     await vscode.commands.executeCommand('xcsh.profiles.focus');
     const extension = vscode.extensions.getExtension('f5-sales-demo.xcsh');
     assert.ok(extension?.isActive);
     assert.strictEqual(vscode.extensions.all.filter((candidate) => candidate.packageJSON.name === 'xcsh').length, 1);
     const commands = await vscode.commands.getCommands(true);
-    const usesNativeChat = vscode.env.appName === 'Kiro';
-    if (usesNativeChat) {
+    const usesKiroChat = vscode.env.appName === 'Kiro';
+    const nativeChatAvailable = usesKiroChat
+      ? commands.includes('kiroAgent.focusChatInput')
+      : commands.includes('workbench.action.chat.openNewChatSessionInPlace.local');
+    const usesNativeChat = usesKiroChat || (nativeChatAvailable && typeof vscode.lm?.registerTool === 'function');
+    if (usesKiroChat) {
       assert.ok(commands.includes('kiroAgent.focusChatInput'), 'Native Kiro chat must be available');
       const models = await vscode.lm.selectChatModels();
       assert.ok(
@@ -134,7 +155,7 @@ suite('Editor compatibility', () => {
         'Kiro must own sidebar model selection',
       );
     }
-    if (usesNativeChat) {
+    if (usesKiroChat) {
       await vscode.commands.executeCommand('xcsh.xcsh.openPanel');
     }
     const output = process.env.XCSH_EDITOR_API_RECEIPT;
@@ -149,7 +170,7 @@ suite('Editor compatibility', () => {
             extensionVersion: extension.packageJSON.version,
             active: extension.isActive,
             usesNativeChat,
-            nativeChatAvailable: commands.includes('kiroAgent.focusChatInput'),
+            nativeChatAvailable,
             chatParticipant: typeof vscode.chat?.createChatParticipant === 'function',
             languageModelTools: typeof vscode.lm?.registerTool === 'function',
             languageModelProvider: typeof vscode.lm?.registerLanguageModelChatProvider === 'function',

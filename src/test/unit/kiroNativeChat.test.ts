@@ -27,7 +27,7 @@ describe('Kiro native sidebar routing', () => {
     'gates %s without opening ordinary chat or modifying a draft',
     async (command) => {
       expect(registerKiroChatCommands(context())).toBe(true);
-      await handlers.get(command)?.({ name: 'sample', content: '{"metadata":{"name":"sample"}}' });
+      expect(await handlers.get(command)?.({ name: 'sample', content: '{"metadata":{"name":"sample"}}' })).toBe(false);
       expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
         'xcsh specialist chat is unavailable in this Kiro version. Contexts and resource views remain available.',
       );

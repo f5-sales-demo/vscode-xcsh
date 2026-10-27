@@ -10,7 +10,7 @@ const editorPath = process.env.VSCODE_TEST_EXECUTABLE;
 export default defineConfig({
   files: 'out/test/integration/extension.test.js',
   version: 'stable',
-  workspaceFolder: '.',
+  workspaceFolder: process.env.VSCODE_TEST_WORKSPACE_DIR || '.',
   ...(editorPath ? { useInstallation: { fromPath: editorPath } } : {}),
   launchArgs: [
     ...(userDataDir ? [`--user-data-dir=${userDataDir}`] : []),

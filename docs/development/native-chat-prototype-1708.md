@@ -443,8 +443,9 @@ once and never retry a rejected write.
 The document persists when a registration instance is disposed because other
 windows and native history share its URI. Native tool readiness is revoked
 separately. Automatic document removal, full disablement/removal behavior and
-production wiring remain open acceptance gates. The shared package remains
-unpublished and unpinned, both PRs remain drafts, and Kiro remains gated.
+production wiring remained open acceptance gates at that checkpoint. The shared
+package was unpublished and unpinned and both PRs were drafts. Kiro remains
+gated.
 
 The managed route also completed an actual GPT specification operation. Its
 60-second inspector wait timed out, but a subsequent read-only native UI capture
@@ -480,3 +481,33 @@ draft, model and primary unchanged. The task-owned document was restored after
 that test. Opus retained its model and primary across upgrade, but its draft
 gained an unexplained suffix, so its draft-equality check failed. Full lifecycle
 acceptance remains open; these failures do not authorize production routing.
+
+## Published core and production activation, October 27
+
+Core extraction PR #5075 merged. The normal v23.10.1 release workflow published
+`@f5-sales-demo/xcsh-f5-core@23.10.1` after both macOS signing lanes passed. Its
+downloaded registry tarball verified against npm's SHA-512 integrity; SHA-256 is
+`5c08b645453bae7c06e8ba67447f6949658f40995e097249d67f0fb7e14f7ad6`. The packaged
+receipt binds source commit `0be74fd9b3faa4e79b31abe4d32f4c8d237b068d` to
+specification 12.5.1 and projection hash
+`3f62329f0e12ecae1789d5579ba513c31589e3ac44e0bcf74d8a14e9720692e3`.
+
+Both published Node exports performed actual specification validation, field
+description, create, inspect, update and delete against synthetic transport.
+Twenty-four safety tests ran against the downloaded bundle, including exact
+approval, stale binding, credential rotation, cancellation, concurrent
+execution, persistence failure and uncertain mutation. No cloud resources were
+changed.
+
+Production activation now uses that exact pinned package, registers the native
+tool and managed workspace agent before optional CLI queries, and avoids the CLI
+RPC agent loop on the native route. Registration conflicts and an unsupported
+package fail closed. The tool is available only after routing registration
+completes. Kiro remains gated. Prototype 0.0.28 demonstrated real ContextManager
+activation, both requested models, tool revocation and reload, and an exactly
+approved synthetic create with independent readback; it does not prove the
+packaged production entrypoint.
+
+Source and published-core evidence does not complete installed production VSIX
+or released extension acceptance. Multiple windows, drafts, attachments,
+disablement/removal and the same VSIX in both editors remain delivery gates.
