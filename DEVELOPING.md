@@ -134,6 +134,14 @@ Registration preserves existing handlers and rolls back a partial conflict.
 Registered routing commands return `true` on success and `false` after a
 rejected operation; integration clients must check that result.
 
+Resource delivery uses the dedicated native `workbench.action.chat.attachFile`
+action after selecting and revalidating xcsh. Passing nested `attachFiles` to
+the custom-agent selection command was ignored in an existing Local
+conversation. An editor without the dedicated action rejects attachment before
+changing chat or creating a snapshot. Native editor typing and programmatic
+partial queries have different draft persistence behavior; qualify actual typing
+and file chips through reload, without submitting drafts.
+
 `ManagedWorkspaceAgent` prepares a stable `.github/agents/xcsh.agent.md` URI in
 trusted, local, single-root VS Code workspaces only. Pass the packaged,
 version-neutral instructions and readiness of the registered core tool. Initial

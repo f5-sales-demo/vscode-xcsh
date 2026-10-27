@@ -26,7 +26,11 @@ beforeEach(async () => {
   jest.mocked(vscode.commands.executeCommand).mockResolvedValue(undefined);
   jest
     .mocked(vscode.commands.getCommands)
-    .mockResolvedValue(['workbench.action.chat.openxcsh', 'workbench.action.chat.openNewChatSessionInPlace.local']);
+    .mockResolvedValue([
+      'workbench.action.chat.openxcsh',
+      'workbench.action.chat.openNewChatSessionInPlace.local',
+      'workbench.action.chat.attachFile',
+    ]);
 });
 afterEach(async () => {
   router.dispose();
@@ -101,16 +105,30 @@ it('creates Local first when the current harness does not expose custom agents',
 it('attaches a private immutable resource file without sending or replacing draft text', async () => {
   await router.attach({ name: '../../load-balancer', content: '{"metadata":{"name":"sample"}}' });
   const calls = jest.mocked(vscode.commands.executeCommand).mock.calls;
-  expect(calls).toHaveLength(3);
-  const options = calls[2]?.[1] as { mode: string; attachFiles: vscode.Uri[] };
-  expect(options.mode).toBe(agent.toString());
-  expect(options.attachFiles).toHaveLength(1);
-  expect(options.attachFiles[0]?.fsPath.startsWith(storage)).toBe(true);
-  expect(await readFile(options.attachFiles[0]!.fsPath, 'utf8')).toBe('{"metadata":{"name":"sample"}}');
-  expect(options).not.toHaveProperty('isPartialQuery');
-  expect(options).not.toHaveProperty('query');
+  expect(calls).toHaveLength(4);
+  expect(calls[2]).toEqual(['workbench.action.chat.openxcsh', { mode: agent.toString() }]);
+  expect(calls[3]?.[0]).toBe('workbench.action.chat.attachFile');
+  const file = calls[3]?.[1] as { fsPath: string; scheme: string } | undefined;
+  if (file?.scheme !== 'file') {
+    throw new Error('Expected native attachment URI');
+  }
+  expect(file.fsPath.startsWith(storage)).toBe(true);
+  expect(await readFile(file.fsPath, 'utf8')).toBe('{"metadata":{"name":"sample"}}');
+  for (const [, options] of calls.slice(0, 3)) {
+    if (options !== undefined) {
+      expect(options).not.toHaveProperty('isPartialQuery');
+      expect(options).not.toHaveProperty('query');
+    }
+  }
   router.dispose();
-  expect(await readFile(options.attachFiles[0]!.fsPath, 'utf8')).toContain('sample');
+  expect(await readFile(file.fsPath, 'utf8')).toContain('sample');
+});
+
+it('rejects unavailable native file attachment before changing chat or creating files', async () => {
+  jest.mocked(vscode.commands.getCommands).mockResolvedValue(['workbench.action.chat.openxcsh']);
+  await expect(router.attach({ name: 'sample', content: '{}' })).rejects.toThrow('NATIVE_ATTACHMENT_UNAVAILABLE');
+  expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+  expect(await readdir(storage)).toEqual([]);
 });
 
 it('rejects malformed or oversized attachments before opening native chat or writing a file', async () => {

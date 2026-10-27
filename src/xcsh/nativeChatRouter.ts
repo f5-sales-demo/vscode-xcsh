@@ -78,12 +78,7 @@ export class NativeChatRouter implements vscode.Disposable {
     }
   }
 
-  private async selectAgent(
-    workspace: string,
-    token?: vscode.CancellationToken,
-    attachments?: vscode.Uri[],
-    clearDraft = false,
-  ): Promise<void> {
+  private async selectAgent(workspace: string, token?: vscode.CancellationToken, clearDraft = false): Promise<void> {
     await this.waitForAgent(workspace, token);
     if (this.options.verifyAgent) {
       await this.options.verifyAgent(token);
@@ -91,7 +86,6 @@ export class NativeChatRouter implements vscode.Disposable {
     this.check(workspace, token);
     await vscode.commands.executeCommand('workbench.action.chat.openxcsh', {
       mode: this.options.agentUri.toString(),
-      ...(attachments ? { attachFiles: attachments } : {}),
       ...(clearDraft ? { query: ' ', isPartialQuery: true } : {}),
     });
   }
@@ -129,7 +123,7 @@ export class NativeChatRouter implements vscode.Disposable {
       this.check(workspace, token);
       // Native empty-session reuse can retain its draft. Only the explicit New
       // Session entrypoint initializes an empty, unsubmitted input.
-      await this.selectAgent(workspace, token, undefined, true);
+      await this.selectAgent(workspace, token, true);
     }, token);
   }
 
@@ -148,6 +142,11 @@ export class NativeChatRouter implements vscode.Disposable {
         }
       } catch {
         throw new Error('ATTACHMENT_INVALID');
+      }
+      const commands = await vscode.commands.getCommands(true);
+      this.check(workspace, token);
+      if (!commands.includes('workbench.action.chat.attachFile')) {
+        throw new Error('NATIVE_ATTACHMENT_UNAVAILABLE');
       }
       await vscode.commands.executeCommand('workbench.action.chat.open');
       this.check(workspace, token);
@@ -170,7 +169,12 @@ export class NativeChatRouter implements vscode.Disposable {
         await file.close();
       }
       this.check(workspace, token);
-      await this.selectAgent(workspace, token, [vscode.Uri.file(filePath)]);
+      await this.selectAgent(workspace, token);
+      this.check(workspace, token);
+      // The dedicated file action handles an existing Local conversation. The
+      // custom-agent action can ignore nested attachFiles in that conversation.
+      await vscode.commands.executeCommand('workbench.action.chat.attachFile', vscode.Uri.file(filePath));
+      this.check(workspace, token);
     }, token);
   }
 }

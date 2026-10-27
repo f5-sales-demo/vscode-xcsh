@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-27",
+  "sourceCommit": "9cf16740fbd4f168a1275abac410e7c92751d081",
+  "artifactSha256": "6a1234869c98870cfe417713b9c97730e93c83dec779bd90409a036c72c2a7d2",
+  "corePackage": "@f5-sales-demo/xcsh-f5-core@23.10.1",
+  "coreTarballSha256": "5c08b645453bae7c06e8ba67447f6949658f40995e097249d67f0fb7e14f7ad6",
+  "specificationVersion": "12.5.1",
+  "specificationSha256": "3f62329f0e12ecae1789d5579ba513c31589e3ac44e0bcf74d8a14e9720692e3",
+  "embeddedNode": "24.21.0",
+  "externalCliNodeBunExcluded": true,
+  "prototypeExtensionInactive": true,
+  "vsCode": {
+    "version": "1.143.1",
+    "primaryAgent": "xcsh",
+    "acceptedHarness": "Local",
+    "models": ["claude-opus-5-5", "gpt-6.1-sol"],
+    "actualSpecificationCallsThroughBothModels": true,
+    "syntheticCreate": {
+      "planHash": "370f779b1b18bc83707b2e39a3a57e08790986fb3cc1f42c1ec7d3c51b0c5052",
+      "completeConfigurationMatchedPreparedReceipt": true,
+      "nativeApproval": true,
+      "postRequests": 1,
+      "independentReadback": true,
+      "receiptStage": "complete"
+    },
+    "canceledApprovalWrites": 0,
+    "changedContextApprovalWrites": 0,
+    "nativeFileCommandExperiment": {
+      "command": "workbench.action.chat.attachFile",
+      "existingLocalConversation": true,
+      "typedDraftAttachmentPrimaryModelSurviveReload": true,
+      "automaticSubmission": false
+    }
+  },
+  "kiro": {
+    "apiVersion": "1.131.0",
+    "sameArtifact": true,
+    "normalExtensionHostActivationVerified": true,
+    "openPanelNewSessionAttachmentReturnFalse": true,
+    "contextsAvailable": true,
+    "gatewayProviderRegistered": false,
+    "advancedChatGated": true
+  },
+  "acceptance": {
+    "classification": "demonstrated installed-artifact behavior and supported native command experiment",
+    "fullInstalledArtifactAcceptance": false,
+    "releasedExtensionAcceptance": false,
+    "remaining": [
+      "production dedicated attachment command wiring in the next artifact",
+      "fresh unsent Local session model preservation across reload",
+      "multiple windows and CLI enrichment",
+      "disablement and removal",
+      "both released registry artifacts"
+    ]
+  },
+  "privacy": "Raw UI, requests, profiles, transport events and receipts remain private. Synthetic writes used only a task-owned HTTPS loopback API. Fixture fetch settings were restored."
+}
