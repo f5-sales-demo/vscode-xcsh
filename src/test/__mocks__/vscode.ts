@@ -188,6 +188,7 @@ export const workspace = {
     update: jest.fn(),
   })),
   workspaceFolders: [],
+  isTrusted: true,
   onDidChangeConfiguration: jest.fn(),
   openTextDocument: jest.fn(),
   fs: {
@@ -605,6 +606,16 @@ export class MockStatusBarItem {
 
 // Mock WorkspaceEdit
 export class WorkspaceEdit {
+  readonly creations: Array<{
+    uri: ReturnType<typeof Uri.file>;
+    options?: { overwrite?: boolean; ignoreIfExists?: boolean; contents?: Uint8Array };
+  }> = [];
+  createFile(
+    uri: ReturnType<typeof Uri.file>,
+    options?: { overwrite?: boolean; ignoreIfExists?: boolean; contents?: Uint8Array },
+  ): void {
+    this.creations.push({ uri, options });
+  }
   private edits: Array<{ uri: ReturnType<typeof Uri.file>; range: Range; newText: string }> = [];
   replace(uri: ReturnType<typeof Uri.file>, range: Range, newText: string): void {
     this.edits.push({ uri, range, newText });

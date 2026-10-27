@@ -11,6 +11,7 @@ export interface NativeChatRouterOptions {
   readonly isAvailable: () => boolean;
   readonly workspace: () => string | undefined;
   readonly prepareModels?: () => Promise<void>;
+  readonly verifyAgent?: (token?: vscode.CancellationToken) => Promise<void>;
   readonly agentRegistrationTimeoutMs?: number;
 }
 
@@ -46,6 +47,10 @@ export class NativeChatRouter implements vscode.Disposable {
     const workspace = this.options.workspace();
     const result = this.pending.then(async () => {
       this.check(workspace, token);
+      if (this.options.verifyAgent) {
+        await this.options.verifyAgent(token);
+        this.check(workspace, token);
+      }
       if (this.options.prepareModels) {
         await this.options.prepareModels();
         this.check(workspace, token);
@@ -80,6 +85,9 @@ export class NativeChatRouter implements vscode.Disposable {
     clearDraft = false,
   ): Promise<void> {
     await this.waitForAgent(workspace, token);
+    if (this.options.verifyAgent) {
+      await this.options.verifyAgent(token);
+    }
     this.check(workspace, token);
     await vscode.commands.executeCommand('workbench.action.chat.openxcsh', {
       mode: this.options.agentUri.toString(),
@@ -113,6 +121,10 @@ export class NativeChatRouter implements vscode.Disposable {
       this.check(workspace, token);
       // This native picker command creates Local directly. newLocalChat can be
       // redirected to the Copilot harness by editor preferences/treatments.
+      if (this.options.verifyAgent) {
+        await this.options.verifyAgent(token);
+        this.check(workspace, token);
+      }
       await vscode.commands.executeCommand('workbench.action.chat.openNewChatSessionInPlace.local', 'sidebar');
       this.check(workspace, token);
       // Native empty-session reuse can retain its draft. Only the explicit New
@@ -187,15 +199,17 @@ export async function registerNativeChatCommands(
     return false;
   }
   const router = new NativeChatRouter(options);
-  const invoke = async (run: () => Promise<void>): Promise<void> => {
+  const invoke = async (run: () => Promise<void>): Promise<boolean> => {
     try {
       await run();
+      return true;
     } catch (error) {
       void vscode.window.showWarningMessage(
         error instanceof Error && error.message === 'NATIVE_CHAT_WINDOW_NOT_FOCUSED'
           ? vscode.l10n.t('Focus this workspace window before opening xcsh chat.')
           : vscode.l10n.t('Unable to open xcsh native chat. Verify the active workspace and try again.'),
       );
+      return false;
     }
   };
   const registrations: vscode.Disposable[] = [];

@@ -42,6 +42,39 @@ it('opens the extension-owned agent without supplying a model or replacing a dra
   expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(2);
 });
 
+it('rejects an edited or removed managed agent before touching native chat', async () => {
+  const guarded = new NativeChatRouter({
+    agentUri: agent,
+    storagePath: storage,
+    isAvailable: () => true,
+    workspace: () => workspace,
+    verifyAgent: () => Promise.reject(new Error('NATIVE_AGENT_CONFLICT')),
+  });
+  await expect(guarded.open()).rejects.toThrow('NATIVE_AGENT_CONFLICT');
+  expect(vscode.commands.executeCommand).not.toHaveBeenCalled();
+  guarded.dispose();
+});
+
+it('revalidates the owned agent after native discovery before selecting it', async () => {
+  let intact = true;
+  const guarded = new NativeChatRouter({
+    agentUri: agent,
+    storagePath: storage,
+    isAvailable: () => true,
+    workspace: () => workspace,
+    verifyAgent: () => {
+      return intact ? Promise.resolve() : Promise.reject(new Error('NATIVE_AGENT_CONFLICT'));
+    },
+  });
+  jest.mocked(vscode.commands.getCommands).mockImplementationOnce(() => {
+    intact = false;
+    return Promise.resolve(['workbench.action.chat.openxcsh']);
+  });
+  await expect(guarded.open()).rejects.toThrow('NATIVE_AGENT_CONFLICT');
+  expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+  guarded.dispose();
+});
+
 it('creates a Local session before selecting the exact agent, without submitting input', async () => {
   await router.newSession();
   expect(jest.mocked(vscode.commands.executeCommand).mock.calls).toEqual([
@@ -289,6 +322,33 @@ it('preserves existing command registrations on conflicts', async () => {
     }),
   ).toBe(false);
   expect(vscode.commands.registerCommand).not.toHaveBeenCalled();
+});
+
+it('returns an explicit routing result so command clients cannot mistake a warning for success', async () => {
+  const context = { subscriptions: [] } as unknown as vscode.ExtensionContext;
+  jest.replaceProperty(vscode.env, 'appName', 'Visual Studio Code');
+  jest
+    .mocked(vscode.commands.getCommands)
+    .mockResolvedValue([
+      'workbench.action.chat.open',
+      'workbench.action.chat.openNewChatSessionInPlace.local',
+      'workbench.action.chat.openxcsh',
+    ]);
+  expect(
+    await registerNativeChatCommands(context, {
+      agentUri: agent,
+      storagePath: storage,
+      isAvailable: () => available,
+      workspace: () => workspace,
+    }),
+  ).toBe(true);
+  const openPanel = jest.mocked(vscode.commands.registerCommand).mock.calls[0]?.[1];
+  if (!openPanel) {
+    throw new Error('Missing test command');
+  }
+  expect(await openPanel()).toBe(true);
+  available = false;
+  expect(await openPanel()).toBe(false);
 });
 
 it('rolls back partial registration if another contributor claims a command during activation', async () => {

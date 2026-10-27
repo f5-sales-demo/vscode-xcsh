@@ -131,11 +131,33 @@ An optional `prepareModels` callback must finish native model metadata discovery
 before chat commands run. With the configured LiteLLM provider, query its native
 vendor and reject an empty catalog; never supply a model selector in the router.
 Registration preserves existing handlers and rolls back a partial conflict.
+Registered routing commands return `true` on success and `false` after a
+rejected operation; integration clients must check that result.
 
-The source adapter remains unwired. Prototype evidence supports focused Local
-operations, but the generated agent command can outlive the agent URI in the
-native mode cache during upgrades. Its presence is insufficient proof that the
-exact owned URI is ready. Static prototype agent declarations improved reload
-behavior; the production readiness guard remains disabled until the published
-core and complete routing lifecycle qualify. See the campaign receipt for
-accepted and excluded observations.
+`ManagedWorkspaceAgent` prepares a stable `.github/agents/xcsh.agent.md` URI in
+trusted, local, single-root VS Code workspaces only. Pass the packaged,
+version-neutral instructions and readiness of the registered core tool. Initial
+publication uses `WorkspaceEdit.createFile` with complete contents and both
+`overwrite` and `ignoreIfExists` disabled. A rejected creation is inspected
+once; there is no write retry. The editor API exposes creation to native
+customization discovery; Node-only publication failed fresh-window discovery
+until reload.
+
+Only exact instruction bytes plus the ownership footer qualify for reuse.
+Existing files, user edits and differing instruction versions are preserved and
+rejected. Directories and the final file reject symlinks; verification checks
+file identity, contents and the workspace after asynchronous work. Supply
+`verifyAgent: token => managedAgent.verify(token)` to the router so edits or
+removal stop routing before chat opens and again immediately before selection.
+
+Disposal revokes the registration instance but retains the workspace document:
+other windows and native conversation history share its URI. Revoke the native
+tool's readiness separately. The workspace document persists after extension
+removal; automatic file cleanup and full disablement/removal acceptance remain
+open. An edited or removed document is never repaired by `verify`.
+
+The source adapter and managed registration remain unwired. A stable workspace
+URI passed prototype upgrades; extension-version-dependent agent URIs failed.
+The production readiness guard remains disabled until the published core and
+complete routing lifecycle qualify. See the campaign receipt for accepted and
+excluded observations.

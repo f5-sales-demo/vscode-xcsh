@@ -411,3 +411,72 @@ The shared package remains unpublished and unpinned in production. The source
 router remains unwired and Kiro delivery remains gated. Both PRs remain drafts;
 merge, publication, one production VSIX in both editors and marketplace artifact
 acceptance remain separate open gates.
+
+## Stable workspace agent registration on October 27
+
+The documented
+[workspace custom-agent location](https://code.visualstudio.com/docs/copilot/customization/custom-agents)
+provides a version-neutral `.github/agents/xcsh.agent.md` URI. Prototype 0.0.22
+used that path; upgrade to 0.0.23 retained the same document and selected xcsh.
+Actual F5 describe operations returned the bundled map constraint through GPT
+before and after upgrade, and through Opus in a second Local window. An exact
+captured resource draft, attachment, selected model and primary agent survived
+reload and Open Panel. A different primary agent's draft survived switching to
+xcsh. A duplicate display name still selected the ALPHA document through its
+exact URI. These are demonstrated prototype results from private receipts; they
+do not qualify a production artifact.
+
+`ManagedWorkspaceAgent` now prepares that path using supported public APIs in
+trusted, local, single-root VS Code workspaces. Exact packaged instruction bytes
+plus the ownership footer qualify for reuse. Existing user files, edits and
+different instruction versions are rejected without replacement. Symlinks,
+workspace changes, cancellation and unavailable core readiness stop
+registration. The router verifies ownership before touching chat and again
+before native selection. Simultaneous registrations inspect a competing file
+once and never retry a rejected write.
+
+| Initial publication candidate                       | Classification and evidence                                                                                                                                                                                                                                                    |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Node-only exclusive publication, prototype 0.0.24   | Failed startup discovery. The complete owned file verified, but the native agent command appeared only after reload. No synthetic request was submitted.                                                                                                                       |
+| Public `WorkspaceEdit.createFile`, prototype 0.0.25 | Supported file API with complete initial contents and overwrite disabled. Demonstrated first-window startup discovery and automatic xcsh selection without reload, preserving Opus. The actual bundled F5 adapter returned the map constraint with external runtimes excluded. |
+
+The document persists when a registration instance is disposed because other
+windows and native history share its URI. Native tool readiness is revoked
+separately. Automatic document removal, full disablement/removal behavior and
+production wiring remain open acceptance gates. The shared package remains
+unpublished and unpinned, both PRs remain drafts, and Kiro remains gated.
+
+The managed route also completed an actual GPT specification operation. Its
+60-second inspector wait timed out, but a subsequent read-only native UI capture
+confirmed the completed tool invocation and final map response. The request was
+not resubmitted. Both operations used the editor's embedded Node 24.21.0 with
+external xcsh, Node and Bun excluded from PATH.
+
+Upgrades to 0.0.26 and 0.0.27 preserved GPT's selected model, primary agent and
+exact captured draft. That draft contained an unexplained suffix, so original
+text equality is excluded. Attachment attempts stopped at the public focus
+guard; they do not qualify attachment acceptance for managed registration.
+Failed background preflights submitted nothing. Routing commands now return an
+explicit boolean result so a warning cannot be mistaken for success.
+
+Source validation passed 97 suites and 1,454 unit/webview tests, including 16
+managed-registration tests and 22 router tests. Package and complete type
+checks, lint, dependency audit, staged PII enforcement and gitleaks passed.
+Installed editor-host suites passed nine checks each in Visual Studio Code and
+Kiro; these cover activation, Contexts and optional APIs, not full specialist
+acceptance.
+
+Final private prototype 0.0.27 has VSIX SHA-256
+`9f656d47b029f146d9468bc7382ca58690d2096b0a433101d1da3a43b3752cb3`. The
+unchanged core hash is recorded above. Its managed-registration and router
+bundles come from the tested source; publication and production wiring remain
+unaccepted. Exact-head checks were re-read: extension head `b0b6b31` had 28
+successful checks and core head `d93b3e3` had 54. Commit-status entries and
+workflow checks were both counted.
+
+The final installed prototype rejected a synthetic user edit with
+`NATIVE_AGENT_CONFLICT`; Open Panel returned `false` and left the captured Opus
+draft, model and primary unchanged. The task-owned document was restored after
+that test. Opus retained its model and primary across upgrade, but its draft
+gained an unexplained suffix, so its draft-equality check failed. Full lifecycle
+acceptance remains open; these failures do not authorize production routing.
