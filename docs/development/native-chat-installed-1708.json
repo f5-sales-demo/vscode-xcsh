@@ -144,5 +144,26 @@
     "editorHostChecksEach": 10,
     "editorHosts": ["Visual Studio Code", "Kiro"],
     "finalImplementationSourceCommit": "d8964ce142457e9473086f075722c00694eec3a1"
+  },
+  "dependencySecurityFollowUp": {
+    "advisory": "GHSA-gcqx-w48m-w2h4",
+    "upstreamPatchedReleaseAvailable": false,
+    "dependencyScope": "Jest development tooling",
+    "hardenedSource": "tooling/deepmerge",
+    "upstreamPoisoningReproduced": true,
+    "prototypeSafetyAndApiChecks": 7,
+    "completeUnitWebviewTests": 1484,
+    "cleanLockfileInstallVerified": true,
+    "vulnerabilitiesAfterRepair": 0,
+    "auditSuppressed": false,
+    "toolingExcludedFromVsix": true,
+    "hardenedVsixSha256": "a19da7b77688b8269a46d5e701b99461ff453182a415b542d0327f12285a4ae0",
+    "differentArtifactEntries": ["extension/package.json"],
+    "runtimeAgentAndRuntimeManifestIdentical": true,
+    "installedInBothEditors": true,
+    "installedManifestComparedExcludingNativeMetadata": true,
+    "vsCodeReloadPreservedIndependentModels": true,
+    "kiroGatesRetested": true,
+    "fullSpecialistAcceptance": false
   }
 }

@@ -1112,7 +1112,7 @@
     "lint:biome": "biome check --no-errors-on-unmatched src scripts webview/src",
     "lint:fix": "eslint src scripts webview/src --fix",
     "test": "npm run test:unit",
-    "test:unit": "jest",
+    "test:unit": "node --test tooling/deepmerge/test.cjs && jest",
     "test:live:read-only": "XCSH_LIVE_TESTS=read-only jest --selectProjects node --runInBand",
     "test:live:crud": "XCSH_LIVE_TESTS=crud jest --selectProjects node --runInBand",
     "verify:integration-tests": "tsx scripts/verify-integration-tests.ts",
@@ -1162,7 +1162,8 @@
       "js-yaml": "5.5.0"
     },
     "@azure/msal-node": "7.1.1",
-    "katex": "0.19.1"
+    "katex": "0.19.1",
+    "deepmerge": "$deepmerge"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
@@ -1203,7 +1204,8 @@
     "typescript": "7.0.2",
     "vite": "^8.3.5",
     "webpack": "^5.112.2",
-    "webpack-cli": "^7.2.3"
+    "webpack-cli": "^7.2.3",
+    "deepmerge": "file:tooling/deepmerge"
   },
   "workspaces": [
     "tooling/eslint"

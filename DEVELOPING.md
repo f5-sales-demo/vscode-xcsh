@@ -24,6 +24,15 @@ tests when changing compatibility.
 
 ## Isolated Mac editor launches
 
+Jest's development-only `deepmerge` dependency uses the local hardened fork in
+`tooling/deepmerge` while GHSA-gcqx-w48m-w2h4 has no patched upstream release.
+The fork retains the upstream API and license, but defines own data properties
+instead of invoking inherited setters during destination writes. Its provenance
+records the original source hash. `test:unit` runs prototype-poisoning and API
+compatibility regressions before Jest. Keep the dependency security audit
+enabled; remove the fork only after verifying a compatible upstream fix. The
+complete tooling directory is excluded from the VSIX.
+
 Run installed apps only from `/Applications`. Managed hosts may require approval
 for copied apps, so never relocate an editor for testing.
 
