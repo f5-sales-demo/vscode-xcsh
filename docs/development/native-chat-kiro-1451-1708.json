@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-27",
+  "issue": 1708,
+  "editor": {
+    "name": "Kiro",
+    "version": "1.4.51",
+    "commit": "d46fd4821d97dc73a01102ccfb497473723cf65b",
+    "embeddedApi": "1.131.0"
+  },
+  "evidenceLayer": "prototype and installed bytes; editor-host verification recorded separately",
+  "installedArtifact": {
+    "version": "10.2610.25014446",
+    "vsixSha256": "a19da7b77688b8269a46d5e701b99461ff453182a415b542d0327f12285a4ae0",
+    "entriesCompared": 88,
+    "allEntriesMatch": true,
+    "manifestComparisonExcludesOnlyEditorInstallationMetadata": true,
+    "sameVersionOlderRuntimeWasReplaced": true
+  },
+  "prototype": {
+    "extensionVersion": "0.0.3",
+    "sourceSha256": "ed69e52754803a504620fcde1540813201ba42e1fd7917eec53bdfcdb6eef50c",
+    "serverSha256": "46e40cf6a5f814e75085da6824a73b92c7ef18b925ffa592716c19abe586a02c",
+    "taskOwnedWorkspace": true,
+    "nativeSignInReusedInPlace": true,
+    "credentialsTransferred": false,
+    "modelOverride": false,
+    "selectedModel": "Auto",
+    "underlyingAutoModelIdentityNotEstablished": true,
+    "publicConfigurationLabels": ["ALPHA_1708_KIRO_1451", "BETA_1708_KIRO_1451"]
+  },
+  "routing": {
+    "nativeInputArguments": {
+      "tested": ["agent", "agentId", "modeId", "combined"],
+      "draftsReachedNativeInput": true,
+      "primaryAgent": "Default",
+      "selectedModel": "Auto",
+      "submitted": false,
+      "classification": "failed primary selection"
+    },
+    "localSessionCreation": {
+      "command": "kiroAgent.sessions.create",
+      "arguments": ["agent", "agentId", "modeId", "agentMode"],
+      "returnedSessionId": true,
+      "exactReturnedSessionSwitchAccepted": true,
+      "primaryAgent": "Default",
+      "submitted": false,
+      "classification": "failed primary selection"
+    },
+    "slashInvocation": {
+      "rawSlashInsertedAsDraft": true,
+      "nativeMenuRecognizedXcsh": true,
+      "nativeMenuLabel": "task to delegate",
+      "nativeTokenSelectedBeforeSyntheticSubmission": true,
+      "primaryAgentAfterSubmission": "Default",
+      "prototypeMarkerNotReturned": true,
+      "delegationNotDemonstrated": true,
+      "classification": "failed primary selection"
+    },
+    "sessionConfiguration": {
+      "nativeExtensionExports": [],
+      "supportedExactSessionConfigSetterIdentified": false,
+      "internalFunctionsProductionDependency": false,
+      "classification": "supported UI; automatic integration unproven"
+    },
+    "defaultFallback": {
+      "manualXcshSelection": true,
+      "nativeNewSessionPrimary": "Default",
+      "extensionNewSessionPrimary": "Default",
+      "defaultSettingControlFound": false,
+      "selectedModelPreserved": true,
+      "firstReloadInterferenceAttemptExcluded": true,
+      "restartAndMultipleWindowDefaultAcceptance": false,
+      "classification": "failed qualification"
+    },
+    "openInput": {
+      "existingXcshRetained": true,
+      "existingDefaultRetained": true,
+      "draftAndAttachmentPreserved": true,
+      "modelPreserved": true
+    },
+    "resourceDraft": {
+      "syntheticResourceAttached": true,
+      "submitted": false,
+      "reloadDraftPreserved": false,
+      "reloadAttachmentPreserved": false,
+      "reloadModel": "Auto",
+      "reloadPrimary": "Default"
+    }
+  },
+  "transport": {
+    "nativeLanguageModelTool": {
+      "registered": true,
+      "directEditorApiInvocationObserved": true,
+      "specialistInvocationObserved": false,
+      "classification": "demonstrated API registration; failed specialist transport"
+    },
+    "streamableHttpMcp": {
+      "extensionHostEndpoint": true,
+      "loopbackOnly": true,
+      "missingTokenStatus": 401,
+      "incorrectTokenStatus": 401,
+      "authenticatedStatus": 200,
+      "manuallySelectedPrimary": "xcsh",
+      "identityInvocations": 1,
+      "returnedMarker": "XCSH_PROTOTYPE_IDENTITY",
+      "returnedConfigurationLabel": "ALPHA_1708_KIRO_1451",
+      "approval": "one-time native Allow; no persistent permission change",
+      "canceledApprovalAdditionalIdentityCalls": 0,
+      "endpointStopped": true,
+      "agentTransportFilesReset": true,
+      "classification": "demonstrated documented transport only"
+    }
+  },
+  "limitations": [
+    "Initial instruction-marker and identity-reassignment prompts were rejected or did not return the expected marker; preserved as failures.",
+    "The revised MCP test returned a public configuration label after the model invoked the identity tool.",
+    "No packaged F5 operation was attempted in Kiro.",
+    "No qualifying automatic selection or one-time default route has been established.",
+    "Selected Auto value preservation does not identify the underlying model."
+  ],
+  "decision": {
+    "advancedKiroChatGated": true,
+    "perSessionSelectionNotSubstituted": true,
+    "prRemainsDraft": true,
+    "mergeAndReleaseAcceptanceIncomplete": true
+  },
+  "privacy": {
+    "rawEvidencePrivate": true,
+    "publishedEndpointsTokensAndConversationIds": false
+  },
+  "sourceVerification": {
+    "editorHost": {
+      "editor": "Kiro",
+      "version": "1.4.51",
+      "testsPassed": 10,
+      "allThreeNativeEntrypointsReturnFalse": true,
+      "contextsOpen": true,
+      "gatewayProviderExcluded": true,
+      "externalCliNodeBunExcludedInEditorHost": true,
+      "evidenceLayer": "source editor-host; not marketplace acceptance"
+    },
+    "focusedKiroUnitTestsPassed": 5,
+    "integrationCompileAndInventoryPassed": true,
+    "unitSuitesPassed": 101,
+    "unitAndWebviewTestsPassed": 1484,
+    "hardenedToolingRegressionTestsPassed": 7,
+    "allTypeChecksPassed": true,
+    "lintPassed": true,
+    "dependencyAuditVulnerabilities": 0,
+    "stagedPrivacyEnforcementPassed": true,
+    "stagedSecretScanPassed": true
+  }
+}

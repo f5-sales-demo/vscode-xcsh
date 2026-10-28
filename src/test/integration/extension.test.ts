@@ -122,7 +122,9 @@ suite('Editor compatibility', () => {
   test('keeps native operations behind explicit context activation', async () => {
     const commands = await vscode.commands.getCommands(true);
     if (vscode.env.appName === 'Kiro') {
-      assert.strictEqual(await vscode.commands.executeCommand('xcsh.xcsh.openPanel'), false);
+      for (const command of ['xcsh.xcsh.openPanel', 'xcsh.xcsh.newSession', 'xcsh.attachToChat']) {
+        assert.strictEqual(await vscode.commands.executeCommand(command), false, `${command} must stay gated`);
+      }
     } else if (
       typeof vscode.lm?.invokeTool === 'function' &&
       commands.includes('workbench.action.chat.openNewChatSessionInPlace.local')

@@ -535,3 +535,50 @@ DEVELOPING.md; the extension never sets them or selects a model. Kiro specialist
 selection remains unqualified and its chat entrypoints remain gated. The PR
 remains draft because both specialist gates have not passed. This follow-up does
 not claim extension marketplace publication or released-artifact acceptance.
+
+## Kiro 1.4.51 follow-up
+
+The [version-specific receipt](native-chat-kiro-1451-1708.json) records the
+October 27 campaign in Kiro 1.4.51, commit
+`d46fd4821d97dc73a01102ccfb497473723cf65b`. The signed-in profile was reused in
+place, with task-owned agents and a command probe loaded through the supported
+extension development host. No credentials were transferred and no model was
+selected by the probe. The default profile contained an older runtime with the
+same extension version; it was replaced by the verified hardened-tooling VSIX.
+All 88 installed extension entries matched that artifact, excluding only editor
+installation metadata from the manifest comparison.
+
+| Candidate                | Result                                                                                                                                                                                                                   | Classification                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| Native command arguments | Separate `agent`, `agentId`, `modeId`, and combined tests inserted the exact drafts, but primary selection remained Default.                                                                                             | Failed primary selection                               |
+| Local session creation   | The exact returned session was opened successfully; named-agent arguments still left its primary selection on Default.                                                                                                   | Failed primary selection                               |
+| Slash invocation         | The native menu recognized xcsh as a task to delegate. Raw text and native-token synthetic submissions retained Default and did not return the expected prototype marker.                                                | Failed primary selection; delegation not demonstrated  |
+| Session configuration    | Native selector changes worked, but the extension exported no integration interface and no supported setter bound to the exact native session was identified.                                                            | Supported UI; automatic integration unproven           |
+| Persistent default       | No default-setting control was found. Native and extension-created new sessions returned to Default.                                                                                                                     | Failed fallback qualification                          |
+| Native tool              | The registered identity tool passed a direct editor API call; the manually selected specialist reported it unavailable and did not invoke it.                                                                            | Demonstrated registration; failed specialist transport |
+| Streamable HTTP MCP      | After manual xcsh selection and one-time native approval, the extension-host endpoint recorded one identity call and returned both transport and public configuration markers. Missing or incorrect tokens returned 401. | Demonstrated documented transport only                 |
+
+The new engine ignored the initial agent JSON because it contained the CLI-only
+`allowedTools` field without native `permissions`. Removing that field restored
+discovery. Initial instruction-marker and identity-reassignment prompts were
+rejected or did not return a marker; those failures were preserved. The clean
+MCP result used a public configuration label without reassigning the model's
+identity. A first UI new-session attempt coincided with a reload and was
+excluded; the repeated test verified creation of a distinct Default session.
+
+Open input retained an existing xcsh conversation, and retained a Default
+conversation's synthetic resource draft and attachment. Reload lost that draft
+and attachment. None of the resource drafts was submitted. Auto remained the
+selected model value; this does not identify the underlying model chosen by
+Auto. Canceling a later native MCP approval produced no additional identity
+call. The fixture endpoint was stopped and task agent transport files reset.
+
+All ten source editor-host checks passed in Kiro 1.4.51 with external xcsh, Node
+and Bun excluded from the editor environment. The complete 101 unit/webview
+suites passed 1,484 tests, alongside seven hardened-tooling regressions, all
+type checks, lint, dependency audit, staged privacy enforcement and secret
+scanning. The native-entrypoint check now asserts that Open, New Session and
+Attach all return false. These prototype and source results do not establish
+Kiro packaged F5 operation acceptance, a persistent default across restarts and
+windows, or marketplace acceptance. Kiro specialist delivery remains gated and
+the PR remains draft.

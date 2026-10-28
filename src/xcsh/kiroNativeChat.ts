@@ -3,7 +3,8 @@
 import * as vscode from 'vscode';
 
 /**
- * Kiro 1.4.26 has no supported primary-specialist route or persistent default.
+ * Campaigns in Kiro 1.4.26 and 1.4.51 have not established a supported
+ * primary-specialist route or a qualifying persistent default.
  * Keep extension entrypoints gated until a distinct candidate passes the campaign
  * in docs/development/native-chat-prototype-1708.md. Returning true still reserves
  * these commands and prevents fallback to the CLI chat/provider in Kiro.

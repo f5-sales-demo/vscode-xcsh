@@ -81,6 +81,22 @@ drafts. Contexts and resource views continue to work. See the sanitized
 A future Kiro route must pass the complete campaign before these entrypoints are
 enabled. Native sign-in and selected models remain under editor control.
 
+The Kiro 1.4.51 follow-up reached the native input handler through public editor
+commands, but named-agent arguments and local session creation still opened
+Default. Manual selector changes worked; new sessions did not retain xcsh, and
+no default-setting control was found. A native language-model identity tool
+worked through the editor API but was unavailable to the specialist. An
+authenticated extension-host MCP identity tool worked after manual selection;
+this does not qualify primary-agent routing or packaged F5 operations. See the
+[version-specific receipt](docs/development/native-chat-kiro-1451-1708.json).
+
+Kiro 1.4.51 ignores a JSON agent containing CLI-only `allowedTools` without
+native `permissions`. Use the documented IDE agent schema for test fixtures.
+Keep prototype configuration labels explicitly public; identity reassignment
+wording was rejected by the native model in this campaign. The resource draft
+and attachment survived Open input but were lost after reload, without being
+submitted. Do not infer draft persistence from a command returning successfully.
+
 ## Native LiteLLM model access
 
 VS Code can expose gateway models through its native language-model provider
