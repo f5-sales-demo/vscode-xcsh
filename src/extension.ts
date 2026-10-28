@@ -33,7 +33,7 @@ import { activateXcsh } from './xcsh/index';
 
 let logger: Logger;
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(context: vscode.ExtensionContext): Promise<void> {
   logger = getLogger();
   logger.info('extension.activation.started');
 
@@ -306,11 +306,11 @@ export function activate(context: vscode.ExtensionContext): void {
     void updateHasActiveContext();
   });
 
-  // Activate xcsh shell assistant integration
-  void activateXcsh(context, contextManager);
-
   // Register conflict diagnostics provider
   registerConflictDiagnostics(context);
+
+  // Activation must not finish while native command registration is pending.
+  await activateXcsh(context, contextManager);
 
   logger.info('extension.activation.completed');
 }

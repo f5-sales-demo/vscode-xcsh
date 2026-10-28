@@ -1,0 +1,8 @@
+{
+  "upstreamPackage": "deepmerge@4.3.1",
+  "upstreamRepository": "https://github.com/TehShrike/deepmerge",
+  "upstreamCjsSha256": "2e5160f84a1141bd927264afe4d15766f1e6cf07daef182b37ff53fea121de7d",
+  "advisory": "GHSA-gcqx-w48m-w2h4",
+  "change": "All destination writes define enumerable own data properties without invoking inherited setters.",
+  "scope": "Jest development tooling; excluded from VSIX"
+}

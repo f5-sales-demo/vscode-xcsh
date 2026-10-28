@@ -142,6 +142,7 @@ export const mockExtensionContext = {
 
 // Mock window
 export const window = {
+  state: { focused: true, active: true },
   showInformationMessage: jest.fn().mockResolvedValue(undefined),
   showWarningMessage: jest.fn(),
   showErrorMessage: jest.fn(),
@@ -187,6 +188,7 @@ export const workspace = {
     update: jest.fn(),
   })),
   workspaceFolders: [],
+  isTrusted: true,
   onDidChangeConfiguration: jest.fn(),
   openTextDocument: jest.fn(),
   fs: {
@@ -429,6 +431,11 @@ export class LanguageModelToolResult {
   constructor(public readonly content: unknown[]) {}
 }
 
+export enum LanguageModelChatToolMode {
+  Auto = 1,
+  Required = 2,
+}
+
 // Mock LanguageModelChatMessageRole
 export enum LanguageModelChatMessageRole {
   User = 1,
@@ -599,6 +606,16 @@ export class MockStatusBarItem {
 
 // Mock WorkspaceEdit
 export class WorkspaceEdit {
+  readonly creations: Array<{
+    uri: ReturnType<typeof Uri.file>;
+    options?: { overwrite?: boolean; ignoreIfExists?: boolean; contents?: Uint8Array };
+  }> = [];
+  createFile(
+    uri: ReturnType<typeof Uri.file>,
+    options?: { overwrite?: boolean; ignoreIfExists?: boolean; contents?: Uint8Array },
+  ): void {
+    this.creations.push({ uri, options });
+  }
   private edits: Array<{ uri: ReturnType<typeof Uri.file>; range: Range; newText: string }> = [];
   replace(uri: ReturnType<typeof Uri.file>, range: Range, newText: string): void {
     this.edits.push({ uri, range, newText });
@@ -659,6 +676,7 @@ export default {
   LanguageModelToolResultPart,
   LanguageModelToolResult,
   LanguageModelChatMessageRole,
+  LanguageModelChatToolMode,
   l10n,
   languages,
   lm,

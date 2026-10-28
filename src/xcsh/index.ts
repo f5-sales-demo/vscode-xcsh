@@ -11,6 +11,9 @@ import { HOST_TOOL_DEFINITIONS, handleHostToolCall } from './hostTools';
 import { registerKiroChatCommands } from './kiroNativeChat';
 import { registerLanguageModelProvider } from './languageModelProvider';
 import { registerLanguageModelTools } from './languageModelTools';
+import { LITELLM_VENDOR, registerLiteLLMProvider } from './litellmProvider';
+import { bundledNativeF5Options } from './nativeCorePackage';
+import { type NativeF5ChatOptions, registerNativeF5Chat } from './nativeF5Activation';
 import { XcshPanelProvider } from './panelProvider';
 import { XcshProcessManager } from './processManager';
 import { XcshRpcBridge } from './rpcBridge';
@@ -54,6 +57,7 @@ function registerHostToolsOnBridge(bridge: XcshRpcBridge): void {
 export async function activateXcsh(
   extensionContext: vscode.ExtensionContext,
   contextManager: ContextManagerInterface,
+  nativeF5Options?: NativeF5ChatOptions,
 ): Promise<void> {
   const logger = getLogger();
   const config = vscode.workspace.getConfiguration('xcsh');
@@ -65,7 +69,73 @@ export async function activateXcsh(
   }
 
   logger.info('integration.activation.started');
-  const usesNativeChat = registerKiroChatCommands(extensionContext);
+  const usesKiroChat = registerKiroChatCommands(extensionContext);
+  void vscode.commands.executeCommand('setContext', 'xcsh.nativeF5Ready', false);
+  let gatewayRegistered = false;
+  try {
+    gatewayRegistered = registerLiteLLMProvider(extensionContext);
+  } catch {
+    logger.warn('integration.provider.unavailable');
+  }
+  if (!usesKiroChat && !nativeF5Options) {
+    try {
+      nativeF5Options = bundledNativeF5Options(extensionContext);
+    } catch {
+      logger.warn('integration.activation.failed');
+      // An unsupported/damaged package must not silently start an ordinary CLI
+      // chat. Invalid instructions leave native entrypoints gated before use.
+      nativeF5Options = {
+        agentDocument: '',
+        createCore: () => {
+          throw new Error('F5_CORE_PACKAGE_UNSUPPORTED');
+        },
+      };
+    }
+  }
+  const native =
+    nativeF5Options && !usesKiroChat
+      ? await registerNativeF5Chat(extensionContext, contextManager, {
+          ...nativeF5Options,
+          prepareModels:
+            nativeF5Options.prepareModels ??
+            (gatewayRegistered
+              ? async () => {
+                  if (!(await vscode.lm.selectChatModels({ vendor: LITELLM_VENDOR })).length) {
+                    throw new Error('MODEL_CATALOG_UNAVAILABLE');
+                  }
+                }
+              : undefined),
+        })
+      : undefined;
+  if (native?.disposed) {
+    return;
+  }
+  const usesNativeChat = usesKiroChat || native !== undefined;
+  if (usesNativeChat) {
+    void vscode.commands.executeCommand('setContext', 'xcsh.usesNativeChat', true);
+    registerTerminalIntegration(extensionContext, contextManager);
+    // These declared commands belong to the CLI RPC session. Keep explicit
+    // handlers on native hosts rather than leaving command-palette dead ends.
+    for (const command of ['xcsh.xcsh.pairHerdr', 'xcsh.xcsh.disconnectHerdr', 'xcsh.xcsh.restart']) {
+      extensionContext.subscriptions.push(
+        vscode.commands.registerCommand(command, () => {
+          void vscode.window.showWarningMessage(vscode.l10n.t('Use the xcsh terminal for CLI session controls.'));
+          return false;
+        }),
+      );
+    }
+    // Native chat owns the agent loop. A compatible CLI can enrich metadata,
+    // but never starts an RPC agent or receives the editor's credential env.
+    if (native?.ready && nativeF5Options?.probeCli) {
+      const executable = config.get<string>('xcsh.path')?.trim() || 'xcsh';
+      void nativeF5Options.probeCli(executable).then(
+        (state) => logger.debug(state === 'compatible' ? 'integration.cli.compatible' : 'integration.cli.unavailable'),
+        () => logger.debug('integration.cli.unavailable'),
+      );
+    }
+    logger.info('integration.activation.completed');
+    return;
+  }
 
   // Detect secondary sidebar support (VS Code >= 1.106)
   const versionParts = vscode.version.split('.').map(Number);

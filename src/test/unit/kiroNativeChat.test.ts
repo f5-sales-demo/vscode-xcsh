@@ -23,49 +23,25 @@ describe('Kiro native sidebar routing', () => {
   });
   afterEach(() => jest.restoreAllMocks());
 
-  it('opens native chat without choosing a model or passing credentials', async () => {
-    expect(registerKiroChatCommands(context())).toBe(true);
-    await handlers.get('xcsh.xcsh.openPanel')?.();
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(nativeCommand, { ensureSession: true });
-  });
+  it.each(['xcsh.xcsh.openPanel', 'xcsh.xcsh.newSession', 'xcsh.attachToChat'])(
+    'gates %s without opening ordinary chat or modifying a draft',
+    async (command) => {
+      expect(registerKiroChatCommands(context())).toBe(true);
+      expect(await handlers.get(command)?.({ name: 'sample', content: '{"metadata":{"name":"sample"}}' })).toBe(false);
+      expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
+        'xcsh specialist chat is unavailable in this Kiro version. Contexts and resource views remain available.',
+      );
+      expect(vscode.commands.executeCommand).toHaveBeenCalledTimes(1);
+      expect(vscode.commands.executeCommand).toHaveBeenCalledWith('setContext', 'xcsh.usesNativeChat', true);
+      expect(vscode.commands.getCommands).not.toHaveBeenCalled();
+    },
+  );
 
-  it('creates a native conversation using Kiro selection', async () => {
-    registerKiroChatCommands(context());
-    await handlers.get('xcsh.xcsh.newSession')?.();
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(nativeCommand, {
-      ensureSession: true,
-      newSession: true,
-    });
-  });
-
-  it('drafts resource context without automatically submitting it', async () => {
-    registerKiroChatCommands(context());
-    await handlers.get('xcsh.attachToChat')?.({ name: 'sample', content: '{"metadata":{"name":"sample"}}' });
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith(nativeCommand, {
-      ensureSession: true,
-      prompt: 'Resource: sample\n\n```json\n{"metadata":{"name":"sample"}}\n```',
-      submit: false,
-    });
-  });
-
-  it('reports unavailable native chat and keeps the existing model unchanged', async () => {
-    jest.mocked(vscode.commands.getCommands).mockResolvedValue([]);
-    registerKiroChatCommands(context());
-    await handlers.get('xcsh.xcsh.openPanel')?.();
-    expect(vscode.window.showWarningMessage).toHaveBeenCalled();
-    expect(vscode.commands.executeCommand).not.toHaveBeenCalledWith(nativeCommand, expect.anything());
-  });
-
-  it('does not expose native errors or credentials when chat fails', async () => {
-    jest
-      .mocked(vscode.commands.executeCommand)
-      .mockResolvedValueOnce(undefined)
-      .mockRejectedValueOnce(new Error('private native failure'));
-    registerKiroChatCommands(context());
-    await handlers.get('xcsh.xcsh.openPanel')?.();
-    expect(vscode.window.showWarningMessage).toHaveBeenCalledWith(
-      'Kiro chat is unavailable. Try reopening the Kiro window.',
-    );
+  it('reserves all Kiro entrypoints so the CLI chat cannot become a fallback', () => {
+    const extensionContext = context();
+    expect(registerKiroChatCommands(extensionContext)).toBe(true);
+    expect([...handlers.keys()]).toEqual(['xcsh.xcsh.openPanel', 'xcsh.xcsh.newSession', 'xcsh.attachToChat']);
+    expect(extensionContext.subscriptions).toHaveLength(3);
   });
 
   it('does not register native routing in VS Code', () => {
