@@ -511,3 +511,27 @@ packaged production entrypoint.
 Source and published-core evidence does not complete installed production VSIX
 or released extension acceptance. Multiple windows, drafts, attachments,
 disablement/removal and the same VSIX in both editors remain delivery gates.
+
+## Final attachment artifact verification
+
+The [installed receipt](native-chat-installed-1708.json) now records source
+`d8964ce142457e9473086f075722c00694eec3a1`, the dedicated attachment artifact,
+and the CI archive whose 90 entries matched it byte for byte. Archive hashes
+differ and are recorded separately. Both final-source editor hosts passed ten
+checks; the exact implementation passed CI on macos-latest, ubuntu-latest and
+windows-latest.
+
+The signed-in VS Code Local workflow preserved independent Opus and GPT models
+in two windows with external xcsh, Node and Bun excluded. Final-artifact native
+approval matched the complete prepared configuration, produced one synthetic
+POST and completed independent readback. Cancellation and a changed context
+produced zero writes. Invalid credentials and an unreachable loopback endpoint
+returned public contract errors without retries. Temporary fixture fetch
+preferences were restored. Shared-desktop preflight failures were preserved,
+canceled and excluded before repeating a clean run.
+
+Local workflow qualification requires the two native preferences documented in
+DEVELOPING.md; the extension never sets them or selects a model. Kiro specialist
+selection remains unqualified and its chat entrypoints remain gated. The PR
+remains draft because both specialist gates have not passed. This follow-up does
+not claim extension marketplace publication or released-artifact acceptance.

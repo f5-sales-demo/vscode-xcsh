@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "date": "2026-10-27",
-  "sourceCommit": "9cf16740fbd4f168a1275abac410e7c92751d081",
-  "artifactSha256": "6a1234869c98870cfe417713b9c97730e93c83dec779bd90409a036c72c2a7d2",
+  "sourceCommit": "d8964ce142457e9473086f075722c00694eec3a1",
+  "artifactSha256": "f7bfcda3c7dcb92271b52b2293cdd145e2b513669bfde76c2a4a65933f95279e",
   "corePackage": "@f5-sales-demo/xcsh-f5-core@23.10.1",
   "coreTarballSha256": "5c08b645453bae7c06e8ba67447f6949658f40995e097249d67f0fb7e14f7ad6",
   "specificationVersion": "12.5.1",
@@ -17,7 +17,8 @@
     "models": ["claude-opus-5-5", "gpt-6.1-sol"],
     "actualSpecificationCallsThroughBothModels": true,
     "syntheticCreate": {
-      "planHash": "370f779b1b18bc83707b2e39a3a57e08790986fb3cc1f42c1ec7d3c51b0c5052",
+      "sourceCommit": "d8964ce142457e9473086f075722c00694eec3a1",
+      "planHash": "18a651fa5bb31d173fe63ea31f4f458a978f39c6753f6db6f04d5345b824c7de",
       "completeConfigurationMatchedPreparedReceipt": true,
       "nativeApproval": true,
       "postRequests": 1,
@@ -30,7 +31,66 @@
       "command": "workbench.action.chat.attachFile",
       "existingLocalConversation": true,
       "typedDraftAttachmentPrimaryModelSurviveReload": true,
-      "automaticSubmission": false
+      "automaticSubmission": false,
+      "productionAttachmentEntrypointVerified": true
+    },
+    "localWorkflowPreferences": {
+      "chat.defaultToCopilotHarness": false,
+      "chat.editor.preferCopilotHarness": false,
+      "configuredByExtension": false,
+      "defaultPreferenceFreshUnsentReloadExcluded": true
+    },
+    "freshSessionReload": {
+      "primaryAgentPreserved": true,
+      "selectedModelPreserved": true,
+      "typedDraftPreserved": true,
+      "attachmentChipsPreserved": true,
+      "automaticDraftSubmission": false
+    },
+    "multipleWindows": {
+      "independentOpusAndGptSelection": true,
+      "secondWindowFreshSessionReloadPreservedXcshAndGpt": true,
+      "externalToolsExcludedInSecondWindow": true,
+      "repeatedWithFinalArtifact": true
+    },
+    "existingOtherAgentConversation": {
+      "switchedToXcsh": true,
+      "exactTypedDraftPreserved": true,
+      "selectedGptModelPreserved": true
+    },
+    "editedAgentConflict": {
+      "routingRejected": true,
+      "userEditPreserved": true,
+      "draftAndModelPreserved": true
+    },
+    "cliEnrichment": {
+      "compatibleAndIncompatibleFixtures": true,
+      "bundledSpecificationRemainsUsable": true,
+      "commands": ["--help", "f5-core capabilities --json"],
+      "credentialEnvironmentPassed": false
+    },
+    "lifecycle": {
+      "reloadRequired": true,
+      "toolCallableBeforeReload": true,
+      "disabledToolRejectedAfterReload": true,
+      "removedToolRejectedAfterReloadInBothWindows": true,
+      "reinstallRestoresBundledCoreInBothWindows": true,
+      "managedDocumentRetainedForHistory": true
+    },
+    "changedContextError": {
+      "writes": 0,
+      "receiptCode": "OPERATION_FAILED",
+      "publicCode": "F5_OPERATION_FAILED",
+      "specificStaleBindingCodeDemonstrated": false
+    },
+    "canceledApprovalRepeatedOnFinalArtifact": true,
+    "changedContextApprovalRepeatedOnFinalArtifact": true,
+    "failureCases": {
+      "credentialFailurePublicCode": "CREDENTIALS_REJECTED",
+      "networkFailurePublicCode": "READ_FAILED",
+      "automaticRetries": 0,
+      "syntheticWritesAcrossFinalApprovalFailureCampaign": 1,
+      "fixtureFetchSettingsRestored": true
     }
   },
   "kiro": {
@@ -43,16 +103,46 @@
     "advancedChatGated": true
   },
   "acceptance": {
-    "classification": "demonstrated installed-artifact behavior and supported native command experiment",
+    "classification": "demonstrated installed-artifact behavior through public native commands with explicit Local workflow preferences",
     "fullInstalledArtifactAcceptance": false,
     "releasedExtensionAcceptance": false,
     "remaining": [
-      "production dedicated attachment command wiring in the next artifact",
-      "fresh unsent Local session model preservation across reload",
-      "multiple windows and CLI enrichment",
-      "disablement and removal",
+      "supported Kiro primary-specialist route; advanced chat stays gated",
       "both released registry artifacts"
+    ],
+    "supportedVsCodeLocalWorkflowVerified": true,
+    "kiroUnavailableWorkflowVerified": true,
+    "bothEditorSpecialistAcceptance": false,
+    "excludedRuns": [
+      "shared-desktop focus loss invalidated routing and primary/model preflight; approval canceled with zero writes",
+      "initial automated recovery process exited before submitting any request"
     ]
   },
-  "privacy": "Raw UI, requests, profiles, transport events and receipts remain private. Synthetic writes used only a task-owned HTTPS loopback API. Fixture fetch settings were restored."
+  "privacy": "Raw UI, requests, profiles, transport events and receipts remain private. Synthetic writes use only a task-owned HTTPS loopback API with certificate verification enabled. Shared-desktop preflight failures are preserved and excluded; uncertain mutations are never replayed. Temporary fixture fetch preferences were restored after verification.",
+  "ciArtifact": {
+    "runId": 40584797582,
+    "sha256": "1570dfd5618c491b0349e4d542e2b630f1157bf0544795e48181c2bcb411789f",
+    "entriesCompared": 90,
+    "allContentsIdenticalToTestedArtifact": true,
+    "archiveHashIdentical": false
+  },
+  "priorArtifact": {
+    "sourceCommit": "9cf16740fbd4f168a1275abac410e7c92751d081",
+    "sha256": "6a1234869c98870cfe417713b9c97730e93c83dec779bd90409a036c72c2a7d2",
+    "syntheticCreate": {
+      "planHash": "370f779b1b18bc83707b2e39a3a57e08790986fb3cc1f42c1ec7d3c51b0c5052",
+      "completeConfigurationMatchedPreparedReceipt": true,
+      "nativeApproval": true,
+      "postRequests": 1,
+      "independentReadback": true,
+      "receiptStage": "complete",
+      "sourceCommit": "9cf16740fbd4f168a1275abac410e7c92751d081"
+    }
+  },
+  "sourceVerification": {
+    "ciCrossPlatform": ["ubuntu-latest", "macos-latest", "windows-latest"],
+    "editorHostChecksEach": 10,
+    "editorHosts": ["Visual Studio Code", "Kiro"],
+    "finalImplementationSourceCommit": "d8964ce142457e9473086f075722c00694eec3a1"
+  }
 }

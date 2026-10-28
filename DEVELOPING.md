@@ -81,14 +81,28 @@ they are not copied into editor settings or shared with another editor's sign-in
 state. The provider registers before optional xcsh CLI startup, so CLI absence
 does not remove model access. Choose the model in the native picker.
 
-The current accepted prototype uses the native **Local** harness. The new
-Copilot harness reset the model to Auto in the experiment, so that workflow is
-excluded. The native picker command
-`workbench.action.chat.openNewChatSessionInPlace.local` with the `sidebar`
-argument creates Local directly. `newLocalChat` can be redirected to Copilot by
-native preferences or treatments, even with an explicit Local override. Kiro's
-native chat has no qualifying custom gateway route in version 1.4.26; Kiro chat
-delivery remains gated.
+The accepted installed workflow uses the native **Local** harness. In the
+signed-in test profile, set these native preferences once before testing:
+
+```json
+{
+  "chat.defaultToCopilotHarness": false,
+  "chat.editor.preferCopilotHarness": false
+}
+```
+
+With both preferences disabled, fresh Local sessions retained xcsh, the chosen
+gateway model, typed drafts and attachment chips through reload in two windows.
+The extension never changes these preferences or selects the model. With the
+default preferences enabled, fresh unsent sessions reset to Copilot/Auto during
+reload; persisted Local conversations behaved differently. Record the native
+preferences when qualifying an editor version. The new Copilot harness reset the
+model to Auto in the experiment, so that workflow is excluded. The native picker
+command `workbench.action.chat.openNewChatSessionInPlace.local` with the
+`sidebar` argument creates Local directly. `newLocalChat` can be redirected to
+Copilot by native preferences or treatments, even with an explicit Local
+override. Kiro's native chat has no qualifying custom gateway route in version
+1.4.26; Kiro chat delivery remains gated.
 
 ## Native F5 tool preparation
 
@@ -161,11 +175,21 @@ removal stop routing before chat opens and again immediately before selection.
 Disposal revokes the registration instance but retains the workspace document:
 other windows and native conversation history share its URI. Revoke the native
 tool's readiness separately. The workspace document persists after extension
-removal; automatic file cleanup and full disablement/removal acceptance remain
-open. An edited or removed document is never repaired by `verify`.
+removal. Installed-artifact checks verified that disablement and removal revoke
+the tool after the editor's required reload, including removal in two windows.
+Before reload, the existing extension host can still invoke the tool. Automatic
+document cleanup remains excluded because conversation history can reference it.
+An edited or removed document is never repaired by `verify`.
 
 `activateXcsh` wires the published core, native adapter and managed
 registration. A stable workspace URI passed prototype upgrades;
 extension-version-dependent agent URIs failed. The complete production VSIX
-lifecycle remains a delivery gate. See the campaign receipt for accepted and
-excluded observations.
+lifecycle and released marketplace artifacts require separate evidence. See the
+[installed receipt](docs/development/native-chat-installed-1708.json) for
+accepted and excluded observations.
+
+On a shared desktop, a changed window, focus, draft or model invalidates the UI
+preflight. Preserve the failed capture and retry after a fresh task-window
+check. Do not replay a possibly dispatched mutation: resolve its receipt and
+independent API outcome first. Attachment drafts must never be submitted
+automatically.
