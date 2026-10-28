@@ -10,15 +10,11 @@ import { writeFileSync } from 'node:fs';
 import * as vscode from 'vscode';
 
 suite('Extension Test Suite', () => {
-  // Allow extension to activate
   suiteSetup(async () => {
-    // Wait for the extension to activate
     const ext = vscode.extensions.getExtension('f5-sales-demo.xcsh');
     if (ext && !ext.isActive) {
       await ext.activate();
     }
-    // Give extension time to fully initialize
-    await new Promise((resolve) => setTimeout(resolve, 2000));
   });
 
   test('Extension should be present', () => {
