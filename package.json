@@ -1104,7 +1104,8 @@
       "js-yaml": "5.5.0"
     },
     "@azure/msal-node": "7.1.1",
-    "katex": "0.19.1"
+    "katex": "0.19.1",
+    "deepmerge": "npm:@stackline/deepmerge@1.1.0"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",
