@@ -245,60 +245,69 @@ describe('XcshProcessManager', () => {
     }
   });
 
-  it('resolves fresh context and waits for the old worker before replacement', async () => {
-    const exitListeners: Array<() => void> = [];
-    const firstProcessState = {
-      on: jest.fn((event: string, listener: () => void): void => {
-        if (event === 'exit') {
-          exitListeners.push(listener);
-        }
-      }),
-      once: jest.fn((event: string, listener: () => void): void => {
-        if (event === 'exit') {
-          exitListeners.push(listener);
-        }
-      }),
-      kill: jest.fn(),
-      exitCode: null as number | null,
-      pid: 101,
-    };
-    const secondProcessState = {
-      on: jest.fn().mockReturnThis(),
-      once: jest.fn().mockReturnThis(),
-      kill: jest.fn(),
-      exitCode: null,
-      pid: undefined,
-    };
-    const firstProcess = firstProcessState as unknown as childProcess.ChildProcess;
-    const secondProcess = secondProcessState as unknown as childProcess.ChildProcess;
-    mockedSpawn.mockReturnValueOnce(firstProcess).mockReturnValueOnce(secondProcess);
-    mockedExecFileSync.mockReturnValue('/usr/local/bin/xcsh\n');
-    mockedExistsSync.mockImplementation((p) => p === '/usr/local/bin/xcsh');
-    const resolveEnvironment = jest
-      .fn()
-      .mockResolvedValueOnce({ HERDR_ENV: '1', HERDR_PANE_ID: 'w1:p1' })
-      .mockResolvedValueOnce({ HERDR_ENV: '1', HERDR_PANE_ID: 'w1:p2' });
-    manager.setEnvironmentResolver(resolveEnvironment);
+  it.each(['code', 'signal'])(
+    'resolves fresh context and waits for %s termination before replacement',
+    async (termination) => {
+      const exitListeners: Array<() => void> = [];
+      const firstProcessState = {
+        on: jest.fn((event: string, listener: () => void): void => {
+          if (event === 'exit') {
+            exitListeners.push(listener);
+          }
+        }),
+        once: jest.fn((event: string, listener: () => void): void => {
+          if (event === 'exit') {
+            exitListeners.push(listener);
+          }
+        }),
+        kill: jest.fn(),
+        exitCode: null as number | null,
+        signalCode: null as NodeJS.Signals | null,
+        pid: 101,
+      };
+      const secondProcessState = {
+        on: jest.fn().mockReturnThis(),
+        once: jest.fn().mockReturnThis(),
+        kill: jest.fn(),
+        exitCode: null,
+        pid: undefined,
+      };
+      const firstProcess = firstProcessState as unknown as childProcess.ChildProcess;
+      const secondProcess = secondProcessState as unknown as childProcess.ChildProcess;
+      mockedSpawn.mockReturnValueOnce(firstProcess).mockReturnValueOnce(secondProcess);
+      mockedExecFileSync.mockReturnValue('/usr/local/bin/xcsh\n');
+      mockedExistsSync.mockImplementation((p) => p === '/usr/local/bin/xcsh');
+      const resolveEnvironment = jest
+        .fn()
+        .mockResolvedValueOnce({ HERDR_ENV: '1', HERDR_PANE_ID: 'w1:p1' })
+        .mockResolvedValueOnce({ HERDR_ENV: '1', HERDR_PANE_ID: 'w1:p2' });
+      manager.setEnvironmentResolver(resolveEnvironment);
 
-    await manager.start();
-    const restart = manager.restart();
-    await Promise.resolve();
-    await Promise.resolve();
+      await manager.start();
+      const restart = manager.restart();
+      await Promise.resolve();
+      await Promise.resolve();
 
-    expect(firstProcessState.kill).toHaveBeenCalledWith('SIGTERM');
-    expect(mockedSpawn).toHaveBeenCalledTimes(1);
+      expect(firstProcessState.kill).toHaveBeenCalledWith('SIGTERM');
+      expect(mockedSpawn).toHaveBeenCalledTimes(1);
 
-    firstProcessState.exitCode = 0;
-    for (const listener of exitListeners) {
-      listener();
-    }
-    await restart;
+      if (termination === 'code') {
+        firstProcessState.exitCode = 0;
+      } else {
+        firstProcessState.signalCode = 'SIGTERM';
+      }
+      for (const listener of exitListeners) {
+        listener();
+      }
+      await restart;
 
-    expect(mockedSpawn).toHaveBeenCalledTimes(2);
-    expect(resolveEnvironment).toHaveBeenCalledTimes(2);
-    expect(mockedSpawn.mock.calls[1]?.[2]?.env).toMatchObject({
-      HERDR_ENV: '1',
-      HERDR_PANE_ID: 'w1:p2',
-    });
-  });
+      expect(mockedSpawn).toHaveBeenCalledTimes(2);
+      expect(firstProcessState.kill).toHaveBeenCalledTimes(1);
+      expect(resolveEnvironment).toHaveBeenCalledTimes(2);
+      expect(mockedSpawn.mock.calls[1]?.[2]?.env).toMatchObject({
+        HERDR_ENV: '1',
+        HERDR_PANE_ID: 'w1:p2',
+      });
+    },
+  );
 });

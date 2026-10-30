@@ -5,6 +5,33 @@ import type { AssistantMessage, TextBlock } from '../state/session';
 import { createSession } from '../state/session';
 
 describe('session state', () => {
+  it('retains original question input and result and deduplicates repeated starts by call identity', () => {
+    const session = createSession();
+    const args = {
+      questions: [
+        {
+          id: 'a',
+          header: 'Audience',
+          question: 'Who?',
+          options: [{ label: 'Developers', description: 'Technical.' }],
+        },
+      ],
+    };
+    session.addToolStart('request_user_input', 'call', args);
+    session.addToolStart('request_user_input', 'call', args);
+    session.endToolUse(
+      'call',
+      { content: [{ type: 'text', text: '{"answers":{"a":{"answers":["Developers"]}}}' }] },
+      false,
+    );
+    const message = session.messages[0] as AssistantMessage;
+    expect(message.blocks).toHaveLength(1);
+    expect(message.blocks[0]).toMatchObject({
+      input: JSON.stringify(args),
+      running: false,
+      output: '{"answers":{"a":{"answers":["Developers"]}}}',
+    });
+  });
   it('creates a session with default values', () => {
     const session = createSession();
     expect(session.id).toBeDefined();
@@ -113,5 +140,25 @@ describe('cited sources (xcsh #2420 references event)', () => {
     const s = createSession();
     expect(() => s.setReferences([{ kind: 'doc', title: 'x', url: 'https://d/x' }])).not.toThrow();
     expect(s.messages).toHaveLength(0);
+  });
+});
+
+describe('accepted answer presentation', () => {
+  it('restores and updates one safe recap without creating a prompt or changing idle state', () => {
+    const session = createSession();
+    const recap = {
+      state: 'recorded' as const,
+      rows: [{ id: 'q', topic: 'Audience', question: 'Who?', answer: 'Developers' }],
+    };
+    session.recordAnswer({ id: 'receipt', recap, evidence: 'safe' }, true);
+    session.recordAnswer({ id: 'receipt', recap: { ...recap, state: 'delivered' }, evidence: 'safe' }, true);
+    expect(session.busy).toBe(false);
+    expect(session.messages).toHaveLength(1);
+    expect(session.messages[0]).toMatchObject({
+      type: 'user',
+      text: '',
+      interactionId: 'receipt',
+      answerRecap: { state: 'delivered' },
+    });
   });
 });

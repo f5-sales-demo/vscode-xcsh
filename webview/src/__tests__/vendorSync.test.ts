@@ -15,7 +15,7 @@ const MANIFEST_PATH = join(VENDOR_DIR, 'VENDOR-MANIFEST.json');
 
 interface Manifest {
   generatedFrom: string;
-  files: Record<string, string>;
+  files: { sha256: string; path: string }[];
 }
 
 function sha256(path: string): string {
@@ -39,14 +39,14 @@ const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as Manifest;
 
 describe('vendored chat-ui sync', () => {
   it('matches every manifest hash byte-for-byte', () => {
-    for (const [path, expected] of Object.entries(manifest.files)) {
+    for (const { path, sha256: expected } of manifest.files) {
       const actual = sha256(join(VENDOR_DIR, path));
       expect(`${path}:${actual}`).toBe(`${path}:${expected}`);
     }
   });
 
   it('has no stray source files missing from the manifest', () => {
-    const listed = new Set(Object.keys(manifest.files));
+    const listed = new Set(manifest.files.map((file) => file.path));
     const stray = walkSources(VENDOR_DIR)
       .map((abs) => relative(VENDOR_DIR, abs).split('\\').join('/'))
       .filter((rel) => !listed.has(rel));

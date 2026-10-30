@@ -90,7 +90,7 @@ module.exports = {
       // rather than in two places — see the comment in that file.
       setupFilesAfterEnv: ['<rootDir>/webview/src/test-setup.ts'],
       transform: {
-        '^.+\\.tsx?$': [
+        '^.+\\.[jt]sx?$': [
           '@swc/jest',
           {
             jsc: {

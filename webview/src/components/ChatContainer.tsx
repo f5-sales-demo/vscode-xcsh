@@ -89,7 +89,7 @@ export function ChatContainer({ session }: ChatContainerProps) {
           </button>
         </div>
       )}
-      <InteractionPanel transport={interactionTransport} />
+      <InteractionPanel transport={interactionTransport} onPresentation={session.recordAnswer} />
       <div className="inputContainer">
         <ComposerHost onSubmit={handleSubmit} onInterrupt={handleInterrupt} busy={busy} />
       </div>

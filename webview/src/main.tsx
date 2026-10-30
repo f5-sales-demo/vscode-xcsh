@@ -29,14 +29,14 @@ function handleMessageUpdate(msg: ExtensionMessage): void {
 function handleToolStart(msg: ExtensionMessage): void {
   const session = getActiveSession();
   if (session && typeof msg.toolName === 'string' && typeof msg.toolCallId === 'string') {
-    session.addToolStart(msg.toolName, msg.toolCallId);
+    session.addToolStart(msg.toolName, msg.toolCallId, msg.args);
   }
 }
 
 function handleToolEnd(msg: ExtensionMessage): void {
   const session = getActiveSession();
   if (session && typeof msg.toolCallId === 'string') {
-    session.endToolUse(msg.toolCallId);
+    session.endToolUse(msg.toolCallId, msg.result, msg.isError === true);
   }
 }
 
