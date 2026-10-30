@@ -125,7 +125,7 @@ export class XcshProcessManager implements vscode.Disposable {
     if (this.disposed) {
       return;
     }
-    if (this.process?.exitCode === null) {
+    if (this.process && !hasExited(this.process)) {
       return;
     }
 
@@ -205,15 +205,15 @@ export class XcshProcessManager implements vscode.Disposable {
 
     const child = this.process;
     this.process = null;
-    if (child && child.exitCode === null) {
+    if (child && !hasExited(child)) {
       child.kill('SIGTERM');
       if (child.pid !== undefined) {
         await waitForExit(child, STOP_TIMEOUT_MS);
-        if (child.exitCode === null) {
+        if (!hasExited(child)) {
           child.kill('SIGKILL');
           await waitForExit(child, STOP_TIMEOUT_MS);
         }
-        if (child.exitCode === null) {
+        if (!hasExited(child)) {
           throw new Error('xcsh worker did not exit; replacement was not started');
         }
       }
@@ -250,7 +250,7 @@ export class XcshProcessManager implements vscode.Disposable {
   }
 
   private checkHealth(): void {
-    if (!this.process || this.process.exitCode !== null) {
+    if (!this.process || hasExited(this.process)) {
       this.logger.warn('process.health.failed');
       this.setStatus('error');
       this.scheduleRestart();
@@ -302,7 +302,7 @@ export class XcshProcessManager implements vscode.Disposable {
 }
 
 function waitForExit(child: ChildProcess, timeoutMs: number): Promise<void> {
-  if (child.exitCode !== null) {
+  if (hasExited(child)) {
     return Promise.resolve();
   }
   return new Promise((resolve) => {
@@ -312,4 +312,9 @@ function waitForExit(child: ChildProcess, timeoutMs: number): Promise<void> {
       resolve();
     });
   });
+}
+
+/** Signal termination leaves exitCode null in Node's ChildProcess. */
+function hasExited(child: ChildProcess): boolean {
+  return typeof child.exitCode === 'number' || typeof child.signalCode === 'string';
 }
