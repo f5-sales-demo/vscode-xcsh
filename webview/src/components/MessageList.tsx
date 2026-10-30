@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
 import type { AssistantMessage, ChatMessage } from '../state/session';
-import { ContentBlockRenderer, ReferenceChips } from '../vendored/chat-ui';
+import { AnswerRecapView, ContentBlockRenderer, ReferenceChips } from '../vendored/chat-ui';
 import { asyncAnswerSummary } from '../vendored/chat-ui/interactions/async-answer';
 
 interface MessageListProps {
@@ -40,7 +40,13 @@ export function MessageList({ messages, busy }: MessageListProps) {
         <div key={ti} className="turn">
           {turn.user && turn.user.type === 'user' && (
             <div className="userMessage">
-              <div className="userMessageText">{asyncAnswerSummary(turn.user.text) ?? turn.user.text}</div>
+              <div className="userMessageText">
+                {turn.user.answerRecap ? (
+                  <AnswerRecapView recap={turn.user.answerRecap} evidence={turn.user.answerEvidence} />
+                ) : (
+                  (asyncAnswerSummary(turn.user.text) ?? turn.user.text)
+                )}
+              </div>
             </div>
           )}
           {turn.assistants.map(({ msg, idx }, ai) => {

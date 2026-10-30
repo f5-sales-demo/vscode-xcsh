@@ -142,3 +142,23 @@ describe('cited sources (xcsh #2420 references event)', () => {
     expect(s.messages).toHaveLength(0);
   });
 });
+
+describe('accepted answer presentation', () => {
+  it('restores and updates one safe recap without creating a prompt or changing idle state', () => {
+    const session = createSession();
+    const recap = {
+      state: 'recorded' as const,
+      rows: [{ id: 'q', topic: 'Audience', question: 'Who?', answer: 'Developers' }],
+    };
+    session.recordAnswer({ id: 'receipt', recap, evidence: 'safe' }, true);
+    session.recordAnswer({ id: 'receipt', recap: { ...recap, state: 'delivered' }, evidence: 'safe' }, true);
+    expect(session.busy).toBe(false);
+    expect(session.messages).toHaveLength(1);
+    expect(session.messages[0]).toMatchObject({
+      type: 'user',
+      text: '',
+      interactionId: 'receipt',
+      answerRecap: { state: 'delivered' },
+    });
+  });
+});

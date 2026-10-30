@@ -1,3 +1,4 @@
+import type { AnswerRecap, AnswerRecapRecord } from '../vendored/chat-ui';
 // webview/src/state/session.ts
 // Copyright (c) 2026 Robin Mordasiewicz. MIT License.
 
@@ -27,6 +28,9 @@ type ContentBlock = TextBlock | ToolUseBlock | ThinkingBlock;
 interface UserMessage {
   type: 'user';
   text: string;
+  interactionId?: string;
+  answerRecap?: AnswerRecap;
+  answerEvidence?: string;
 }
 
 /** One skill the engine has loaded, as the composer's Skills submenu shows it.
@@ -64,6 +68,7 @@ export interface Session {
   subscribe(fn: () => void): () => void;
   notify(): void;
   addUserMessage(text: string): void;
+  recordAnswer(this: void, record: AnswerRecapRecord, fromSnapshot?: boolean): void;
   appendAssistantText(text: string): void;
   addToolStart(toolName: string, toolCallId: string, args?: unknown): void;
   endToolUse(toolCallId: string, result?: unknown, isError?: boolean): void;
@@ -124,6 +129,26 @@ export function createSession(): Session {
     addUserMessage(text: string): void {
       session.messages = [...session.messages, { type: 'user', text }];
       session.busy = true;
+      session.notify();
+    },
+
+    recordAnswer(record: AnswerRecapRecord, fromSnapshot = false): void {
+      const value: UserMessage = {
+        type: 'user',
+        text: '',
+        interactionId: record.id,
+        answerRecap: record.recap,
+        answerEvidence: record.evidence,
+      };
+      const exists = session.messages.some((message) => message.type === 'user' && message.interactionId === record.id);
+      session.messages = exists
+        ? session.messages.map((message) =>
+            message.type === 'user' && message.interactionId === record.id ? value : message,
+          )
+        : [...session.messages, value];
+      if (!fromSnapshot) {
+        session.busy = record.recap.state === 'recorded' || record.recap.state === 'queued';
+      }
       session.notify();
     },
 
