@@ -99,12 +99,14 @@ export interface ToolExecutionStart extends RpcEvent {
   type: 'tool_execution_start';
   toolName: string;
   toolCallId: string;
+  args?: unknown;
 }
 
 export interface ToolExecutionEnd extends RpcEvent {
   type: 'tool_execution_end';
   toolCallId: string;
   result?: unknown;
+  isError?: boolean;
 }
 
 // ───────── Host Tools ─────────

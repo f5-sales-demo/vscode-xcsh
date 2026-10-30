@@ -95,6 +95,7 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
             type: 'tool_execution_start',
             toolName: event.toolName,
             toolCallId: event.toolCallId,
+            args: event.args,
           },
         });
       }),
@@ -104,7 +105,12 @@ export class XcshPanelProvider implements vscode.WebviewViewProvider {
       this.rpcBridge.onEvent<ToolExecutionEnd>('tool_execution_end', (event) => {
         void webviewView.webview.postMessage({
           type: 'from-extension',
-          message: { type: 'tool_execution_end', toolCallId: event.toolCallId },
+          message: {
+            type: 'tool_execution_end',
+            toolCallId: event.toolCallId,
+            result: event.result,
+            isError: event.isError,
+          },
         });
       }),
     );

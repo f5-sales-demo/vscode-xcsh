@@ -1105,7 +1105,8 @@
     },
     "@azure/msal-node": "7.1.1",
     "katex": "0.19.1",
-    "deepmerge": "npm:@stackline/deepmerge@1.1.0"
+    "deepmerge": "npm:@stackline/deepmerge@1.1.0",
+    "re2js": "2.9.1"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.3",

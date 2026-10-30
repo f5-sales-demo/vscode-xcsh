@@ -13,6 +13,7 @@ interface ToolUseBlock {
   running: boolean;
   input?: string;
   output?: string;
+  ok?: boolean;
 }
 
 interface ThinkingBlock {
@@ -64,8 +65,8 @@ export interface Session {
   notify(): void;
   addUserMessage(text: string): void;
   appendAssistantText(text: string): void;
-  addToolStart(toolName: string, toolCallId: string): void;
-  endToolUse(toolCallId: string): void;
+  addToolStart(toolName: string, toolCallId: string, args?: unknown): void;
+  endToolUse(toolCallId: string, result?: unknown, isError?: boolean): void;
   /** Attach citations to the latest assistant message (they arrive at turn end, after
    *  its text). A stray event with no assistant message yet is ignored. */
   setReferences(references: ChatReferenceWire[]): void;
@@ -145,22 +146,48 @@ export function createSession(): Session {
       session.notify();
     },
 
-    addToolStart(toolName: string, toolCallId: string): void {
+    addToolStart(toolName: string, toolCallId: string, args?: unknown): void {
+      if (
+        session.messages.some(
+          (message) =>
+            message.type === 'assistant' &&
+            message.blocks.some((block) => block.type === 'tool_use' && block.toolCallId === toolCallId),
+        )
+      ) {
+        return;
+      }
+      const metadata = args === undefined ? {} : { input: JSON.stringify(args) };
       const msgs = [...session.messages];
       const last = msgs[msgs.length - 1];
       if (last?.type === 'assistant') {
         msgs[msgs.length - 1] = {
           ...last,
-          blocks: [...last.blocks, { type: 'tool_use', toolName, toolCallId, running: true }],
+          blocks: [...last.blocks, { type: 'tool_use', toolName, toolCallId, running: true, ...metadata }],
         };
       } else {
-        msgs.push({ type: 'assistant', blocks: [{ type: 'tool_use', toolName, toolCallId, running: true }] });
+        msgs.push({
+          type: 'assistant',
+          blocks: [{ type: 'tool_use', toolName, toolCallId, running: true, ...metadata }],
+        });
       }
       session.messages = msgs;
       session.notify();
     },
 
-    endToolUse(toolCallId: string): void {
+    endToolUse(toolCallId: string, result?: unknown, isError?: boolean): void {
+      const content = (result as { content?: { type: string; text?: string }[] } | undefined)?.content;
+      const metadata =
+        result === undefined
+          ? {}
+          : {
+              output: Array.isArray(content)
+                ? content
+                    .filter((part) => part.type === 'text')
+                    .map((part) => part.text ?? '')
+                    .join('\n')
+                : '',
+              ok: !isError,
+            };
       session.messages = session.messages.map((msg) => {
         if (msg.type !== 'assistant') {
           return msg;
@@ -172,7 +199,9 @@ export function createSession(): Session {
         return {
           ...msg,
           blocks: msg.blocks.map((block) =>
-            block.type === 'tool_use' && block.toolCallId === toolCallId ? { ...block, running: false } : block,
+            block.type === 'tool_use' && block.toolCallId === toolCallId
+              ? { ...block, running: false, ...metadata }
+              : block,
           ),
         };
       });
